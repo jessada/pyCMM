@@ -1,0 +1,56 @@
+#import subprocess
+from pycmm import settings
+from pycmm.app.vcf import vcf2avdb
+from collections import OrderedDict
+import argparse
+
+argp = argparse.ArgumentParser(description=settings.VCF2AVDB_DESCRIPTION)
+argp.add_argument('-i',
+                  dest='vcf_input_file',
+                  metavar="VCF FILE",
+                  help='vcf input file name',
+                  required=True,
+                  )
+argp.add_argument('-o',
+                  dest='avdb_output_file',
+                  metavar='OUTPUT FILE',
+                  help='avdb output file name',
+                  required=True,
+                  )
+argp.add_argument('--debug',
+                  dest='debug_mode',
+                  action='store_true',
+                  help='To enable debug mode, this will effect the result and the debugging message',
+                  default=False)
+argp.add_argument('-l',
+                  dest='log_file',
+                  metavar='FILE',
+                  help='log file',
+                  default=settings.DFLT_LOG_FILE)
+args = argp.parse_args()
+#
+#app_params = OrderedDict()
+#app_params['vcf input file'] = args.vcf_input_file
+#app_params['avdb input file'] = args.avdb_output_file
+#app_params['debug mode'] = args.debug_mode
+#app_params['log file'] = args.log_file
+#
+#print app_params
+
+#              : args.avdb_output_file,
+#              : args.debug_mode,
+#              'log file': args.log_file,
+#              }
+#vcf2avdb(**app_params)
+vcf2avdb(vcf_input_file=args.vcf_input_file,
+         avdb_output_file=args.avdb_output_file,
+         debug_mode=args.debug_mode,
+         log_file=args.log_file,
+         )
+
+#out = demo_som2d_paradigm()
+#p = subprocess.Popen('cat ' + out["terminal file"], shell=True)
+#p = subprocess.Popen('evince ' + out["summary file"], shell=True)
+#for eps_file_name in out["eps reports"]:
+#    p = subprocess.Popen('evince ' + eps_file_name, shell=True)
+
