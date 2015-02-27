@@ -49,6 +49,7 @@ setup(
     packages=['pycmm',
               'pycmm.app',
               'pycmm.utils',
+              'pycmm.proc',
 #              'linkana.presentation',
 #              'linkana.db',
               ],

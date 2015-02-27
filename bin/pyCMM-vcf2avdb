@@ -1,14 +1,14 @@
 #import subprocess
 from pycmm import settings
-from pycmm.app.vcf import vcf2avdb
+from pycmm.app.vcf import app_vcf2avdb
 from collections import OrderedDict
 import argparse
 
 argp = argparse.ArgumentParser(description=settings.VCF2AVDB_DESCRIPTION)
 argp.add_argument('-i',
                   dest='vcf_input_file',
-                  metavar="VCF FILE",
-                  help='vcf input file name',
+                  metavar="VCF TABIX FILE",
+                  help='vcf tabix input file name',
                   required=True,
                   )
 argp.add_argument('-o',
@@ -26,7 +26,12 @@ argp.add_argument('-l',
                   dest='log_file',
                   metavar='FILE',
                   help='log file',
-                  default=settings.DFLT_LOG_FILE)
+                  default=settings.VCF2AVDB_DFLT_LOG_FILE)
+argp.add_argument('-w',
+                  dest='working_dir',
+                  metavar='DIR',
+                  help='working directory',
+                  default=settings.DFLT_WORKING_DIR)
 args = argp.parse_args()
 #
 #app_params = OrderedDict()
@@ -42,11 +47,12 @@ args = argp.parse_args()
 #              'log file': args.log_file,
 #              }
 #vcf2avdb(**app_params)
-vcf2avdb(vcf_input_file=args.vcf_input_file,
-         avdb_output_file=args.avdb_output_file,
-         debug_mode=args.debug_mode,
-         log_file=args.log_file,
-         )
+app_vcf2avdb(vcf_input_file=args.vcf_input_file,
+             avdb_output_file=args.avdb_output_file,
+             debug_mode=args.debug_mode,
+             log_file=args.log_file,
+             working_dir=args.working_dir,
+             )
 
 #out = demo_som2d_paradigm()
 #p = subprocess.Popen('cat ' + out["terminal file"], shell=True)

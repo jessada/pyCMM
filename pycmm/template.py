@@ -7,8 +7,8 @@ import inspect
 import gc
 
 
-class CaPBase(object):
-    """ CaP base class """
+class pyCMMBase(object):
+    """ pyCMM base class """
 
     def __init__(self):
         pass
@@ -51,22 +51,22 @@ class CaPBase(object):
         return funcs[0].__name__ if funcs else None
 
 
-class Tester(unittest.TestCase, CaPBase):
-    """ general CaP template for testing """
+class Tester(unittest.TestCase, pyCMMBase):
+    """ general pyCMM template for testing """
 
     individual_debug = False
 
     def __init__(self, test_name):
         unittest.TestCase.__init__(self, test_name)
-        CaPBase.__init__(self)
+        pyCMMBase.__init__(self)
 
     def remove_dir(self, dir_name):
         self.assertTrue(dir_name, '"None" is not a valid directory')
-        CaPBase.remove_dir(self, dir_name)
+        pyCMMBase.remove_dir(self, dir_name)
 
     def create_dir(self, dir_name):
         self.assertTrue(dir_name, '"None" is not a valid directory')
-        CaPBase.create_dir(self, dir_name)
+        pyCMMBase.create_dir(self, dir_name)
 
     def empty_working_dir(self):
         if not self.individual_debug:

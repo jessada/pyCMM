@@ -6,10 +6,11 @@ This module is all about constant value
 
 """
 
-DFLT_LOG_FILE = "pycmm.log"
+DFLT_WORKING_DIR = "."
 
 ## > > > > > > > > > > > > > vcf2avdb < < < < < < < < < <
 VCF2AVDB_DESCRIPTION = "A script to parse all point mutations from vcf format into avdb format"
+VCF2AVDB_DFLT_LOG_FILE = "vcf2avdb"
 
 ## > > > > > > > > > > > > > random values < < < < < < < < < <
 #DFLT_SEED = None

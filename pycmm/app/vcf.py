@@ -1,36 +1,39 @@
 import sys
 import datetime
+from collections import OrderedDict
+from pycmm import settings
 from pycmm.utils import mylogger
 from pycmm.utils import disp
-from pycmm import settings
-#import numpy as np
-#import combivep.settings as cbv_const
-#from combivep.preproc.dataset import DataSetManager
-#from combivep.engine.wrapper import Trainer
-#from combivep.engine.wrapper import Predictor
-#from combivep.refdb.control import UcscController
-#from combivep.refdb.control import LjbController
+from pycmm.utils import log_file_with_time_stamp
+from pycmm.proc import vcf
 
 
-def vcf2avdb(*args, **kwargs):
+def app_vcf2avdb(*args, **kwargs):
     func_name = sys._getframe().f_code.co_name
     time_stamp = datetime.datetime.now()
-    log_file = kwargs["log_file"]
+    log_file = log_file_with_time_stamp(kwargs["log_file"],
+                                        time_stamp,
+                                        )
     mylogger.init(log_file=log_file,
                   dbg_mode=kwargs["debug_mode"],
                   )
 
     disp.new_section_txt("S T A R T <" + func_name + ">")
-    required_params={}
-    required_params['vcf input file'] = kwargs['vcf_input_file']
-    required_params['avdb output file'] = kwargs['avdb_output_file']
-    optional_params={}
-    optional_params['log file'] = log_file
+    required_params=OrderedDict()
+    required_params['vcf input file (-i)'] = kwargs['vcf_input_file']
+    required_params['avdb output file (-o)'] = kwargs['avdb_output_file']
+    optional_params=OrderedDict()
+    optional_params['log file (-l)'] = log_file
+    optional_params['working directory (-w)'] = kwargs['working_dir']
     disp.show_config(app_description=settings.VCF2AVDB_DESCRIPTION,
                      time_stamp=time_stamp,
                      required_params=required_params,
                      optional_params=optional_params,
                      )
+    vcf.vcf2avdb(kwargs['vcf_input_file'],
+                 kwargs['avdb_output_file'],
+                 kwargs['working_dir'],
+                 ) 
     disp.new_section_txt("F I N I S H <" + func_name + ">")
 
 #def app_combivep_trainer():

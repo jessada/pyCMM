@@ -54,3 +54,5 @@ docs/_build/
 target/
 obsolete
 tmp
+*test_uniq_avdb_2*
+*test_concat_files_2*
