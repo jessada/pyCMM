@@ -6,7 +6,12 @@ This module is all about constant value
 
 """
 
+#FULL_SYSTEM_TEST = True
+FULL_SYSTEM_TEST = False
+
 DFLT_WORKING_DIR = "."
+VCF_MUT_KEY_INT_FMT = "{chrom:02d}_{pos:012d}_{ref:s}_{alt:s}"
+VCF_MUT_KEY_STR_FMT = "{chrom:s}_{pos:012d}_{ref:s}_{alt:s}"
 
 ## > > > > > > > > > > > > > vcf2avdb < < < < < < < < < <
 VCF2AVDB_DESCRIPTION = "A script to parse all point mutations from vcf format into avdb format"

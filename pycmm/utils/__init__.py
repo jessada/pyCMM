@@ -29,4 +29,3 @@ def concat_files(in_files,
         cmd += " " + " ".join(in_files)
     cmd += " > " + out_file
     exec_sh(cmd)
-

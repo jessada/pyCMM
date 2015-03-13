@@ -1,6 +1,7 @@
 import unittest
 import os
 import filecmp
+from pycmm import settings
 from pycmm.utils.test.template import SafeUtilsTester
 from pycmm.utils import get_file_prefix
 from pycmm.utils import concat_files
@@ -44,6 +45,7 @@ class TestFunctions(SafeUtilsTester):
                                     exp_file),
                         "concat_files cannot concat small avinput files correctly")
 
+    @unittest.skipUnless(settings.FULL_SYSTEM_TEST, "taking too long time to test")
     def test_concat_files_2(self):
         """ to check if 400K-lined avinput files can be concantenated """
 

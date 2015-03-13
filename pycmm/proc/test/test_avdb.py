@@ -1,5 +1,7 @@
 import os
 import filecmp
+import unittest
+from pycmm import settings
 from pycmm.proc.test.template import SafeProcTester
 from pycmm.proc.avdb import uniq_avdb
 
@@ -32,11 +34,13 @@ class TestAvdbFunctions(SafeProcTester):
                                     exp_file),
                         "uniq_avdb doesn't work correctly with small amount of avdb records")
 
+    @unittest.skip("obsolete")
     def test_uniq_avdb_2(self):
         """
         to validate if the funcion work with 1.2M number of records
         """
 
+        self.individual_debug = True
         self.init_test(self.current_func_name)
         in_file = os.path.join(self.data_dir,
                                'in_'+self.current_func_name)
