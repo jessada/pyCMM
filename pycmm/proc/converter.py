@@ -1,3 +1,4 @@
+import sys
 import glob
 from os.path import basename
 from os.path import join as join_path
@@ -11,7 +12,7 @@ from pycmm.proc.avdb import KeyAVDBRecord
 def vcf2pavdb(vcf_in_file,
               pavdb_out_file,
               ):
-    mylogger.info("inside proc.converter.vcf2pavdb")
+    mylogger.getLogger(__name__ + "." + sys._getframe().f_code.co_name)
     f = open(pavdb_out_file, "w")
     print >> f, "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tdummy1\tdummy2"
     f.close()
@@ -30,7 +31,7 @@ def pavdb2avinputs(pavdb_in_file,
     
     P L S   B E   A W A R E   T H A T   K E Y S   M I G H T   B E   W R O N G
     """
-    mylogger.info("inside proc.converter.pavdb2avinputs")
+    mylogger.getLogger(__name__ + "." + sys._getframe().f_code.co_name)
     cmd = "convert2annovar.pl"
     cmd += " -format vcf4"
     cmd += " " + pavdb_in_file
@@ -42,7 +43,7 @@ def pavdb2avinputs(pavdb_in_file,
 def raw_avdb2key_avdb(raw_avdb_in_file,
                       key_avdb_out_file,
                       ):
-    mylogger.info("inside proc.converter.raw_avdb2key_avdb")
+    mylogger.getLogger(__name__ + "." + sys._getframe().f_code.co_name)
     f_in = open(raw_avdb_in_file, "r")
     f_out = open(key_avdb_out_file, "w")
     for line in f_in:
@@ -74,7 +75,7 @@ def vcf2avdb(vcf_in_file,
     five columns in avdb format and the rest are the raw content from vcf
     (chrom, pos, id, ref, alt, qual, filter, info, and the rest)
     """
-    mylogger.info("inside proc.converter.vcf2avdb")
+    mylogger.getLogger(__name__ + "." + sys._getframe().f_code.co_name)
     tmp_file_prefix = join_path(working_dir,
                                 basename(vcf_in_file))
     tmp_pavdb_file = tmp_file_prefix + '.tmp.avdb'
@@ -115,7 +116,7 @@ def avdb2bed(avdb_in_file,
     - The forth column is vcf mutation key (pos_chrom_ref_alt)
     - The fifth to eighth columns are the each component of the key
     """
-    mylogger.info("inside proc.converter.avdb2bed")
+    mylogger.getLogger(__name__ + "." + sys._getframe().f_code.co_name)
     f_in = open(avdb_in_file, "r")
     f_out = open(bed_out_file, "w")
     for line in f_in:

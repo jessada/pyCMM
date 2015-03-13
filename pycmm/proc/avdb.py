@@ -1,3 +1,4 @@
+import sys
 from collections import OrderedDict
 from pycmm.template import pyCMMBase
 from pycmm.settings import VCF_MUT_KEY_INT_FMT
@@ -141,7 +142,8 @@ class KeyAVDBRecord(RawAVDBRecord):
 def uniq_avdb(avdb_in_file,
               uniq_avdb_out_file,
               ):
-    mylogger.info("inside proc.uniq_avdb")
+    mylogger.getLogger(__name__ + "." + sys._getframe().f_code.co_name)
+    #mylogger.debug("inside proc.uniq_avdb")
     cmd = "cut -f1-11 " + avdb_in_file
     cmd += " | sort"
     cmd += " | uniq"

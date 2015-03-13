@@ -15,7 +15,7 @@ def log_file_with_time_stamp(raw_file, time_stamp):
 
 def exec_sh(cmd):
     p = subprocess.Popen(cmd, shell=True)
-    mylogger.info("executing: " + repr(cmd))
+    mylogger.debug("executing: " + repr(cmd))
     error = p.wait()
     if error:
         mylogger.throw("Error found during execute command '%s' with error code %d" % (cmd, error))
