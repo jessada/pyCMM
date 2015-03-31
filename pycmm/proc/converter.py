@@ -128,23 +128,6 @@ def avdb2bed(avdb_in_file,
         buffer += "\t" + avdb_rec.avdb_start_pos
         buffer += "\t" + str(int(avdb_rec.avdb_start_pos)+1)
         buffer += "\t" + avdb_rec.vcf_key 
-#        mylogger.info(avdb_rec.vcf_key)
-#        if avdb_rec.chrom.isdigit():
-#            buffer += "\t" + VCF_MUT_KEY_INT_FMT.format(chrom=int(avdb_rec.chrom),
-#                                                        pos=int(avdb_rec.pos),
-#                                                        ref=avdb_rec.ref,
-#                                                        alt=avdb_rec.alt,
-#                                                        )
-#        else:
-#            buffer += "\t" + VCF_MUT_KEY_STR_FMT.format(chrom=avdb_rec.chrom,
-#                                                        pos=int(avdb_rec.pos),
-#                                                        ref=avdb_rec.ref,
-#                                                        alt=avdb_rec.alt,
-#                                                        )
-#        buffer += "\t" + avdb_rec.chrom
-#        buffer += "\t" + avdb_rec.pos
-#        buffer += "\t" + avdb_rec.ref
-#        buffer += "\t" + avdb_rec.alt
         f_out.write(buffer + '\n')
     f_in.close()
     f_out.close()

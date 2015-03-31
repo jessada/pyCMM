@@ -19,7 +19,7 @@ import sys
 
 mylog_file = None
 logging.basicConfig(level=logging.DEBUG,
-                    format='## [%(levelname)s]\t%(asctime)s - %(name)-12s - %(message)s',
+                    format='## [%(levelname)s]%(asctime)25s - %(processName)-12s - %(name)-12s - %(message)s',
                     )
 lg = logging.getLogger('root')
 

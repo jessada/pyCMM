@@ -143,7 +143,6 @@ def uniq_avdb(avdb_in_file,
               uniq_avdb_out_file,
               ):
     mylogger.getLogger(__name__ + "." + sys._getframe().f_code.co_name)
-    #mylogger.debug("inside proc.uniq_avdb")
     cmd = "cut -f1-11 " + avdb_in_file
     cmd += " | sort"
     cmd += " | uniq"
