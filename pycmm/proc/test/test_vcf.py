@@ -1,16 +1,23 @@
-import os
 import filecmp
-from pycmm.proc.test.template import SafeProcTester
-from pycmm.proc.vcf import cal_zygo 
+from os.path import join as join_path
+from os.path import dirname
+from pycmm.template import SafeTester
+from pycmm.proc.myvcf import cal_zygo
+from pycmm.proc.myvcf import load_vcf
+from pycmm.proc.myvcf import write_vcf
+from pycmm.proc.myvcf import read_vcf
 
 
-class TestVcfFunctions(SafeProcTester):
+class TestMyVCFFunctions(SafeTester):
 
     def __init__(self, test_name):
-        SafeProcTester.__init__(self, test_name)
+        SafeTester.__init__(self,
+                            test_name,
+                            dirname(__file__),
+                            )
 
     def setUp(self):
-        self.test_class = 'NoClass'
+        self.module_name = 'myvcf'
 
     def __create_db_instance(self):
         return None
@@ -22,13 +29,31 @@ class TestVcfFunctions(SafeProcTester):
         """
 
         self.init_test(self.current_func_name)
-#        in_file = os.path.join(self.data_dir,
-#                               'in_'+self.current_func_name+'.vcf.gz')
-#        out_file = os.path.join(self.working_dir,
-#                                'out_'+self.current_func_name+'.pavdb')
-#        vcf2pavdb(in_file, out_file)
-#        exp_file = os.path.join(self.data_dir,
-#                                'exp_'+self.current_func_name)
-#        self.assertTrue(filecmp.cmp(out_file, 
-#                                    exp_file),
-#                        "vcf2pavdb doesn't funciton correctly")
+
+    def test_write_vcf_1(self):
+        """ test if PyVCF can correctly write VCF file """
+
+        self.individual_debug = True
+        self.init_test(self.current_func_name)
+        in_file = join_path(self.data_dir,
+                               'input.vcf.gz')
+                               #'in_'+self.current_func_name+'.vcf.gz')
+        out_file = join_path(self.working_dir,
+                               'output.vcf')
+#        write_vcf(in_file, out_file)
+
+    def test_load_vcf_1(self):
+        """ test if PyVCF can correctly load VCF file """
+
+        self.init_test(self.current_func_name)
+        in_file = join_path(self.data_dir,
+                               'input.vcf')
+#        load_vcf(in_file)
+
+    def test_read_vcf_1(self):
+        """ test if PyVCF can correctly load VCF file """
+
+        self.init_test(self.current_func_name)
+        in_file = join_path(self.data_dir,
+                               'input.vcf.gz')
+#        read_vcf(in_file)

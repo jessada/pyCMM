@@ -74,6 +74,7 @@ def debug(msg):
 #        write_log(formated_msg)
 
 def throw(err_msg):
-    formated_msg=ERROR_FMT.format(msg=err_msg)
-    write_log(formated_msg)
-    raise Exception(formated_msg)
+    lg.error(err_msg)
+#    formated_msg=ERROR_FMT.format(msg=err_msg)
+#    write_log(formated_msg)
+#    raise Exception(formated_msg)

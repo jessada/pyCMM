@@ -5,6 +5,8 @@ import shutil
 import subprocess
 import inspect
 import gc
+from os.path import join as join_path
+from os.path import dirname
 
 
 class pyCMMBase(object):
@@ -40,13 +42,13 @@ class pyCMMBase(object):
     def dbg(self, debug_msg):
         if DEBUG_MODE:
             to_stderr(DEBUG_FMT.format(log=log(debug_msg,
-                                       self.__class__.__name__,
-                                       )))
+                                               self.__class__.__name__,
+                                               )))
 
     def info(self, info_msg):
         to_stderr(INFO_FMT.format(log=log(info_msg,
-                                  self.__class__.__name__,
-                                  )))
+                                          self.__class__.__name__,
+                                          )))
 
     def warn(self, warning_msg):
         to_stderr(WARNING_FMT.format(msg=warning_msg))
@@ -76,9 +78,16 @@ class Tester(unittest.TestCase, pyCMMBase):
 
     individual_debug = False
 
-    def __init__(self, test_name):
+    def __init__(self,
+                 test_name,
+                 module_path
+                 ):
         unittest.TestCase.__init__(self, test_name)
         pyCMMBase.__init__(self)
+        self.base_working_dir = join_path(module_path,
+                                            'tmp')
+        self.base_data_dir = join_path(module_path,
+                                         'data')
 
     def remove_dir(self, dir_name):
         self.assertTrue(dir_name, '"None" is not a valid directory')
@@ -98,13 +107,14 @@ class Tester(unittest.TestCase, pyCMMBase):
             self.remove_dir(self.working_dir)
 
     def set_dir(self):
-        self.working_dir = os.path.join(os.path.join(os.path.join(os.path.dirname(__file__),
-                                                                  'tmp'),
-                                                     self.test_class),
-                                        self.test_function)
-        self.data_dir= os.path.join(os.path.join(os.path.dirname(__file__), 
-                                                 'data'),
-                                    self.test_class)
+        self.working_dir = join_path(join_path(join_path(self.base_working_dir,
+                                                         self.module_name),
+                                               self.__class__.__name__[4:]),
+                                     self.test_function)
+        self.data_dir = join_path(join_path(join_path(self.base_data_dir,
+                                                      self.module_name),
+                                            self.__class__.__name__[4:]),
+                                  self.test_function)
 
     def init_test(self, test_function):
         self.test_function = test_function
@@ -124,8 +134,14 @@ class SafeTester(Tester):
 
     """
 
-    def __init__(self, test_name):
-        Tester.__init__(self, test_name)
+    def __init__(self,
+                 test_name,
+                 module_path,
+                 ):
+        Tester.__init__(self,
+                        test_name,
+                        module_path,
+                        )
 
 
 class RiskyTester(Tester):
