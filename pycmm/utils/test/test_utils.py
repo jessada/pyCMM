@@ -1,20 +1,24 @@
 import unittest
-import os
 import filecmp
+from os.path import join as join_path
+from os.path import dirname
 from pycmm import settings
-from pycmm.utils.test.template import SafeUtilsTester
+from pycmm.template import SafeTester
 from pycmm.utils import get_file_prefix
 from pycmm.utils import concat_files
 
 
-class TestFunctions(SafeUtilsTester):
+class TestFunctions(SafeTester):
 
 
     def __init__(self, test_name):
-        SafeUtilsTester.__init__(self, test_name)
+        SafeTester.__init__(self,
+                            test_name,
+                            dirname(__file__),
+                            )
 
     def setUp(self):
-        self.test_class = 'NoClass'
+        self.module_name = 'default'
 
     def __create_db_instance(self):
         return None
@@ -34,14 +38,14 @@ class TestFunctions(SafeUtilsTester):
 
         self.individual_debug = True
         self.init_test(self.current_func_name)
-        in_file_wildcards = os.path.join(self.data_dir,
-                                         'in_'+self.current_func_name+'*')
-        out_file = os.path.join(self.working_dir,
+        in_file_wildcards = join_path(self.data_dir,
+                                         'input_*')
+        out_file = join_path(self.working_dir,
                                 'out_'+self.current_func_name)
         concat_files(in_file_wildcards, out_file)
-        exp_file = os.path.join(self.data_dir,
-                                'exp_'+self.current_func_name)
-        self.assertTrue(filecmp.cmp(out_file, 
+        exp_file = join_path(self.data_dir,
+                                'expected_result')
+        self.assertTrue(filecmp.cmp(out_file,
                                     exp_file),
                         "concat_files cannot concat small avinput files correctly")
 
@@ -51,14 +55,14 @@ class TestFunctions(SafeUtilsTester):
 
         self.individual_debug = True
         self.init_test(self.current_func_name)
-        in_file_wildcards = os.path.join(self.data_dir,
+        in_file_wildcards = join_path(self.data_dir,
                                          'in_'+self.current_func_name+'*')
-        out_file = os.path.join(self.working_dir,
+        out_file = join_path(self.working_dir,
                                 'out_'+self.current_func_name)
         concat_files(in_file_wildcards, out_file)
-        exp_file = os.path.join(self.data_dir,
+        exp_file = join_path(self.data_dir,
                                 'exp_'+self.current_func_name)
-        self.assertTrue(filecmp.cmp(out_file, 
+        self.assertTrue(filecmp.cmp(out_file,
                                     exp_file),
                         "concat_files cannot concat small avinput files correctly")
 
