@@ -42,6 +42,7 @@ def read_vcf(vcf_in_file,
     #for record in vcf_reader.fetch('18', 12512300, 12512375):
     for record in vcf_reader.fetch('18', 12512360, 14513530):
         mylogger.debug(record)
+        print record.INFO
         rec_prop = OrderedDict()
         rec_prop['QUAL'] = record.QUAL
         rec_prop['INFO'] = record.INFO

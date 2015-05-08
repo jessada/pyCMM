@@ -28,14 +28,14 @@ def pavdb2avinputs(pavdb_in_file,
     """
     using convert2annovar.pl to convert mutation from vcf format into raw
     avdb (avinput) format
-    
+
     P L S   B E   A W A R E   T H A T   K E Y S   M I G H T   B E   W R O N G
     """
     mylogger.getLogger(__name__ + "." + sys._getframe().f_code.co_name)
     cmd = "convert2annovar.pl"
-    cmd += " -format vcf4"
+    cmd += " --format vcf4"
     cmd += " " + pavdb_in_file
-    cmd += " -include"
+    cmd += " --include"
     cmd += " --allsample"
     cmd += " --outfile " + avinput_file_prefix
     exec_sh(cmd)

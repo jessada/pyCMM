@@ -48,12 +48,12 @@ class TestMyVCFFunctions(SafeTester):
         self.init_test(self.current_func_name)
         in_file = join_path(self.data_dir,
                                'input.vcf')
-#        load_vcf(in_file)
+        load_vcf(in_file)
 
     def test_read_vcf_1(self):
-        """ test if PyVCF can correctly load VCF file """
+        """ test if PyVCF can correctly read VCF file """
 
         self.init_test(self.current_func_name)
         in_file = join_path(self.data_dir,
                                'input.vcf.gz')
-#        read_vcf(in_file)
+        read_vcf(in_file)

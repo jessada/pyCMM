@@ -66,12 +66,12 @@ class TestConverterFunctions(SafeTester):
         to check if convert2annovar.pl can correctly generate avdb files
         """
 
-        self.individual_debug = True
+#        self.individual_debug = True
         self.init_test(self.current_func_name)
         in_file = join_path(self.data_dir,
                             'input.pavdb')
         out_file_prefix = join_path(self.working_dir,
-                                    'out_')
+                                    'output')
         pavdb2avinputs(in_file, out_file_prefix)
         out_1_file = out_file_prefix + '.dummy1.avinput'
         out_2_file = out_file_prefix + '.dummy2.avinput'
@@ -92,6 +92,7 @@ class TestConverterFunctions(SafeTester):
         file into avdb file with vcf key
         """
 
+#        self.individual_debug = True
         self.init_test(self.current_func_name)
         in_file = join_path(self.data_dir,
                             'input.avinput')
@@ -107,6 +108,7 @@ class TestConverterFunctions(SafeTester):
     def test_vcf2avdb_1(self):
         """ to check if vcf file can be correctly converted in avdb file """
 
+#        self.individual_debug = True
         self.init_test(self.current_func_name)
         in_file = join_path(self.data_dir,
                             'input.vcf.gz')
@@ -138,7 +140,7 @@ class TestConverterFunctions(SafeTester):
     def test_avdb2bed_1(self):
         """ to check if avdb2bed can correctly convert in small avdb file """
 
-#        self.individual_debug = True
+        self.individual_debug = True
         self.init_test(self.current_func_name)
         in_file = join_path(self.data_dir,
                             'input.avdb')
