@@ -80,5 +80,8 @@ setup(
     license='LICENSE.txt',
     description='further linkage analysis',
     long_description=open('README.md').read(),
-#    install_requires=["pysam >= 0.7"],
+    install_requires=[
+        "pysam >= 0.7",
+        "pyvcf >= 0.6.0",
+        ],
 )

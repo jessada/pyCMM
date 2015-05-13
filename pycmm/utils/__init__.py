@@ -14,11 +14,16 @@ def log_file_with_time_stamp(raw_file, time_stamp):
     return log_file
 
 def exec_sh(cmd):
-    p = subprocess.Popen(cmd, shell=True)
+    p = subprocess.Popen(cmd,
+                         shell=True,
+                         stdout=subprocess.PIPE,
+                         stderr=subprocess.PIPE,
+                         )
     mylogger.debug("executing: " + repr(cmd))
     error = p.wait()
     if error:
         mylogger.throw("Error found during execute command '%s' with error code %d" % (cmd, error))
+    return p, error
 
 def concat_files(in_files,
                  out_file):
