@@ -26,7 +26,7 @@ class TestJobManager(SafeTester):
     def __create_db_instance(self):
         return None
 
-    def test_submit_job(self):
+    def test_submit_job_1(self):
         """ check if a job has been correctly submitted to SLURM """
 
         self.individual_debug = True

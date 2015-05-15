@@ -5,6 +5,7 @@ from pycmm.utils import exec_sh
 from pycmm.utils import mylogger
 
 JOB_STATUS_PENDING="PENDING"
+JOB_STATUS_RUNNING="RUNNING"
 JOB_STATUS_COMPLETED="COMPLETED"
 JOB_STATUS_FAILED="FAILED"
 
