@@ -22,6 +22,7 @@ class JobRecord(pyCMMBase):
         self.job_script = None
         self.job_params = None
         self.job_id = None
+        self.email = None
         self.prerequisite = None
     
     def get_raw_repr(self):
@@ -34,6 +35,7 @@ class JobRecord(pyCMMBase):
                 "job script": self.job_script,
                 "job paramters": self.job_params,
                 "job id": self.job_id,
+                "report usage email": self.email,
                 "pre-requisite": self.prerequisite,
                 }
 
