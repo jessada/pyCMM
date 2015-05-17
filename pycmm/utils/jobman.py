@@ -62,6 +62,8 @@ class JobManager(pyCMMBase):
         cmd += " -n " + job_rec.ntasks
         cmd += " -t " + job_rec.alloc_time
         cmd += " -J " + job_rec.job_name
+        if job_rec.email:
+            cmd += " -C usage_mail"
         cmd += " -o " + job_rec.slurm_log_file
         if (job_rec.prerequisite is not None) and (type(job_rec.prerequisite) is list):
             cmd += " --dependency=afterok"
@@ -82,6 +84,7 @@ class JobManager(pyCMMBase):
                    slurm_log_file,
                    job_script,
                    job_params,
+                   email=False,
                    prerequisite=None,
                    ):
         mylogger.getLogger(__name__ + "." + sys._getframe().f_code.co_name)
@@ -94,6 +97,7 @@ class JobManager(pyCMMBase):
         job_rec.slurm_log_file = slurm_log_file
         job_rec.job_script = job_script
         job_rec.job_params = job_params
+        job_rec.email = email
         job_rec.prerequisite =  prerequisite
         cmd = self.__get_sbatch_cmd(job_rec)
         out = self.__exec_sh(cmd)
