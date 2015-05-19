@@ -19,7 +19,7 @@ VCF2AVDB_DESCRIPTION = "A script to parse all point mutations from vcf format in
 VCF2AVDB_DFLT_LOG_FILE = "vcf2avdb"
 
 ## > > > > > > > > > > > > > GATK Best practice (DNA seq) < < < < < < < < < <
-GATK_ALLOC_TIME = "72:00:00"
+GATK_ALLOC_TIME = "168:00:00"
 
 ## > > > > > > > > > > > > > random values < < < < < < < < < <
 #DFLT_SEED = None

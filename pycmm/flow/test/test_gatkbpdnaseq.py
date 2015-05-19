@@ -5,11 +5,12 @@ from os.path import join as join_path
 from os.path import dirname
 from pycmm import settings
 from pycmm.template import SafeTester
-from pycmm.utils import exec_sh
+from pycmm.utils import mylogger
 from pycmm.flow.gatkbpdnaseq import bwa_mem as gatk_bwa_mem
 from pycmm.flow.gatkbpdnaseq import sort_sam as gatk_sort_sam
 from pycmm.flow.gatkbpdnaseq import mark_dup as gatk_mark_dup
 from pycmm.flow.gatkbpdnaseq import haplotype_caller as gatk_haplotype_caller
+from pycmm.flow.gatkbpdnaseq import combine_gvcfs as gatk_combine_gvcfs
 from pycmm.flow.gatkbpdnaseq import preprocess_sample
 
 TEST_PROJECT_CODE = 'b2011097'
@@ -77,7 +78,7 @@ class TestFunctions(SafeTester):
 
     @unittest.skipUnless(settings.SLURM_TEST, "taking too much UPPMAX cpu-core hours")
     def test_mark_dup(self):
-        """ test dedup reads """
+        """ test mark duplicate """
 
         self.individual_debug = True
         self.init_test(self.current_func_name)
@@ -115,13 +116,74 @@ class TestFunctions(SafeTester):
                         "ref.fa")
         out_gvcf = join_path(self.working_dir,
                              sample_name+".gvcf")
+        targets_interval_list = join_path(self.data_dir,
+                                          "targets.interval_list") 
         gatk_haplotype_caller(job_name,
                               TEST_PROJECT_CODE,
                               slurm_log_file,
                               dedup_reads,
                               out_gvcf,
                               ref,
+                              targets_interval_list=targets_interval_list,
+                              email=True,
                               )
+
+#    @unittest.skipUnless(settings.SLURM_TEST, "taking too much UPPMAX cpu-core hours")
+    def test_combine_gvcfs_1(self):
+        """ test combine small gvcfs """
+
+        self.individual_debug = True
+        self.init_test(self.current_func_name)
+        job_name = self.test_function
+        gvcf_file_1 = join_path(self.data_dir,
+                                "test_M_sample_1.g.vcf")
+        gvcf_file_2 = join_path(self.data_dir,
+                                "test_M_sample_2.g.vcf")
+        gvcf_file_3 = join_path(self.data_dir,
+                                "test_M_sample_3.g.vcf")
+        slurm_log_file = join_path(self.working_dir,
+                                   self.test_function+'.log')
+        gvcf_list = [gvcf_file_1, gvcf_file_2, gvcf_file_3]
+        ref = join_path(self.data_dir,
+                        "ref.fa")
+        out_merged_gvcf = join_path(self.working_dir,
+                                    self.test_function+"_merged.gvcf")
+        gatk_combine_gvcfs(job_name,
+                           TEST_PROJECT_CODE,
+                           slurm_log_file,
+                           gvcf_list,
+                           out_merged_gvcf,
+                           ref,
+                           self.working_dir,
+                           email=True,
+                           )
+
+    @unittest.skip("reserved for load test")
+    def test_combine_gvcfs_2(self):
+        """ test combine gvcfs """
+
+        self.individual_debug = True
+        self.init_test(self.current_func_name)
+        job_name = self.test_function
+        gvcf_file_prefix = join_path(self.data_dir,
+                                     self.test_function+"_")
+        slurm_log_file = join_path(self.working_dir,
+                                   self.test_function+'.log')
+
+        gvcf_list = map(lambda x: gvcf_file_prefix+"{:03d}".format(x)+".gvcf",
+                xrange(1,401))
+        ref = join_path(self.data_dir,
+                        "ref.fa")
+        out_merged_gvcf = join_path(self.working_dir,
+                                    self.test_function+"_merged.gvcf")
+        gatk_combine_gvcfs(job_name,
+                           TEST_PROJECT_CODE,
+                           slurm_log_file,
+                           gvcf_list,
+                           out_merged_gvcf,
+                           ref,
+                           self.working_dir,
+                           )
 
     @unittest.skipUnless(settings.SLURM_TEST, "taking too much UPPMAX cpu-core hours")
     def test_preprocess_sample_1(self):
@@ -144,6 +206,7 @@ class TestFunctions(SafeTester):
                           sample_prefix,
                           sample_group,
                           ref,
+                          self.working_dir,
                           self.working_dir,
                           self.working_dir,
                           time_stamp,
@@ -171,6 +234,7 @@ class TestFunctions(SafeTester):
                           sample_prefix,
                           sample_group,
                           ref,
+                          self.working_dir,
                           self.working_dir,
                           self.working_dir,
                           time_stamp,

@@ -95,6 +95,7 @@ def haplotype_caller(job_name,
                      bam_file,
                      out_gvcf,
                      ref,
+                     targets_interval_list=None,
                      email=False,
                      prerequisite=None,
                      ):
@@ -107,10 +108,47 @@ def haplotype_caller(job_name,
     job_params = " -B " + bam_file 
     job_params += " -o " + out_gvcf
     job_params += " -r " + ref
+    if targets_interval_list is not None:
+        job_params += " -L " + targets_interval_list
     jobman.submit_job(job_name,
                       project_code,
                       "core",
                       "2",
+                      GATK_ALLOC_TIME,
+                      slurm_log_file,
+                      job_script,
+                      job_params,
+                      email=email,
+                      prerequisite=prerequisite,
+                      )
+
+def combine_gvcfs(job_name,
+                  project_code,
+                  slurm_log_file,
+                  gvcf_list,
+                  out_merged_gvcf,
+                  ref,
+                  working_dir,
+                  email=False,
+                  prerequisite=None,
+                  ):
+    """
+    Combines any number of gVCF files that were produced by
+    the Haplotype Caller into a single joint gVCF file
+    """
+
+    job_script = "$PYCMM/bash/GATKBP_combine_gvcfs.sh"
+    gvcf_list_file = join_path(working_dir,
+                               job_name+"_gvcf.list")
+    f_gvcf = open(gvcf_list_file, "w")
+    map(lambda x: f_gvcf.write(x+"\n"), gvcf_list)
+    job_params = " -G " + gvcf_list_file 
+    job_params += " -o " + out_merged_gvcf
+    job_params += " -r " + ref
+    jobman.submit_job(job_name,
+                      project_code,
+                      "core",
+                      "4",
                       GATK_ALLOC_TIME,
                       slurm_log_file,
                       job_script,
@@ -124,10 +162,11 @@ def preprocess_sample(project_code,
                       sample_prefix,
                       sample_group,
                       ref,
+                      out_dir,
                       working_dir,
                       slurm_log_dir,
                       time_stamp,
-                      out_gvcf,
+                      out_merged_gvcf,
                       email=False,
                       ):
     """
@@ -151,14 +190,14 @@ def preprocess_sample(project_code,
                                   sample_name+"_raw_aligned.sam")
     sorted_reads = join_path(working_dir,
                              sample_name+"_sorted_reads.bam")
-    dedup_reads = join_path(working_dir,
+    dedup_reads = join_path(out_dir,
                             sample_name+"_dedup_reads.bam")
     metrics_file = join_path(working_dir,
                              sample_name+"_metrics.txt")
 
     # running bwa-mem alignment
     job_name_bwa_mem = sample_name + "_bwa_mem"
-    slurm_log_file = join_path(working_dir,
+    slurm_log_file = join_path(slurm_log_dir,
                                job_name_bwa_mem+log_file_suffix)
     bwa_mem(job_name_bwa_mem,
             project_code,
@@ -172,7 +211,7 @@ def preprocess_sample(project_code,
 
     # running reads sorting
     job_name_sort_sam = sample_name + "_sort_sam"
-    slurm_log_file = join_path(working_dir,
+    slurm_log_file = join_path(slurm_log_dir,
                                job_name_sort_sam+log_file_suffix)
     sort_sam(job_name_sort_sam,
              project_code,
@@ -185,7 +224,7 @@ def preprocess_sample(project_code,
 
     # running marking duplicates
     job_name_mark_dup = sample_name + "_mark_dup"
-    slurm_log_file = join_path(working_dir,
+    slurm_log_file = join_path(slurm_log_dir,
                                job_name_mark_dup+log_file_suffix)
     mark_dup(job_name_mark_dup,
              project_code,
@@ -199,15 +238,37 @@ def preprocess_sample(project_code,
 
     # running haplotype caller
     job_name_hap_call = sample_name + "_hap_call"
-    slurm_log_file = join_path(working_dir,
+    slurm_log_file = join_path(slurm_log_dir,
                                job_name_hap_call+log_file_suffix)
     haplotype_caller(job_name_hap_call,
                      project_code,
                      slurm_log_file,
                      dedup_reads,
-                     out_gvcf,
+                     out_merged_gvcf,
                      ref,
                      email=email,
                      prerequisite=[job_name_mark_dup],
                      )
     return job_name_mark_dup
+
+def preprocess_dataset(project_code,
+                       sample_list,
+                       ref,
+                       out_dir,
+                       working_dir,
+                       slurm_log_dir,
+                       time_stamp,
+                       out_gvcf,
+                       email=False,
+                       ):
+    """
+    An aggregate flow to pre-process a DNASeq sample. The flow consists of
+      - bwa-mem alignment
+      - reads sorting
+      - marking duplicates
+      - haplotype caller
+    The flow output a gvcf file for one sample. The return value is the last
+    job name of the process.
+    """
+
+    return None

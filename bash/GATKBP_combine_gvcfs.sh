@@ -9,28 +9,24 @@ cat <<EOF
 usage:
 $0 [OPTION]
 option:
--B {BAM file}       BAM file (required)
--o {file}           output GVCF file (required)
--r {file}           reference file (required)
--L {file}           target interval list
--h                  this help
+-G {file}         a file containing list of gvcf files to be combined (required)
+-o {file}         combined GVCF file (required)
+-r {file}         reference file
+-h                this help
 EOF
 )
 
 # parse option
-while getopts ":B:o:r:L:h" OPTION; do
+while getopts ":G:o:r:h" OPTION; do
   case "$OPTION" in
-    B)
-      bam_file="$OPTARG"
+    G)
+      gvcf_list="$OPTARG"
       ;;
     o)
       out_file="$OPTARG"
       ;;
     r)
       ref="$OPTARG"
-      ;;
-    L)
-      targets_interval_list="$OPTARG"
       ;;
     h)
       echo >&2 "$usage"
@@ -41,13 +37,14 @@ while getopts ":B:o:r:L:h" OPTION; do
   esac
 done
 
-[ ! -z $bam_file ] || die "a BAM input file is required (-B)"
-[ ! -z $out_file ] || die "please indicate output file name (-o)"
+[ ! -z $gvcf_list ] || die "a list of gvcf files to be combined is required (-G)"
+[ ! -z $out_file ] || die "please indicate output combined gvcf file name (-o)"
 [ ! -z $ref ] || die "reference file is required (-r)"
-[ -f "$bam_file" ] || die "$bam_file is not found"
-[ -f "$ref" ] || die "$ref is not found"
+[ -f "$ref" ] || die "reference $ref is not found"
+[ -f "$gvcf_list" ] || die "$gvcf_list is not a valid file name. List of gvcf files must be put togetther in a file"
 
 time_stamp=$( date )
+IFS=',' read -ra gvcf_files <<< "$gvcf_list"
 
 cd $PYCMM_DIR
 revision_no=`git rev-list HEAD | wc -l`
@@ -69,28 +66,23 @@ display_param "parameters" "$params"
 display_param "time stamp" "$time_stamp"
 info_msg
 info_msg "overall configuration"
-display_param "BAM input file (-B)" "$bam_file"
-display_param "output GVCF file (-o)" "$out_file"
+display_param "input gvcf files (-G):"
+variant_cmd=""
+gvcf_idx=1
+while read gvcf; do
+    display_param "  gvcf file #$gvcf_idx " "$gvcf"
+    variant_cmd+=" --variant $gvcf"
+    ((gvcf_idx++))
+done < "$gvcf_list"
+display_param "output combined GVCF file (-o)" "$out_file"
 display_param "reference file (-r)" "$ref"
-if [ ! -z "$targets_interval_list" ]
-then
-    display_param "target interval list (-L)" "$targets_interval_list"
-fi
 
 # ****************************************  executing  ****************************************
  
-cmd=" java -jar $GATK_dir/GenomeAnalysisTK.jar"
-cmd+=" -T HaplotypeCaller"
-cmd+=" -R $ref"
-cmd+=" -I $bam_file"
-cmd+=" --emitRefConfidence GVCF"
-cmd+=" --variant_index_type LINEAR"
-cmd+=" --variant_index_parameter 128000"
-#cmd+=" --fix_misencoded_quality_scores"
-if [ ! -z "$targets_interval_list" ]
-then
-    cmd+=" -L $targets_interval_list"
-fi
+cmd="java -jar $GATK_dir/GenomeAnalysisTK.jar"
+cmd+=" -T CombineGVCFs"
+cmd+=" $variant_cmd"
+cmd+=" -R $ref" 
 cmd+=" -o $out_file"
 eval_cmd "$cmd"
 
