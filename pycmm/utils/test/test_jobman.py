@@ -187,10 +187,10 @@ class TestJobManager(SafeTester):
         jobman.cancel_job(job_name)
 
     @unittest.skipUnless(settings.SLURM_TEST, "taking too long time to test")
-    def test_get_job_report(self):
+    def test_get_job_usage_mail(self):
         """ check if SLURM usage_mail can be applied with the flow """
 
-        self.individual_debug = True
+#        self.individual_debug = True
         self.init_test(self.current_func_name)
         job_name = self.test_function
         slurm_log_file = join_path(self.working_dir,
@@ -213,11 +213,66 @@ class TestJobManager(SafeTester):
                           email=True,
                           )
 
-    @unittest.skipUnless(settings.SLURM_TEST, "taking too long time to test")
-    def test_prerequisite(self):
-        """ check if 'afterok' dependcy can be applied """
+#    @unittest.skipUnless(settings.SLURM_TEST, "taking too long time to test")
+    def test_monitor_jobs(self):
+        """ check JobManager can correctly monitor all the jobs """
 
         self.individual_debug = True
+        self.init_test(self.current_func_name)
+        job_name_1 = self.test_function + "_1"
+        slurm_log_file = join_path(self.working_dir,
+                                   self.test_function+'.log')
+        job_script = join_path(self.data_dir,
+                               'test_job_script.sh')
+        fail_script = join_path(self.data_dir,
+                                'test_fail_script.sh')
+        report_file = join_path(self.working_dir,
+                                self.test_function+'_report.txt')
+        tmp_file = join_path(self.working_dir,
+                             self.test_function+'.txt')
+        job_params = '3 2000 ' + tmp_file
+        self.delete_file(tmp_file)
+        jobman = JobManager(job_report_file=report_file)
+        jobman.submit_job(job_name_1,
+                          TEST_PROJECT_CODE,
+                          TEST_PARTITION_TYPE,
+                          TEST_NTASKS,
+                          TEST_ALLOC_TIME,
+                          slurm_log_file,
+                          fail_script,
+                          job_params,
+                          )
+        job_name_2 = self.test_function + "_2"
+        job_params = '100 1200 ' + tmp_file
+        jobman.submit_job(job_name_2,
+                          TEST_PROJECT_CODE,
+                          TEST_PARTITION_TYPE,
+                          TEST_NTASKS,
+                          TEST_ALLOC_TIME,
+                          slurm_log_file,
+                          job_script,
+                          job_params,
+                          prerequisite=[job_name_1],
+                          )
+        job_name_3 = self.test_function + "_3"
+        job_params = '410 420 ' + tmp_file
+        jobman.submit_job(job_name_3,
+                          TEST_PROJECT_CODE,
+                          TEST_PARTITION_TYPE,
+                          TEST_NTASKS,
+                          TEST_ALLOC_TIME,
+                          slurm_log_file,
+                          fail_script,
+                          job_params,
+                          prerequisite=[job_name_1, job_name_2],
+                          )
+        jobman.monitor_jobs()
+
+    @unittest.skipUnless(settings.SLURM_TEST, "taking too long time to test")
+    def test_prerequisite(self):
+        """ check if 'afterok' dependency can be applied """
+
+#        self.individual_debug = True
         self.init_test(self.current_func_name)
         job_name_1 = self.test_function + "_1"
         slurm_log_file = join_path(self.working_dir,
