@@ -59,7 +59,7 @@ cd - > /dev/null
 new_section_txt "S T A R T <$script_name>"
 info_msg
 info_msg "description"
-info_msg "  Mark duplicates and index the BAM file"
+info_msg "  Call SNPs and indels simultaneously via local re-assembly of haplotypes in an active region"
 info_msg
 info_msg "version and script configuration"
 display_param "revision no" "$revision_no"

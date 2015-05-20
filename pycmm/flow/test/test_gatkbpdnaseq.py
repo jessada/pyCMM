@@ -128,7 +128,7 @@ class TestFunctions(SafeTester):
                               email=True,
                               )
 
-#    @unittest.skipUnless(settings.SLURM_TEST, "taking too much UPPMAX cpu-core hours")
+    @unittest.skipUnless(settings.SLURM_TEST, "taking too much UPPMAX cpu-core hours")
     def test_combine_gvcfs_1(self):
         """ test combine small gvcfs """
 
@@ -183,6 +183,33 @@ class TestFunctions(SafeTester):
                            out_merged_gvcf,
                            ref,
                            self.working_dir,
+                           )
+
+    @unittest.skipUnless(settings.SLURM_TEST, "taking too much UPPMAX cpu-core hours")
+    def test_genotype_gvcfs(self):
+        """ test genotype gvcfs """
+
+        self.individual_debug = True
+        self.init_test(self.current_func_name)
+        job_name = self.test_function
+        gvcf_file = join_path(self.data_dir,
+                              "test_M_sample.g.vcf")
+
+        slurm_log_file = join_path(self.working_dir,
+                                   self.test_function+'.log')
+        gvcf_list = [gvcf_file]
+        ref = join_path(self.data_dir,
+                        "ref.fa")
+        out_genotyped_vcf = join_path(self.working_dir,
+                                    self.test_function+"_genotyped.vcf")
+        gatk_combine_gvcfs(job_name,
+                           TEST_PROJECT_CODE,
+                           slurm_log_file,
+                           gvcf_list,
+                           out_genotyped_vcf,
+                           ref,
+                           self.working_dir,
+                           email=True,
                            )
 
     @unittest.skipUnless(settings.SLURM_TEST, "taking too much UPPMAX cpu-core hours")

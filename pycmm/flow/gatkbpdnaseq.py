@@ -126,7 +126,7 @@ def combine_gvcfs(job_name,
                   project_code,
                   slurm_log_file,
                   gvcf_list,
-                  out_merged_gvcf,
+                  out_combined_gvcf,
                   ref,
                   working_dir,
                   email=False,
@@ -143,12 +143,47 @@ def combine_gvcfs(job_name,
     f_gvcf = open(gvcf_list_file, "w")
     map(lambda x: f_gvcf.write(x+"\n"), gvcf_list)
     job_params = " -G " + gvcf_list_file 
-    job_params += " -o " + out_merged_gvcf
+    job_params += " -o " + out_combined_gvcf
     job_params += " -r " + ref
     jobman.submit_job(job_name,
                       project_code,
                       "core",
-                      "4",
+                      "2",
+                      GATK_ALLOC_TIME,
+                      slurm_log_file,
+                      job_script,
+                      job_params,
+                      email=email,
+                      prerequisite=prerequisite,
+                      )
+
+def genotype_gvcfs(job_name,
+                   project_code,
+                   slurm_log_file,
+                   gvcf_list,
+                   out_genotyped_vcf,
+                   ref,
+                   working_dir,
+                   email=False,
+                   prerequisite=None,
+                   ):
+    """
+    Combines any number of gVCF files that were produced by
+    the Haplotype Caller into a single joint gVCF file
+    """
+
+    job_script = "$PYCMM/bash/GATKBP_genotype_gvcfs.sh"
+    gvcf_list_file = join_path(working_dir,
+                               job_name+"_gvcf.list")
+    f_gvcf = open(gvcf_list_file, "w")
+    map(lambda x: f_gvcf.write(x+"\n"), gvcf_list)
+    job_params = " -G " + gvcf_list_file 
+    job_params += " -o " + out_genotyped_vcf
+    job_params += " -r " + ref
+    jobman.submit_job(job_name,
+                      project_code,
+                      "core",
+                      "2",
                       GATK_ALLOC_TIME,
                       slurm_log_file,
                       job_script,

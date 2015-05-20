@@ -9,8 +9,8 @@ cat <<EOF
 usage:
 $0 [OPTION]
 option:
--G {file}         a file containing list of gvcf files to be combined (required)
--o {file}         combined GVCF file (required)
+-G {file}         a file containing list of gvcf files to be genotyped (required)
+-o {file}         genotyped GVCF file (required)
 -r {file}         reference file
 -h                this help
 EOF
@@ -37,8 +37,8 @@ while getopts ":G:o:r:h" OPTION; do
   esac
 done
 
-[ ! -z $gvcf_list ] || die "a list of gvcf files to be combined is required (-G)"
-[ ! -z $out_file ] || die "please indicate output combined gvcf file name (-o)"
+[ ! -z $gvcf_list ] || die "a list of gvcf files to be genotyped is required (-G)"
+[ ! -z $out_file ] || die "please indicate output genotyped gvcf file name (-o)"
 [ ! -z $ref ] || die "reference file is required (-r)"
 [ -f "$ref" ] || die "reference $ref is not found"
 [ -f "$gvcf_list" ] || die "$gvcf_list is not a valid file name. List of gvcf files must be put togetther in a file"
@@ -56,7 +56,7 @@ cd - > /dev/null
 new_section_txt "S T A R T <$script_name>"
 info_msg
 info_msg "description"
-info_msg "  Combine per-sample gVCF files produced by HaplotypeCaller into a multi-sample gVCF file"
+info_msg "  Perform joint genotyping on gVCF files produced by HaplotypeCaller"
 info_msg
 info_msg "version and script configuration"
 display_param "revision no" "$revision_no"
@@ -74,13 +74,13 @@ while read gvcf; do
     variant_cmd+=" --variant $gvcf"
     ((gvcf_idx++))
 done < "$gvcf_list"
-display_param "output combined GVCF file (-o)" "$out_file"
+display_param "output genotyped GVCF file (-o)" "$out_file"
 display_param "reference file (-r)" "$ref"
 
 # ****************************************  executing  ****************************************
  
 cmd="java -jar $GATK_dir/GenomeAnalysisTK.jar"
-cmd+=" -T CombineGVCFs"
+cmd+=" -T GenotypeGVCFs"
 cmd+=" $variant_cmd"
 cmd+=" -R $ref" 
 cmd+=" -o $out_file"
