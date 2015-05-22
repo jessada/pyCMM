@@ -44,7 +44,6 @@ done
 [ -f "$gvcf_list" ] || die "$gvcf_list is not a valid file name. List of gvcf files must be put togetther in a file"
 
 time_stamp=$( date )
-IFS=',' read -ra gvcf_files <<< "$gvcf_list"
 
 cd $PYCMM_DIR
 revision_no=`git rev-list HEAD | wc -l`

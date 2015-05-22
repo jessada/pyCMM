@@ -56,7 +56,7 @@ class JobManager(pyCMMBase):
         self.__job_rpt_fmt += "\t{project_code}"
         self.__job_rpt_fmt += "\t{alloc_time}"
         self.__job_rpt_fmt += "\t{cpus}"
-        self.__job_rpt_fmt += "\t{usage_email}"
+        self.__job_rpt_fmt += "\t{usage_mail}"
         self.__job_rpt_fmt += "\t{dependency}"
         self.__job_rpt_fmt += "\t{job_status}"
         self.__job_rpt_file = job_report_file
@@ -132,7 +132,7 @@ class JobManager(pyCMMBase):
                                               project_code="ACCOUNT",
                                               alloc_time="ALLOC_TIME",
                                               cpus="CPUS",
-                                              usage_email="USAGE_EMAIL",
+                                              usage_mail="USAGE_EMAIL",
                                               dependency="DEPENDENCY",
                                               job_status="STATUS",
                                               )+"\n")
@@ -144,10 +144,11 @@ class JobManager(pyCMMBase):
                                                   project_code=job_rec.project_code,
                                                   alloc_time=job_rec.alloc_time,
                                                   cpus=job_rec.ntasks,
-                                                  usage_email=str(job_rec.email),
+                                                  usage_mail=str(job_rec.email),
                                                   dependency=str(job_rec.prerequisite),
                                                   job_status=job_rec.job_status,
                                                   )+"\n")
+        f_rpt.close()
 
     def monitor_init(self):
         """
@@ -188,21 +189,21 @@ class JobManager(pyCMMBase):
         for job_name in self.__job_dict:
             job_rec = self.__job_dict[job_name]
             if job_rec.job_status == JOB_STATUS_COMPLETED:
-#                mylogger.debug(job_name + ":" + job_rec.job_status + " -> " + " job complete so no update")
                 continue
             if job_rec.job_status == JOB_STATUS_FAILED:
-#                mylogger.debug(job_name + ":" + job_rec.job_status + " -> " + " job failed so no update")
                 continue
             if job_rec.job_status.startswith(JOB_STATUS_CANCELLED):
-#                mylogger.debug(job_name + ":" + job_rec.job_status + " -> " + " job cancelled so no update")
                 continue
             # refresh job status
-#            mylogger.debug(job_name + ":" + job_rec.job_status + " -> " + " not yet complete")
             job_rec.job_status = self.get_job_status(job_name)
-#            mylogger.debug(job_name + ":" + job_rec.job_status + " -> " + " status updated")
 
     @property
     def all_job_done(self):
+        """
+        If there is at least one job running or pending,
+        return False (not yet done)
+        otherwise return True 
+        """
         for job_name in self.__job_dict:
             job_rec = self.__job_dict[job_name]
             if job_rec.job_status == JOB_STATUS_COMPLETED:

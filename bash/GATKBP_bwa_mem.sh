@@ -9,7 +9,7 @@ cat <<EOF
 usage:
 $0 [OPTION]
 option:
--S {sample prefix}  prefix location of fastq files (required)
+-S {fastq list}     list of fastq files (comma separated) (required)
 -g {sample group}   sample group (required) 
 -o {file}           output aligned reads file (required)
 -r {file}           reference file
@@ -21,7 +21,7 @@ EOF
 while getopts ":S:g:r:o:h" OPTION; do
   case "$OPTION" in
     S)
-      sample_prefix="$OPTARG"
+      sample_list="$OPTARG"
       ;;
     g)
       sample_group="$OPTARG"
@@ -41,12 +41,13 @@ while getopts ":S:g:r:o:h" OPTION; do
   esac
 done
 
-[ ! -z $sample_prefix ] || die "sample prefix is required (-S)"
+[ ! -z $sample_list ] || die "list of fastq files is required (-S)"
 [ ! -z $sample_group ] || die "sample group is required (-g)"
 [ ! -z $out_file ] || die "output file name is required (-o)"
 [ ! -z $ref ] || die "reference file is required (-r)"
-sample1="$sample_prefix"_1.fastq.gz
-sample2="$sample_prefix"_2.fastq.gz
+IFS=',' read -ra fastq_files <<< "$sample_list"
+sample1="${fastq_files[0]}"
+sample2="${fastq_files[1]}"
 [ -f "$sample1" ] || die "$sample1 is not found"
 [ -f "$sample2" ] || die "$sample2 is not found"
 [ -f "$ref" ] || die "$ref is not found"
@@ -81,7 +82,8 @@ display_param "output directory (-o)" "$out_file"
 display_param "reference file (-r)" "$ref"
 
 # ****************************************  executing  ****************************************
-sample_name=$(basename "$sample_prefix")
+sample_file=$(basename "$sample1")
+sample_name=${sample_file%_1.fastq.gz}
 read_group="$sample_group.$sample_name"
 
 cmd=" bwa mem -M -R '@RG\tID:$read_group\tSM:$sample_name\tPL:illumina\tLB:lib1\tPU:unit1'"

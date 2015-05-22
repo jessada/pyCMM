@@ -213,7 +213,7 @@ class TestJobManager(SafeTester):
                           email=True,
                           )
 
-#    @unittest.skipUnless(settings.SLURM_TEST, "taking too long time to test")
+    @unittest.skipUnless(settings.SLURM_TEST, "taking too long time to test")
     def test_monitor_jobs(self):
         """ check JobManager can correctly monitor all the jobs """
 
