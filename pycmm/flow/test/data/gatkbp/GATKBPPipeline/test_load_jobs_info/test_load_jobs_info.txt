@@ -4,6 +4,7 @@
 ##OUTPUT_DIR=/glob/jessada/private/projects/
 ##VARIANTS_CALLING=YES
 ##JOBS_REPORT_FILE=/glob/jessada/job_rpt.txt
+##TARGETS_INTERVAL_LIST=/glob/jessada/target_interval
 ##USAGE_MAIL=NO
 #SAMPLE_NAME	FASTQ1	FASTQ2	SAMPLE_GROUP	PLATFORM	LIBRARY	UNIT	USAGE_MAIL	PREPROCESS_SAMPLE
 test_sample_1	/proj/b2012247/private/axeq_custom/1303AHS-0016/Co-1747_1.fastq.gz	/proj/b2012247/private/axeq_custom/1303AHS-0016/Co-1747_2.fastq.gz	test_group	Illumina	lib1	unit1	YES	YES

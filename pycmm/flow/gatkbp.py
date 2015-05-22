@@ -22,6 +22,7 @@ JOBS_SETUP_REFFERENCE_KEY = "REFERENCE"
 JOBS_SETUP_OUTPUT_DIR_KEY = "OUTPUT_DIR"
 JOBS_SETUP_VARIANTS_CALLING_KEY = "VARIANTS_CALLING"
 JOBS_SETUP_JOBS_REPORT_FILE_KEY = "JOBS_REPORT_FILE"
+JOBS_SETUP_TARGETS_INTERVAL_LIST_KEY = "TARGETS_INTERVAL_LIST"
 JOBS_SETUP_USAGE_MAIL_KEY = "USAGE_MAIL"
 
 SAMPLE_RECORD_JOBS_NAME_IDX = 0
@@ -155,6 +156,7 @@ class GATKBPPipeline(JobManager):
                 "output directory": self.output_dir,
                 "varaints calling": self.variants_calling,
                 "jobs report file": self.jobs_report_file,
+                "targets interval list": self.targets_interval_list,
                 "usage_mail": self.usage_mail,
                 }
 
@@ -181,6 +183,13 @@ class GATKBPPipeline(JobManager):
     @property
     def jobs_report_file(self):
         return self.__meta_data[JOBS_SETUP_JOBS_REPORT_FILE_KEY]
+
+    @property
+    def targets_interval_list(self):
+        if JOBS_SETUP_TARGETS_INTERVAL_LIST_KEY in self.__meta_data:
+            return self.__meta_data[JOBS_SETUP_TARGETS_INTERVAL_LIST_KEY]
+        else:
+            return None
 
     @property
     def usage_mail(self):
@@ -228,6 +237,7 @@ class GATKBPPipeline(JobManager):
         self.__meta_data = {}
         while line.startswith('##'):
             # parse meta data
+            mylogger.debug(line)
             key, val = self.__parse_metadata(line)
             self.__meta_data[key] = val
             line = reader.next()
@@ -365,7 +375,6 @@ class GATKBPPipeline(JobManager):
     def hap_cal(self,
                 sample_name,
                 bam_file=None,
-                targets_interval_list=None,
                 prerequisite=None,
                 ):
         """
@@ -387,8 +396,8 @@ class GATKBPPipeline(JobManager):
             job_params = " -B " + bam_file
         job_params += " -o " + sample_rec.raw_gvcf_file
         job_params += " -r " + self.reference
-        if targets_interval_list is not None:
-            job_params += " -L " + targets_interval_list
+        if self.targets_interval_list is not None:
+            job_params += " -L " + self.targets_interval_list
         self.submit_job(job_name,
                         self.project_code,
                         "core",
