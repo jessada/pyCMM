@@ -6,12 +6,6 @@ from os.path import dirname
 from pycmm import settings
 from pycmm.template import SafeTester
 from pycmm.utils import mylogger
-#from pycmm.flow.gatkbp import bwa_mem as gatk_bwa_mem
-#from pycmm.flow.gatkbp import sort_sam as gatk_sort_sam
-#from pycmm.flow.gatkbp import mark_dup as gatk_mark_dup
-#from pycmm.flow.gatkbp import haplotype_caller as gatk_haplotype_caller
-#from pycmm.flow.gatkbp import combine_gvcfs as gatk_combine_gvcfs
-#from pycmm.flow.gatkbp import preprocess_sample
 from pycmm.flow.gatkbp import GATKBPPipeline
 from pycmm.flow.gatkbp import JOBS_SETUP_DATASET_NAME_KEY
 from pycmm.flow.gatkbp import JOBS_SETUP_PROJECT_CODE_KEY
@@ -373,7 +367,7 @@ class TestGATKBPPipeline(SafeTester):
         pl.preprocess_sample(sample_name)
 
 
-#    @unittest.skipUnless(settings.SLURM_TEST, "taking too much UPPMAX cpu-core hours")
+    @unittest.skipUnless(settings.SLURM_TEST, "taking too much UPPMAX cpu-core hours")
     def test_preprocess_dataset_1(self):
         """ test dataset pre-processing workflow (targeted sequencing) """
 

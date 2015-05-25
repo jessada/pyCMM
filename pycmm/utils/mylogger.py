@@ -2,27 +2,40 @@ import logging
 #from pycmm import settings
 import sys
 
-#def init(file_name=settings.DFLT_LOG_FILE,
-#         level=DEBUG,
-#         ):
-#    root = logging.getLogger('abcd')
-#    root.setLevel(logging.DEBUG)
+lg = logging.getLogger('pycmm')
+lg.setLevel(logging.DEBUG)
+# create file handler which logs even debug messages
+#fh = logging.FileHandler('spam.log')
+#fh.setLevel(logging.DEBUG)
+# create console handler with a higher log level
+ch = logging.StreamHandler()
+ch.setLevel(logging.INFO)
+# create formatter and add it to the handlers
+formatter = logging.Formatter('## [%(levelname)s]%(asctime)25s - %(processName)-12s - %(name)-12s - %(message)s')
+#fh.setFormatter(formatter)
+ch.setFormatter(formatter)
+# add the handlers to the logger
+#lg.addHandler(fh)
+lg.addHandler(ch)
+
+def set_log_file(file_name, level=logging.DEBUG):
+    fh = logging.FileHandler(file_name)
+    fh.setLevel(level)
+    fh.setFormatter(formatter)
+    lg.addHandler(fh)
+
+
+#mylog_file = None
+#logging.basicConfig(level=logging.DEBUG,
+#                    format='## [%(levelname)s]%(asctime)25s - %(processName)-12s - %(name)-12s - %(message)s',
+#                    )
+#lg = logging.getLogger('root')
 #
-#    ch = logging.StreamHandler(sys.stdout)
-#    ch.setLevel(logging.DEBUG)
-#    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-#    ch.setFormatter(formatter)
-#    root.addHandler(ch)
-#    #logging.basicConfig(filename=file_name,
-#    #                    level=level,
-#    #                    )
-
-mylog_file = None
-logging.basicConfig(level=logging.DEBUG,
-                    format='## [%(levelname)s]%(asctime)25s - %(processName)-12s - %(name)-12s - %(message)s',
-                    )
-lg = logging.getLogger('root')
-
+#fh = logging.FileHandler('spam.log')
+#fh.setLevel(logging.DEBUG)
+#formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+#fh.setFormatter(formatter)
+#lg.addHandler(fh)
 #INFO_FMT  = "## [INFO]    {msg}"
 #WARN_FMT  = "## [WARNING] {msg}"
 #DEBUG_FMT = "## [DEBUG]   {msg}"

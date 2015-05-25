@@ -19,6 +19,8 @@ VCF2AVDB_DESCRIPTION = "A script to parse all point mutations from vcf format in
 VCF2AVDB_DFLT_LOG_FILE = "vcf2avdb"
 
 ## > > > > > > > > > > > > > GATK Best practice (DNA seq) < < < < < < < < < <
+DNASEQ_PIPELINE_DESCRIPTION = "A flow to control a pipeline to process DNA sequencing data"
+DNASEQ_PIPELINE_DFLT_LOG_FILE = "dnaseq_pipeline"
 GATK_ALLOC_TIME = "168:00:00"
 
 ## > > > > > > > > > > > > > random values < < < < < < < < < <
