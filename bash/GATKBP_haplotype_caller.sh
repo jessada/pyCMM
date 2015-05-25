@@ -86,6 +86,7 @@ cmd+=" -I $bam_file"
 cmd+=" --emitRefConfidence GVCF"
 cmd+=" --variant_index_type LINEAR"
 cmd+=" --variant_index_parameter 128000"
+cmd+=" -allowPotentiallyMisencodedQuals"
 #cmd+=" --fix_misencoded_quality_scores"
 if [ ! -z "$targets_interval_list" ]
 then

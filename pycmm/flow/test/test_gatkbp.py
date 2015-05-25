@@ -219,15 +219,36 @@ class TestGATKBPPipeline(SafeTester):
         pl.mark_dup(sample_name, bam_file=bam_file)
 
     @unittest.skipUnless(settings.SLURM_TEST, "taking too much UPPMAX cpu-core hours")
-    def test_haplotype_caller(self):
-        """ test haplotype caller """
+    def test_haplotype_caller_1(self):
+        """ test haplotype caller with small data size """
 
         self.individual_debug = True
         self.init_test(self.current_func_name)
         targets_interval_list = join_path(self.data_dir,
                                           "targets.interval_list") 
         jobs_setup_file = self.__create_jobs_setup_file(targets_interval_list=targets_interval_list)
-        sample_name = "test-sample"
+        sample_name = "test-small-sample"
+        dedup_reads_file = join_path(self.data_dir,
+                                     sample_name+"_dedup_reads.bam")
+        self.__add_sample_jobs_setup_file(jobs_setup_file,
+                                          sample_name,
+                                          "NA",
+                                          "NA",
+                                          "NA",
+                                          )
+        pl = GATKBPPipeline(jobs_setup_file)
+        pl.hap_cal(sample_name, 
+                   bam_file=dedup_reads_file,
+                   )
+
+    @unittest.skipUnless(settings.SLURM_TEST, "taking too much UPPMAX cpu-core hours")
+    def test_haplotype_caller_2(self):
+        """ test haplotype caller with big data size """
+
+        self.individual_debug = True
+        self.init_test(self.current_func_name)
+        jobs_setup_file = self.__create_jobs_setup_file()
+        sample_name = "test-big-sample"
         dedup_reads_file = join_path(self.data_dir,
                                      sample_name+"_dedup_reads.bam")
         self.__add_sample_jobs_setup_file(jobs_setup_file,
