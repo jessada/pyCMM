@@ -1,6 +1,7 @@
 import unittest
 import filecmp
 import datetime
+from os.path import exists as path_exists
 from os.path import join as join_path
 from os.path import dirname
 from pycmm import settings
@@ -320,7 +321,7 @@ class TestGATKBPPipeline(SafeTester):
         pl = GATKBPPipeline(jobs_setup_file)
         pl.genotype_gvcfs(gvcf_list=gvcf_list)
 
-#    @unittest.skipUnless(settings.SLURM_TEST, "taking too much UPPMAX cpu-core hours")
+    @unittest.skipUnless(settings.SLURM_TEST, "taking too much UPPMAX cpu-core hours")
     def test_preprocess_sample_1(self):
         """ test sample pre-processing workflow (targeted sequencing) """
 
@@ -392,3 +393,38 @@ class TestGATKBPPipeline(SafeTester):
         pl = GATKBPPipeline(jobs_setup_file)
         pl.preprocess_dataset()
 
+    @unittest.skipUnless(settings.SLURM_TEST, "taking too much UPPMAX cpu-core hours")
+    def test_garbage_collecting(self):
+        """ test if the workflow can correctly collecting garbage """
+
+        self.individual_debug = True
+        self.init_test(self.current_func_name)
+        jobs_setup_file = self.__create_jobs_setup_file()
+        sample_name = "test-sample"
+        self.__add_sample_jobs_setup_file(jobs_setup_file,
+                                          sample_name,
+                                          "NA",
+                                          "NA",
+                                          "NA",
+                                          )
+        pl = GATKBPPipeline(jobs_setup_file)
+        sample_rec = pl.samples[sample_name]
+        raw_aligned_source = join_path(self.data_dir,
+                                       sample_name+"_raw_aligned_reads.sam")
+        raw_aligned_dest = join_path(self.working_dir,
+                                     sample_rec.raw_aligned_reads_file)
+        self.copy_file(raw_aligned_source, raw_aligned_dest)
+        sorted_reads_source = join_path(self.data_dir,
+                                        sample_name+"_sorted_reads.bam")
+        sorted_reads_dest = join_path(self.working_dir,
+                                      sample_rec.sorted_reads_file)
+        self.copy_file(sorted_reads_source, sorted_reads_dest)
+        pl.mark_dup(sample_name)
+        pl.monitor_jobs()
+        self.assertFalse(path_exists(raw_aligned_dest),
+                         " garbage collecting process doesn't work properly")
+        self.assertFalse(path_exists(sorted_reads_dest),
+                         " garbage collecting process doesn't work properly")
+
+    def tearDown(self):
+        self.remove_working_dir()

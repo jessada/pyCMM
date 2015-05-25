@@ -6,6 +6,7 @@ from pycmm.template import pyCMMBase
 from pycmm.utils import mylogger
 from pycmm.utils.jobman import JobManager
 from pycmm.settings import GATK_ALLOC_TIME
+from pycmm.utils.jobman import JOB_STATUS_COMPLETED
 
 METADATA_PATTERN = re.compile(r'''##(?P<key>.+?)=(?P<val>.+)''')
 
@@ -266,14 +267,29 @@ class GATKBPPipeline(JobManager):
                                    sample_name)
             self.create_dir(sample_dir)
 
-    def __get_raw_aligned_file(self,
-                               sample_name,
-                               ):
+#    def __get_raw_aligned_file(self,
+#                               sample_name,
+#                               ):
+#
+#        bam_out_dir = join_path(self.samples_working_dir,
+#                                sample_name)
+#        return join_path(bam_out_dir,
+#                         sample_name+"_raw_aligned.sam")
+#
+    def __garbage_collecting(self):
+        for job_name in self.job_dict:
+            job_rec = self.job_dict[job_name]
+            if job_name.endswith("_mark_dup") and (job_rec.job_status == JOB_STATUS_COMPLETED):
+                sample_name = job_name.strip("_mark_dup")
+                sample_rec = self.__samples[sample_name]
+                mylogger.info("deleting " + sample_rec.raw_aligned_reads_file)
+                self.delete_file(sample_rec.raw_aligned_reads_file)
+                mylogger.info("deleting " + sample_rec.sorted_reads_file)
+                self.delete_file(sample_rec.sorted_reads_file)
 
-        bam_out_dir = join_path(self.samples_working_dir,
-                                sample_name)
-        return join_path(bam_out_dir,
-                         sample_name+"_raw_aligned.sam")
+    def monitor_action(self):
+        JobManager.monitor_action(self)
+        self.__garbage_collecting()
 
     def bwa_mem(self,
                 sample_name,

@@ -5,6 +5,7 @@ from os.path import dirname
 from pycmm import settings
 from pycmm.template import SafeTester
 from pycmm.utils import exec_sh
+from pycmm.utils import mylogger
 from pycmm.utils.jobman import JobManager
 from pycmm.utils.jobman import JOB_STATUS_PENDING
 from pycmm.utils.jobman import JOB_STATUS_RUNNING
@@ -13,6 +14,26 @@ TEST_PROJECT_CODE = 'b2011097'
 TEST_PARTITION_TYPE = 'core'
 TEST_NTASKS = '1'
 TEST_ALLOC_TIME = '10:00'
+
+class JobManagerHouseKeeping(JobManager):
+    """ A test class to test garbage collecting of JobManager """
+
+    def __init__(self,
+                 job_report_file=None,
+                 ):
+        JobManager.__init__(self,
+                            job_report_file,
+                            )
+
+    def get_raw_repr(self):
+        return {"NA1": "NA1",
+                "NA2": "NA2",
+                }
+
+    def monitor_action(self):
+        JobManager.monitor_action(self)
+        mylogger.info("hello monitor action")
+
 
 class TestJobManager(SafeTester):
 
@@ -190,7 +211,7 @@ class TestJobManager(SafeTester):
     def test_get_job_usage_mail(self):
         """ check if SLURM usage_mail can be applied with the flow """
 
-#        self.individual_debug = True
+        self.individual_debug = True
         self.init_test(self.current_func_name)
         job_name = self.test_function
         slurm_log_file = join_path(self.working_dir,
@@ -232,7 +253,7 @@ class TestJobManager(SafeTester):
                              self.test_function+'.txt')
         job_params = '3 2000 ' + tmp_file
         self.delete_file(tmp_file)
-        jobman = JobManager(job_report_file=report_file)
+        jobman = JobManagerHouseKeeping(job_report_file=report_file)
         jobman.submit_job(job_name_1,
                           TEST_PROJECT_CODE,
                           TEST_PARTITION_TYPE,
@@ -272,7 +293,7 @@ class TestJobManager(SafeTester):
     def test_prerequisite(self):
         """ check if 'afterok' dependency can be applied """
 
-#        self.individual_debug = True
+        self.individual_debug = True
         self.init_test(self.current_func_name)
         job_name_1 = self.test_function + "_1"
         slurm_log_file = join_path(self.working_dir,

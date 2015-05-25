@@ -36,8 +36,12 @@ class pyCMMBase(object):
         if os.path.exists(file_name):
             os.remove(file_name)
 
-    def copy_file(self, source, destination):
-        shutil.copy2(source, destination)
+    def copy_file(self, src, dst):
+        if os.path.islink(src):
+            linkto = os.readlink(src)
+            os.symlink(linkto, dst)
+        else:
+            shutil.copy(src, dst)
 
     def dbg(self, debug_msg):
         if DEBUG_MODE:
