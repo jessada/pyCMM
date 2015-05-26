@@ -1,4 +1,4 @@
-#import os
+import os
 
 """
 
@@ -23,6 +23,8 @@ DNASEQ_PIPELINE_DESCRIPTION = "A flow to control a pipeline to process DNA seque
 DNASEQ_PIPELINE_DFLT_LOG_FILE = "dnaseq_pipeline"
 GATK_ALLOC_TIME = "168:00:00"
 
+#KNOWN_INDELS_1000G_PHASE1 = os.environ["KNOWN_INDELS_1000G_PHASE1"]
+#KNOWN_INDELS_MILLS_AND_1000G_GOLD_STANDARD = os.environ["KNOWN_INDELS_MILLS_AND_1000G_GOLD_STANDARD"]
 ## > > > > > > > > > > > > > random values < < < < < < < < < <
 #DFLT_SEED = None
 #DEMO_SEED = 20

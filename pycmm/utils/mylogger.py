@@ -5,7 +5,7 @@ lg = logging.getLogger('pycmm')
 lg.setLevel(logging.DEBUG)
 # create console handler with a higher log level
 ch = logging.StreamHandler()
-ch.setLevel(logging.INFO)
+ch.setLevel(logging.DEBUG)
 # create formatter and add it to the handlers
 formatter = logging.Formatter('## [%(levelname)s]%(asctime)25s - %(processName)-12s - %(name)-12s - %(message)s')
 ch.setFormatter(formatter)

@@ -5,20 +5,24 @@ from os.path import join as join_path
 from pycmm.template import pyCMMBase
 from pycmm.utils import mylogger
 from pycmm.utils.jobman import JobManager
-from pycmm.settings import GATK_ALLOC_TIME
 from pycmm.utils.jobman import JOB_STATUS_COMPLETED
+from pycmm.utils import exec_sh
+from pycmm.settings import GATK_ALLOC_TIME
 
 METADATA_PATTERN = re.compile(r'''##(?P<key>.+?)=(?P<val>.+)''')
 
 BWA_MEM_SCRIPT = "$PYCMM/bash/GATKBP_bwa_mem.sh"
 SORT_SAM_SCRIPT = "$PYCMM/bash/GATKBP_sort_sam.sh"
 MARK_DUP_SCRIPT = "$PYCMM/bash/GATKBP_mark_dup.sh"
+INDELS_TARGET_INTERVALS_SCRIPT = "$PYCMM/bash/GATKBP_indels_target_intervals.sh"
+INDELS_REALIGN_SCRIPT = "$PYCMM/bash/GATKBP_indels_realign.sh"
 HAPLOTYPE_CALLER_SCRIPT = "$PYCMM/bash/GATKBP_haplotype_caller.sh"
 COMBINE_GVCFS_SCRIPT = "$PYCMM/bash/GATKBP_combine_gvcfs.sh"
 GENOTYPE_GVCFS_SCRIPT = "$PYCMM/bash/GATKBP_genotype_gvcfs.sh"
 
 JOBS_SETUP_DATASET_NAME_KEY = "DATASET_NAME"
 JOBS_SETUP_PROJECT_CODE_KEY = "PROJECT_CODE"
+JOBS_SETUP_KNOWN_INDELS_KEY = "KNOWN_INDELS"
 JOBS_SETUP_REFFERENCE_KEY = "REFERENCE"
 JOBS_SETUP_OUTPUT_DIR_KEY = "OUTPUT_DIR"
 JOBS_SETUP_VARIANTS_CALLING_KEY = "VARIANTS_CALLING"
@@ -90,6 +94,18 @@ class SampleRecord(pyCMMBase):
                          self.sample_name+"_dedup_reads.bam")
 
     @property
+    def indels_target_intervals_file(self):
+        return join_path(join_path(self.__output_dir,
+                                   'tmp'),
+                         self.sample_name+"_indels_target_intervals.list")
+
+    @property
+    def indels_realign_file(self):
+        return join_path(join_path(self.__output_dir,
+                                   'bam'),
+                         self.sample_name+"_indels_realign.bam")
+
+    @property
     def metrics_file(self):
         return join_path(join_path(join_path(self.__output_dir,
                                              'tmp'),
@@ -153,6 +169,7 @@ class GATKBPPipeline(JobManager):
     def get_raw_repr(self):
         return {"dataset name": self.dataset_name,
                 "project code": self.project_code,
+                "known indels": self.known_indels,
                 "reference": self.reference,
                 "output directory": self.output_dir,
                 "varaints calling": self.variants_calling,
@@ -168,6 +185,10 @@ class GATKBPPipeline(JobManager):
     @property
     def project_code(self):
         return self.__meta_data[JOBS_SETUP_PROJECT_CODE_KEY]
+
+    @property
+    def known_indels(self):
+        return self.__meta_data[JOBS_SETUP_KNOWN_INDELS_KEY].split(',')
 
     @property
     def reference(self):
@@ -231,14 +252,14 @@ class GATKBPPipeline(JobManager):
                          self.dataset_name+"_genotyped.vcf")
 
     def __load_jobs_info(self, job_setup_file):
-        mylogger.getLogger(__name__ + "." + sys._getframe().f_code.co_name)
+        mylogger.getLogger(__name__)
+        #mylogger.getLogger(__name__ + "." + sys._getframe().f_code.co_name)
         f_jobs_info = open(job_setup_file, 'r')
         reader = (line.strip() for line in f_jobs_info)
         line = reader.next()
         self.__meta_data = {}
         while line.startswith('##'):
             # parse meta data
-            mylogger.debug(line)
             key, val = self.__parse_metadata(line)
             self.__meta_data[key] = val
             line = reader.next()
@@ -267,15 +288,6 @@ class GATKBPPipeline(JobManager):
                                    sample_name)
             self.create_dir(sample_dir)
 
-#    def __get_raw_aligned_file(self,
-#                               sample_name,
-#                               ):
-#
-#        bam_out_dir = join_path(self.samples_working_dir,
-#                                sample_name)
-#        return join_path(bam_out_dir,
-#                         sample_name+"_raw_aligned.sam")
-#
     def __garbage_collecting(self):
         for job_name in self.job_dict:
             job_rec = self.job_dict[job_name]
@@ -375,6 +387,79 @@ class GATKBPPipeline(JobManager):
             job_params = " -B " + bam_file
         job_params += " -o " + sample_rec.dedup_reads_file
         job_params += " -m " + sample_rec.metrics_file
+        self.submit_job(job_name,
+                        self.project_code,
+                        "core",
+                        "4",
+                        GATK_ALLOC_TIME,
+                        slurm_log_file,
+                        job_script,
+                        job_params,
+                        email=sample_rec.usage_mail,
+                        prerequisite=prerequisite,
+                        )
+        return job_name
+
+    def indels_target_intervals(self,
+                               sample_name,
+                               bam_file=None,
+                               prerequisite=None,
+                               ):
+        """ Create a target list of intervals to be realigned """
+        sample_rec = self.__samples[sample_name]
+        slurm_log_file = join_path(self.slurm_log_dir,
+                                   sample_name)
+        slurm_log_file += "_indels_target_intervals_"
+        slurm_log_file += self.time_stamp.strftime("%Y%m%d%H%M%S")
+        slurm_log_file += ".log"
+        job_name = sample_name + "_indels_target_intervals"
+        job_script = INDELS_TARGET_INTERVALS_SCRIPT
+        if bam_file is None:
+            job_params = " -I " + sample_rec.dedup_reads_file
+        else:
+            job_params = " -I " + bam_file
+        job_params += " -k " + ",".join(self.known_indels)
+        job_params += " -R " + self.reference
+        job_params += " -o " + sample_rec.indels_target_intervals_file
+        self.submit_job(job_name,
+                        self.project_code,
+                        "core",
+                        "2",
+                        GATK_ALLOC_TIME,
+                        slurm_log_file,
+                        job_script,
+                        job_params,
+                        email=sample_rec.usage_mail,
+                        prerequisite=prerequisite,
+                        )
+        return job_name
+
+    def indels_realign(self,
+                       sample_name,
+                       bam_file=None,
+                       indels_target_intervals=None,
+                       prerequisite=None,
+                       ):
+        """ Local Realignment around Indels """
+        sample_rec = self.__samples[sample_name]
+        slurm_log_file = join_path(self.slurm_log_dir,
+                                   sample_name)
+        slurm_log_file += "_indels_realign_"
+        slurm_log_file += self.time_stamp.strftime("%Y%m%d%H%M%S")
+        slurm_log_file += ".log"
+        job_name = sample_name + "_indels_realign"
+        job_script = INDELS_REALIGN_SCRIPT
+        if bam_file is None:
+            job_params = " -I " + sample_rec.dedup_reads_file
+        else:
+            job_params = " -I " + bam_file
+        job_params += " -k " + ",".join(self.known_indels)
+        job_params += " -R " + self.reference
+        if indels_target_intervals is None:
+            job_params += " -t " + sample_rec.indels_target_intervals
+        else:
+            job_params += " -t " + indels_target_intervals
+        job_params += " -o " + sample_rec.indels_realign_file
         self.submit_job(job_name,
                         self.project_code,
                         "core",

@@ -10,14 +10,17 @@ from pycmm.utils import mylogger
 from pycmm.flow.gatkbp import GATKBPPipeline
 from pycmm.flow.gatkbp import JOBS_SETUP_DATASET_NAME_KEY
 from pycmm.flow.gatkbp import JOBS_SETUP_PROJECT_CODE_KEY
+from pycmm.flow.gatkbp import JOBS_SETUP_KNOWN_INDELS_KEY
 from pycmm.flow.gatkbp import JOBS_SETUP_REFFERENCE_KEY
 from pycmm.flow.gatkbp import JOBS_SETUP_OUTPUT_DIR_KEY
 from pycmm.flow.gatkbp import JOBS_SETUP_VARIANTS_CALLING_KEY
 from pycmm.flow.gatkbp import JOBS_SETUP_JOBS_REPORT_FILE_KEY
 from pycmm.flow.gatkbp import JOBS_SETUP_TARGETS_INTERVAL_LIST_KEY
 from pycmm.flow.gatkbp import JOBS_SETUP_USAGE_MAIL_KEY
+#from pycmm.settings import KNOWN_INDELS_1000G_PHASE1
+#from pycmm.settings import KNOWN_INDELS_MILLS_AND_1000G_GOLD_STANDARD
 
-TEST_PROJECT_CODE = 'b2011097'
+TEST_PROJECT_CODE = 'b2011158'
 
 class TestGATKBPPipeline(SafeTester):
 
@@ -33,12 +36,19 @@ class TestGATKBPPipeline(SafeTester):
     def __create_jobs_setup_file(self,
                                  dataset_name=None,
                                  project_code=TEST_PROJECT_CODE,
+#                                 known_indels=[KNOWN_INDELS_1000G_PHASE1,
+#                                               KNOWN_INDELS_MILLS_AND_1000G_GOLD_STANDARD,
+#                                               ],
                                  variants_calling="YES",
                                  targets_interval_list=None,
                                  usage_mail="NO",
                                  ):
         jobs_setup_file = join_path(self.working_dir,
                                     self.test_function+'_jobs_setup.txt')
+        known_indels = join_path(self.data_dir,
+                                 '1000g_phase1.vcf')
+        known_indels += "," + join_path(self.data_dir,
+                                        'mills_n_1000g_gold.vcf')
         reference_file = join_path(self.data_dir,
                                    'ref.fa')
         jobs_report_file = join_path(self.working_dir,
@@ -49,11 +59,11 @@ class TestGATKBPPipeline(SafeTester):
         else:
             f_rpt.write("##" + JOBS_SETUP_DATASET_NAME_KEY + "=" + dataset_name + "\n")
         f_rpt.write("##" + JOBS_SETUP_PROJECT_CODE_KEY + "=" + project_code + "\n")
+        f_rpt.write("##" + JOBS_SETUP_KNOWN_INDELS_KEY + "=" + known_indels + "\n")
         f_rpt.write("##" + JOBS_SETUP_REFFERENCE_KEY + "=" + reference_file + "\n")
         f_rpt.write("##" + JOBS_SETUP_OUTPUT_DIR_KEY + "=" + self.working_dir + "\n")
         f_rpt.write("##" + JOBS_SETUP_VARIANTS_CALLING_KEY + "=" + variants_calling + "\n")
         f_rpt.write("##" + JOBS_SETUP_JOBS_REPORT_FILE_KEY + "=" + jobs_report_file + "\n")
-        mylogger.debug(targets_interval_list)
         if targets_interval_list is not None:
             f_rpt.write("##" + JOBS_SETUP_TARGETS_INTERVAL_LIST_KEY + "=" + targets_interval_list + "\n")
         f_rpt.write("##" + JOBS_SETUP_USAGE_MAIL_KEY + "=" + usage_mail + "\n")
@@ -108,6 +118,12 @@ class TestGATKBPPipeline(SafeTester):
         self.assertEqual(pl.project_code,
                          "b1234567",
                          "GATKBPPipeline cannot correctly read meta info 'project code' from jobs setup file")
+        self.assertEqual(pl.known_indels[0],
+                         "/glob/jessada/private/master_data/known_indels_SNPs/1000G_phase1.indels.b37.vcf",
+                         "GATKBPPipeline cannot correctly read meta info 'known indels[0]' from jobs setup file")
+        self.assertEqual(pl.known_indels[1],
+                         "/glob/jessada/private/master_data/known_indels_SNPs/Mills_and_1000G_gold_standard.indels.b37.vcf",
+                         "GATKBPPipeline cannot correctly read meta info 'known indels[1]' from jobs setup file")
         self.assertEqual(pl.reference,
                          "/glob/jessada/Homo_sapiens.GRCh37.57.dna.concat.fa",
                          "GATKBPPipeline cannot correctly read meta info 'reference' from jobs setup file")
@@ -120,7 +136,6 @@ class TestGATKBPPipeline(SafeTester):
         self.assertEqual(pl.jobs_report_file,
                          "/glob/jessada/job_rpt.txt",
                          "GATKBPPipeline cannot correctly read meta info 'jobs report file' from jobs setup file")
-        mylogger.debug(pl.targets_interval_list)
         self.assertEqual(pl.targets_interval_list,
                          "/glob/jessada/target_interval",
                          "GATKBPPipeline cannot correctly read meta info 'targets.interval_list' from jobs setup file")
@@ -217,6 +232,51 @@ class TestGATKBPPipeline(SafeTester):
                                           )
         pl = GATKBPPipeline(jobs_setup_file)
         pl.mark_dup(sample_name, bam_file=bam_file)
+
+    @unittest.skipUnless(settings.SLURM_TEST, "taking too much UPPMAX cpu-core hours")
+    def test_indels_target_intervals(self):
+        """ test creating indels target intervals """
+
+        self.individual_debug = True
+        self.init_test(self.current_func_name)
+        jobs_setup_file = self.__create_jobs_setup_file()
+        sample_name = "test-sample"
+        bam_file = join_path(self.data_dir,
+                             sample_name+"_dedup_reads.bam")
+        self.__add_sample_jobs_setup_file(jobs_setup_file,
+                                          sample_name,
+                                          "NA",
+                                          "NA",
+                                          "NA",
+                                          usage_mail="YES",
+                                          )
+        pl = GATKBPPipeline(jobs_setup_file)
+        pl.indels_target_intervals(sample_name, bam_file=bam_file)
+
+#    @unittest.skipUnless(settings.SLURM_TEST, "taking too much UPPMAX cpu-core hours")
+    def test_indels_realign(self):
+        """ test creating indels target intervals """
+
+        self.individual_debug = True
+        self.init_test(self.current_func_name)
+        jobs_setup_file = self.__create_jobs_setup_file()
+        sample_name = "test-sample"
+        bam_file = join_path(self.data_dir,
+                             sample_name+"_dedup_reads.bam")
+        indels_target_intervals = join_path(self.data_dir,
+                                            'indels_target_intervals.list')
+        self.__add_sample_jobs_setup_file(jobs_setup_file,
+                                          sample_name,
+                                          "NA",
+                                          "NA",
+                                          "NA",
+                                          usage_mail="YES",
+                                          )
+        pl = GATKBPPipeline(jobs_setup_file)
+        pl.indels_realign(sample_name,
+                          bam_file=bam_file,
+                          indels_target_intervals=indels_target_intervals,
+                          )
 
     @unittest.skipUnless(settings.SLURM_TEST, "taking too much UPPMAX cpu-core hours")
     def test_haplotype_caller_1(self):
