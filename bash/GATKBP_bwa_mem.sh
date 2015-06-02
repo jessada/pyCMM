@@ -9,25 +9,25 @@ cat <<EOF
 usage:
 $0 [OPTION]
 option:
--S {fastq list}     list of fastq files (comma separated) (required)
+-I {fastq list}     list of fastq files (comma separated) (required)
+-R {file}           reference file
 -g {sample group}   sample group (required) 
 -o {file}           output aligned reads file (required)
--r {file}           reference file
 -h                  this help
 EOF
 )
 
 # parse option
-while getopts ":S:g:r:o:h" OPTION; do
+while getopts ":I:R:g:o:h" OPTION; do
   case "$OPTION" in
-    S)
+    I)
       sample_list="$OPTARG"
+      ;;
+    R)
+      ref="$OPTARG"
       ;;
     g)
       sample_group="$OPTARG"
-      ;;
-    r)
-      ref="$OPTARG"
       ;;
     o)
       out_file="$OPTARG"
@@ -41,10 +41,10 @@ while getopts ":S:g:r:o:h" OPTION; do
   esac
 done
 
-[ ! -z $sample_list ] || die "list of fastq files is required (-S)"
+[ ! -z $sample_list ] || die "list of fastq files is required (-I)"
 [ ! -z $sample_group ] || die "sample group is required (-g)"
 [ ! -z $out_file ] || die "output file name is required (-o)"
-[ ! -z $ref ] || die "reference file is required (-r)"
+[ ! -z $ref ] || die "reference file is required (-R)"
 IFS=',' read -ra fastq_files <<< "$sample_list"
 sample1="${fastq_files[0]}"
 sample2="${fastq_files[1]}"
@@ -54,7 +54,7 @@ sample2="${fastq_files[1]}"
 
 time_stamp=$( date )
 
-cd $PYCMM_DIR
+cd $PYCMM
 revision_no=`git rev-list HEAD | wc -l`
 revision_code=`git rev-parse HEAD`
 cd - > /dev/null
@@ -69,17 +69,17 @@ info_msg
 info_msg "version and script configuration"
 display_param "revision no" "$revision_no"
 display_param "revision code" "$revision_code"
-display_param "script path" "$PYCMM_DIR"
+display_param "script path" "$PYCMM"
 display_param "parameters" "$params"
 display_param "time stamp" "$time_stamp"
 info_msg
 info_msg "overall configuration"
-display_param "sample prefix (-S)" "$sample_prefix"
+display_param "sample prefix (-I)" "$sample_prefix"
 display_param "  sample 1" "$sample1"
 display_param "  sample 2" "$sample2"
 display_param "sample group (-g)" "$sample_group"
 display_param "output directory (-o)" "$out_file"
-display_param "reference file (-r)" "$ref"
+display_param "reference file (-R)" "$ref"
 
 # ****************************************  executing  ****************************************
 sample_file=$(basename "$sample1")

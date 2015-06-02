@@ -9,28 +9,32 @@ cat <<EOF
 usage:
 $0 [OPTION]
 option:
--B {BAM file}       BAM file (required)
--o {file}           output GVCF file (required)
--r {file}           reference file (required)
+-I {BAM file}       BAM file (required)
+-R {file}           reference file (required)
+-d {file}           dbSNP file
 -L {file}           target interval list
+-o {file}           output GVCF file (required)
 -h                  this help
 EOF
 )
 
 # parse option
-while getopts ":B:o:r:L:h" OPTION; do
+while getopts ":I:R:d:L:o:h" OPTION; do
   case "$OPTION" in
-    B)
+    I)
       bam_file="$OPTARG"
       ;;
-    o)
-      out_file="$OPTARG"
-      ;;
-    r)
+    R)
       ref="$OPTARG"
+      ;;
+    d)
+      dbsnp="$OPTARG"
       ;;
     L)
       targets_interval_list="$OPTARG"
+      ;;
+    o)
+      out_file="$OPTARG"
       ;;
     h)
       echo >&2 "$usage"
@@ -41,15 +45,15 @@ while getopts ":B:o:r:L:h" OPTION; do
   esac
 done
 
-[ ! -z $bam_file ] || die "a BAM input file is required (-B)"
+[ ! -z $bam_file ] || die "a BAM input file is required (-I)"
+[ ! -z $ref ] || die "reference file is required (-R)"
 [ ! -z $out_file ] || die "please indicate output file name (-o)"
-[ ! -z $ref ] || die "reference file is required (-r)"
 [ -f "$bam_file" ] || die "$bam_file is not found"
 [ -f "$ref" ] || die "$ref is not found"
 
 time_stamp=$( date )
 
-cd $PYCMM_DIR
+cd $PYCMM
 revision_no=`git rev-list HEAD | wc -l`
 revision_code=`git rev-parse HEAD`
 cd - > /dev/null
@@ -64,18 +68,22 @@ info_msg
 info_msg "version and script configuration"
 display_param "revision no" "$revision_no"
 display_param "revision code" "$revision_code"
-display_param "script path" "$PYCMM_DIR"
+display_param "script path" "$PYCMM"
 display_param "parameters" "$params"
 display_param "time stamp" "$time_stamp"
 info_msg
 info_msg "overall configuration"
-display_param "BAM input file (-B)" "$bam_file"
-display_param "output GVCF file (-o)" "$out_file"
-display_param "reference file (-r)" "$ref"
+display_param "BAM input file (-I)" "$bam_file"
+display_param "reference file (-R)" "$ref"
 if [ ! -z "$targets_interval_list" ]
 then
     display_param "target interval list (-L)" "$targets_interval_list"
 fi
+if [ ! -z "$dbsnp" ]
+then
+    display_param "dbSNP (-d)" "$dbsnp"
+fi
+display_param "output GVCF file (-o)" "$out_file"
 
 # ****************************************  executing  ****************************************
  
@@ -87,6 +95,10 @@ cmd+=" --emitRefConfidence GVCF"
 cmd+=" --variant_index_type LINEAR"
 cmd+=" --variant_index_parameter 128000"
 cmd+=" -allowPotentiallyMisencodedQuals"
+if [ ! -z "$dbsnp" ]
+then
+    cmd+=" --dbsnp $dbsnp"
+fi
 if [ ! -z "$targets_interval_list" ]
 then
     cmd+=" -L $targets_interval_list"

@@ -37,6 +37,7 @@ class pyCMMBase(object):
             os.remove(file_name)
 
     def copy_file(self, src, dst):
+        self.delete_file(dst)
         if os.path.islink(src):
             linkto = os.readlink(src)
             os.symlink(linkto, dst)

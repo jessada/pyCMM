@@ -11,14 +11,13 @@ from pycmm.flow.gatkbp import GATKBPPipeline
 from pycmm.flow.gatkbp import JOBS_SETUP_DATASET_NAME_KEY
 from pycmm.flow.gatkbp import JOBS_SETUP_PROJECT_CODE_KEY
 from pycmm.flow.gatkbp import JOBS_SETUP_KNOWN_INDELS_KEY
+from pycmm.flow.gatkbp import JOBS_SETUP_DBSNP_KEY
 from pycmm.flow.gatkbp import JOBS_SETUP_REFFERENCE_KEY
 from pycmm.flow.gatkbp import JOBS_SETUP_OUTPUT_DIR_KEY
 from pycmm.flow.gatkbp import JOBS_SETUP_VARIANTS_CALLING_KEY
 from pycmm.flow.gatkbp import JOBS_SETUP_JOBS_REPORT_FILE_KEY
 from pycmm.flow.gatkbp import JOBS_SETUP_TARGETS_INTERVAL_LIST_KEY
 from pycmm.flow.gatkbp import JOBS_SETUP_USAGE_MAIL_KEY
-#from pycmm.settings import KNOWN_INDELS_1000G_PHASE1
-#from pycmm.settings import KNOWN_INDELS_MILLS_AND_1000G_GOLD_STANDARD
 
 TEST_PROJECT_CODE = 'b2011158'
 
@@ -36,9 +35,6 @@ class TestGATKBPPipeline(SafeTester):
     def __create_jobs_setup_file(self,
                                  dataset_name=None,
                                  project_code=TEST_PROJECT_CODE,
-#                                 known_indels=[KNOWN_INDELS_1000G_PHASE1,
-#                                               KNOWN_INDELS_MILLS_AND_1000G_GOLD_STANDARD,
-#                                               ],
                                  variants_calling="YES",
                                  targets_interval_list=None,
                                  usage_mail="NO",
@@ -49,6 +45,8 @@ class TestGATKBPPipeline(SafeTester):
                                  '1000g_phase1.vcf')
         known_indels += "," + join_path(self.data_dir,
                                         'mills_n_1000g_gold.vcf')
+        dbsnp_file = join_path(self.data_dir,
+                               'dbsnp.vcf')
         reference_file = join_path(self.data_dir,
                                    'ref.fa')
         jobs_report_file = join_path(self.working_dir,
@@ -60,6 +58,7 @@ class TestGATKBPPipeline(SafeTester):
             f_rpt.write("##" + JOBS_SETUP_DATASET_NAME_KEY + "=" + dataset_name + "\n")
         f_rpt.write("##" + JOBS_SETUP_PROJECT_CODE_KEY + "=" + project_code + "\n")
         f_rpt.write("##" + JOBS_SETUP_KNOWN_INDELS_KEY + "=" + known_indels + "\n")
+        f_rpt.write("##" + JOBS_SETUP_DBSNP_KEY + "=" + dbsnp_file + "\n")
         f_rpt.write("##" + JOBS_SETUP_REFFERENCE_KEY + "=" + reference_file + "\n")
         f_rpt.write("##" + JOBS_SETUP_OUTPUT_DIR_KEY + "=" + self.working_dir + "\n")
         f_rpt.write("##" + JOBS_SETUP_VARIANTS_CALLING_KEY + "=" + variants_calling + "\n")
@@ -124,6 +123,9 @@ class TestGATKBPPipeline(SafeTester):
         self.assertEqual(pl.known_indels[1],
                          "/glob/jessada/private/master_data/known_indels_SNPs/Mills_and_1000G_gold_standard.indels.b37.vcf",
                          "GATKBPPipeline cannot correctly read meta info 'known indels[1]' from jobs setup file")
+        self.assertEqual(pl.dbsnp,
+                         "/glob/jessada/private/master_data/known_indels_SNPs/dbsnp.vcf",
+                         "GATKBPPipeline cannot correctly read meta info 'dbsnp' from jobs setup file")
         self.assertEqual(pl.reference,
                          "/glob/jessada/Homo_sapiens.GRCh37.57.dna.concat.fa",
                          "GATKBPPipeline cannot correctly read meta info 'reference' from jobs setup file")
@@ -234,7 +236,7 @@ class TestGATKBPPipeline(SafeTester):
         pl.mark_dup(sample_name, bam_file=bam_file)
 
     @unittest.skipUnless(settings.SLURM_TEST, "taking too much UPPMAX cpu-core hours")
-    def test_indels_target_intervals(self):
+    def test_create_intervals(self):
         """ test creating indels target intervals """
 
         self.individual_debug = True
@@ -248,12 +250,11 @@ class TestGATKBPPipeline(SafeTester):
                                           "NA",
                                           "NA",
                                           "NA",
-                                          usage_mail="YES",
                                           )
         pl = GATKBPPipeline(jobs_setup_file)
-        pl.indels_target_intervals(sample_name, bam_file=bam_file)
+        pl.create_intervals(sample_name, bam_file=bam_file)
 
-#    @unittest.skipUnless(settings.SLURM_TEST, "taking too much UPPMAX cpu-core hours")
+    @unittest.skipUnless(settings.SLURM_TEST, "taking too much UPPMAX cpu-core hours")
     def test_indels_realign(self):
         """ test creating indels target intervals """
 
@@ -263,8 +264,30 @@ class TestGATKBPPipeline(SafeTester):
         sample_name = "test-sample"
         bam_file = join_path(self.data_dir,
                              sample_name+"_dedup_reads.bam")
-        indels_target_intervals = join_path(self.data_dir,
-                                            'indels_target_intervals.list')
+        indels_target_intervals_file = join_path(self.data_dir,
+                                                 'indels_target_intervals.list')
+        self.__add_sample_jobs_setup_file(jobs_setup_file,
+                                          sample_name,
+                                          "NA",
+                                          "NA",
+                                          "NA",
+                                          )
+        pl = GATKBPPipeline(jobs_setup_file)
+        pl.indels_realign(sample_name,
+                          bam_file=bam_file,
+                          indels_target_intervals_file=indels_target_intervals_file,
+                          )
+
+    @unittest.skipUnless(settings.SLURM_TEST, "taking too much UPPMAX cpu-core hours")
+    def test_base_recal(self):
+        """ test base recalibration """
+
+        self.individual_debug = True
+        self.init_test(self.current_func_name)
+        jobs_setup_file = self.__create_jobs_setup_file()
+        sample_name = "test-sample"
+        bam_file = join_path(self.data_dir,
+                             sample_name+"_realigned_reads.bam")
         self.__add_sample_jobs_setup_file(jobs_setup_file,
                                           sample_name,
                                           "NA",
@@ -273,10 +296,7 @@ class TestGATKBPPipeline(SafeTester):
                                           usage_mail="YES",
                                           )
         pl = GATKBPPipeline(jobs_setup_file)
-        pl.indels_realign(sample_name,
-                          bam_file=bam_file,
-                          indels_target_intervals=indels_target_intervals,
-                          )
+        pl.base_recal(sample_name, bam_file=bam_file)
 
     @unittest.skipUnless(settings.SLURM_TEST, "taking too much UPPMAX cpu-core hours")
     def test_haplotype_caller_1(self):
@@ -289,12 +309,13 @@ class TestGATKBPPipeline(SafeTester):
         jobs_setup_file = self.__create_jobs_setup_file(targets_interval_list=targets_interval_list)
         sample_name = "test-small-sample"
         dedup_reads_file = join_path(self.data_dir,
-                                     sample_name+"_dedup_reads.bam")
+                                     sample_name+"_recal_reads.bam")
         self.__add_sample_jobs_setup_file(jobs_setup_file,
                                           sample_name,
                                           "NA",
                                           "NA",
                                           "NA",
+                                          usage_mail="YES",
                                           )
         pl = GATKBPPipeline(jobs_setup_file)
         pl.hap_cal(sample_name, 
@@ -310,12 +331,13 @@ class TestGATKBPPipeline(SafeTester):
         jobs_setup_file = self.__create_jobs_setup_file()
         sample_name = "test-big-sample"
         dedup_reads_file = join_path(self.data_dir,
-                                     sample_name+"_dedup_reads.bam")
+                                     sample_name+"_recal_reads.bam")
         self.__add_sample_jobs_setup_file(jobs_setup_file,
                                           sample_name,
                                           "NA",
                                           "NA",
                                           "NA",
+                                          usage_mail="YES",
                                           )
         pl = GATKBPPipeline(jobs_setup_file)
         pl.hap_cal(sample_name, 
@@ -457,7 +479,8 @@ class TestGATKBPPipeline(SafeTester):
         self.init_test(self.current_func_name)
         targets_interval_list = join_path(self.data_dir,
                                           "targets.interval_list") 
-        jobs_setup_file = self.__create_jobs_setup_file(targets_interval_list=targets_interval_list)
+        jobs_setup_file = self.__create_jobs_setup_file(targets_interval_list=targets_interval_list,
+                                                        project_code='b2011097')
         sample_group = self.current_func_name
         for sample_idx in xrange(1,4):
             sample_name = "test_sample_M_" + str(sample_idx)
@@ -472,6 +495,59 @@ class TestGATKBPPipeline(SafeTester):
                                               sample_group,
                                               )
         pl = GATKBPPipeline(jobs_setup_file)
+        pl.preprocess_dataset()
+
+    @unittest.skipUnless(settings.SLURM_TEST, "taking too much UPPMAX cpu-core hours")
+    def test_preprocess_dataset_2(self):
+        """
+        test dataset pre-processing in the case that only one out of three
+        need to be processed
+        """
+
+        self.individual_debug = True
+        self.init_test(self.current_func_name)
+        targets_interval_list = join_path(self.data_dir,
+                                          "targets.interval_list") 
+        jobs_setup_file = self.__create_jobs_setup_file(targets_interval_list=targets_interval_list)
+        sample_group = self.current_func_name
+        for sample_idx in xrange(1,4):
+            sample_name = "test_sample_M_" + str(sample_idx)
+            fastq1_file = join_path(self.data_dir,
+                               sample_name + "_1.fastq.gz")
+            fastq2_file = join_path(self.data_dir,
+                               sample_name + "_2.fastq.gz")
+            if sample_idx > 2:
+                self.__add_sample_jobs_setup_file(jobs_setup_file,
+                                                  sample_name,
+                                                  fastq1_file,
+                                                  fastq2_file,
+                                                  sample_group,
+                                                  )
+            else:
+                self.__add_sample_jobs_setup_file(jobs_setup_file,
+                                                  sample_name,
+                                                  fastq1_file,
+                                                  fastq2_file,
+                                                  sample_group,
+                                                  preprocess_sample="NO",
+                                                  )
+        pl = GATKBPPipeline(jobs_setup_file)
+        samples_working_dir = join_path(self.working_dir,
+                                        "tmp")
+        for sample_idx in xrange(1,3):
+            sample_name = "test_sample_M_" + str(sample_idx)
+            sample_working_dir = join_path(samples_working_dir,
+                                           sample_name)
+            raw_vcf_source = join_path(self.data_dir,
+                                       sample_name+"_raw.g.vcf")
+            raw_vcf_dest = join_path(sample_working_dir,
+                                     sample_name+"_raw.g.vcf")
+            self.copy_file(raw_vcf_source, raw_vcf_dest)
+            raw_idx_source = join_path(self.data_dir,
+                                       sample_name+"_raw.g.vcf.idx")
+            raw_idx_dest = join_path(sample_working_dir,
+                                     sample_name+"_raw.g.vcf.idx")
+            self.copy_file(raw_idx_source, raw_idx_dest)
         pl.preprocess_dataset()
 
     @unittest.skipUnless(settings.SLURM_TEST, "taking too much UPPMAX cpu-core hours")

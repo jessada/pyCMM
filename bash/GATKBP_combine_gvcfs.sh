@@ -45,7 +45,7 @@ done
 
 time_stamp=$( date )
 
-cd $PYCMM_DIR
+cd $PYCMM
 revision_no=`git rev-list HEAD | wc -l`
 revision_code=`git rev-parse HEAD`
 cd - > /dev/null
@@ -60,7 +60,7 @@ info_msg
 info_msg "version and script configuration"
 display_param "revision no" "$revision_no"
 display_param "revision code" "$revision_code"
-display_param "script path" "$PYCMM_DIR"
+display_param "script path" "$PYCMM"
 display_param "parameters" "$params"
 display_param "time stamp" "$time_stamp"
 info_msg

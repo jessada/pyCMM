@@ -14,8 +14,9 @@ METADATA_PATTERN = re.compile(r'''##(?P<key>.+?)=(?P<val>.+)''')
 BWA_MEM_SCRIPT = "$PYCMM/bash/GATKBP_bwa_mem.sh"
 SORT_SAM_SCRIPT = "$PYCMM/bash/GATKBP_sort_sam.sh"
 MARK_DUP_SCRIPT = "$PYCMM/bash/GATKBP_mark_dup.sh"
-INDELS_TARGET_INTERVALS_SCRIPT = "$PYCMM/bash/GATKBP_indels_target_intervals.sh"
+INDELS_TARGET_INTERVALS_SCRIPT = "$PYCMM/bash/GATKBP_create_intervals.sh"
 INDELS_REALIGN_SCRIPT = "$PYCMM/bash/GATKBP_indels_realign.sh"
+BASE_RECAL_SCRIPT = "$PYCMM/bash/GATKBP_base_recal.sh"
 HAPLOTYPE_CALLER_SCRIPT = "$PYCMM/bash/GATKBP_haplotype_caller.sh"
 COMBINE_GVCFS_SCRIPT = "$PYCMM/bash/GATKBP_combine_gvcfs.sh"
 GENOTYPE_GVCFS_SCRIPT = "$PYCMM/bash/GATKBP_genotype_gvcfs.sh"
@@ -23,6 +24,7 @@ GENOTYPE_GVCFS_SCRIPT = "$PYCMM/bash/GATKBP_genotype_gvcfs.sh"
 JOBS_SETUP_DATASET_NAME_KEY = "DATASET_NAME"
 JOBS_SETUP_PROJECT_CODE_KEY = "PROJECT_CODE"
 JOBS_SETUP_KNOWN_INDELS_KEY = "KNOWN_INDELS"
+JOBS_SETUP_DBSNP_KEY = "DBSNP"
 JOBS_SETUP_REFFERENCE_KEY = "REFERENCE"
 JOBS_SETUP_OUTPUT_DIR_KEY = "OUTPUT_DIR"
 JOBS_SETUP_VARIANTS_CALLING_KEY = "VARIANTS_CALLING"
@@ -89,21 +91,10 @@ class SampleRecord(pyCMMBase):
 
     @property
     def dedup_reads_file(self):
-        return join_path(join_path(self.__output_dir,
-                                   'bam'),
+        return join_path(join_path(join_path(self.__output_dir,
+                                             'tmp'),
+                                   self.sample_name),
                          self.sample_name+"_dedup_reads.bam")
-
-    @property
-    def indels_target_intervals_file(self):
-        return join_path(join_path(self.__output_dir,
-                                   'tmp'),
-                         self.sample_name+"_indels_target_intervals.list")
-
-    @property
-    def indels_realign_file(self):
-        return join_path(join_path(self.__output_dir,
-                                   'bam'),
-                         self.sample_name+"_indels_realign.bam")
 
     @property
     def metrics_file(self):
@@ -111,6 +102,46 @@ class SampleRecord(pyCMMBase):
                                              'tmp'),
                                    self.sample_name),
                          self.sample_name+"_metrics.txt")
+
+    @property
+    def indels_target_intervals_file(self):
+        return join_path(join_path(join_path(self.__output_dir,
+                                             'tmp'),
+                                   self.sample_name),
+                         self.sample_name+"_indels_target_intervals.list")
+
+    @property
+    def realigned_reads_file(self):
+        return join_path(join_path(join_path(self.__output_dir,
+                                             'tmp'),
+                                   self.sample_name),
+                         self.sample_name+"_realigned_reads.bam")
+
+    @property
+    def recal_table_file(self):
+        return join_path(join_path(join_path(self.__output_dir,
+                                             'tmp'),
+                                   self.sample_name),
+                         self.sample_name+"_recal_data.table")
+
+    @property
+    def post_recal_table_file(self):
+        return join_path(join_path(join_path(self.__output_dir,
+                                             'tmp'),
+                                   self.sample_name),
+                         self.sample_name+"_post_recal_data.table")
+
+    @property
+    def recalibration_plots(self):
+        return join_path(join_path(self.__output_dir,
+                                   'pdf'),
+                         self.sample_name+"_recalibration_plots.pdf")
+
+    @property
+    def recal_reads_file(self):
+        return join_path(join_path(self.__output_dir,
+                                   'bam'),
+                         self.sample_name+"_recal_reads.bam")
 
     @property
     def raw_gvcf_file(self):
@@ -159,6 +190,8 @@ class GATKBPPipeline(JobManager):
                                        "vcf")
         self.__bam_out_dir = join_path(self.output_dir,
                                        "bam")
+        self.__pdf_out_dir = join_path(self.output_dir,
+                                       "pdf")
         self.__samples_working_dir = join_path(self.output_dir,
                                                "tmp")
         self.__slurm_log_dir = join_path(self.output_dir,
@@ -189,6 +222,10 @@ class GATKBPPipeline(JobManager):
     @property
     def known_indels(self):
         return self.__meta_data[JOBS_SETUP_KNOWN_INDELS_KEY].split(',')
+
+    @property
+    def dbsnp(self):
+        return self.__meta_data[JOBS_SETUP_DBSNP_KEY]
 
     @property
     def reference(self):
@@ -228,6 +265,10 @@ class GATKBPPipeline(JobManager):
     @property
     def bam_out_dir(self):
         return self.__bam_out_dir
+
+    @property
+    def pdf_out_dir(self):
+        return self.__pdf_out_dir
 
     @property
     def slurm_log_dir(self):
@@ -281,6 +322,7 @@ class GATKBPPipeline(JobManager):
         self.create_dir(self.output_dir)
         self.create_dir(self.vcf_out_dir)
         self.create_dir(self.bam_out_dir)
+#        self.create_dir(self.pdf_out_dir)
         self.create_dir(self.slurm_log_dir)
         self.create_dir(self.samples_working_dir)
         for sample_name in self.samples:
@@ -291,13 +333,17 @@ class GATKBPPipeline(JobManager):
     def __garbage_collecting(self):
         for job_name in self.job_dict:
             job_rec = self.job_dict[job_name]
-            if job_name.endswith("_mark_dup") and (job_rec.job_status == JOB_STATUS_COMPLETED):
-                sample_name = job_name.strip("_mark_dup")
+            if job_name.endswith("_base_recal") and (job_rec.job_status == JOB_STATUS_COMPLETED):
+                sample_name = job_name.strip("_base_recal")
                 sample_rec = self.__samples[sample_name]
                 mylogger.info("deleting " + sample_rec.raw_aligned_reads_file)
                 self.delete_file(sample_rec.raw_aligned_reads_file)
                 mylogger.info("deleting " + sample_rec.sorted_reads_file)
                 self.delete_file(sample_rec.sorted_reads_file)
+                mylogger.info("deleting " + sample_rec.dedup_reads_file)
+                self.delete_file(sample_rec.dedup_reads_file)
+                mylogger.info("deleting " + sample_rec.realigned_reads_file)
+                self.delete_file(sample_rec.realigned_reads_file)
 
     def monitor_action(self):
         JobManager.monitor_action(self)
@@ -316,10 +362,10 @@ class GATKBPPipeline(JobManager):
         slurm_log_file += ".log"
         job_name = sample_name + "_bwa_mem"
         job_script = BWA_MEM_SCRIPT
-        job_params = " -S " + sample_rec.fastq1_file 
+        job_params = " -I " + sample_rec.fastq1_file 
         job_params += "," + sample_rec.fastq2_file
         job_params += " -g " + sample_rec.sample_group
-        job_params += " -r " + self.reference
+        job_params += " -R " + self.reference
         job_params += " -o " + sample_rec.raw_aligned_reads_file
         self.submit_job(job_name,
                         self.project_code,
@@ -349,9 +395,9 @@ class GATKBPPipeline(JobManager):
         job_name = sample_name + "_sort_sam"
         job_script = SORT_SAM_SCRIPT
         if sam_file is None:
-            job_params = " -S " + sample_rec.raw_aligned_reads_file 
+            job_params = " -I " + sample_rec.raw_aligned_reads_file 
         else:
-            job_params = " -S " + sam_file 
+            job_params = " -I " + sam_file 
         job_params += " -o " + sample_rec.sorted_reads_file
         self.submit_job(job_name,
                         self.project_code,
@@ -382,9 +428,9 @@ class GATKBPPipeline(JobManager):
         job_name = sample_name + "_mark_dup"
         job_script = MARK_DUP_SCRIPT
         if bam_file is None:
-            job_params = " -B " + sample_rec.sorted_reads_file
+            job_params = " -I " + sample_rec.sorted_reads_file
         else:
-            job_params = " -B " + bam_file
+            job_params = " -I " + bam_file
         job_params += " -o " + sample_rec.dedup_reads_file
         job_params += " -m " + sample_rec.metrics_file
         self.submit_job(job_name,
@@ -400,19 +446,19 @@ class GATKBPPipeline(JobManager):
                         )
         return job_name
 
-    def indels_target_intervals(self,
-                               sample_name,
-                               bam_file=None,
-                               prerequisite=None,
-                               ):
+    def create_intervals(self,
+                         sample_name,
+                         bam_file=None,
+                         prerequisite=None,
+                         ):
         """ Create a target list of intervals to be realigned """
         sample_rec = self.__samples[sample_name]
         slurm_log_file = join_path(self.slurm_log_dir,
                                    sample_name)
-        slurm_log_file += "_indels_target_intervals_"
+        slurm_log_file += "_create_intervals_"
         slurm_log_file += self.time_stamp.strftime("%Y%m%d%H%M%S")
         slurm_log_file += ".log"
-        job_name = sample_name + "_indels_target_intervals"
+        job_name = sample_name + "_create_intervals"
         job_script = INDELS_TARGET_INTERVALS_SCRIPT
         if bam_file is None:
             job_params = " -I " + sample_rec.dedup_reads_file
@@ -437,7 +483,7 @@ class GATKBPPipeline(JobManager):
     def indels_realign(self,
                        sample_name,
                        bam_file=None,
-                       indels_target_intervals=None,
+                       indels_target_intervals_file=None,
                        prerequisite=None,
                        ):
         """ Local Realignment around Indels """
@@ -455,15 +501,53 @@ class GATKBPPipeline(JobManager):
             job_params = " -I " + bam_file
         job_params += " -k " + ",".join(self.known_indels)
         job_params += " -R " + self.reference
-        if indels_target_intervals is None:
-            job_params += " -t " + sample_rec.indels_target_intervals
+        if indels_target_intervals_file is None:
+            job_params += " -t " + sample_rec.indels_target_intervals_file
         else:
-            job_params += " -t " + indels_target_intervals
-        job_params += " -o " + sample_rec.indels_realign_file
+            job_params += " -t " + indels_target_intervals_file
+        job_params += " -o " + sample_rec.realigned_reads_file
         self.submit_job(job_name,
                         self.project_code,
                         "core",
-                        "4",
+                        "2",
+                        GATK_ALLOC_TIME,
+                        slurm_log_file,
+                        job_script,
+                        job_params,
+                        email=sample_rec.usage_mail,
+                        prerequisite=prerequisite,
+                        )
+        return job_name
+
+    def base_recal(self,
+                   sample_name,
+                   bam_file=None,
+                   prerequisite=None,
+                   ):
+        """ Base Quality Score Recalibration """
+        sample_rec = self.__samples[sample_name]
+        slurm_log_file = join_path(self.slurm_log_dir,
+                                   sample_name)
+        slurm_log_file += "_base_recal_"
+        slurm_log_file += self.time_stamp.strftime("%Y%m%d%H%M%S")
+        slurm_log_file += ".log"
+        job_name = sample_name + "_base_recal"
+        job_script = BASE_RECAL_SCRIPT
+        if bam_file is None:
+            job_params = " -I " + sample_rec.realigned_reads_file
+        else:
+            job_params = " -I " + bam_file
+        job_params += " -R " + self.reference
+        job_params += " -k " + ",".join(self.known_indels)
+        job_params += "," + self.dbsnp
+        job_params += " -t " + sample_rec.recal_table_file
+        job_params += " -a " + sample_rec.post_recal_table_file
+        job_params += " -p " + sample_rec.recalibration_plots
+        job_params += " -o " + sample_rec.recal_reads_file
+        self.submit_job(job_name,
+                        self.project_code,
+                        "core",
+                        "3",
                         GATK_ALLOC_TIME,
                         slurm_log_file,
                         job_script,
@@ -492,13 +576,15 @@ class GATKBPPipeline(JobManager):
         job_name = sample_name + "_hap_cal"
         job_script = HAPLOTYPE_CALLER_SCRIPT
         if bam_file is None:
-            job_params = " -B " + sample_rec.dedup_reads_file
+            job_params = " -I " + sample_rec.recal_reads_file
         else:
-            job_params = " -B " + bam_file
-        job_params += " -o " + sample_rec.raw_gvcf_file
-        job_params += " -r " + self.reference
+            job_params = " -I " + bam_file
+        job_params += " -R " + self.reference
         if self.targets_interval_list is not None:
             job_params += " -L " + self.targets_interval_list
+        if self.dbsnp is not None:
+            job_params += " -d " + self.dbsnp
+        job_params += " -o " + sample_rec.raw_gvcf_file
         self.submit_job(job_name,
                         self.project_code,
                         "core",
@@ -613,8 +699,14 @@ class GATKBPPipeline(JobManager):
                                           prerequisite=[job_name_bwa_mem])
         job_name_mark_dup = self.mark_dup(sample_name,
                                           prerequisite=[job_name_sort_sam])
+        job_name_create_intervals = self.create_intervals(sample_name,
+                                                          prerequisite=[job_name_mark_dup])
+        job_name_indels_realign = self.indels_realign(sample_name,
+                                                      prerequisite=[job_name_create_intervals])
+        job_name_base_recal = self.base_recal(sample_name,
+                                              prerequisite=[job_name_indels_realign])
         job_name_hap_cal = self.hap_cal(sample_name,
-                                        prerequisite=[job_name_mark_dup])
+                                        prerequisite=[job_name_base_recal])
         return job_name_hap_cal
 
     def preprocess_dataset(self):
@@ -630,7 +722,8 @@ class GATKBPPipeline(JobManager):
 
         prerequisite = []
         for sample_name in self.samples:
-            prerequisite.append(self.preprocess_sample(sample_name))
+            if self.__samples[sample_name].preprocess_sample:
+                prerequisite.append(self.preprocess_sample(sample_name))
         job_name_combine_gvcfs = self.combine_gvcfs(prerequisite=prerequisite) 
         job_name_genotype_gvcfs = self.genotype_gvcfs(prerequisite=[job_name_combine_gvcfs]) 
         return job_name_genotype_gvcfs

@@ -9,16 +9,16 @@ cat <<EOF
 usage:
 $0 [OPTION]
 option:
--S {SAM file}       SAM file (required)
+-I {SAM file}       SAM file (required)
 -o {file}           output sorted reads file (required)
 -h                  this help
 EOF
 )
 
 # parse option
-while getopts ":S:o:h" OPTION; do
+while getopts ":I:o:h" OPTION; do
   case "$OPTION" in
-    S)
+    I)
       sam_file="$OPTARG"
       ;;
     o)
@@ -33,13 +33,13 @@ while getopts ":S:o:h" OPTION; do
   esac
 done
 
-[ ! -z $sam_file ] || die "a SAM input file is required (-S)"
+[ ! -z $sam_file ] || die "a SAM input file is required (-I)"
 [ ! -z $out_file ] || die "please indicate output file name (-o)"
 [ -f "$sam_file" ] || die "$sam_file is not found"
 
 time_stamp=$( date )
 
-cd $PYCMM_DIR
+cd $PYCMM
 revision_no=`git rev-list HEAD | wc -l`
 revision_code=`git rev-parse HEAD`
 cd - > /dev/null
@@ -54,12 +54,12 @@ info_msg
 info_msg "version and script configuration"
 display_param "revision no" "$revision_no"
 display_param "revision code" "$revision_code"
-display_param "script path" "$PYCMM_DIR"
+display_param "script path" "$PYCMM"
 display_param "parameters" "$params"
 display_param "time stamp" "$time_stamp"
 info_msg
 info_msg "overall configuration"
-display_param "SAM input file (-S)" "$sam_file"
+display_param "SAM input file (-I)" "$sam_file"
 display_param "output file (-o)" "$out_file"
 
 # ****************************************  executing  ****************************************
