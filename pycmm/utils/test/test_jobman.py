@@ -4,13 +4,36 @@ from os.path import join as join_path
 from os.path import dirname
 from pycmm import settings
 from pycmm.template import SafeTester
+from pycmm.utils import exec_sh
+from pycmm.utils import mylogger
 from pycmm.utils.jobman import JobManager
 from pycmm.utils.jobman import JOB_STATUS_PENDING
+from pycmm.utils.jobman import JOB_STATUS_RUNNING
 
 TEST_PROJECT_CODE = 'b2011097'
 TEST_PARTITION_TYPE = 'core'
 TEST_NTASKS = '1'
-TEST_ALLOC_TIME = '10:00:00'
+TEST_ALLOC_TIME = '10:00'
+
+class JobManagerHouseKeeping(JobManager):
+    """ A test class to test garbage collecting of JobManager """
+
+    def __init__(self,
+                 job_report_file=None,
+                 ):
+        JobManager.__init__(self,
+                            job_report_file,
+                            )
+
+    def get_raw_repr(self):
+        return {"NA1": "NA1",
+                "NA2": "NA2",
+                }
+
+    def monitor_action(self):
+        JobManager.monitor_action(self)
+        mylogger.info("hello monitor action")
+
 
 class TestJobManager(SafeTester):
 
@@ -26,17 +49,19 @@ class TestJobManager(SafeTester):
     def __create_db_instance(self):
         return None
 
-    def test_submit_job(self):
+    @unittest.skipUnless(settings.SLURM_TEST, "taking too long time to test")
+    def test_submit_job_1(self):
         """ check if a job has been correctly submitted to SLURM """
 
-        self.individual_debug = True
         self.init_test(self.current_func_name)
         job_name = self.test_function
         slurm_log_file = join_path(self.working_dir,
                                    self.test_function+'.log')
         job_script = join_path(self.data_dir,
                                'test_job_script.sh')
-        job_params = 'hello testt_submit_job'
+        tmp_file = join_path(self.working_dir,
+                             self.test_function+'.txt')
+        job_params = '5 100000 ' + tmp_file
         jobman = JobManager()
         jobman.submit_job(job_name,
                           TEST_PROJECT_CODE,
@@ -52,17 +77,119 @@ class TestJobManager(SafeTester):
                         "Invalid number of queried records")
         jobman.cancel_job(job_name)
 
+    @unittest.skipUnless(settings.SLURM_TEST, "taking too long time to test")
+    def test_submit_job_2(self):
+        """ check if a real GATK alignment job can be submitted """
+
+        self.individual_debug = True
+        self.init_test(self.current_func_name)
+
+        gatk_alloc_time = "72:00:00"
+        sample_name = "test_sample"
+        sample_prefix = join_path(self.data_dir,
+                                  sample_name)
+        sample_group = self.current_func_name
+        ref = join_path(self.data_dir,
+                        "ref.fa")
+        raw_aligned_reads = join_path(self.working_dir,
+                                      sample_name+"_raw_aligned.sam")
+        sorted_reads = join_path(self.working_dir,
+                                 sample_name+"_sorted.bam")
+        dedup_reads = join_path(self.working_dir,
+                                sample_name+"_dedup.bam")
+        raw_gvcf = join_path(self.working_dir,
+                             sample_name+"_raw.gvcf")
+        metrics_file = join_path(self.working_dir,
+                                 sample_name+"_metrics.txt")
+        jobman = JobManager()
+
+        bwa_mem_job_name = "test_bwa_mem"
+        slurm_log_file = join_path(self.working_dir,
+                                   bwa_mem_job_name+'.log')
+        job_script = "$PYCMM/bash/GATKBP_bwa_mem.sh"
+        job_params = " -S " + sample_prefix 
+        job_params += " -g " + sample_group
+        job_params += " -r " + ref
+        job_params += " -o " + raw_aligned_reads
+        jobman.submit_job(bwa_mem_job_name,
+                          TEST_PROJECT_CODE,
+                          TEST_PARTITION_TYPE,
+                          "1",
+                          gatk_alloc_time,
+                          slurm_log_file,
+                          job_script,
+                          job_params,
+                          )
+
+        sort_reads_job_name = "test_sorted_reads"
+        slurm_log_file = join_path(self.working_dir,
+                                   sort_reads_job_name+'.log')
+        job_script = "$PYCMM/bash/GATKBP_sort_reads.sh"
+        job_params = " -S " + raw_aligned_reads 
+        job_params += " -o " + sorted_reads
+        jobman.submit_job(sort_reads_job_name,
+                          TEST_PROJECT_CODE,
+                          TEST_PARTITION_TYPE,
+                          "2",
+                          gatk_alloc_time,
+                          slurm_log_file,
+                          job_script,
+                          job_params,
+                          prerequisite=[bwa_mem_job_name],
+                          )
+
+        dedup_reads_job_name = "test_dedup_reads"
+        slurm_log_file = join_path(self.working_dir,
+                                   dedup_reads_job_name+'.log')
+        job_script = "$PYCMM/bash/GATKBP_markdup.sh"
+        job_params = " -B " + sorted_reads 
+        job_params += " -o " + dedup_reads
+        job_params += " -m " + metrics_file
+        jobman.submit_job(dedup_reads_job_name,
+                          TEST_PROJECT_CODE,
+                          TEST_PARTITION_TYPE,
+                          "4",
+                          gatk_alloc_time,
+                          slurm_log_file,
+                          job_script,
+                          job_params,
+                          prerequisite=[sort_reads_job_name],
+                          )
+
+        hap_cal_job_name = "test_hap_cal"
+        slurm_log_file = join_path(self.working_dir,
+                                   hap_cal_job_name+'.log')
+        job_script = "$PYCMM/bash/GATKBP_haplotype_caller.sh"
+        job_params = " -B " + dedup_reads 
+        job_params += " -o " + raw_gvcf
+        job_params += " -r " + ref
+        jobman.submit_job(hap_cal_job_name,
+                          TEST_PROJECT_CODE,
+                          TEST_PARTITION_TYPE,
+                          "2",
+                          gatk_alloc_time,
+                          slurm_log_file,
+                          job_script,
+                          job_params,
+                          prerequisite=[dedup_reads_job_name],
+                          )
+
+        job_id = jobman.get_job_id(bwa_mem_job_name)
+        jobman.cancel_job(bwa_mem_job_name)
+
+    @unittest.skipUnless(settings.SLURM_TEST, "taking too long time to test")
     def test_get_job_status(self):
         """ check if job status can be correctly retrieved """
 
-        self.individual_debug = True
         self.init_test(self.current_func_name)
         job_name = self.test_function
         slurm_log_file = join_path(self.working_dir,
                                    self.test_function+'.log')
         job_script = join_path(self.data_dir,
                                'test_job_script.sh')
-        job_params = 'I want to test_get_job_status'
+        tmp_file = join_path(self.working_dir,
+                             self.test_function+'.txt')
+        job_params = '3 200000 ' + tmp_file
         jobman = JobManager()
         jobman.submit_job(job_name,
                           TEST_PROJECT_CODE,
@@ -74,14 +201,97 @@ class TestJobManager(SafeTester):
                           job_params,
                           )
         job_status = jobman.get_job_status(job_name)
-        self.assertEqual(job_status,
-                         JOB_STATUS_PENDING,
-                         "Invalid job status"
-                         )
+        self.assertTrue((job_status == JOB_STATUS_PENDING) or
+                        (job_status == JOB_STATUS_RUNNING),
+                        "Invalid job status"
+                        )
         jobman.cancel_job(job_name)
 
+    @unittest.skipUnless(settings.SLURM_TEST, "taking too long time to test")
+    def test_get_job_usage_mail(self):
+        """ check if SLURM usage_mail can be applied with the flow """
+
+        self.individual_debug = True
+        self.init_test(self.current_func_name)
+        job_name = self.test_function
+        slurm_log_file = join_path(self.working_dir,
+                                   self.test_function+'.log')
+        job_script = join_path(self.data_dir,
+                               'test_job_script.sh')
+        tmp_file = join_path(self.working_dir,
+                             self.test_function+'.txt')
+        job_params = '3 20000 ' + tmp_file
+        self.delete_file(tmp_file)
+        jobman = JobManager()
+        jobman.submit_job(job_name,
+                          TEST_PROJECT_CODE,
+                          TEST_PARTITION_TYPE,
+                          TEST_NTASKS,
+                          TEST_ALLOC_TIME,
+                          slurm_log_file,
+                          job_script,
+                          job_params,
+                          email=True,
+                          )
+
+    @unittest.skipUnless(settings.SLURM_TEST, "taking too long time to test")
+    def test_monitor_jobs(self):
+        """ check JobManager can correctly monitor all the jobs """
+
+        self.individual_debug = True
+        self.init_test(self.current_func_name)
+        job_name_1 = self.test_function + "_1"
+        slurm_log_file = join_path(self.working_dir,
+                                   self.test_function+'.log')
+        job_script = join_path(self.data_dir,
+                               'test_job_script.sh')
+        fail_script = join_path(self.data_dir,
+                                'test_fail_script.sh')
+        report_file = join_path(self.working_dir,
+                                self.test_function+'_report.txt')
+        tmp_file = join_path(self.working_dir,
+                             self.test_function+'.txt')
+        job_params = '3 2000 ' + tmp_file
+        self.delete_file(tmp_file)
+        jobman = JobManagerHouseKeeping(job_report_file=report_file)
+        jobman.submit_job(job_name_1,
+                          TEST_PROJECT_CODE,
+                          TEST_PARTITION_TYPE,
+                          TEST_NTASKS,
+                          TEST_ALLOC_TIME,
+                          slurm_log_file,
+                          fail_script,
+                          job_params,
+                          )
+        job_name_2 = self.test_function + "_2"
+        job_params = '100 1200 ' + tmp_file
+        jobman.submit_job(job_name_2,
+                          TEST_PROJECT_CODE,
+                          TEST_PARTITION_TYPE,
+                          TEST_NTASKS,
+                          TEST_ALLOC_TIME,
+                          slurm_log_file,
+                          job_script,
+                          job_params,
+                          prerequisite=[job_name_1],
+                          )
+        job_name_3 = self.test_function + "_3"
+        job_params = '410 420 ' + tmp_file
+        jobman.submit_job(job_name_3,
+                          TEST_PROJECT_CODE,
+                          TEST_PARTITION_TYPE,
+                          TEST_NTASKS,
+                          TEST_ALLOC_TIME,
+                          slurm_log_file,
+                          fail_script,
+                          job_params,
+                          prerequisite=[job_name_1, job_name_2],
+                          )
+        jobman.monitor_jobs()
+
+    @unittest.skipUnless(settings.SLURM_TEST, "taking too long time to test")
     def test_prerequisite(self):
-        """ check if 'afterok' dependcy can be applied """
+        """ check if 'afterok' dependency can be applied """
 
         self.individual_debug = True
         self.init_test(self.current_func_name)
@@ -92,7 +302,7 @@ class TestJobManager(SafeTester):
                                'test_job_script.sh')
         tmp_file = join_path(self.working_dir,
                              self.test_function+'.txt')
-        job_params = '3 2000000 ' + tmp_file
+        job_params = '3 20000 ' + tmp_file
         self.delete_file(tmp_file)
         jobman = JobManager()
         jobman.submit_job(job_name_1,
@@ -105,7 +315,7 @@ class TestJobManager(SafeTester):
                           job_params,
                           )
         job_name_2 = self.test_function + "_2"
-        job_params = '100 1200000 ' + tmp_file
+        job_params = '100 12000 ' + tmp_file
         jobman.submit_job(job_name_2,
                           TEST_PROJECT_CODE,
                           TEST_PARTITION_TYPE,
@@ -128,9 +338,9 @@ class TestJobManager(SafeTester):
                           job_params,
                           prerequisite=[job_name_1, job_name_2],
                           )
-        jobman.cancel_job(job_name_1)
-        jobman.cancel_job(job_name_2)
         jobman.cancel_job(job_name_3)
+        jobman.cancel_job(job_name_2)
+        jobman.cancel_job(job_name_1)
 
     def tearDown(self):
         self.remove_working_dir()

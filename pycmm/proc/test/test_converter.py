@@ -61,31 +61,31 @@ class TestConverterFunctions(SafeTester):
                                     exp_file),
                         "vcf2pavdb doesn't funciton correctly")
 
-    def test_pavdb2avinputs(self):
-        """
-        to check if convert2annovar.pl can correctly generate avdb files
-        """
-
-#        self.individual_debug = True
-        self.init_test(self.current_func_name)
-        in_file = join_path(self.data_dir,
-                            'input.pavdb')
-        out_file_prefix = join_path(self.working_dir,
-                                    'output')
-        pavdb2avinputs(in_file, out_file_prefix)
-        out_1_file = out_file_prefix + '.dummy1.avinput'
-        out_2_file = out_file_prefix + '.dummy2.avinput'
-        exp_1_file = join_path(self.data_dir,
-                               'expected_result_1')
-        exp_2_file = join_path(self.data_dir,
-                               'expected_result_2')
-        self.assertTrue(filecmp.cmp(out_1_file,
-                                    exp_1_file),
-                        "pavdb2avinputs doesn't funciton correctly")
-        self.assertTrue(filecmp.cmp(out_2_file,
-                                    exp_2_file),
-                        "pavdb2avinputs doesn't funciton correctly")
-
+#    def test_pavdb2avinputs(self):
+#        """
+#        to check if convert2annovar.pl can correctly generate avdb files
+#        """
+#
+##        self.individual_debug = True
+#        self.init_test(self.current_func_name)
+#        in_file = join_path(self.data_dir,
+#                            'input.pavdb')
+#        out_file_prefix = join_path(self.working_dir,
+#                                    'output')
+#        pavdb2avinputs(in_file, out_file_prefix)
+#        out_1_file = out_file_prefix + '.dummy1.avinput'
+#        out_2_file = out_file_prefix + '.dummy2.avinput'
+#        exp_1_file = join_path(self.data_dir,
+#                               'expected_result_1')
+#        exp_2_file = join_path(self.data_dir,
+#                               'expected_result_2')
+#        self.assertTrue(filecmp.cmp(out_1_file,
+#                                    exp_1_file),
+#                        "pavdb2avinputs doesn't funciton correctly")
+#        self.assertTrue(filecmp.cmp(out_2_file,
+#                                    exp_2_file),
+#                        "pavdb2avinputs doesn't funciton correctly")
+#
     def test_raw_avdb2key_avdb(self):
         """
         to check if the function can correctly convert the raw avdb (avinput)
@@ -105,22 +105,22 @@ class TestConverterFunctions(SafeTester):
                                     exp_file),
                         "raw_avdb2key_avdb doesn't funciton correctly")
 
-    def test_vcf2avdb_1(self):
-        """ to check if vcf file can be correctly converted in avdb file """
-
-#        self.individual_debug = True
-        self.init_test(self.current_func_name)
-        in_file = join_path(self.data_dir,
-                            'input.vcf.gz')
-        out_file = join_path(self.working_dir,
-                             'output.avdb')
-        vcf2avdb(in_file, out_file, self.working_dir)
-        exp_file = join_path(self.data_dir,
-                             'expected_result')
-        self.assertTrue(filecmp.cmp(out_file,
-                                    exp_file),
-                        "vcf2avdb doesn't funciton correctly with small vcf file")
-
+#    def test_vcf2avdb_1(self):
+#        """ to check if vcf file can be correctly converted in avdb file """
+#
+##        self.individual_debug = True
+#        self.init_test(self.current_func_name)
+#        in_file = join_path(self.data_dir,
+#                            'input.vcf.gz')
+#        out_file = join_path(self.working_dir,
+#                             'output.avdb')
+#        vcf2avdb(in_file, out_file, self.working_dir)
+#        exp_file = join_path(self.data_dir,
+#                             'expected_result')
+#        self.assertTrue(filecmp.cmp(out_file,
+#                                    exp_file),
+#                        "vcf2avdb doesn't funciton correctly with small vcf file")
+#
     @unittest.skipUnless(settings.FULL_SYSTEM_TEST, "taking too long time to test")
     def test_vcf2avdb_2(self):
         """ to check if vcf file can be correctly converted in avdb file """

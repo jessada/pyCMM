@@ -36,8 +36,13 @@ class pyCMMBase(object):
         if os.path.exists(file_name):
             os.remove(file_name)
 
-    def copy_file(self, source, destination):
-        shutil.copy2(source, destination)
+    def copy_file(self, src, dst):
+        self.delete_file(dst)
+        if os.path.islink(src):
+            linkto = os.readlink(src)
+            os.symlink(linkto, dst)
+        else:
+            shutil.copy(src, dst)
 
     def dbg(self, debug_msg):
         if DEBUG_MODE:
@@ -85,9 +90,9 @@ class Tester(unittest.TestCase, pyCMMBase):
         unittest.TestCase.__init__(self, test_name)
         pyCMMBase.__init__(self)
         self.base_working_dir = join_path(module_path,
-                                            'tmp')
+                                          'tmp')
         self.base_data_dir = join_path(module_path,
-                                         'data')
+                                       'data')
 
     def remove_dir(self, dir_name):
         self.assertTrue(dir_name, '"None" is not a valid directory')

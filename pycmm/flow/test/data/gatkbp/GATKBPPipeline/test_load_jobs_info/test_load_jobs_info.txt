@@ -1,0 +1,14 @@
+##DATASET_NAME=test-dataset
+##PROJECT_CODE=b1234567
+##REFERENCE=/glob/jessada/Homo_sapiens.GRCh37.57.dna.concat.fa
+##KNOWN_INDELS=/glob/jessada/private/master_data/known_indels_SNPs/1000G_phase1.indels.b37.vcf,/glob/jessada/private/master_data/known_indels_SNPs/Mills_and_1000G_gold_standard.indels.b37.vcf 
+##DBSNP=/glob/jessada/private/master_data/known_indels_SNPs/dbsnp.vcf 
+##OUTPUT_DIR=/glob/jessada/private/projects/
+##VARIANTS_CALLING=YES
+##JOBS_REPORT_FILE=/glob/jessada/job_rpt.txt
+##TARGETS_INTERVAL_LIST=/glob/jessada/target_interval
+##USAGE_MAIL=NO
+#SAMPLE_NAME	FASTQ1	FASTQ2	SAMPLE_GROUP	PLATFORM	LIBRARY	UNIT	USAGE_MAIL	PREPROCESS_SAMPLE
+test_sample_1	/proj/b2012247/private/axeq_custom/1303AHS-0016/Co-1747_1.fastq.gz	/proj/b2012247/private/axeq_custom/1303AHS-0016/Co-1747_2.fastq.gz	test_group	Illumina	lib1	unit1	YES	YES
+test_sample10000	/proj/b2012247/private/axeq_custom/1303AHS-0016/Co-866_1.fastq.gz	/proj/b2012247/private/axeq_custom/1303AHS-0016/Co-866_2.fastq.gz	test_group	Illumina	lib1	unit1	YES	YES
+test_sample3	/proj/b2012247/private/axeq_custom/1303AHS-0016/Co-1116_1.fastq.gz	/proj/b2012247/private/axeq_custom/1303AHS-0016/Co-1116_2.fastq.gz	test_group	Illumina	lib1	unit1	YES	YES

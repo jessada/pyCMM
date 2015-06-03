@@ -1,4 +1,4 @@
-#import os
+import os
 
 """
 
@@ -8,6 +8,7 @@ This module is all about constant value
 
 #FULL_SYSTEM_TEST = True
 FULL_SYSTEM_TEST = False
+SLURM_TEST = False
 
 DFLT_WORKING_DIR = "."
 VCF_MUT_KEY_INT_FMT = "{chrom:02d}_{pos:012d}_{ref:s}_{alt:s}"
@@ -17,6 +18,13 @@ VCF_MUT_KEY_STR_FMT = "{chrom:s}_{pos:012d}_{ref:s}_{alt:s}"
 VCF2AVDB_DESCRIPTION = "A script to parse all point mutations from vcf format into avdb format"
 VCF2AVDB_DFLT_LOG_FILE = "vcf2avdb"
 
+## > > > > > > > > > > > > > GATK Best practice (DNA seq) < < < < < < < < < <
+DNASEQ_PIPELINE_DESCRIPTION = "A flow to control a pipeline to process DNA sequencing data"
+DNASEQ_PIPELINE_DFLT_LOG_FILE = "dnaseq_pipeline"
+GATK_ALLOC_TIME = "168:00:00"
+
+#KNOWN_INDELS_1000G_PHASE1 = os.environ["KNOWN_INDELS_1000G_PHASE1"]
+#KNOWN_INDELS_MILLS_AND_1000G_GOLD_STANDARD = os.environ["KNOWN_INDELS_MILLS_AND_1000G_GOLD_STANDARD"]
 ## > > > > > > > > > > > > > random values < < < < < < < < < <
 #DFLT_SEED = None
 #DEMO_SEED = 20

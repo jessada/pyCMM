@@ -1,1 +1,1 @@
-../test_submit_job/test_job_script.sh
+../test_submit_job_1/test_job_script.sh
