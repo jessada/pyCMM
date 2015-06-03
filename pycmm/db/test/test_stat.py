@@ -2,6 +2,7 @@ import filecmp
 import unittest
 from os.path import join as join_path
 from os.path import dirname
+from pycmm import settings
 from pycmm.template import SafeTester
 from pycmm.db.stat import vcf_query
 
