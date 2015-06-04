@@ -2,6 +2,7 @@ import filecmp
 import unittest
 from os.path import join as join_path
 from os.path import dirname
+from os.path import isdir
 from pycmm import settings
 from pycmm.template import SafeTester
 from pycmm.db.stat import vcf_query
@@ -21,6 +22,7 @@ class TestStatFunctions(SafeTester):
     def __create_db_instance(self):
         return None
 
+    @unittest.skipUnless(isdir("/Users/jesthu"), "This can only run in 'jesthu' machine")
     def test_vcf_query_1(self):
         """
         test if vcf_query work correctly if
@@ -93,6 +95,7 @@ class TestStatFunctions(SafeTester):
                          ['0', '1'],
                          "genotype data of vcf query is not correct")
 
+    @unittest.skipUnless(isdir("/Users/jesthu"), "This can only run in 'jesthu' machine")
     def test_vcf_query_2(self):
         """
         test if vcf_query work correctly if
@@ -125,6 +128,7 @@ class TestStatFunctions(SafeTester):
                          ['C'],
                          "ALT of vcf query is not correct")
 
+    @unittest.skipUnless(isdir("/Users/jesthu"), "This can only run in 'jesthu' machine")
     def test_vcf_query_3(self):
         """
         test if vcf_query work correctly if filename is specified
