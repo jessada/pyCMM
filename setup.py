@@ -83,5 +83,6 @@ setup(
     install_requires=[
         "pysam >= 0.7",
         "pyvcf >= 0.6.0",
+        "pyvcf >= 15.5.7",
         ],
 )

@@ -1,7 +1,11 @@
 import sys
 import re
 import datetime
+import pyaml
+from os import listdir
 from os.path import join as join_path
+from os.path import isdir
+from os.path import isfile
 from pycmm.template import pyCMMBase
 from pycmm.utils import mylogger
 from pycmm.utils.jobman import JobManager
@@ -21,6 +25,7 @@ HAPLOTYPE_CALLER_SCRIPT = "$PYCMM/bash/GATKBP_haplotype_caller.sh"
 COMBINE_GVCFS_SCRIPT = "$PYCMM/bash/GATKBP_combine_gvcfs.sh"
 GENOTYPE_GVCFS_SCRIPT = "$PYCMM/bash/GATKBP_genotype_gvcfs.sh"
 
+# jobs metadata section
 JOBS_SETUP_DATASET_NAME_KEY = "DATASET_NAME"
 JOBS_SETUP_PROJECT_CODE_KEY = "PROJECT_CODE"
 JOBS_SETUP_KNOWN_INDELS_KEY = "KNOWN_INDELS"
@@ -30,9 +35,23 @@ JOBS_SETUP_OUTPUT_DIR_KEY = "OUTPUT_DIR"
 JOBS_SETUP_VARIANTS_CALLING_KEY = "VARIANTS_CALLING"
 JOBS_SETUP_JOBS_REPORT_FILE_KEY = "JOBS_REPORT_FILE"
 JOBS_SETUP_TARGETS_INTERVAL_LIST_KEY = "TARGETS_INTERVAL_LIST"
-JOBS_SETUP_USAGE_MAIL_KEY = "USAGE_MAIL"
+JOBS_SETUP_DATASET_USAGE_MAIL_KEY = "USAGE_MAIL"
 
-SAMPLE_RECORD_JOBS_NAME_IDX = 0
+# jobs sample info section
+JOBS_SETUP_SAMPLES_SECTION = "SAMPLES"
+JOBS_SETUP_SAMPLE_NAME_KEY = "sample_name"
+JOBS_SETUP_FASTQ_KEY = "fastq_files"
+JOBS_SETUP_R1_KEY = "R1"
+JOBS_SETUP_R2_KEY = "R2"
+JOBS_SETUP_SAMPLE_GROUP_KEY = "sample_group"
+JOBS_SETUP_PLATFORM_KEY = "platform"
+#JOBS_SETUP_LIBRARY_KEY = "library"
+#JOBS_SETUP_UNIT_KEY = "unit"
+JOBS_SETUP_SAMPLE_USAGE_MAIL_KEY = "usage_mail"
+JOBS_SETUP_PREPROCESS_SAMPLE_KEY = "preprocess_sample"
+
+# obsolete should be deleted
+SAMPLE_RECORD_SAMPLE_NAME_IDX = 0
 SAMPLE_RECORD_FASTQ1_IDX = 1
 SAMPLE_RECORD_FASTQ2_IDX = 2
 SAMPLE_RECORD_SAMPLE_GROUP_IDX = 3
@@ -66,7 +85,7 @@ class SampleRecord(pyCMMBase):
 
     @property
     def sample_name(self):
-        return self.__data[SAMPLE_RECORD_JOBS_NAME_IDX]
+        return self.__data[SAMPLE_RECORD_SAMPLE_NAME_IDX]
 
     @property
     def fastq1_file(self):
@@ -160,11 +179,11 @@ class SampleRecord(pyCMMBase):
 
     @property
     def library(self):
-        return self.__data[SAMPLE_RECORD_LIBRARY_IDX]
+        return 'lib1'
 
     @property
     def unit(self):
-        return self.__data[SAMPLE_RECORD_UNIT_IDX]
+        return 'unit1'
 
     @property
     def usage_mail(self):
@@ -183,7 +202,7 @@ class GATKBPPipeline(JobManager):
                  ):
         self.__load_jobs_info(jobs_setup_file)
         self.__meta_data[JOBS_SETUP_VARIANTS_CALLING_KEY] == "YES"
-        self.__meta_data[JOBS_SETUP_USAGE_MAIL_KEY] == "YES"
+        self.__meta_data[JOBS_SETUP_DATASET_USAGE_MAIL_KEY] == "YES"
         JobManager.__init__(self,
                             job_report_file=self.jobs_report_file)
         self.__vcf_out_dir = join_path(self.output_dir,
@@ -252,7 +271,7 @@ class GATKBPPipeline(JobManager):
 
     @property
     def usage_mail(self):
-        return self.__meta_data[JOBS_SETUP_USAGE_MAIL_KEY] == "YES"
+        return self.__meta_data[JOBS_SETUP_DATASET_USAGE_MAIL_KEY] == "YES"
 
     @property
     def samples(self):
@@ -382,7 +401,7 @@ class GATKBPPipeline(JobManager):
     def sort_sam(self,
                  sample_name,
                  sam_file=None,
-                 prerequisite=None,
+                 prereq=None,
                  ):
         """ Use picard command to sort the SAM file and convert it to BAM """
     
@@ -408,14 +427,14 @@ class GATKBPPipeline(JobManager):
                         job_script,
                         job_params,
                         email=sample_rec.usage_mail,
-                        prerequisite=prerequisite,
+                        prereq=prereq,
                         )
         return job_name
 
     def mark_dup(self,
                  sample_name,
                  bam_file=None,
-                 prerequisite=None,
+                 prereq=None,
                  ):
         """ Use picard command to mark duplicates """
     
@@ -442,14 +461,14 @@ class GATKBPPipeline(JobManager):
                         job_script,
                         job_params,
                         email=sample_rec.usage_mail,
-                        prerequisite=prerequisite,
+                        prereq=prereq,
                         )
         return job_name
 
     def create_intervals(self,
                          sample_name,
                          bam_file=None,
-                         prerequisite=None,
+                         prereq=None,
                          ):
         """ Create a target list of intervals to be realigned """
         sample_rec = self.__samples[sample_name]
@@ -476,7 +495,7 @@ class GATKBPPipeline(JobManager):
                         job_script,
                         job_params,
                         email=sample_rec.usage_mail,
-                        prerequisite=prerequisite,
+                        prereq=prereq,
                         )
         return job_name
 
@@ -484,7 +503,7 @@ class GATKBPPipeline(JobManager):
                        sample_name,
                        bam_file=None,
                        indels_target_intervals_file=None,
-                       prerequisite=None,
+                       prereq=None,
                        ):
         """ Local Realignment around Indels """
         sample_rec = self.__samples[sample_name]
@@ -515,14 +534,14 @@ class GATKBPPipeline(JobManager):
                         job_script,
                         job_params,
                         email=sample_rec.usage_mail,
-                        prerequisite=prerequisite,
+                        prereq=prereq,
                         )
         return job_name
 
     def base_recal(self,
                    sample_name,
                    bam_file=None,
-                   prerequisite=None,
+                   prereq=None,
                    ):
         """ Base Quality Score Recalibration """
         sample_rec = self.__samples[sample_name]
@@ -553,14 +572,14 @@ class GATKBPPipeline(JobManager):
                         job_script,
                         job_params,
                         email=sample_rec.usage_mail,
-                        prerequisite=prerequisite,
+                        prereq=prereq,
                         )
         return job_name
 
     def hap_cal(self,
                 sample_name,
                 bam_file=None,
-                prerequisite=None,
+                prereq=None,
                 ):
         """
         Call SNPs and indels simultaneously via local re-assembly of haplotypes
@@ -594,13 +613,13 @@ class GATKBPPipeline(JobManager):
                         job_script,
                         job_params,
                         email=sample_rec.usage_mail,
-                        prerequisite=prerequisite,
+                        prereq=prereq,
                         )
         return job_name
 
     def combine_gvcfs(self,
                       gvcf_list=None,
-                      prerequisite=None,
+                      prereq=None,
                       ):
         """
         Combines any number of gVCF files that were produced by
@@ -636,13 +655,13 @@ class GATKBPPipeline(JobManager):
                         job_script,
                         job_params,
                         email=self.usage_mail,
-                        prerequisite=prerequisite,
+                        prereq=prereq,
                         )
         return job_name
 
     def genotype_gvcfs(self,
                       gvcf_list=None,
-                      prerequisite=None,
+                      prereq=None,
                       ):
         """
         Combines any number of gVCF files that were produced by
@@ -677,7 +696,7 @@ class GATKBPPipeline(JobManager):
                         job_script,
                         job_params,
                         email=self.usage_mail,
-                        prerequisite=prerequisite,
+                        prereq=prereq,
                         )
         return job_name
 
@@ -696,17 +715,17 @@ class GATKBPPipeline(JobManager):
     
         job_name_bwa_mem = self.bwa_mem(sample_name)
         job_name_sort_sam = self.sort_sam(sample_name,
-                                          prerequisite=[job_name_bwa_mem])
+                                          prereq=[job_name_bwa_mem])
         job_name_mark_dup = self.mark_dup(sample_name,
-                                          prerequisite=[job_name_sort_sam])
+                                          prereq=[job_name_sort_sam])
         job_name_create_intervals = self.create_intervals(sample_name,
-                                                          prerequisite=[job_name_mark_dup])
+                                                          prereq=[job_name_mark_dup])
         job_name_indels_realign = self.indels_realign(sample_name,
-                                                      prerequisite=[job_name_create_intervals])
+                                                      prereq=[job_name_create_intervals])
         job_name_base_recal = self.base_recal(sample_name,
-                                              prerequisite=[job_name_indels_realign])
+                                              prereq=[job_name_indels_realign])
         job_name_hap_cal = self.hap_cal(sample_name,
-                                        prerequisite=[job_name_base_recal])
+                                        prereq=[job_name_base_recal])
         return job_name_hap_cal
 
     def preprocess_dataset(self):
@@ -720,10 +739,89 @@ class GATKBPPipeline(JobManager):
         job name of the process.
         """
 
-        prerequisite = []
+        prereq = []
         for sample_name in self.samples:
             if self.__samples[sample_name].preprocess_sample:
-                prerequisite.append(self.preprocess_sample(sample_name))
-        job_name_combine_gvcfs = self.combine_gvcfs(prerequisite=prerequisite) 
-        job_name_genotype_gvcfs = self.genotype_gvcfs(prerequisite=[job_name_combine_gvcfs]) 
+                prereq.append(self.preprocess_sample(sample_name))
+        job_name_combine_gvcfs = self.combine_gvcfs(prereq=prereq) 
+        job_name_genotype_gvcfs = self.genotype_gvcfs(prereq=[job_name_combine_gvcfs]) 
         return job_name_genotype_gvcfs
+
+def create_job_setup_file(dataset_name,
+                          sample_group,
+                          project_code,
+                          reference_file,
+                          project_out_dir,
+                          samples_root_dir,
+                          platform='Illumina',
+                          known_indels_file=None,
+                          dbsnp_file=None,
+                          variants_calling="YES",
+                          targets_interval_list=None,
+                          usage_mail="NO",
+                          out_job_setup_file=None,
+                          ):
+    mylogger.getLogger(__name__)
+    if out_job_setup_file is None:
+        out_job_setup_file = join_path(samples_root_dir,
+                                       dataset_name+"_job_setup.txt")
+    stream = file(out_job_setup_file, 'w')
+    job_setup_document = {}
+    job_setup_document[JOBS_SETUP_DATASET_NAME_KEY] = dataset_name
+    job_setup_document[JOBS_SETUP_PROJECT_CODE_KEY] = project_code
+    if known_indels_file is not None:
+        job_setup_document[JOBS_SETUP_KNOWN_INDELS_KEY] = known_indels_file
+    if dbsnp_file is not None:
+        job_setup_document[JOBS_SETUP_DBSNP_KEY] = dbsnp_file
+    job_setup_document[JOBS_SETUP_REFFERENCE_KEY] = reference_file
+    job_setup_document[JOBS_SETUP_OUTPUT_DIR_KEY] = project_out_dir
+    job_setup_document[JOBS_SETUP_VARIANTS_CALLING_KEY] = variants_calling
+    if targets_interval_list is not None:
+        job_setup_document[JOBS_SETUP_TARGETS_INTERVAL_LIST_KEY] = targets_interval_list
+    job_setup_document[JOBS_SETUP_DATASET_USAGE_MAIL_KEY] = usage_mail
+
+    samples = []
+    # look for all sub-directory of samples_root_dir
+    for item in listdir(samples_root_dir):
+        item_path = join_path(samples_root_dir, item)
+        if isdir(item_path):
+            # look for fastq.gz files to create sample information
+            for subdir_item in listdir(item_path):
+                if subdir_item.endswith('.fastq.gz'):
+                    sample = {}
+                    sample[JOBS_SETUP_SAMPLE_NAME_KEY] = item
+                    sample[JOBS_SETUP_PLATFORM_KEY] = platform
+                    sample[JOBS_SETUP_SAMPLE_GROUP_KEY] = sample_group
+                    sample[JOBS_SETUP_SAMPLE_USAGE_MAIL_KEY] = 'NO'
+                    sample[JOBS_SETUP_PREPROCESS_SAMPLE_KEY] = 'YES'
+                    break
+            # look for fastq.gz files to fastq files info for R1,R2 pairs or R1 alone
+            fastq_files = []
+            for subdir_item in listdir(item_path):
+                if not subdir_item.endswith('.fastq.gz'):
+                    continue
+                if 'R1' not in subdir_item:
+                    continue
+                pair = {}
+                R1_file = join_path(item_path, subdir_item)
+                pair[JOBS_SETUP_R1_KEY] = R1_file
+                R2_file = R1_file.replace('R1', 'R2')
+                if isfile(R2_file):
+                    pair[JOBS_SETUP_R2_KEY] = R2_file
+                fastq_files.append(pair)
+            # look for fastq.gz files to fastq files info for single file (without 'R1')
+            for subdir_item in listdir(item_path):
+                if not subdir_item.endswith('.fastq.gz'):
+                    continue
+                if 'R1' in subdir_item:
+                    continue
+                pair = {}
+                file_path = join_path(item_path, subdir_item)
+                if 'R2' in file_path and isfile(file_path.replace('R2', 'R1')):
+                    continue
+                pair[JOBS_SETUP_R1_KEY] = file_path
+                fastq_files.append(pair)
+            sample[JOBS_SETUP_FASTQ_KEY] = fastq_files
+            samples.append(sample)
+    job_setup_document[JOBS_SETUP_SAMPLES_SECTION] = samples
+    pyaml.dump(job_setup_document, stream)

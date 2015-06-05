@@ -1,0 +1,47 @@
+DATASET_NAME: test_create_job_setup_file
+OUTPUT_DIR: /pica/v6/b2011117/private/projects/pyCMM/pycmm/flow/test/tmp/gatkbp/Functions/test_create_job_setup_file
+PROJECT_CODE: b2011097
+REFERENCE: /links/to/reference_file
+SAMPLES:
+  - fastq_files:
+      - R1: /pica/v6/b2011117/private/projects/pyCMM/pycmm/flow/test/data/gatkbp/Functions/test_create_job_setup_file/Br-528/Br-528_GCCAAT_L004_R1_001.fastq.gz
+        R2: /pica/v6/b2011117/private/projects/pyCMM/pycmm/flow/test/data/gatkbp/Functions/test_create_job_setup_file/Br-528/Br-528_GCCAAT_L004_R2_001.fastq.gz
+      - R1: /pica/v6/b2011117/private/projects/pyCMM/pycmm/flow/test/data/gatkbp/Functions/test_create_job_setup_file/Br-528/Br-528_GCCAAT_L004_R1_002.fastq.gz
+        R2: /pica/v6/b2011117/private/projects/pyCMM/pycmm/flow/test/data/gatkbp/Functions/test_create_job_setup_file/Br-528/Br-528_GCCAAT_L004_R2_002.fastq.gz
+      - R1: /pica/v6/b2011117/private/projects/pyCMM/pycmm/flow/test/data/gatkbp/Functions/test_create_job_setup_file/Br-528/Br-528_GCCAAT_L004_R1_003.fastq.gz
+      - R1: /pica/v6/b2011117/private/projects/pyCMM/pycmm/flow/test/data/gatkbp/Functions/test_create_job_setup_file/Br-528/Br-528_GCCAAT_L004_R1_004.fastq.gz
+        R2: /pica/v6/b2011117/private/projects/pyCMM/pycmm/flow/test/data/gatkbp/Functions/test_create_job_setup_file/Br-528/Br-528_GCCAAT_L004_R2_004.fastq.gz
+      - R1: /pica/v6/b2011117/private/projects/pyCMM/pycmm/flow/test/data/gatkbp/Functions/test_create_job_setup_file/Br-528/Br-528_GCCAAT_L004_R1_005.fastq.gz
+        R2: /pica/v6/b2011117/private/projects/pyCMM/pycmm/flow/test/data/gatkbp/Functions/test_create_job_setup_file/Br-528/Br-528_GCCAAT_L004_R2_005.fastq.gz
+      - R1: /pica/v6/b2011117/private/projects/pyCMM/pycmm/flow/test/data/gatkbp/Functions/test_create_job_setup_file/Br-528/Br-528_GCCAAT_L004_R1_006.fastq.gz
+    platform: Illumina
+    preprocess_sample: YES
+    sample_group: NA
+    sample_name: Br-528
+    usage_mail: NO
+  - fastq_files:
+      - R1: /pica/v6/b2011117/private/projects/pyCMM/pycmm/flow/test/data/gatkbp/Functions/test_create_job_setup_file/Co-666/Co-666_GATCAG_L005_R1_001.fastq.gz
+        R2: /pica/v6/b2011117/private/projects/pyCMM/pycmm/flow/test/data/gatkbp/Functions/test_create_job_setup_file/Co-666/Co-666_GATCAG_L005_R2_001.fastq.gz
+      - R1: /pica/v6/b2011117/private/projects/pyCMM/pycmm/flow/test/data/gatkbp/Functions/test_create_job_setup_file/Co-666/Co-666_GATCAG_L005_R1_002.fastq.gz
+        R2: /pica/v6/b2011117/private/projects/pyCMM/pycmm/flow/test/data/gatkbp/Functions/test_create_job_setup_file/Co-666/Co-666_GATCAG_L005_R2_002.fastq.gz
+      - R1: /pica/v6/b2011117/private/projects/pyCMM/pycmm/flow/test/data/gatkbp/Functions/test_create_job_setup_file/Co-666/Co-666_GATCAG_L005_R1_005.fastq.gz
+        R2: /pica/v6/b2011117/private/projects/pyCMM/pycmm/flow/test/data/gatkbp/Functions/test_create_job_setup_file/Co-666/Co-666_GATCAG_L005_R2_005.fastq.gz
+      - R1: /pica/v6/b2011117/private/projects/pyCMM/pycmm/flow/test/data/gatkbp/Functions/test_create_job_setup_file/Co-666/Co-666_GATCAG_L005_R1_006.fastq.gz
+        R2: /pica/v6/b2011117/private/projects/pyCMM/pycmm/flow/test/data/gatkbp/Functions/test_create_job_setup_file/Co-666/Co-666_GATCAG_L005_R2_006.fastq.gz
+      - R1: /pica/v6/b2011117/private/projects/pyCMM/pycmm/flow/test/data/gatkbp/Functions/test_create_job_setup_file/Co-666/abcd.fastq.gz
+      - R1: /pica/v6/b2011117/private/projects/pyCMM/pycmm/flow/test/data/gatkbp/Functions/test_create_job_setup_file/Co-666/Co-666_GATCAG_L005_R2_003.fastq.gz
+    platform: Illumina
+    preprocess_sample: YES
+    sample_group: NA
+    sample_name: Co-666
+    usage_mail: NO
+  - fastq_files:
+      - R1: /pica/v6/b2011117/private/projects/pyCMM/pycmm/flow/test/data/gatkbp/Functions/test_create_job_setup_file/Br-724/5_110901_BD036TACXX_Br-724_ind_5_R1.fastq.gz
+        R2: /pica/v6/b2011117/private/projects/pyCMM/pycmm/flow/test/data/gatkbp/Functions/test_create_job_setup_file/Br-724/5_110901_BD036TACXX_Br-724_ind_5_R2.fastq.gz
+    platform: Illumina
+    preprocess_sample: YES
+    sample_group: NA
+    sample_name: Br-724
+    usage_mail: NO
+USAGE_MAIL: NO
+VARIANTS_CALLING: YES

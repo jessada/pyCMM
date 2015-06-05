@@ -17,9 +17,11 @@ from pycmm.flow.gatkbp import JOBS_SETUP_OUTPUT_DIR_KEY
 from pycmm.flow.gatkbp import JOBS_SETUP_VARIANTS_CALLING_KEY
 from pycmm.flow.gatkbp import JOBS_SETUP_JOBS_REPORT_FILE_KEY
 from pycmm.flow.gatkbp import JOBS_SETUP_TARGETS_INTERVAL_LIST_KEY
-from pycmm.flow.gatkbp import JOBS_SETUP_USAGE_MAIL_KEY
+from pycmm.flow.gatkbp import JOBS_SETUP_DATASET_USAGE_MAIL_KEY
+from pycmm.flow.gatkbp import create_job_setup_file
 
-TEST_PROJECT_CODE = 'b2011158'
+FAST_TEST_PROJECT_CODE = 'b2011158'
+SLOW_TEST_PROJECT_CODE = 'b2011097'
 
 class TestGATKBPPipeline(SafeTester):
 
@@ -34,7 +36,7 @@ class TestGATKBPPipeline(SafeTester):
 
     def __create_jobs_setup_file(self,
                                  dataset_name=None,
-                                 project_code=TEST_PROJECT_CODE,
+                                 project_code=FAST_TEST_PROJECT_CODE,
                                  variants_calling="YES",
                                  targets_interval_list=None,
                                  usage_mail="NO",
@@ -397,7 +399,7 @@ class TestGATKBPPipeline(SafeTester):
         out_merged_gvcf = join_path(self.working_dir,
                                     self.test_function+"_merged.gvcf")
         gatk_combine_gvcfs(job_name,
-                           TEST_PROJECT_CODE,
+                           FAST_TEST_PROJECT_CODE,
                            slurm_log_file,
                            gvcf_list,
                            out_merged_gvcf,
@@ -454,7 +456,7 @@ class TestGATKBPPipeline(SafeTester):
 
         self.individual_debug = True
         self.init_test(self.current_func_name)
-        jobs_setup_file = self.__create_jobs_setup_file()
+        jobs_setup_file = self.__create_jobs_setup_file(project_code='b2011097')
         sample_name = "test_big_sample"
         sample_group = self.current_func_name
         fastq1_file = join_path(self.data_dir,
@@ -582,6 +584,42 @@ class TestGATKBPPipeline(SafeTester):
                          " garbage collecting process doesn't work properly")
         self.assertFalse(path_exists(sorted_reads_dest),
                          " garbage collecting process doesn't work properly")
+
+    def tearDown(self):
+        self.remove_working_dir()
+
+class TestFunctions(SafeTester):
+
+    def __init__(self, test_name):
+        SafeTester.__init__(self,
+                            test_name,
+                            dirname(__file__),
+                            )
+
+    def setUp(self):
+        self.module_name = 'gatkbp'
+
+    def test_create_job_setup_file(self):
+        """ test if function create_job_setup_file can be really used in production """
+
+        self.individual_debug = True
+        self.init_test(self.current_func_name)
+        samples_root_dir = self.data_dir
+        out_job_setup_file = join_path(self.working_dir,
+                                       'job_setup_file.txt')
+        exp_job_setup_file = join_path(self.data_dir,
+                                       'expected_job_setup_file.txt')
+        create_job_setup_file(self.test_function,
+                              'NA',
+                              SLOW_TEST_PROJECT_CODE,
+                              '/links/to/reference_file',
+                              self.working_dir,
+                              samples_root_dir,
+                              out_job_setup_file=out_job_setup_file,
+                              )
+        self.assertTrue(filecmp.cmp(out_job_setup_file,
+                                    exp_job_setup_file),
+                        "create_job_setup_file doesn't funciton correctly")
 
     def tearDown(self):
         self.remove_working_dir()
