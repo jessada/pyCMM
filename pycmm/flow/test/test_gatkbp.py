@@ -36,13 +36,16 @@ class TestGATKBPPipeline(SafeTester):
 
     def __create_jobs_setup_file(self,
                                  dataset_name=None,
-                                 project_code=FAST_TEST_PROJECT_CODE,
+                                 sample_group='test_group',
+                                 project_code=SLOW_TEST_PROJECT_CODE,
                                  variants_calling="YES",
                                  targets_interval_list=None,
                                  usage_mail="NO",
                                  ):
         jobs_setup_file = join_path(self.working_dir,
                                     self.test_function+'_jobs_setup.txt')
+        if dataset_name is None:
+            dataset_name = self.test_function
         known_indels = join_path(self.data_dir,
                                  '1000g_phase1.vcf')
         known_indels += "," + join_path(self.data_dir,
@@ -53,34 +56,44 @@ class TestGATKBPPipeline(SafeTester):
                                    'ref.fa')
         jobs_report_file = join_path(self.working_dir,
                                      self.test_function+'_rpt.txt')
-        f_rpt = open(jobs_setup_file, "w")
-        if dataset_name is None:
-            f_rpt.write("##" + JOBS_SETUP_DATASET_NAME_KEY + "=" + self.test_function + "\n")
-        else:
-            f_rpt.write("##" + JOBS_SETUP_DATASET_NAME_KEY + "=" + dataset_name + "\n")
-        f_rpt.write("##" + JOBS_SETUP_PROJECT_CODE_KEY + "=" + project_code + "\n")
-        f_rpt.write("##" + JOBS_SETUP_KNOWN_INDELS_KEY + "=" + known_indels + "\n")
-        f_rpt.write("##" + JOBS_SETUP_DBSNP_KEY + "=" + dbsnp_file + "\n")
-        f_rpt.write("##" + JOBS_SETUP_REFFERENCE_KEY + "=" + reference_file + "\n")
-        f_rpt.write("##" + JOBS_SETUP_OUTPUT_DIR_KEY + "=" + self.working_dir + "\n")
-        f_rpt.write("##" + JOBS_SETUP_VARIANTS_CALLING_KEY + "=" + variants_calling + "\n")
-        f_rpt.write("##" + JOBS_SETUP_JOBS_REPORT_FILE_KEY + "=" + jobs_report_file + "\n")
-        if targets_interval_list is not None:
-            f_rpt.write("##" + JOBS_SETUP_TARGETS_INTERVAL_LIST_KEY + "=" + targets_interval_list + "\n")
-        f_rpt.write("##" + JOBS_SETUP_USAGE_MAIL_KEY + "=" + usage_mail + "\n")
-        sample_header = "#SAMPLE"
-        sample_header += "\tFASTQ1"
-        sample_header += "\tFASTQ2"
-        sample_header += "\tSAMPLE_GROUP"
-        sample_header += "\tPLATFORM"
-        sample_header += "\tLIBRARY"
-        sample_header += "\tUNIT"
-        sample_header += "\tUSAGE_MAIL"
-        sample_header += "\tPREPROCESS_SAMPLE"
-        sample_header += "\n"
-        f_rpt.write(sample_header)
-        f_rpt.close()
+        create_job_setup_file(dataset_name=dataset_name,
+                              sample_group=sample_group,
+                              project_code=project_code,
+                              reference_file=reference_file,
+                              project_out_dir=self.working_dir,
+                              jobs_report_file=jobs_report_file,
+                              samples_root_dir=self.data_dir,
+                              out_job_setup_file=jobs_setup_file,
+                              )
         return jobs_setup_file
+#        f_rpt = open(jobs_setup_file, "w")
+#        if dataset_name is None:
+#            f_rpt.write("##" + JOBS_SETUP_DATASET_NAME_KEY + "=" + self.test_function + "\n")
+#        else:
+#            f_rpt.write("##" + JOBS_SETUP_DATASET_NAME_KEY + "=" + dataset_name + "\n")
+#        f_rpt.write("##" + JOBS_SETUP_PROJECT_CODE_KEY + "=" + project_code + "\n")
+#        f_rpt.write("##" + JOBS_SETUP_KNOWN_INDELS_KEY + "=" + known_indels + "\n")
+#        f_rpt.write("##" + JOBS_SETUP_DBSNP_KEY + "=" + dbsnp_file + "\n")
+#        f_rpt.write("##" + JOBS_SETUP_REFFERENCE_KEY + "=" + reference_file + "\n")
+#        f_rpt.write("##" + JOBS_SETUP_OUTPUT_DIR_KEY + "=" + self.working_dir + "\n")
+#        f_rpt.write("##" + JOBS_SETUP_VARIANTS_CALLING_KEY + "=" + variants_calling + "\n")
+#        f_rpt.write("##" + JOBS_SETUP_JOBS_REPORT_FILE_KEY + "=" + jobs_report_file + "\n")
+#        if targets_interval_list is not None:
+#            f_rpt.write("##" + JOBS_SETUP_TARGETS_INTERVAL_LIST_KEY + "=" + targets_interval_list + "\n")
+#        f_rpt.write("##" + JOBS_SETUP_USAGE_MAIL_KEY + "=" + usage_mail + "\n")
+#        sample_header = "#SAMPLE"
+#        sample_header += "\tFASTQ1"
+#        sample_header += "\tFASTQ2"
+#        sample_header += "\tSAMPLE_GROUP"
+#        sample_header += "\tPLATFORM"
+#        sample_header += "\tLIBRARY"
+#        sample_header += "\tUNIT"
+#        sample_header += "\tUSAGE_MAIL"
+#        sample_header += "\tPREPROCESS_SAMPLE"
+#        sample_header += "\n"
+#        f_rpt.write(sample_header)
+#        f_rpt.close()
+#        return jobs_setup_file
 
     def __add_sample_jobs_setup_file(self,
                                      jobs_setup_file,
@@ -151,71 +164,190 @@ class TestGATKBPPipeline(SafeTester):
                          "GATKBPPipeline cannot correctly identify number of sampels from jobs setup file")
         self.assertEqual(pl.samples['test_sample3'].sample_name,
                          'test_sample3',
-                         "GATKBPPipeline cannot correctly sample information from jobs setup file")
+                         "GATKBPPipeline cannot correctly read sample information from jobs setup file")
         self.assertEqual(pl.samples['test_sample3'].library,
                          'lib1',
-                         "GATKBPPipeline cannot correctly sample information from jobs setup file")
+                         "GATKBPPipeline cannot correctly read sample information from jobs setup file")
         self.assertEqual(pl.samples['test_sample3'].unit,
                          'unit1',
-                         "GATKBPPipeline cannot correctly sample information from jobs setup file")
-        self.assertEqual(pl.samples['test_sample3'].fastq1_file,
+                         "GATKBPPipeline cannot correctly read sample information from jobs setup file")
+        self.assertEqual(pl.samples['test_sample3'].fastq_pairs[0]['R1'],
                          '/proj/b2012247/private/axeq_custom/1303AHS-0016/Co-1116_1.fastq.gz',
-                         "GATKBPPipeline cannot correctly sample information from jobs setup file")
+                         "GATKBPPipeline cannot correctly read sample information from jobs setup file")
         self.assertEqual(pl.samples['test_sample_1'].sample_name,
                          'test_sample_1',
-                         "GATKBPPipeline cannot correctly sample information from jobs setup file")
+                         "GATKBPPipeline cannot correctly read sample information from jobs setup file")
+        self.assertEqual(pl.samples['test_sample_1'].preprocess_sample,
+                         True,
+                         "GATKBPPipeline cannot correctly read sample information from jobs setup file")
         self.assertEqual(pl.samples['test_sample_1'].platform,
                          'Illumina',
-                         "GATKBPPipeline cannot correctly sample information from jobs setup file")
-        self.assertEqual(pl.samples['test_sample_1'].fastq2_file,
+                         "GATKBPPipeline cannot correctly read sample information from jobs setup file")
+        self.assertEqual(pl.samples['test_sample_1'].fastq_pairs[3]['R2'],
                          '/proj/b2012247/private/axeq_custom/1303AHS-0016/Co-1747_2.fastq.gz',
-                         "GATKBPPipeline cannot correctly sample information from jobs setup file")
+                         "GATKBPPipeline cannot correctly read sample information from jobs setup file")
         self.assertEqual(pl.samples['test_sample10000'].sample_name,
                          'test_sample10000',
-                         "GATKBPPipeline cannot correctly sample information from jobs setup file")
+                         "GATKBPPipeline cannot correctly read sample information from jobs setup file")
         self.assertEqual(pl.samples['test_sample10000'].sample_group,
                          'test_group',
-                         "GATKBPPipeline cannot correctly sample information from jobs setup file")
+                         "GATKBPPipeline cannot correctly read sample information from jobs setup file")
+        self.assertEqual(pl.samples['test_sample10000'].usage_mail,
+                         False,
+                         "GATKBPPipeline cannot correctly read sample information from jobs setup file")
 
     @unittest.skipUnless(settings.SLURM_TEST, "taking too much UPPMAX cpu-core hours")
-    def test_bwa_mem(self):
-        """ test bwa mem """
+    def test_bwa_mem_1(self):
+        """ test basic bwa mem, one pair of fastq files """
 
         self.individual_debug = True
         self.init_test(self.current_func_name)
         jobs_setup_file = self.__create_jobs_setup_file()
         sample_name = "test-sample"
-        sample_group = self.current_func_name
-        fastq1_file = join_path(self.data_dir,
-                           sample_name + "_1.fastq.gz")
-        fastq2_file = join_path(self.data_dir,
-                           sample_name + "_2.fastq.gz")
-        self.__add_sample_jobs_setup_file(jobs_setup_file,
-                                          sample_name,
-                                          fastq1_file,
-                                          fastq2_file,
-                                          sample_group,
-                                          )
         pl = GATKBPPipeline(jobs_setup_file)
         pl.bwa_mem(sample_name)
 
     @unittest.skipUnless(settings.SLURM_TEST, "taking too much UPPMAX cpu-core hours")
-    def test_sort_sam(self):
-        """ test sort sam """
+    def test_bwa_mem_2(self):
+        """ test a little advanced bwa mem, 6 pairs of fastq files """
+
+        self.individual_debug = True
+        self.init_test(self.current_func_name)
+        jobs_setup_file = self.__create_jobs_setup_file()
+        sample_name = "test-6-pairs"
+        pl = GATKBPPipeline(jobs_setup_file)
+        pl.bwa_mem(sample_name)
+
+    @unittest.skipUnless(settings.SLURM_TEST, "taking too much UPPMAX cpu-core hours")
+    def test_bwa_mem_3(self):
+        """ test a little more advanced bwa mem, 6 abnormal pairs of fastq files """
+
+        self.individual_debug = True
+        self.init_test(self.current_func_name)
+        jobs_setup_file = self.__create_jobs_setup_file()
+        sample_name = "test-6-unpairs"
+        pl = GATKBPPipeline(jobs_setup_file)
+        pl.bwa_mem(sample_name)
+
+    @unittest.skipUnless(settings.SLURM_TEST, "taking too much UPPMAX cpu-core hours")
+    def test_bwa_mem_4(self):
+        """ test bwa mem with concatenate gz files """
 
         self.individual_debug = True
         self.init_test(self.current_func_name)
         jobs_setup_file = self.__create_jobs_setup_file()
         sample_name = "test-sample"
-        sam_file = join_path(self.data_dir,
-                             sample_name+"_raw_aligned_reads.sam")
-        self.__add_sample_jobs_setup_file(jobs_setup_file,
-                                          sample_name,
-                                          "NA",
-                                          "NA",
-                                          "NA",
-                                          )
         pl = GATKBPPipeline(jobs_setup_file)
+        pl.bwa_mem(sample_name)
+
+    @unittest.skipUnless(settings.SLURM_TEST, "taking too much UPPMAX cpu-core hours")
+    def test_concat_sam_1(self):
+        """ test basic concat sam, a sam file from one pair of fastq files """
+
+        self.individual_debug = True
+        self.init_test(self.current_func_name)
+        jobs_setup_file = self.__create_jobs_setup_file()
+        sample_name = "test-sample"
+        pl = GATKBPPipeline(jobs_setup_file)
+        sam_file_src = join_path(self.data_dir,
+                                 sample_name+"_raw_aligned_reads_1.sam")
+        sam_file_dest = join_path(join_path(join_path(self.working_dir,
+                                                      "tmp"),
+                                            sample_name),
+                                  sample_name+"_raw_aligned_reads_1.sam")
+        self.copy_file(sam_file_src, sam_file_dest)
+        pl.concat_sam(sample_name)
+
+    @unittest.skipUnless(settings.SLURM_TEST, "taking too much UPPMAX cpu-core hours")
+    def test_concat_sam_2(self):
+        """ test a little advanced concat sam, 6 pairs of fastq files """
+
+        self.individual_debug = True
+        self.init_test(self.current_func_name)
+        jobs_setup_file = self.__create_jobs_setup_file()
+        sample_name = "test-6-pairs"
+        pl = GATKBPPipeline(jobs_setup_file)
+        for idx in xrange(1,7):
+            file_name = sample_name + "_raw_aligned_reads_" + str(idx) + ".sam"
+            sam_file_src = join_path(self.data_dir,
+                                     file_name)
+            sam_file_dest = join_path(join_path(join_path(self.working_dir,
+                                                          "tmp"),
+                                                sample_name),
+                                     file_name)
+            self.copy_file(sam_file_src, sam_file_dest)
+        pl.concat_sam(sample_name)
+
+    @unittest.skipUnless(settings.SLURM_TEST, "taking too much UPPMAX cpu-core hours")
+    def test_concat_sam_3(self):
+        """ test a little more advanced concat sam, 6 abnormal pairs of fastq files """
+
+        self.individual_debug = True
+        self.init_test(self.current_func_name)
+        jobs_setup_file = self.__create_jobs_setup_file()
+        sample_name = "test-6-unpairs"
+        pl = GATKBPPipeline(jobs_setup_file)
+        for idx in xrange(1,7):
+            file_name = sample_name + "_raw_aligned_reads_" + str(idx) + ".sam"
+            sam_file_src = join_path(self.data_dir,
+                                     file_name)
+            sam_file_dest = join_path(join_path(join_path(self.working_dir,
+                                                          "tmp"),
+                                                sample_name),
+                                     file_name)
+            self.copy_file(sam_file_src, sam_file_dest)
+        pl.concat_sam(sample_name)
+
+    @unittest.skipUnless(settings.SLURM_TEST, "taking too much UPPMAX cpu-core hours")
+    def test_sort_sam_1(self):
+        """ test basic sort sam, a sam file from one pair of fastq files """
+
+        self.individual_debug = True
+        self.init_test(self.current_func_name)
+        jobs_setup_file = self.__create_jobs_setup_file()
+        sample_name = "test-sample"
+        pl = GATKBPPipeline(jobs_setup_file)
+        sam_file = join_path(self.data_dir,
+                             sample_name+"_concatted_reads.sam")
+        pl.sort_sam(sample_name, sam_file=sam_file)
+
+    @unittest.skipUnless(settings.SLURM_TEST, "taking too much UPPMAX cpu-core hours")
+    def test_sort_sam_2(self):
+        """ test a little advanced sort sam, 6 pairs of fastq files """
+
+        self.individual_debug = True
+        self.init_test(self.current_func_name)
+        jobs_setup_file = self.__create_jobs_setup_file()
+        sample_name = "test-6-pairs"
+        pl = GATKBPPipeline(jobs_setup_file)
+        sam_file = join_path(self.data_dir,
+                             sample_name+"_concatted_reads.sam")
+        pl.sort_sam(sample_name, sam_file=sam_file)
+
+    @unittest.skipUnless(settings.SLURM_TEST, "taking too much UPPMAX cpu-core hours")
+    def test_sort_sam_3(self):
+        """ test a little more advanced sort sam, 6 abnormal pairs of fastq files """
+
+        self.individual_debug = True
+        self.init_test(self.current_func_name)
+        jobs_setup_file = self.__create_jobs_setup_file()
+        sample_name = "test-6-unpairs"
+        pl = GATKBPPipeline(jobs_setup_file)
+        sam_file = join_path(self.data_dir,
+                             sample_name+"_concatted_reads.sam")
+        pl.sort_sam(sample_name, sam_file=sam_file)
+
+    @unittest.skipUnless(settings.SLURM_TEST, "taking too much UPPMAX cpu-core hours")
+    def test_sort_sam_4(self):
+        """ test sort sam with concatenate gz files """
+
+        self.individual_debug = True
+        self.init_test(self.current_func_name)
+        jobs_setup_file = self.__create_jobs_setup_file()
+        sample_name = "test-sample"
+        pl = GATKBPPipeline(jobs_setup_file)
+        sam_file = join_path(self.data_dir,
+                             sample_name+"_concatted_reads.sam")
         pl.sort_sam(sample_name, sam_file=sam_file)
 
     @unittest.skipUnless(settings.SLURM_TEST, "taking too much UPPMAX cpu-core hours")
@@ -609,12 +741,13 @@ class TestFunctions(SafeTester):
                                        'job_setup_file.txt')
         exp_job_setup_file = join_path(self.data_dir,
                                        'expected_job_setup_file.txt')
-        create_job_setup_file(self.test_function,
-                              'NA',
-                              SLOW_TEST_PROJECT_CODE,
-                              '/links/to/reference_file',
-                              self.working_dir,
-                              samples_root_dir,
+        create_job_setup_file(dataset_name=self.test_function,
+                              sample_group='NA',
+                              project_code=SLOW_TEST_PROJECT_CODE,
+                              reference_file='/links/to/reference_file',
+                              project_out_dir=self.working_dir,
+                              jobs_report_file='/path/to/job_report_file',
+                              samples_root_dir=samples_root_dir,
                               out_job_setup_file=out_job_setup_file,
                               )
         self.assertTrue(filecmp.cmp(out_job_setup_file,

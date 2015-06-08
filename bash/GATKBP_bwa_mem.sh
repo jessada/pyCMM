@@ -49,7 +49,6 @@ IFS=',' read -ra fastq_files <<< "$sample_list"
 sample1="${fastq_files[0]}"
 sample2="${fastq_files[1]}"
 [ -f "$sample1" ] || die "$sample1 is not found"
-[ -f "$sample2" ] || die "$sample2 is not found"
 [ -f "$ref" ] || die "$ref is not found"
 
 time_stamp=$( date )
@@ -89,7 +88,10 @@ read_group="$sample_group.$sample_name"
 cmd=" bwa mem -M -R '@RG\tID:$read_group\tSM:$sample_name\tPL:illumina\tLB:lib1\tPU:unit1'"
 cmd+=" $ref"
 cmd+=" $sample1"
-cmd+=" $sample2"
+if [ -f $sample2 ]
+then
+    cmd+=" $sample2"
+fi
 cmd+=" > $out_file" 
 eval_cmd "$cmd"
 new_section_txt "F I N I S H <$script_name>"

@@ -1,4 +1,5 @@
 DATASET_NAME: test_create_job_setup_file
+JOBS_REPORT_FILE: /path/to/job_report_file
 OUTPUT_DIR: /pica/v6/b2011117/private/projects/pyCMM/pycmm/flow/test/tmp/gatkbp/Functions/test_create_job_setup_file
 PROJECT_CODE: b2011097
 REFERENCE: /links/to/reference_file

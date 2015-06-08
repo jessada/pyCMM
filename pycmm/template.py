@@ -4,6 +4,7 @@ import os
 import shutil
 import subprocess
 import inspect
+import fileinput
 import gc
 from os.path import join as join_path
 from os.path import dirname
@@ -34,7 +35,15 @@ class pyCMMBase(object):
 
     def delete_file(self, file_name):
         if os.path.exists(file_name):
-            os.remove(file_name)
+            if os.path.islink(file_name):
+                os.unlink(file_name)
+            else:
+                os.remove(file_name)
+
+    def concat_files(self, srcs, dst):
+        with open(dst, 'w') as fout:
+            for line in fileinput.input(srcs):
+                fout.write(line)
 
     def copy_file(self, src, dst):
         self.delete_file(dst)

@@ -19,10 +19,10 @@ class JobManagerHouseKeeping(JobManager):
     """ A test class to test garbage collecting of JobManager """
 
     def __init__(self,
-                 job_report_file=None,
+                 jobs_report_file=None,
                  ):
         JobManager.__init__(self,
-                            job_report_file,
+                            jobs_report_file,
                             )
 
     def get_raw_repr(self):
@@ -253,7 +253,7 @@ class TestJobManager(SafeTester):
                              self.test_function+'.txt')
         job_params = '3 2000 ' + tmp_file
         self.delete_file(tmp_file)
-        jobman = JobManagerHouseKeeping(job_report_file=report_file)
+        jobman = JobManagerHouseKeeping(jobs_report_file=report_file)
         jobman.submit_job(job_name_1,
                           TEST_PROJECT_CODE,
                           TEST_PARTITION_TYPE,

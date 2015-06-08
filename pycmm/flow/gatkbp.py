@@ -2,6 +2,7 @@ import sys
 import re
 import datetime
 import pyaml
+import yaml
 from os import listdir
 from os.path import join as join_path
 from os.path import isdir
@@ -16,6 +17,7 @@ from pycmm.settings import GATK_ALLOC_TIME
 METADATA_PATTERN = re.compile(r'''##(?P<key>.+?)=(?P<val>.+)''')
 
 BWA_MEM_SCRIPT = "$PYCMM/bash/GATKBP_bwa_mem.sh"
+CONCAT_FILES_SCRIPT = "$PYCMM/bash/concat_files.sh"
 SORT_SAM_SCRIPT = "$PYCMM/bash/GATKBP_sort_sam.sh"
 MARK_DUP_SCRIPT = "$PYCMM/bash/GATKBP_mark_dup.sh"
 INDELS_TARGET_INTERVALS_SCRIPT = "$PYCMM/bash/GATKBP_create_intervals.sh"
@@ -40,41 +42,38 @@ JOBS_SETUP_DATASET_USAGE_MAIL_KEY = "USAGE_MAIL"
 # jobs sample info section
 JOBS_SETUP_SAMPLES_SECTION = "SAMPLES"
 JOBS_SETUP_SAMPLE_NAME_KEY = "sample_name"
-JOBS_SETUP_FASTQ_KEY = "fastq_files"
+JOBS_SETUP_FASTQ_PAIRS_KEY = "fastq_files"
 JOBS_SETUP_R1_KEY = "R1"
 JOBS_SETUP_R2_KEY = "R2"
 JOBS_SETUP_SAMPLE_GROUP_KEY = "sample_group"
 JOBS_SETUP_PLATFORM_KEY = "platform"
-#JOBS_SETUP_LIBRARY_KEY = "library"
-#JOBS_SETUP_UNIT_KEY = "unit"
 JOBS_SETUP_SAMPLE_USAGE_MAIL_KEY = "usage_mail"
 JOBS_SETUP_PREPROCESS_SAMPLE_KEY = "preprocess_sample"
 
-# obsolete should be deleted
-SAMPLE_RECORD_SAMPLE_NAME_IDX = 0
-SAMPLE_RECORD_FASTQ1_IDX = 1
-SAMPLE_RECORD_FASTQ2_IDX = 2
-SAMPLE_RECORD_SAMPLE_GROUP_IDX = 3
-SAMPLE_RECORD_PLATFORM_IDX = 4
-SAMPLE_RECORD_LIBRARY_IDX = 5
-SAMPLE_RECORD_UNIT_IDX = 6
-SAMPLE_RECORD_USAGE_MAIL_IDX = 7
-SAMPLE_RECORD_PREPROCESS_SAMPLE_IDX = 8
+## obsolete should be deleted
+#SAMPLE_RECORD_SAMPLE_NAME_IDX = 0
+#SAMPLE_RECORD_FASTQ1_IDX = 1
+#SAMPLE_RECORD_FASTQ2_IDX = 2
+#SAMPLE_RECORD_SAMPLE_GROUP_IDX = 3
+#SAMPLE_RECORD_PLATFORM_IDX = 4
+#SAMPLE_RECORD_LIBRARY_IDX = 5
+#SAMPLE_RECORD_UNIT_IDX = 6
+#SAMPLE_RECORD_USAGE_MAIL_IDX = 7
+#SAMPLE_RECORD_PREPROCESS_SAMPLE_IDX = 8
 
 class SampleRecord(pyCMMBase):
     """ A structure to parse and keep sample information """
 
     def __init__(self,
-                 sample_line,
+                 sample_info,
                  output_dir,
                  ):
-        self.__data = sample_line.strip().split('\t')
+        self.__parse_sample_info(sample_info)
         self.__output_dir = output_dir
 
     def get_raw_repr(self):
         return {"sample name": self.sample_name,
-                "fastq1 file": self.fastq1_file,
-                "fastq2 file": self.fastq2_file,
+                "fastq pairs": self.fastq_pairs,
                 "sample group": self.sample_group,
                 "platform": self.platform,
                 "library": self.library,
@@ -83,24 +82,65 @@ class SampleRecord(pyCMMBase):
                 "pre-process sample": self.preprocess_sample,
                 }
 
+    def __parse_sample_info(self, sample_info):
+        self.__sample_name = sample_info[JOBS_SETUP_SAMPLE_NAME_KEY]
+        self.__platform = sample_info[JOBS_SETUP_PLATFORM_KEY]
+        self.__sample_group = sample_info[JOBS_SETUP_SAMPLE_GROUP_KEY]
+        self.__fastq_pairs = sample_info[JOBS_SETUP_FASTQ_PAIRS_KEY]
+        self.__usage_mail = sample_info[JOBS_SETUP_SAMPLE_USAGE_MAIL_KEY]
+        self.__preprocess_sample = sample_info[JOBS_SETUP_PREPROCESS_SAMPLE_KEY]
+
     @property
     def sample_name(self):
-        return self.__data[SAMPLE_RECORD_SAMPLE_NAME_IDX]
+        return self.__sample_name
 
     @property
-    def fastq1_file(self):
-        return self.__data[SAMPLE_RECORD_FASTQ1_IDX]
+    def sample_group(self):
+        return self.__sample_group
 
     @property
-    def fastq2_file(self):
-        return self.__data[SAMPLE_RECORD_FASTQ2_IDX]
+    def platform(self):
+        return self.__platform
 
     @property
-    def raw_aligned_reads_file(self):
+    def library(self):
+        return 'lib1'
+
+    @property
+    def unit(self):
+        return 'unit1'
+
+    @property
+    def usage_mail(self):
+        return self.__usage_mail
+
+    @property
+    def preprocess_sample(self):
+        return self.__preprocess_sample
+
+    @property
+    def fastq_pairs(self):
+        return self.__fastq_pairs
+
+    @property
+    def raw_aligned_reads_files(self):
+        file_prefix = join_path(join_path(join_path(self.__output_dir,
+                                                    'tmp'),
+                                          self.sample_name),
+                                self.sample_name+"_raw_aligned_reads")
+        raw_aligned_reads_files = []
+        for idx in xrange(len(self.fastq_pairs)):
+            file_name = file_prefix + "_" + str(idx+1) + ".sam"
+            raw_aligned_reads_files.append(file_name)
+        return raw_aligned_reads_files
+
+    @property
+    def concatted_sam_file(self):
         return join_path(join_path(join_path(self.__output_dir,
                                              'tmp'),
                                    self.sample_name),
-                         self.sample_name+"_raw_aligned_reads.sam")
+                         self.sample_name+"_concatted_reads.sam")
+
     @property
     def sorted_reads_file(self):
         return join_path(join_path(join_path(self.__output_dir,
@@ -169,30 +209,6 @@ class SampleRecord(pyCMMBase):
                                    self.sample_name),
                          self.sample_name+"_raw.g.vcf")
 
-    @property
-    def sample_group(self):
-        return self.__data[SAMPLE_RECORD_SAMPLE_GROUP_IDX]
-
-    @property
-    def platform(self):
-        return self.__data[SAMPLE_RECORD_PLATFORM_IDX]
-
-    @property
-    def library(self):
-        return 'lib1'
-
-    @property
-    def unit(self):
-        return 'unit1'
-
-    @property
-    def usage_mail(self):
-        return self.__data[SAMPLE_RECORD_USAGE_MAIL_IDX] == "YES"
-
-    @property
-    def preprocess_sample(self):
-        return self.__data[SAMPLE_RECORD_PREPROCESS_SAMPLE_IDX] == "YES"
-
 
 class GATKBPPipeline(JobManager):
     """ A class to control GATK best practice pipeline """
@@ -200,11 +216,10 @@ class GATKBPPipeline(JobManager):
     def __init__(self,
                  jobs_setup_file,
                  ):
+        mylogger.getLogger(__name__)
         self.__load_jobs_info(jobs_setup_file)
-        self.__meta_data[JOBS_SETUP_VARIANTS_CALLING_KEY] == "YES"
-        self.__meta_data[JOBS_SETUP_DATASET_USAGE_MAIL_KEY] == "YES"
         JobManager.__init__(self,
-                            job_report_file=self.jobs_report_file)
+                            jobs_report_file=self.jobs_report_file)
         self.__vcf_out_dir = join_path(self.output_dir,
                                        "vcf")
         self.__bam_out_dir = join_path(self.output_dir,
@@ -240,11 +255,17 @@ class GATKBPPipeline(JobManager):
 
     @property
     def known_indels(self):
-        return self.__meta_data[JOBS_SETUP_KNOWN_INDELS_KEY].split(',')
+        if JOBS_SETUP_KNOWN_INDELS_KEY in self.__meta_data:
+            return self.__meta_data[JOBS_SETUP_KNOWN_INDELS_KEY].split(',')
+        else:
+            return None
 
     @property
     def dbsnp(self):
-        return self.__meta_data[JOBS_SETUP_DBSNP_KEY]
+        if JOBS_SETUP_DBSNP_KEY in self.__meta_data:
+            return self.__meta_data[JOBS_SETUP_DBSNP_KEY]
+        else:
+            return None
 
     @property
     def reference(self):
@@ -256,7 +277,7 @@ class GATKBPPipeline(JobManager):
 
     @property
     def variants_calling(self):
-        return self.__meta_data[JOBS_SETUP_VARIANTS_CALLING_KEY] == "YES"
+        return self.__meta_data[JOBS_SETUP_VARIANTS_CALLING_KEY]
 
     @property
     def jobs_report_file(self):
@@ -271,7 +292,7 @@ class GATKBPPipeline(JobManager):
 
     @property
     def usage_mail(self):
-        return self.__meta_data[JOBS_SETUP_DATASET_USAGE_MAIL_KEY] == "YES"
+        return self.__meta_data[JOBS_SETUP_DATASET_USAGE_MAIL_KEY]
 
     @property
     def samples(self):
@@ -312,26 +333,19 @@ class GATKBPPipeline(JobManager):
                          self.dataset_name+"_genotyped.vcf")
 
     def __load_jobs_info(self, job_setup_file):
-        mylogger.getLogger(__name__)
-        #mylogger.getLogger(__name__ + "." + sys._getframe().f_code.co_name)
-        f_jobs_info = open(job_setup_file, 'r')
-        reader = (line.strip() for line in f_jobs_info)
-        line = reader.next()
         self.__meta_data = {}
-        while line.startswith('##'):
-            # parse meta data
-            key, val = self.__parse_metadata(line)
-            self.__meta_data[key] = val
-            line = reader.next()
+        stream = file(job_setup_file, "r")
+        document = yaml.safe_load(stream)
+        # load metadata
+        for item_key in document:
+            if item_key != JOBS_SETUP_SAMPLES_SECTION:
+                self.__meta_data[item_key] = document[item_key]
+        # load samples information
+        document_samples = document[JOBS_SETUP_SAMPLES_SECTION]
         self.__samples = {}
-        for line in reader:
-            # parse sample information
-            sample_rec = SampleRecord(line, self.output_dir)
-            sample_name = sample_rec.sample_name
-            if sample_name in self.__samples:
-                raise Exception("Sample " + sample_name + " is duplicated in jobs setup file")
-            self.__samples[sample_name] = sample_rec
-        f_jobs_info.close()
+        for sample in document_samples:
+            sample_rec = SampleRecord(sample, self.output_dir)
+            self.__samples[sample_rec.sample_name] = sample_rec
 
     def __parse_metadata(self, meta_string):
         match = METADATA_PATTERN.match(meta_string)
@@ -341,7 +355,6 @@ class GATKBPPipeline(JobManager):
         self.create_dir(self.output_dir)
         self.create_dir(self.vcf_out_dir)
         self.create_dir(self.bam_out_dir)
-#        self.create_dir(self.pdf_out_dir)
         self.create_dir(self.slurm_log_dir)
         self.create_dir(self.samples_working_dir)
         for sample_name in self.samples:
@@ -355,8 +368,8 @@ class GATKBPPipeline(JobManager):
             if job_name.endswith("_base_recal") and (job_rec.job_status == JOB_STATUS_COMPLETED):
                 sample_name = job_name.strip("_base_recal")
                 sample_rec = self.__samples[sample_name]
-                mylogger.info("deleting " + sample_rec.raw_aligned_reads_file)
-                self.delete_file(sample_rec.raw_aligned_reads_file)
+                mylogger.info("deleting " + sample_rec.raw_aligned_reads_file_prefix)
+                self.delete_file(sample_rec.raw_aligned_reads_file_prefix)
                 mylogger.info("deleting " + sample_rec.sorted_reads_file)
                 self.delete_file(sample_rec.sorted_reads_file)
                 mylogger.info("deleting " + sample_rec.dedup_reads_file)
@@ -374,18 +387,52 @@ class GATKBPPipeline(JobManager):
         """ To generate a SAM file containing aligned reads """
     
         sample_rec = self.__samples[sample_name]
+        slurm_log_file_prefix = join_path(self.slurm_log_dir,
+                                          sample_name)
+        slurm_log_file_prefix += "_bwa_mem_"
+        slurm_log_file_prefix += self.time_stamp.strftime("%Y%m%d%H%M%S")
+        job_name_prefix = sample_name + "_bwa_mem"
+        job_script = BWA_MEM_SCRIPT
+        job_params_prefix = " -g " + sample_rec.sample_group
+        job_params_prefix += " -R " + self.reference
+        job_names_list = []
+        for fastq_pair_idx in xrange(len(sample_rec.fastq_pairs)):
+            idx_suffix = "_" + str(fastq_pair_idx + 1)
+            job_name = job_name_prefix + idx_suffix
+            fastq_pair = sample_rec.fastq_pairs[fastq_pair_idx]
+            job_params = job_params_prefix + " -I " + fastq_pair['R1']
+            if 'R2' in fastq_pair:
+                job_params += "," + fastq_pair['R2']
+            job_params += " -o " + sample_rec.raw_aligned_reads_files[fastq_pair_idx]
+            slurm_log_file = slurm_log_file_prefix + idx_suffix + ".log"
+            self.submit_job(job_name,
+                            self.project_code,
+                            "core",
+                            "1",
+                            GATK_ALLOC_TIME,
+                            slurm_log_file,
+                            job_script,
+                            job_params,
+                            email=sample_rec.usage_mail,
+                            )
+            job_names_list.append(job_name)
+        return job_names_list
+
+    def concat_sam(self,
+                   sample_name,
+                   prereq=None,
+                   ):
+        """ Concatenate SAM files """
+        sample_rec = self.__samples[sample_name]
         slurm_log_file = join_path(self.slurm_log_dir,
                                    sample_name)
-        slurm_log_file += "_bwa_mem_"
+        slurm_log_file += "_concat_sam_"
         slurm_log_file += self.time_stamp.strftime("%Y%m%d%H%M%S")
         slurm_log_file += ".log"
-        job_name = sample_name + "_bwa_mem"
-        job_script = BWA_MEM_SCRIPT
-        job_params = " -I " + sample_rec.fastq1_file 
-        job_params += "," + sample_rec.fastq2_file
-        job_params += " -g " + sample_rec.sample_group
-        job_params += " -R " + self.reference
-        job_params += " -o " + sample_rec.raw_aligned_reads_file
+        job_name = sample_name + "_concat_sam"
+        job_script = CONCAT_FILES_SCRIPT
+        job_params = " -I " + ",".join(sample_rec.raw_aligned_reads_files)
+        job_params += " -o " + sample_rec.concatted_sam_file
         self.submit_job(job_name,
                         self.project_code,
                         "core",
@@ -395,6 +442,7 @@ class GATKBPPipeline(JobManager):
                         job_script,
                         job_params,
                         email=sample_rec.usage_mail,
+                        prereq=prereq,
                         )
         return job_name
 
@@ -403,8 +451,8 @@ class GATKBPPipeline(JobManager):
                  sam_file=None,
                  prereq=None,
                  ):
-        """ Use picard command to sort the SAM file and convert it to BAM """
-    
+        """ Use picard command to sort the concatted SAM file and convert it to BAM """
+
         sample_rec = self.__samples[sample_name]
         slurm_log_file = join_path(self.slurm_log_dir,
                                    sample_name)
@@ -414,9 +462,9 @@ class GATKBPPipeline(JobManager):
         job_name = sample_name + "_sort_sam"
         job_script = SORT_SAM_SCRIPT
         if sam_file is None:
-            job_params = " -I " + sample_rec.raw_aligned_reads_file 
+            job_params = " -I " + sample_rec.concatted_sam_file
         else:
-            job_params = " -I " + sam_file 
+            job_params = " -I " + sam_file
         job_params += " -o " + sample_rec.sorted_reads_file
         self.submit_job(job_name,
                         self.project_code,
@@ -714,8 +762,10 @@ class GATKBPPipeline(JobManager):
         """
     
         job_name_bwa_mem = self.bwa_mem(sample_name)
-        job_name_sort_sam = self.sort_sam(sample_name,
+        job_name_concat_sam = self.concat_sam(sample_name,
                                           prereq=[job_name_bwa_mem])
+        job_name_sort_sam = self.sort_sam(sample_name,
+                                          prereq=[job_name_concat_sam])
         job_name_mark_dup = self.mark_dup(sample_name,
                                           prereq=[job_name_sort_sam])
         job_name_create_intervals = self.create_intervals(sample_name,
@@ -752,6 +802,7 @@ def create_job_setup_file(dataset_name,
                           project_code,
                           reference_file,
                           project_out_dir,
+                          jobs_report_file,
                           samples_root_dir,
                           platform='Illumina',
                           known_indels_file=None,
@@ -778,6 +829,7 @@ def create_job_setup_file(dataset_name,
     job_setup_document[JOBS_SETUP_VARIANTS_CALLING_KEY] = variants_calling
     if targets_interval_list is not None:
         job_setup_document[JOBS_SETUP_TARGETS_INTERVAL_LIST_KEY] = targets_interval_list
+    job_setup_document[JOBS_SETUP_JOBS_REPORT_FILE_KEY] = jobs_report_file
     job_setup_document[JOBS_SETUP_DATASET_USAGE_MAIL_KEY] = usage_mail
 
     samples = []
@@ -786,6 +838,7 @@ def create_job_setup_file(dataset_name,
         item_path = join_path(samples_root_dir, item)
         if isdir(item_path):
             # look for fastq.gz files to create sample information
+            sample = None
             for subdir_item in listdir(item_path):
                 if subdir_item.endswith('.fastq.gz'):
                     sample = {}
@@ -821,7 +874,8 @@ def create_job_setup_file(dataset_name,
                     continue
                 pair[JOBS_SETUP_R1_KEY] = file_path
                 fastq_files.append(pair)
-            sample[JOBS_SETUP_FASTQ_KEY] = fastq_files
-            samples.append(sample)
+            if sample is not None:
+                sample[JOBS_SETUP_FASTQ_PAIRS_KEY] = fastq_files
+                samples.append(sample)
     job_setup_document[JOBS_SETUP_SAMPLES_SECTION] = samples
     pyaml.dump(job_setup_document, stream)

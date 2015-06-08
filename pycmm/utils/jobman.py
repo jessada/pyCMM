@@ -26,7 +26,7 @@ class JobRecord(pyCMMBase):
         self.job_id = None
         self.job_status = "NA"
         self.email = None
-        self.prerequisite = None
+        self.prereq = None
     
     def get_raw_repr(self):
         return {"job name": self.job_name,
@@ -40,14 +40,14 @@ class JobRecord(pyCMMBase):
                 "job id": self.job_id,
                 "job status": self.job_status,
                 "report usage email": self.email,
-                "pre-requisite": self.prerequisite,
+                "pre-requisite": self.prereq,
                 }
 
 class JobManager(pyCMMBase):
     """ A class to manage UPPMAX SLURM job """
 
     def __init__(self,
-                 job_report_file=None,
+                 jobs_report_file=None,
                  ):
         self.job_dict = {}
         self.__job_rpt_fmt = "{job_id}"
@@ -59,7 +59,7 @@ class JobManager(pyCMMBase):
         self.__job_rpt_fmt += "\t{usage_mail}"
         self.__job_rpt_fmt += "\t{dependency}"
         self.__job_rpt_fmt += "\t{job_status}"
-        self.__job_rpt_file = job_report_file
+        self.__job_rpt_file = jobs_report_file
 
     def get_raw_repr(self):
         return {"NA1": "NA1",
@@ -83,10 +83,10 @@ class JobManager(pyCMMBase):
         if job_rec.email:
             cmd += " -C usage_mail"
         cmd += " -o " + job_rec.slurm_log_file
-        if (job_rec.prerequisite is not None) and (type(job_rec.prerequisite) is list):
+        if (job_rec.prereq is not None) and (type(job_rec.prereq) is list):
             cmd += " --dependency=afterok"
-            mylogger.debug(job_rec.prerequisite)
-            for job_name in job_rec.prerequisite:
+            mylogger.debug(job_rec.prereq)
+            for job_name in job_rec.prereq:
                 job_id = self.get_job_id(job_name)
                 cmd += ":" + job_id
         cmd += " " + job_rec.job_script
@@ -103,7 +103,7 @@ class JobManager(pyCMMBase):
                    job_script,
                    job_params,
                    email=False,
-                   prerequisite=None,
+                   prereq=None,
                    ):
         mylogger.getLogger(__name__ + "." + sys._getframe().f_code.co_name)
         job_rec = JobRecord()
@@ -116,7 +116,7 @@ class JobManager(pyCMMBase):
         job_rec.job_script = job_script
         job_rec.job_params = job_params
         job_rec.email = email
-        job_rec.prerequisite =  prerequisite
+        job_rec.prereq =  prereq
         cmd = self.__get_sbatch_cmd(job_rec)
         out = self.__exec_sh(cmd)
         job_rec.job_id = out.strip().split()[-1]
@@ -145,7 +145,7 @@ class JobManager(pyCMMBase):
                                                   alloc_time=job_rec.alloc_time,
                                                   cpus=job_rec.ntasks,
                                                   usage_mail=str(job_rec.email),
-                                                  dependency=str(job_rec.prerequisite),
+                                                  dependency=str(job_rec.prereq),
                                                   job_status=job_rec.job_status,
                                                   )+"\n")
         f_rpt.close()
