@@ -123,24 +123,31 @@ class SampleRecord(pyCMMBase):
         return self.__fastq_pairs
 
     @property
-    def raw_aligned_reads_files(self):
-        file_prefix = join_path(join_path(join_path(self.__output_dir,
-                                                    'tmp'),
-                                          self.sample_name),
-                                self.sample_name+"_raw_aligned_reads")
-        raw_aligned_reads_files = []
-        for idx in xrange(len(self.fastq_pairs)):
-            file_name = file_prefix + "_" + str(idx+1) + ".sam"
-            raw_aligned_reads_files.append(file_name)
-        return raw_aligned_reads_files
-
-    @property
-    def concatted_sam_file(self):
+    def raw_aligned_reads_file(self):
         return join_path(join_path(join_path(self.__output_dir,
                                              'tmp'),
                                    self.sample_name),
-                         self.sample_name+"_concatted_reads.sam")
+                         self.sample_name+"_raw_aligned_reads.sam")
 
+#    @property
+#    def raw_aligned_reads_files(self):
+#        file_prefix = join_path(join_path(join_path(self.__output_dir,
+#                                                    'tmp'),
+#                                          self.sample_name),
+#                                self.sample_name+"_raw_aligned_reads")
+#        raw_aligned_reads_files = []
+#        for idx in xrange(len(self.fastq_pairs)):
+#            file_name = file_prefix + "_" + str(idx+1) + ".sam"
+#            raw_aligned_reads_files.append(file_name)
+#        return raw_aligned_reads_files
+#
+#    @property
+#    def concatted_sam_file(self):
+#        return join_path(join_path(join_path(self.__output_dir,
+#                                             'tmp'),
+#                                   self.sample_name),
+#                         self.sample_name+"_concatted_reads.sam")
+#
     @property
     def sorted_reads_file(self):
         return join_path(join_path(join_path(self.__output_dir,
@@ -381,7 +388,7 @@ class GATKBPPipeline(JobManager):
         JobManager.monitor_action(self)
         self.__garbage_collecting()
 
-    def bwa_mem(self,
+    def bwa_mem_old(self,
                 sample_name,
                 ):
         """ To generate a SAM file containing aligned reads """
@@ -418,6 +425,36 @@ class GATKBPPipeline(JobManager):
             job_names_list.append(job_name)
         return job_names_list
 
+    def bwa_mem(self,
+                sample_name,
+                ):
+        """ To generate a SAM file containing aligned reads """
+    
+        sample_rec = self.__samples[sample_name]
+        slurm_log_file = join_path(self.slurm_log_dir,
+                                   sample_name)
+        slurm_log_file += "_bwa_mem_"
+        slurm_log_file += self.time_stamp.strftime("%Y%m%d%H%M%S")
+        slurm_log_file += ".log"
+        job_name = sample_name + "_bwa_mem"
+        job_script = BWA_MEM_SCRIPT
+        job_params = " -I " + sample_rec.fastq_pairs[0]['R1'] 
+        job_params += "," + sample_rec.fastq_pairs[0]['R2']
+        job_params += " -g " + sample_rec.sample_group
+        job_params += " -R " + self.reference
+        job_params += " -o " + sample_rec.raw_aligned_reads_file
+        self.submit_job(job_name,
+                        self.project_code,
+                        "core",
+                        "1",
+                        GATK_ALLOC_TIME,
+                        slurm_log_file,
+                        job_script,
+                        job_params,
+                        email=sample_rec.usage_mail,
+                        )
+        return job_name
+
     def concat_sam(self,
                    sample_name,
                    prereq=None,
@@ -451,8 +488,8 @@ class GATKBPPipeline(JobManager):
                  sam_file=None,
                  prereq=None,
                  ):
-        """ Use picard command to sort the concatted SAM file and convert it to BAM """
-
+        """ Use picard command to sort the SAM file and convert it to BAM """
+    
         sample_rec = self.__samples[sample_name]
         slurm_log_file = join_path(self.slurm_log_dir,
                                    sample_name)
@@ -462,9 +499,9 @@ class GATKBPPipeline(JobManager):
         job_name = sample_name + "_sort_sam"
         job_script = SORT_SAM_SCRIPT
         if sam_file is None:
-            job_params = " -I " + sample_rec.concatted_sam_file
+            job_params = " -I " + sample_rec.raw_aligned_reads_file 
         else:
-            job_params = " -I " + sam_file
+            job_params = " -I " + sam_file 
         job_params += " -o " + sample_rec.sorted_reads_file
         self.submit_job(job_name,
                         self.project_code,
@@ -762,10 +799,8 @@ class GATKBPPipeline(JobManager):
         """
     
         job_name_bwa_mem = self.bwa_mem(sample_name)
-        job_name_concat_sam = self.concat_sam(sample_name,
-                                          prereq=[job_name_bwa_mem])
         job_name_sort_sam = self.sort_sam(sample_name,
-                                          prereq=[job_name_concat_sam])
+                                          prereq=[job_name_bwa_mem])
         job_name_mark_dup = self.mark_dup(sample_name,
                                           prereq=[job_name_sort_sam])
         job_name_create_intervals = self.create_intervals(sample_name,
@@ -809,7 +844,8 @@ def create_job_setup_file(dataset_name,
                           dbsnp_file=None,
                           variants_calling="YES",
                           targets_interval_list=None,
-                          usage_mail="NO",
+                          dataset_usage_mail="NO",
+                          sample_usage_mail={},
                           out_job_setup_file=None,
                           ):
     mylogger.getLogger(__name__)
@@ -830,7 +866,7 @@ def create_job_setup_file(dataset_name,
     if targets_interval_list is not None:
         job_setup_document[JOBS_SETUP_TARGETS_INTERVAL_LIST_KEY] = targets_interval_list
     job_setup_document[JOBS_SETUP_JOBS_REPORT_FILE_KEY] = jobs_report_file
-    job_setup_document[JOBS_SETUP_DATASET_USAGE_MAIL_KEY] = usage_mail
+    job_setup_document[JOBS_SETUP_DATASET_USAGE_MAIL_KEY] = dataset_usage_mail
 
     samples = []
     # look for all sub-directory of samples_root_dir
@@ -845,7 +881,10 @@ def create_job_setup_file(dataset_name,
                     sample[JOBS_SETUP_SAMPLE_NAME_KEY] = item
                     sample[JOBS_SETUP_PLATFORM_KEY] = platform
                     sample[JOBS_SETUP_SAMPLE_GROUP_KEY] = sample_group
-                    sample[JOBS_SETUP_SAMPLE_USAGE_MAIL_KEY] = 'NO'
+                    if item in sample_usage_mail:
+                        sample[JOBS_SETUP_SAMPLE_USAGE_MAIL_KEY] = 'YES'
+                    else:
+                        sample[JOBS_SETUP_SAMPLE_USAGE_MAIL_KEY] = 'NO'
                     sample[JOBS_SETUP_PREPROCESS_SAMPLE_KEY] = 'YES'
                     break
             # look for fastq.gz files to fastq files info for R1,R2 pairs or R1 alone
