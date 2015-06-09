@@ -204,7 +204,7 @@ class TestGATKBPPipeline(SafeTester):
 
     @unittest.skipUnless(settings.SLURM_TEST, "taking too much UPPMAX cpu-core hours")
     def test_bwa_mem_1(self):
-        """ test basic bwa mem, one pair of fastq files """
+        """ test basic bwa mem, a normal pair of fastq files """
 
         self.individual_debug = True
         self.init_test(self.current_func_name)
@@ -213,28 +213,6 @@ class TestGATKBPPipeline(SafeTester):
         pl = GATKBPPipeline(jobs_setup_file)
         pl.bwa_mem(sample_name)
 
-#    @unittest.skipUnless(settings.SLURM_TEST, "taking too much UPPMAX cpu-core hours")
-#    def test_bwa_mem_2(self):
-#        """ test a little advanced bwa mem, 6 pairs of fastq files """
-#
-#        self.individual_debug = True
-#        self.init_test(self.current_func_name)
-#        jobs_setup_file = self.__create_jobs_setup_file()
-#        sample_name = "test-6-pairs"
-#        pl = GATKBPPipeline(jobs_setup_file)
-#        pl.bwa_mem(sample_name)
-#
-#    @unittest.skipUnless(settings.SLURM_TEST, "taking too much UPPMAX cpu-core hours")
-#    def test_bwa_mem_3(self):
-#        """ test a little more advanced bwa mem, 6 abnormal pairs of fastq files """
-#
-#        self.individual_debug = True
-#        self.init_test(self.current_func_name)
-#        jobs_setup_file = self.__create_jobs_setup_file()
-#        sample_name = "test-6-unpairs"
-#        pl = GATKBPPipeline(jobs_setup_file)
-#        pl.bwa_mem(sample_name)
-#
     @unittest.skipUnless(settings.SLURM_TEST, "taking too much UPPMAX cpu-core hours")
     def test_bwa_mem_4(self):
         """ test bwa mem with concatenate gz files """
@@ -248,64 +226,6 @@ class TestGATKBPPipeline(SafeTester):
         pl = GATKBPPipeline(jobs_setup_file)
         pl.bwa_mem(sample_name)
 
-#    @unittest.skipUnless(settings.SLURM_TEST, "taking too much UPPMAX cpu-core hours")
-#    def test_concat_sam_1(self):
-#        """ test basic concat sam, a sam file from one pair of fastq files """
-#
-#        self.individual_debug = True
-#        self.init_test(self.current_func_name)
-#        jobs_setup_file = self.__create_jobs_setup_file()
-#        sample_name = "test-sample"
-#        pl = GATKBPPipeline(jobs_setup_file)
-#        sam_file_src = join_path(self.data_dir,
-#                                 sample_name+"_raw_aligned_reads_1.sam")
-#        sam_file_dest = join_path(join_path(join_path(self.working_dir,
-#                                                      "tmp"),
-#                                            sample_name),
-#                                  sample_name+"_raw_aligned_reads_1.sam")
-#        self.copy_file(sam_file_src, sam_file_dest)
-#        pl.concat_sam(sample_name)
-#
-#    @unittest.skipUnless(settings.SLURM_TEST, "taking too much UPPMAX cpu-core hours")
-#    def test_concat_sam_2(self):
-#        """ test a little advanced concat sam, 6 pairs of fastq files """
-#
-#        self.individual_debug = True
-#        self.init_test(self.current_func_name)
-#        jobs_setup_file = self.__create_jobs_setup_file()
-#        sample_name = "test-6-pairs"
-#        pl = GATKBPPipeline(jobs_setup_file)
-#        for idx in xrange(1,7):
-#            file_name = sample_name + "_raw_aligned_reads_" + str(idx) + ".sam"
-#            sam_file_src = join_path(self.data_dir,
-#                                     file_name)
-#            sam_file_dest = join_path(join_path(join_path(self.working_dir,
-#                                                          "tmp"),
-#                                                sample_name),
-#                                     file_name)
-#            self.copy_file(sam_file_src, sam_file_dest)
-#        pl.concat_sam(sample_name)
-#
-#    @unittest.skipUnless(settings.SLURM_TEST, "taking too much UPPMAX cpu-core hours")
-#    def test_concat_sam_3(self):
-#        """ test a little more advanced concat sam, 6 abnormal pairs of fastq files """
-#
-#        self.individual_debug = True
-#        self.init_test(self.current_func_name)
-#        jobs_setup_file = self.__create_jobs_setup_file()
-#        sample_name = "test-6-unpairs"
-#        pl = GATKBPPipeline(jobs_setup_file)
-#        for idx in xrange(1,7):
-#            file_name = sample_name + "_raw_aligned_reads_" + str(idx) + ".sam"
-#            sam_file_src = join_path(self.data_dir,
-#                                     file_name)
-#            sam_file_dest = join_path(join_path(join_path(self.working_dir,
-#                                                          "tmp"),
-#                                                sample_name),
-#                                     file_name)
-#            self.copy_file(sam_file_src, sam_file_dest)
-#        pl.concat_sam(sample_name)
-#
     @unittest.skipUnless(settings.SLURM_TEST, "taking too much UPPMAX cpu-core hours")
     def test_sort_sam_1(self):
         """ test basic sort sam, a sam file from one pair of fastq files """
@@ -582,26 +502,6 @@ class TestGATKBPPipeline(SafeTester):
                                                         )
         pl = GATKBPPipeline(jobs_setup_file)
         pl.preprocess_sample(sample_name)
-
-#        self.individual_debug = True
-#        self.init_test(self.current_func_name)
-#        targets_interval_list = join_path(self.data_dir,
-#                                          "targets.interval_list") 
-#        jobs_setup_file = self.__create_jobs_setup_file(targets_interval_list=targets_interval_list)
-#        sample_name = "test-M_sample"
-#        sample_group = self.current_func_name
-#        fastq1_file = join_path(self.data_dir,
-#                           sample_name + "_1.fastq.gz")
-#        fastq2_file = join_path(self.data_dir,
-#                           sample_name + "_2.fastq.gz")
-#        self.__add_sample_jobs_setup_file(jobs_setup_file,
-#                                          sample_name,
-#                                          fastq1_file,
-#                                          fastq2_file,
-#                                          sample_group,
-#                                          )
-#        pl = GATKBPPipeline(jobs_setup_file)
-#        pl.preprocess_sample(sample_name)
 
     @unittest.skipUnless(settings.SLURM_TEST, "taking too much UPPMAX cpu-core hours")
     def test_preprocess_sample_2(self):

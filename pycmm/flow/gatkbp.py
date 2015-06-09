@@ -50,17 +50,6 @@ JOBS_SETUP_PLATFORM_KEY = "platform"
 JOBS_SETUP_SAMPLE_USAGE_MAIL_KEY = "usage_mail"
 JOBS_SETUP_PREPROCESS_SAMPLE_KEY = "preprocess_sample"
 
-## obsolete should be deleted
-#SAMPLE_RECORD_SAMPLE_NAME_IDX = 0
-#SAMPLE_RECORD_FASTQ1_IDX = 1
-#SAMPLE_RECORD_FASTQ2_IDX = 2
-#SAMPLE_RECORD_SAMPLE_GROUP_IDX = 3
-#SAMPLE_RECORD_PLATFORM_IDX = 4
-#SAMPLE_RECORD_LIBRARY_IDX = 5
-#SAMPLE_RECORD_UNIT_IDX = 6
-#SAMPLE_RECORD_USAGE_MAIL_IDX = 7
-#SAMPLE_RECORD_PREPROCESS_SAMPLE_IDX = 8
-
 class SampleRecord(pyCMMBase):
     """ A structure to parse and keep sample information """
 
@@ -129,25 +118,6 @@ class SampleRecord(pyCMMBase):
                                    self.sample_name),
                          self.sample_name+"_raw_aligned_reads.sam")
 
-#    @property
-#    def raw_aligned_reads_files(self):
-#        file_prefix = join_path(join_path(join_path(self.__output_dir,
-#                                                    'tmp'),
-#                                          self.sample_name),
-#                                self.sample_name+"_raw_aligned_reads")
-#        raw_aligned_reads_files = []
-#        for idx in xrange(len(self.fastq_pairs)):
-#            file_name = file_prefix + "_" + str(idx+1) + ".sam"
-#            raw_aligned_reads_files.append(file_name)
-#        return raw_aligned_reads_files
-#
-#    @property
-#    def concatted_sam_file(self):
-#        return join_path(join_path(join_path(self.__output_dir,
-#                                             'tmp'),
-#                                   self.sample_name),
-#                         self.sample_name+"_concatted_reads.sam")
-#
     @property
     def sorted_reads_file(self):
         return join_path(join_path(join_path(self.__output_dir,
@@ -388,43 +358,6 @@ class GATKBPPipeline(JobManager):
         JobManager.monitor_action(self)
         self.__garbage_collecting()
 
-    def bwa_mem_old(self,
-                sample_name,
-                ):
-        """ To generate a SAM file containing aligned reads """
-    
-        sample_rec = self.__samples[sample_name]
-        slurm_log_file_prefix = join_path(self.slurm_log_dir,
-                                          sample_name)
-        slurm_log_file_prefix += "_bwa_mem_"
-        slurm_log_file_prefix += self.time_stamp.strftime("%Y%m%d%H%M%S")
-        job_name_prefix = sample_name + "_bwa_mem"
-        job_script = BWA_MEM_SCRIPT
-        job_params_prefix = " -g " + sample_rec.sample_group
-        job_params_prefix += " -R " + self.reference
-        job_names_list = []
-        for fastq_pair_idx in xrange(len(sample_rec.fastq_pairs)):
-            idx_suffix = "_" + str(fastq_pair_idx + 1)
-            job_name = job_name_prefix + idx_suffix
-            fastq_pair = sample_rec.fastq_pairs[fastq_pair_idx]
-            job_params = job_params_prefix + " -I " + fastq_pair['R1']
-            if 'R2' in fastq_pair:
-                job_params += "," + fastq_pair['R2']
-            job_params += " -o " + sample_rec.raw_aligned_reads_files[fastq_pair_idx]
-            slurm_log_file = slurm_log_file_prefix + idx_suffix + ".log"
-            self.submit_job(job_name,
-                            self.project_code,
-                            "core",
-                            "1",
-                            GATK_ALLOC_TIME,
-                            slurm_log_file,
-                            job_script,
-                            job_params,
-                            email=sample_rec.usage_mail,
-                            )
-            job_names_list.append(job_name)
-        return job_names_list
-
     def bwa_mem(self,
                 sample_name,
                 ):
@@ -452,34 +385,6 @@ class GATKBPPipeline(JobManager):
                         job_script,
                         job_params,
                         email=sample_rec.usage_mail,
-                        )
-        return job_name
-
-    def concat_sam(self,
-                   sample_name,
-                   prereq=None,
-                   ):
-        """ Concatenate SAM files """
-        sample_rec = self.__samples[sample_name]
-        slurm_log_file = join_path(self.slurm_log_dir,
-                                   sample_name)
-        slurm_log_file += "_concat_sam_"
-        slurm_log_file += self.time_stamp.strftime("%Y%m%d%H%M%S")
-        slurm_log_file += ".log"
-        job_name = sample_name + "_concat_sam"
-        job_script = CONCAT_FILES_SCRIPT
-        job_params = " -I " + ",".join(sample_rec.raw_aligned_reads_files)
-        job_params += " -o " + sample_rec.concatted_sam_file
-        self.submit_job(job_name,
-                        self.project_code,
-                        "core",
-                        "1",
-                        GATK_ALLOC_TIME,
-                        slurm_log_file,
-                        job_script,
-                        job_params,
-                        email=sample_rec.usage_mail,
-                        prereq=prereq,
                         )
         return job_name
 
