@@ -18,7 +18,7 @@ from pycmm.flow.gatkbp import JOBS_SETUP_VARIANTS_CALLING_KEY
 from pycmm.flow.gatkbp import JOBS_SETUP_JOBS_REPORT_FILE_KEY
 from pycmm.flow.gatkbp import JOBS_SETUP_TARGETS_INTERVAL_LIST_KEY
 from pycmm.flow.gatkbp import JOBS_SETUP_DATASET_USAGE_MAIL_KEY
-from pycmm.flow.gatkbp import create_job_setup_file
+from pycmm.flow.gatkbp import create_jobs_setup_file
 
 FAST_PROJECT_CODE = 'b2011158'
 SLOW_PROJECT_CODE = 'b2011097'
@@ -47,82 +47,29 @@ class TestGATKBPPipeline(SafeTester):
                                     self.test_function+'_jobs_setup.txt')
         if dataset_name is None:
             dataset_name = self.test_function
-        known_indels = join_path(self.data_dir,
-                                 '1000G_phase1.indels.b37.vcf')
-        known_indels += "," + join_path(self.data_dir,
-                                        'Mills_and_1000G_gold_standard.indels.b37.vcf')
+        known_indels = []
+        known_indels.append(join_path(self.data_dir,
+                                      '1000G_phase1.indels.b37.vcf'))
+        known_indels.append(join_path(self.data_dir,
+                                      'Mills_and_1000G_gold_standard.indels.b37.vcf'))
         dbsnp_file = join_path(self.data_dir,
                                'dbsnp_138.b37.vcf')
         reference_file = join_path(self.data_dir,
                                    'ref.fa')
-        jobs_report_file = join_path(self.working_dir,
-                                     self.test_function+'_rpt.txt')
-        create_job_setup_file(dataset_name=dataset_name,
-                              sample_group=sample_group,
-                              project_code=project_code,
-                              reference_file=reference_file,
-                              project_out_dir=self.working_dir,
-                              jobs_report_file=jobs_report_file,
-                              samples_root_dir=self.data_dir,
-                              known_indels_file=known_indels,
-                              dbsnp_file=dbsnp_file,
-                              targets_interval_list=targets_interval_list,
-                              dataset_usage_mail=dataset_usage_mail,
-                              sample_usage_mail=sample_usage_mail,
-                              out_job_setup_file=jobs_setup_file,
-                              )
+        create_jobs_setup_file(dataset_name=dataset_name,
+                               sample_group=sample_group,
+                               project_code=project_code,
+                               reference_file=reference_file,
+                               project_out_dir=self.working_dir,
+                               samples_root_dir=self.data_dir,
+                               known_indels_file=known_indels,
+                               dbsnp_file=dbsnp_file,
+                               targets_interval_list=targets_interval_list,
+                               dataset_usage_mail=dataset_usage_mail,
+                               sample_usage_mail=sample_usage_mail,
+                               out_jobs_setup_file=jobs_setup_file,
+                               )
         return jobs_setup_file
-#        f_rpt = open(jobs_setup_file, "w")
-#        if dataset_name is None:
-#            f_rpt.write("##" + JOBS_SETUP_DATASET_NAME_KEY + "=" + self.test_function + "\n")
-#        else:
-#            f_rpt.write("##" + JOBS_SETUP_DATASET_NAME_KEY + "=" + dataset_name + "\n")
-#        f_rpt.write("##" + JOBS_SETUP_PROJECT_CODE_KEY + "=" + project_code + "\n")
-#        f_rpt.write("##" + JOBS_SETUP_KNOWN_INDELS_KEY + "=" + known_indels + "\n")
-#        f_rpt.write("##" + JOBS_SETUP_DBSNP_KEY + "=" + dbsnp_file + "\n")
-#        f_rpt.write("##" + JOBS_SETUP_REFFERENCE_KEY + "=" + reference_file + "\n")
-#        f_rpt.write("##" + JOBS_SETUP_OUTPUT_DIR_KEY + "=" + self.working_dir + "\n")
-#        f_rpt.write("##" + JOBS_SETUP_VARIANTS_CALLING_KEY + "=" + variants_calling + "\n")
-#        f_rpt.write("##" + JOBS_SETUP_JOBS_REPORT_FILE_KEY + "=" + jobs_report_file + "\n")
-#        if targets_interval_list is not None:
-#            f_rpt.write("##" + JOBS_SETUP_TARGETS_INTERVAL_LIST_KEY + "=" + targets_interval_list + "\n")
-#        f_rpt.write("##" + JOBS_SETUP_USAGE_MAIL_KEY + "=" + usage_mail + "\n")
-#        sample_header = "#SAMPLE"
-#        sample_header += "\tFASTQ1"
-#        sample_header += "\tFASTQ2"
-#        sample_header += "\tSAMPLE_GROUP"
-#        sample_header += "\tPLATFORM"
-#        sample_header += "\tLIBRARY"
-#        sample_header += "\tUNIT"
-#        sample_header += "\tUSAGE_MAIL"
-#        sample_header += "\tPREPROCESS_SAMPLE"
-#        sample_header += "\n"
-#        f_rpt.write(sample_header)
-#        f_rpt.close()
-#        return jobs_setup_file
-
-    def __add_sample_jobs_setup_file(self,
-                                     jobs_setup_file,
-                                     sample_name,
-                                     fastq1,
-                                     fastq2,
-                                     sample_group,
-                                     usage_mail="NO",
-                                     preprocess_sample="YES",
-                                     ):
-        sample_info = []
-        sample_info.append(sample_name)
-        sample_info.append(fastq1)
-        sample_info.append(fastq2)
-        sample_info.append(sample_group)
-        sample_info.append("Illumina")
-        sample_info.append("lib1")
-        sample_info.append("unit1")
-        sample_info.append(usage_mail)
-        sample_info.append(preprocess_sample)
-        f_rpt = open(jobs_setup_file, "a")
-        f_rpt.write("\t".join(sample_info) + "\n")
-        f_rpt.close()
 
     def test_load_jobs_info(self):
         """ test if meta data and sample info are loaded correctly """
@@ -223,6 +170,20 @@ class TestGATKBPPipeline(SafeTester):
         sample_usage_mail = {sample_name: "YES"}
         jobs_setup_file = self.__create_jobs_setup_file(project_code=FAST_PROJECT_CODE,
                                                         sample_usage_mail=sample_usage_mail)
+        pl = GATKBPPipeline(jobs_setup_file)
+        pl.bwa_mem(sample_name)
+
+    @unittest.skipUnless(settings.SLURM_TEST, "taking too much UPPMAX cpu-core hours")
+    def test_bwa_mem_5(self):
+        """ test bwa mem with problematics Ill-Br """
+
+        self.individual_debug = True
+        self.init_test(self.current_func_name)
+        sample_name = "test-Ill-Prob"
+        sample_usage_mail = {sample_name: "YES"}
+        jobs_setup_file = self.__create_jobs_setup_file(project_code=FAST_PROJECT_CODE,
+#                                                        sample_usage_mail=sample_usage_mail,
+                                                        )
         pl = GATKBPPipeline(jobs_setup_file)
         pl.bwa_mem(sample_name)
 
@@ -527,7 +488,7 @@ class TestGATKBPPipeline(SafeTester):
 
     @unittest.skipUnless(settings.SLURM_TEST, "taking too much UPPMAX cpu-core hours")
     def test_preprocess_sample_4(self):
-        """ test sample pre-processing workflow (targeted sequencing) """
+        """ test sample pre-processing workflow (Illumina WES) """
 
         self.individual_debug = True
         self.init_test(self.current_func_name)
@@ -543,28 +504,31 @@ class TestGATKBPPipeline(SafeTester):
         pl.preprocess_sample(sample_name)
 
     @unittest.skipUnless(settings.SLURM_TEST, "taking too much UPPMAX cpu-core hours")
-    def test_preprocess_dataset_1(self):
-        """ test dataset pre-processing workflow (targeted sequencing) """
+    def test_preprocess_sample_5(self):
+        """ test sample pre-processing workflow (one of problematic sample from Illimina WES) """
 
         self.individual_debug = True
         self.init_test(self.current_func_name)
+        sample_name = "test-Ill_prob"
+        sample_usage_mail = {sample_name: "YES"}
         targets_interval_list = join_path(self.data_dir,
                                           "targets.interval_list") 
-        jobs_setup_file = self.__create_jobs_setup_file(targets_interval_list=targets_interval_list,
-                                                        project_code='b2011097')
-        sample_group = self.current_func_name
-        for sample_idx in xrange(1,4):
-            sample_name = "test_sample_M_" + str(sample_idx)
-            fastq1_file = join_path(self.data_dir,
-                               sample_name + "_1.fastq.gz")
-            fastq2_file = join_path(self.data_dir,
-                               sample_name + "_2.fastq.gz")
-            self.__add_sample_jobs_setup_file(jobs_setup_file,
-                                              sample_name,
-                                              fastq1_file,
-                                              fastq2_file,
-                                              sample_group,
-                                              )
+        jobs_setup_file = self.__create_jobs_setup_file(project_code=FAST_PROJECT_CODE,
+                                                        sample_usage_mail=sample_usage_mail,
+#                                                        targets_interval_list=targets_interval_list,
+                                                        )
+        pl = GATKBPPipeline(jobs_setup_file)
+        pl.preprocess_sample(sample_name)
+
+    @unittest.skipUnless(settings.SLURM_TEST, "taking too much UPPMAX cpu-core hours")
+    def test_preprocess_dataset_1(self):
+        """ test preprocess target sequencing dataset """
+
+        self.individual_debug = True
+        self.init_test(self.current_func_name)
+        jobs_setup_file = self.__create_jobs_setup_file(project_code=FAST_PROJECT_CODE,
+                                                        dataset_usage_mail="YES",
+                                                        )
         pl = GATKBPPipeline(jobs_setup_file)
         pl.preprocess_dataset()
 
@@ -680,28 +644,28 @@ class TestFunctions(SafeTester):
     def setUp(self):
         self.module_name = 'gatkbp'
 
-    def test_create_job_setup_file(self):
-        """ test if function create_job_setup_file can be really used in production """
+    def test_create_jobs_setup_file(self):
+        """ test if function create_jobs_setup_file can be really used in production """
 
         self.individual_debug = True
         self.init_test(self.current_func_name)
         samples_root_dir = self.data_dir
-        out_job_setup_file = join_path(self.working_dir,
-                                       'job_setup_file.txt')
-        exp_job_setup_file = join_path(self.data_dir,
-                                       'expected_job_setup_file.txt')
-        create_job_setup_file(dataset_name=self.test_function,
+        out_jobs_setup_file = join_path(self.working_dir,
+                                        'jobs_setup_file.txt')
+        exp_jobs_setup_file = join_path(self.data_dir,
+                                        'expected_jobs_setup_file.txt')
+        create_jobs_setup_file(dataset_name=self.test_function,
                               sample_group='NA',
                               project_code=SLOW_PROJECT_CODE,
                               reference_file='/links/to/reference_file',
                               project_out_dir=self.working_dir,
                               jobs_report_file='/path/to/job_report_file',
                               samples_root_dir=samples_root_dir,
-                              out_job_setup_file=out_job_setup_file,
+                              out_jobs_setup_file=out_jobs_setup_file,
                               )
-        self.assertTrue(filecmp.cmp(out_job_setup_file,
-                                    exp_job_setup_file),
-                        "create_job_setup_file doesn't funciton correctly")
+        self.assertTrue(filecmp.cmp(out_jobs_setup_file,
+                                    exp_jobs_setup_file),
+                        "create_jobs_setup_file doesn't funciton correctly")
 
     def tearDown(self):
         self.remove_working_dir()

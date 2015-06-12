@@ -233,7 +233,7 @@ class GATKBPPipeline(JobManager):
     @property
     def known_indels(self):
         if JOBS_SETUP_KNOWN_INDELS_KEY in self.__meta_data:
-            return self.__meta_data[JOBS_SETUP_KNOWN_INDELS_KEY].split(',')
+            return self.__meta_data[JOBS_SETUP_KNOWN_INDELS_KEY]
         else:
             return None
 
@@ -309,9 +309,9 @@ class GATKBPPipeline(JobManager):
         return join_path(self.vcf_out_dir,
                          self.dataset_name+"_genotyped.vcf")
 
-    def __load_jobs_info(self, job_setup_file):
+    def __load_jobs_info(self, jobs_setup_file):
         self.__meta_data = {}
-        stream = file(job_setup_file, "r")
+        stream = file(jobs_setup_file, "r")
         document = yaml.safe_load(stream)
         # load metadata
         for item_key in document:
@@ -345,8 +345,8 @@ class GATKBPPipeline(JobManager):
             if job_name.endswith("_base_recal") and (job_rec.job_status == JOB_STATUS_COMPLETED):
                 sample_name = job_name.strip("_base_recal")
                 sample_rec = self.__samples[sample_name]
-                mylogger.info("deleting " + sample_rec.raw_aligned_reads_file_prefix)
-                self.delete_file(sample_rec.raw_aligned_reads_file_prefix)
+                mylogger.info("deleting " + sample_rec.raw_aligned_reads_file)
+                self.delete_file(sample_rec.raw_aligned_reads_file)
                 mylogger.info("deleting " + sample_rec.sorted_reads_file)
                 self.delete_file(sample_rec.sorted_reads_file)
                 mylogger.info("deleting " + sample_rec.dedup_reads_file)
@@ -703,6 +703,7 @@ class GATKBPPipeline(JobManager):
         job name of the process.
         """
     
+        mylogger.debug("preprocess sample " + sample_name)
         job_name_bwa_mem = self.bwa_mem(sample_name)
         job_name_sort_sam = self.sort_sam(sample_name,
                                           prereq=[job_name_bwa_mem])
@@ -729,6 +730,7 @@ class GATKBPPipeline(JobManager):
         job name of the process.
         """
 
+        print "abc"
         prereq = []
         for sample_name in self.samples:
             if self.__samples[sample_name].preprocess_sample:
@@ -737,27 +739,30 @@ class GATKBPPipeline(JobManager):
         job_name_genotype_gvcfs = self.genotype_gvcfs(prereq=[job_name_combine_gvcfs]) 
         return job_name_genotype_gvcfs
 
-def create_job_setup_file(dataset_name,
-                          sample_group,
-                          project_code,
-                          reference_file,
-                          project_out_dir,
-                          jobs_report_file,
-                          samples_root_dir,
-                          platform='Illumina',
-                          known_indels_file=None,
-                          dbsnp_file=None,
-                          variants_calling="YES",
-                          targets_interval_list=None,
-                          dataset_usage_mail="NO",
-                          sample_usage_mail={},
-                          out_job_setup_file=None,
-                          ):
+def create_jobs_setup_file(dataset_name,
+                           sample_group,
+                           project_code,
+                           reference_file,
+                           project_out_dir,
+                           samples_root_dir,
+                           jobs_report_file=None,
+                           platform='Illumina',
+                           known_indels_file=None,
+                           dbsnp_file=None,
+                           variants_calling="YES",
+                           targets_interval_list=None,
+                           dataset_usage_mail="NO",
+                           sample_usage_mail={},
+                           out_jobs_setup_file=None,
+                           ):
     mylogger.getLogger(__name__)
-    if out_job_setup_file is None:
-        out_job_setup_file = join_path(samples_root_dir,
+    if jobs_report_file is None:
+        jobs_report_file = join_path(project_out_dir,
+                                     dataset_name+"_rpt.txt")
+    if out_jobs_setup_file is None:
+        out_jobs_setup_file = join_path(samples_root_dir,
                                        dataset_name+"_job_setup.txt")
-    stream = file(out_job_setup_file, 'w')
+    stream = file(out_jobs_setup_file, 'w')
     job_setup_document = {}
     job_setup_document[JOBS_SETUP_DATASET_NAME_KEY] = dataset_name
     job_setup_document[JOBS_SETUP_PROJECT_CODE_KEY] = project_code
