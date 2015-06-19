@@ -4,6 +4,7 @@ import datetime
 from os.path import exists as path_exists
 from os.path import join as join_path
 from os.path import dirname
+from os.path import isdir
 from pycmm import settings
 from pycmm.template import SafeTester
 from pycmm.utils import mylogger
@@ -644,6 +645,7 @@ class TestFunctions(SafeTester):
     def setUp(self):
         self.module_name = 'gatkbp'
 
+    @unittest.skipUnless(isdir("/proj/b2011117"), "This can only run in UPPMAX")
     def test_create_jobs_setup_file(self):
         """ test if function create_jobs_setup_file can be really used in production """
 
