@@ -1,0 +1,31 @@
+DATASET_NAME: test-dataset
+OUTPUT_DIR: /glob/jessada/private/projects/
+PROJECT_CODE: b1234567
+VCF_TABIX_FILE: /home/jesthu/test.vcf.gz
+ANNOVAR:
+  db_folder: /home/jesthu/annovar
+  buildver: hg19
+  db_list:
+    - db_name: refGene
+      db_op: g
+    - db_name: cytoBand
+      db_op: r
+    - db_name: genomicSuperDups
+      db_op: r
+    - db_name: esp6500si_all
+      db_op: f
+    - db_name: 1000g2014oct_eur
+      db_op: f
+    - db_name: 1000g2014oct_all
+      db_op: f
+    - db_name: exac03
+      db_op: f
+    - db_name: cg69
+      db_op: f
+    - db_name: custom
+      db_op: f
+  nastring: .
+
+
+
+
