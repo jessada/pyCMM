@@ -21,7 +21,7 @@ VCF2AVDB_DFLT_LOG_FILE = "vcf2avdb"
 ## > > > > > > > > > > > > > GATK Best practice (DNA seq) < < < < < < < < < <
 DNASEQ_PIPELINE_DESCRIPTION = "A flow to control a pipeline to process DNA sequencing data"
 DNASEQ_PIPELINE_DFLT_LOG_FILE = "dnaseq_pipeline"
-GATK_ALLOC_TIME = "168:00:00"
+GATK_ALLOC_TIME = "4-00:00:00"
 
 CREATE_JOB_SETUP_FILE_DESCRIPTION = "An applicationt to generate job setup file for DNASEQ_PIPELINE"
 
