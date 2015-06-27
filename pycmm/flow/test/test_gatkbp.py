@@ -8,6 +8,8 @@ from os.path import isdir
 from pycmm import settings
 from pycmm.template import SafeTester
 from pycmm.utils import mylogger
+from pycmm.settings import FAST_PROJECT_CODE
+from pycmm.settings import SLOW_PROJECT_CODE
 from pycmm.flow.gatkbp import GATKBPPipeline
 from pycmm.flow.gatkbp import JOBS_SETUP_DATASET_NAME_KEY
 from pycmm.flow.gatkbp import JOBS_SETUP_PROJECT_CODE_KEY
@@ -20,9 +22,6 @@ from pycmm.flow.gatkbp import JOBS_SETUP_JOBS_REPORT_FILE_KEY
 from pycmm.flow.gatkbp import JOBS_SETUP_TARGETS_INTERVAL_LIST_KEY
 from pycmm.flow.gatkbp import JOBS_SETUP_DATASET_USAGE_MAIL_KEY
 from pycmm.flow.gatkbp import create_jobs_setup_file
-
-FAST_PROJECT_CODE = 'b2014170'
-SLOW_PROJECT_CODE = 'b2011097'
 
 class TestGATKBPPipeline(SafeTester):
 
