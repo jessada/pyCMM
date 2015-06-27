@@ -730,7 +730,6 @@ class GATKBPPipeline(JobManager):
         job name of the process.
         """
 
-        print "abc"
         prereq = []
         for sample_name in self.samples:
             if self.__samples[sample_name].preprocess_sample:
