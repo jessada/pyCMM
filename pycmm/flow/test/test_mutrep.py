@@ -8,19 +8,34 @@ from os.path import isdir
 from pycmm import settings
 from pycmm.template import SafeTester
 from pycmm.utils import mylogger
+from pycmm.settings import DFLT_ANNOVAR_DB_FOLDER
+from pycmm.settings import DFLT_ANNOVAR_DB_NAMES
+from pycmm.settings import DFLT_ANNOVAR_DB_OPS
+from pycmm.settings import FAST_PROJECT_CODE
+from pycmm.settings import SLOW_PROJECT_CODE
 from pycmm.flow.mutrep import MutRepPipeline
-
+from pycmm.flow.mutrep import create_jobs_setup_file
 from pycmm.proc.annovar import ANNOVAR_PARAMS_INPUT_FILE_KEY
 from pycmm.proc.annovar import ANNOVAR_PARAMS_DB_FOLDER_KEY
 from pycmm.proc.annovar import ANNOVAR_PARAMS_BUILDVER_KEY
 from pycmm.proc.annovar import ANNOVAR_PARAMS_OUT_PREFIX_KEY
 from pycmm.proc.annovar import ANNOVAR_PARAMS_DB_LIST_KEY
-from pycmm.proc.annovar import ANNOVAR_PARAMS_DB_NAME_KEY
-from pycmm.proc.annovar import ANNOVAR_PARAMS_DB_OP_KEY
+from pycmm.proc.annovar import ANNOVAR_PARAMS_DB_NAMES_KEY
+from pycmm.proc.annovar import ANNOVAR_PARAMS_DB_OPS_KEY
 from pycmm.proc.annovar import ANNOVAR_PARAMS_NASTRING_KEY
 
-FAST_PROJECT_CODE = 'b2011158'
-SLOW_PROJECT_CODE = 'b2011097'
+DFLT_ANNOVAR_TEST_DB_FOLDER = DFLT_ANNOVAR_DB_FOLDER 
+#DFLT_ANNOVAR_TEST_DB_NAMES = DFLT_ANNOVAR_DB_NAMES
+#DFLT_ANNOVAR_TEST_DB_OPS = DFLT_ANNOVAR_DB_OPS
+DFLT_ANNOVAR_TEST_DB_NAMES = "refGene" 
+DFLT_ANNOVAR_TEST_DB_OPS = "g" 
+DFLT_ANNOVAR_TEST_DB_NAMES += ",cytoBand" 
+DFLT_ANNOVAR_TEST_DB_OPS += ",r" 
+DFLT_ANNOVAR_TEST_DB_NAMES += ",genomicSuperDups" 
+DFLT_ANNOVAR_TEST_DB_OPS += ",r" 
+#DFLT_ANNOVAR_TEST_DB_NAMES += ",exac03" 
+#DFLT_ANNOVAR_TEST_DB_OPS += ",f" 
+
 
 class TestMutRepPipeline(SafeTester):
 
@@ -33,74 +48,76 @@ class TestMutRepPipeline(SafeTester):
     def setUp(self):
         self.module_name = 'mutrep'
 
-#    def __create_jobs_setup_file(self,
-#                                 dataset_name=None,
-#                                 sample_group='test_group',
-#                                 project_code=SLOW_PROJECT_CODE,
-#                                 variants_calling="YES",
-#                                 targets_interval_list=None,
-#                                 dataset_usage_mail="NO",
-#                                 sample_usage_mail={},
-#                                 ):
-#        jobs_setup_file = join_path(self.working_dir,
-#                                    self.test_function+'_jobs_setup.txt')
-#        if dataset_name is None:
-#            dataset_name = self.test_function
-#        known_indels = []
-#        known_indels.append(join_path(self.data_dir,
-#                                      '1000G_phase1.indels.b37.vcf'))
-#        known_indels.append(join_path(self.data_dir,
-#                                      'Mills_and_1000G_gold_standard.indels.b37.vcf'))
-#        dbsnp_file = join_path(self.data_dir,
-#                               'dbsnp_138.b37.vcf')
-#        reference_file = join_path(self.data_dir,
-#                                   'ref.fa')
-#        create_jobs_setup_file(dataset_name=dataset_name,
-#                               sample_group=sample_group,
-#                               project_code=project_code,
-#                               reference_file=reference_file,
-#                               project_out_dir=self.working_dir,
-#                               samples_root_dir=self.data_dir,
-#                               known_indels_file=known_indels,
-#                               dbsnp_file=dbsnp_file,
-#                               targets_interval_list=targets_interval_list,
-#                               dataset_usage_mail=dataset_usage_mail,
-#                               sample_usage_mail=sample_usage_mail,
-#                               out_jobs_setup_file=jobs_setup_file,
-#                               )
-#        return jobs_setup_file
-#
+    def __create_jobs_setup_file(self,
+                                 vcf_tabix_file,
+                                 dataset_name=None,
+                                 project_code=SLOW_PROJECT_CODE,
+                                 vcf_region="18",
+                                 patients_list=None,
+                                 annovar_human_db_dir=DFLT_ANNOVAR_TEST_DB_FOLDER,
+                                 annovar_buildver="hg19",
+                                 annovar_db_names=DFLT_ANNOVAR_TEST_DB_NAMES,
+                                 annovar_db_ops=DFLT_ANNOVAR_TEST_DB_OPS,
+                                 annovar_nastring=".",
+                                 ):
+        jobs_setup_file = join_path(self.working_dir,
+                                    self.test_function+'_jobs_setup.txt')
+        if dataset_name is None:
+            dataset_name = self.test_function
+        create_jobs_setup_file(dataset_name=dataset_name,
+                               project_out_dir=self.working_dir,
+                               vcf_tabix_file=vcf_tabix_file,
+                               vcf_region=vcf_region,
+                               patients_list=patients_list,
+                               project_code=project_code,
+                               annovar_human_db_dir=annovar_human_db_dir,
+                               annovar_buildver=annovar_buildver,
+                               annovar_db_names=annovar_db_names,
+                               annovar_db_ops=annovar_db_ops,
+                               annovar_nastring=annovar_nastring,
+                               out_jobs_setup_file=jobs_setup_file,
+                               )
+        return jobs_setup_file
+
+    @unittest.skipUnless(isdir("/proj/b2011117"), "This can only run in UPPMAX")
     def test_load_jobs_info_1(self):
         """ test if job configurations are loaded correctly """
 
+        self.individual_debug = True
         self.init_test(self.current_func_name)
         job_name = self.test_function
-        jobs_setup_file = join_path(self.data_dir,
-                                    self.test_function+'.txt')
+        dummy_vcf_tabix_file = "/path/to/vcf_tabix_file"
+        jobs_setup_file = self.__create_jobs_setup_file(vcf_tabix_file=dummy_vcf_tabix_file)
         pl = MutRepPipeline(jobs_setup_file)
-        exp_dataset_name = "test-dataset"
+        exp_dataset_name = self.test_function
         self.assertEqual(pl.dataset_name,
                          exp_dataset_name,
                          "GATKBPPipeline cannot correctly read meta info 'dataset name' from jobs setup file")
         self.assertEqual(pl.project_code,
-                         "b1234567",
+                         SLOW_PROJECT_CODE,
                          "GATKBPPipeline cannot correctly read meta info 'project code' from jobs setup file")
         self.assertEqual(pl.input_vcf_tabix,
-                         "/home/jesthu/test.vcf.gz",
+                         dummy_vcf_tabix_file,
                          "GATKBPPipeline cannot correctly read meta info 'input vcf tabix' from jobs setup file")
+        self.assertEqual(pl.vcf_region,
+                         "18",
+                         "GATKBPPipeline cannot correctly read meta info 'vcf region' from jobs setup file")
+        self.assertEqual(pl.patients_list,
+                         None,
+                         "GATKBPPipeline cannot correctly read meta info 'patients list' from jobs setup file")
         exp_jobs_report_file = join_path(pl.output_dir,
                                          exp_dataset_name+"_rpt.txt")
         self.assertEqual(pl.jobs_report_file,
                          exp_jobs_report_file,
                          "GATKBPPipeline cannot correctly read meta info 'jobs report file' from jobs setup file")
         self.assertEqual(pl.output_dir,
-                         "/glob/jessada/private/projects/",
+                         self.working_dir,
                          "GATKBPPipeline cannot correctly read meta info 'output dir' from jobs setup file")
         self.assertEqual(pl.annovar_config[ANNOVAR_PARAMS_INPUT_FILE_KEY],
-                         "/home/jesthu/test.vcf.gz",
+                         dummy_vcf_tabix_file,
                          "GATKBPPipeline cannot correctly read meta info 'annovar input file' from jobs setup file")
         self.assertEqual(pl.annovar_config[ANNOVAR_PARAMS_DB_FOLDER_KEY],
-                         "/home/jesthu/annovar",
+                         DFLT_ANNOVAR_TEST_DB_FOLDER,
                          "GATKBPPipeline cannot correctly read meta info 'annovar db folder' from jobs setup file")
         self.assertEqual(pl.annovar_config[ANNOVAR_PARAMS_BUILDVER_KEY],
                          "hg19",
@@ -113,32 +130,142 @@ class TestMutRepPipeline(SafeTester):
         self.assertEqual(pl.annovar_config[ANNOVAR_PARAMS_NASTRING_KEY],
                          ".",
                          "GATKBPPipeline cannot correctly read meta info 'annovar nastring' from jobs setup file")
-        self.assertEqual(pl.annovar_config[ANNOVAR_PARAMS_DB_LIST_KEY][1][ANNOVAR_PARAMS_DB_NAME_KEY],
-                         "cytoBand",
-                         "GATKBPPipeline cannot correctly read meta info 'annovar db name' from jobs setup file")
-        self.assertEqual(pl.annovar_config[ANNOVAR_PARAMS_DB_LIST_KEY][4][ANNOVAR_PARAMS_DB_NAME_KEY],
-                         "1000g2014oct_eur",
-                         "GATKBPPipeline cannot correctly read meta info 'annovar db name' from jobs setup file")
-        self.assertEqual(pl.annovar_config[ANNOVAR_PARAMS_DB_LIST_KEY][2][ANNOVAR_PARAMS_DB_OP_KEY],
-                         "r",
-                         "GATKBPPipeline cannot correctly read meta info 'annovar db name' from jobs setup file")
-        self.assertEqual(pl.annovar_config[ANNOVAR_PARAMS_DB_LIST_KEY][5][ANNOVAR_PARAMS_DB_OP_KEY],
-                         "f",
-                         "GATKBPPipeline cannot correctly read meta info 'annovar db name' from jobs setup file")
+        self.assertEqual(pl.annovar_config[ANNOVAR_PARAMS_DB_NAMES_KEY],
+                         DFLT_ANNOVAR_TEST_DB_NAMES,
+                         "GATKBPPipeline cannot correctly read meta info 'annovar db names' from jobs setup file")
+        self.assertEqual(pl.annovar_config[ANNOVAR_PARAMS_DB_OPS_KEY],
+                         DFLT_ANNOVAR_TEST_DB_OPS,
+                         "GATKBPPipeline cannot correctly read meta info 'annovar db ops' from jobs setup file")
 
-    def tearDown(self):
-        self.remove_working_dir()
+    @unittest.skipUnless(isdir("/proj/b2011117"), "This can only run in UPPMAX")
+    def test_load_jobs_info_2(self):
+        """ test if modified job configurations are loaded correctly """
 
-class TestFunctions(SafeTester):
+        self.init_test(self.current_func_name)
+        job_name = self.test_function
+        dummy_vcf_tabix_file = "/path/to/vcf_tabix_file"
+        jobs_setup_file = self.__create_jobs_setup_file(vcf_tabix_file=dummy_vcf_tabix_file,
+                                                        project_code=None,
+                                                        vcf_region=None,
+                                                        patients_list="Co-441",
+                                                        )
+        pl = MutRepPipeline(jobs_setup_file)
+        exp_dataset_name = self.test_function
+        self.assertEqual(pl.project_code,
+                         None,
+                         "GATKBPPipeline cannot correctly read meta info 'project code' from jobs setup file")
+        self.assertEqual(pl.vcf_region,
+                         None,
+                         "GATKBPPipeline cannot correctly read meta info 'vcf region' from jobs setup file")
+        self.assertEqual(pl.patients_list,
+                         "Co-441",
+                         "GATKBPPipeline cannot correctly read meta info 'patients list' from jobs setup file")
 
-    def __init__(self, test_name):
-        SafeTester.__init__(self,
-                            test_name,
-                            dirname(__file__),
-                            )
+    def test_cal_mut_stat_offline_1(self):
+        """ test basic offline version (w/o slurm) of cal_mut_stat (one chrom)"""
 
-    def setUp(self):
-        self.module_name = 'gatkbp'
+        self.individual_debug = True
+        self.init_test(self.current_func_name)
+        vcf_tabix_file = join_path(self.data_dir,
+                                   "input.vcf.gz")
+        jobs_setup_file = self.__create_jobs_setup_file(vcf_tabix_file=vcf_tabix_file,
+                                                        project_code=None,
+                                                        vcf_region=None,
+                                                        )
+        pl = MutRepPipeline(jobs_setup_file)
+        pl.cal_mut_stat()
+
+    @unittest.skipUnless(settings.FULL_SYSTEM_TEST, "taking too long time to test")
+    def test_cal_mut_stat_offline_2(self):
+        """ test a little advance offline version (w/o slurm) of cal_mut_stat (all chroms) """
+
+        self.individual_debug = True
+        self.init_test(self.current_func_name)
+        vcf_tabix_file = join_path(self.data_dir,
+                                   "multi_chrs.vcf.gz")
+        jobs_setup_file = self.__create_jobs_setup_file(vcf_tabix_file=vcf_tabix_file,
+                                                        project_code=None,
+                                                        vcf_region=None,
+                                                        )
+        pl = MutRepPipeline(jobs_setup_file)
+        pl.cal_mut_stat()
+
+    @unittest.skipUnless(settings.SLURM_TEST, "taking too much UPPMAX cpu-core hours")
+    def test_cal_mut_stat_slurm_1(self):
+        """ test basic slurm version of cal_mut_stat (indicate vcf region)"""
+
+        self.individual_debug = True
+        self.init_test(self.current_func_name)
+        vcf_tabix_file = join_path(self.data_dir,
+                                   "multi_chrs.vcf.gz")
+        jobs_setup_file = self.__create_jobs_setup_file(dataset_name="test_cal_stat_1",
+                                                        vcf_tabix_file=vcf_tabix_file,
+                                                        project_code=FAST_PROJECT_CODE,
+                                                        vcf_region="X",
+                                                        )
+        pl = MutRepPipeline(jobs_setup_file)
+        pl.cal_mut_stat()
+
+    @unittest.skipUnless(settings.SLURM_TEST, "taking too much UPPMAX cpu-core hours")
+    def test_cal_mut_stat_slurm_2(self):
+        """ test a little advance slurm version of cal_mut_stat (all chroms)"""
+
+        self.individual_debug = True
+        self.init_test(self.current_func_name)
+        vcf_tabix_file = join_path(self.data_dir,
+                                   "multi_chrs.vcf.gz")
+        jobs_setup_file = self.__create_jobs_setup_file(dataset_name="test_cal_stat_2",
+                                                        vcf_tabix_file=vcf_tabix_file,
+                                                        project_code=FAST_PROJECT_CODE,
+                                                        vcf_region=None,
+                                                        )
+        pl = MutRepPipeline(jobs_setup_file)
+        pl.cal_mut_stat()
+
+    @unittest.skipUnless(settings.FULL_SYSTEM_TEST, "taking too long time to test")
+    def test_table_annovar_offline_1(self):
+        """ test offline version (w/o slurm) of table_annovar """
+
+        self.individual_debug = True
+        self.init_test(self.current_func_name)
+        vcf_tabix_file = join_path(self.data_dir,
+                                   "input.vcf.gz")
+        jobs_setup_file = self.__create_jobs_setup_file(vcf_tabix_file=vcf_tabix_file,
+                                                        project_code=None)
+        pl = MutRepPipeline(jobs_setup_file)
+        pl.table_annovar()
+
+    @unittest.skipUnless(settings.FULL_SYSTEM_TEST, "taking too long time to test")
+    def test_table_annovar_offline_2(self):
+        """ test offline version (w/o slurm) of table_annovar together with custom cal_stat """
+
+        self.individual_debug = True
+        self.init_test(self.current_func_name)
+        vcf_tabix_file = join_path(self.data_dir,
+                                   "input.vcf.gz")
+        annovar_db_names = DFLT_ANNOVAR_TEST_DB_NAMES
+        annovar_db_names += ",test_pyCMM" 
+        annovar_db_ops = DFLT_ANNOVAR_TEST_DB_OPS
+        annovar_db_ops += ",f" 
+        jobs_setup_file = self.__create_jobs_setup_file(vcf_tabix_file=vcf_tabix_file,
+                                                        annovar_db_names=annovar_db_names,
+                                                        annovar_db_ops=annovar_db_ops,
+                                                        project_code=None)
+        pl = MutRepPipeline(jobs_setup_file)
+        pl.table_annovar()
+
+    @unittest.skipUnless(settings.SLURM_TEST, "taking too much UPPMAX cpu-core hours")
+    def test_table_annovar_slurm(self):
+        """ test slurm version of table_annovar """
+
+        self.individual_debug = True
+        self.init_test(self.current_func_name)
+        vcf_tabix_file = join_path(self.data_dir,
+                                   "input.vcf.gz")
+        jobs_setup_file = self.__create_jobs_setup_file(vcf_tabix_file=vcf_tabix_file,
+                                                        project_code=FAST_PROJECT_CODE)
+        pl = MutRepPipeline(jobs_setup_file)
+        pl.table_annovar()
 
     def tearDown(self):
         self.remove_working_dir()

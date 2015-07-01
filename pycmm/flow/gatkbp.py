@@ -14,10 +14,8 @@ from pycmm.utils.jobman import JOB_STATUS_COMPLETED
 from pycmm.utils import exec_sh
 from pycmm.settings import GATK_ALLOC_TIME
 
-METADATA_PATTERN = re.compile(r'''##(?P<key>.+?)=(?P<val>.+)''')
-
 BWA_MEM_SCRIPT = "$PYCMM/bash/GATKBP_bwa_mem.sh"
-CONCAT_FILES_SCRIPT = "$PYCMM/bash/concat_files.sh"
+#CONCAT_FILES_SCRIPT = "$PYCMM/bash/concat_files.sh"
 SORT_SAM_SCRIPT = "$PYCMM/bash/GATKBP_sort_sam.sh"
 MARK_DUP_SCRIPT = "$PYCMM/bash/GATKBP_mark_dup.sh"
 INDELS_TARGET_INTERVALS_SCRIPT = "$PYCMM/bash/GATKBP_create_intervals.sh"
@@ -323,10 +321,6 @@ class GATKBPPipeline(JobManager):
         for sample in document_samples:
             sample_rec = SampleRecord(sample, self.output_dir)
             self.__samples[sample_rec.sample_name] = sample_rec
-
-    def __parse_metadata(self, meta_string):
-        match = METADATA_PATTERN.match(meta_string)
-        return match.group('key'), match.group('val')
 
     def __create_directories(self):
         self.create_dir(self.output_dir)

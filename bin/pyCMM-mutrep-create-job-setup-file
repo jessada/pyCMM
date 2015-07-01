@@ -1,0 +1,58 @@
+import argparse
+import sys
+from pycmm import settings
+from pycmm.app.mutrep import app_pycmm_mutrep_create_jobs_setup_file
+
+
+argp = argparse.ArgumentParser(description=settings.MUTREP_CREATE_JOB_SETUP_FILE_DESCRIPTION)
+argp.add_argument('-d',
+                  dest='dataset_name',
+                  metavar="DATASET_NAME",
+                  help='name of this dataset. This will be the name of the merged vcf file',
+                  required=True,
+                  )
+argp.add_argument('-O',
+                  dest='project_out_dir',
+                  metavar="OUTPUT_DIR",
+                  help='a folder to keep all the running results, including log and intermediate files',
+                  required=True,
+                  )
+argp.add_argument('-i',
+                  dest='vcf_tabix_file',
+                  metavar="INPUT_FILE",
+                  help='vcf file in tabix format',
+                  required=True,
+                  )
+argp.add_argument('-r',
+                  dest='vcf_region',
+                  metavar="VCF_ REGION",
+                  help='vcf region to be studied',
+                  default=None,
+                  )
+argp.add_argument('-c',
+                  dest='patients_list',
+                  metavar="PATIENTS_LIST",
+                  help='list of patients to be studied',
+                  default=None,
+                  )
+argp.add_argument('-p',
+                  dest='project_code',
+                  metavar="PROJECT_CODE",
+                  help='UPPMAX project code',
+                  default=None,
+                  )
+argp.add_argument('-o',
+                  dest='out_jobs_setup_file',
+                  metavar="JOBS_SETUP_FILE",
+                  help='a file containing jobs configuration',
+                  default=sys.stdout,
+                  )
+args = argp.parse_args()
+app_pycmm_mutrep_create_jobs_setup_file(dataset_name=args.dataset_name,
+                                 project_out_dir=args.project_out_dir,
+                                 vcf_tabix_file=args.vcf_tabix_file,
+                                 vcf_region=args.vcf_region,
+                                 patients_list=args.patients_list,
+                                 project_code=args.project_code,
+                                 out_jobs_setup_file=args.out_jobs_setup_file,
+                                 )
