@@ -1,8 +1,8 @@
 from pycmm import settings
-from pycmm.app.mutrep import app_pycmm_mutrep_table_annovar
+from pycmm.app.cmmdb import app_pycmm_cmmdb_table_annovar
 import argparse
 
-argp = argparse.ArgumentParser(description=settings.MUTREP_PIPELINE_DESCRIPTION)
+argp = argparse.ArgumentParser(description=settings.CMMDB_PIPELINE_DESCRIPTION)
 argp.add_argument('-j',
                   dest='jobs_setup_file',
                   metavar="JOBS SETUP FILE",
@@ -13,8 +13,8 @@ argp.add_argument('-l',
                   dest='log_file',
                   metavar='FILE',
                   help='log file',
-                  default=settings.MUTREP_PIPELINE_DFLT_LOG_FILE)
+                  default=settings.CMMDB_PIPELINE_DFLT_LOG_FILE)
 args = argp.parse_args()
-app_pycmm_mutrep_table_annovar(jobs_setup_file=args.jobs_setup_file,
-                               log_file=args.log_file,
-                               )
+app_pycmm_cmmdb_table_annovar(jobs_setup_file=args.jobs_setup_file,
+                              log_file=args.log_file,
+                              )

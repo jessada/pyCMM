@@ -1,10 +1,10 @@
 import argparse
 import sys
 from pycmm import settings
-from pycmm.app.mutrep import app_pycmm_mutrep_create_jobs_setup_file
+from pycmm.app.cmmdb import app_pycmm_cmmdb_create_jobs_setup_file
 
 
-argp = argparse.ArgumentParser(description=settings.MUTREP_CREATE_JOB_SETUP_FILE_DESCRIPTION)
+argp = argparse.ArgumentParser(description=settings.CMMDB_CREATE_JOB_SETUP_FILE_DESCRIPTION)
 argp.add_argument('-d',
                   dest='dataset_name',
                   metavar="DATASET_NAME",
@@ -48,11 +48,11 @@ argp.add_argument('-o',
                   default=sys.stdout,
                   )
 args = argp.parse_args()
-app_pycmm_mutrep_create_jobs_setup_file(dataset_name=args.dataset_name,
-                                 project_out_dir=args.project_out_dir,
-                                 vcf_tabix_file=args.vcf_tabix_file,
-                                 vcf_region=args.vcf_region,
-                                 patients_list=args.patients_list,
-                                 project_code=args.project_code,
-                                 out_jobs_setup_file=args.out_jobs_setup_file,
-                                 )
+app_pycmm_cmmdb_create_jobs_setup_file(dataset_name=args.dataset_name,
+                                       project_out_dir=args.project_out_dir,
+                                       vcf_tabix_file=args.vcf_tabix_file,
+                                       vcf_region=args.vcf_region,
+                                       patients_list=args.patients_list,
+                                       project_code=args.project_code,
+                                       out_jobs_setup_file=args.out_jobs_setup_file,
+                                       )

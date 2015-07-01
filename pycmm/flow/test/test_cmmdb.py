@@ -13,8 +13,8 @@ from pycmm.settings import DFLT_ANNOVAR_DB_NAMES
 from pycmm.settings import DFLT_ANNOVAR_DB_OPS
 from pycmm.settings import FAST_PROJECT_CODE
 from pycmm.settings import SLOW_PROJECT_CODE
-from pycmm.flow.mutrep import MutRepPipeline
-from pycmm.flow.mutrep import create_jobs_setup_file
+from pycmm.flow.cmmdb import CMMDBPipeline
+from pycmm.flow.cmmdb import create_jobs_setup_file
 from pycmm.proc.annovar import ANNOVAR_PARAMS_INPUT_FILE_KEY
 from pycmm.proc.annovar import ANNOVAR_PARAMS_DB_FOLDER_KEY
 from pycmm.proc.annovar import ANNOVAR_PARAMS_BUILDVER_KEY
@@ -24,20 +24,16 @@ from pycmm.proc.annovar import ANNOVAR_PARAMS_DB_NAMES_KEY
 from pycmm.proc.annovar import ANNOVAR_PARAMS_DB_OPS_KEY
 from pycmm.proc.annovar import ANNOVAR_PARAMS_NASTRING_KEY
 
-DFLT_ANNOVAR_TEST_DB_FOLDER = DFLT_ANNOVAR_DB_FOLDER 
-#DFLT_ANNOVAR_TEST_DB_NAMES = DFLT_ANNOVAR_DB_NAMES
-#DFLT_ANNOVAR_TEST_DB_OPS = DFLT_ANNOVAR_DB_OPS
-DFLT_ANNOVAR_TEST_DB_NAMES = "refGene" 
-DFLT_ANNOVAR_TEST_DB_OPS = "g" 
-DFLT_ANNOVAR_TEST_DB_NAMES += ",cytoBand" 
-DFLT_ANNOVAR_TEST_DB_OPS += ",r" 
-DFLT_ANNOVAR_TEST_DB_NAMES += ",genomicSuperDups" 
-DFLT_ANNOVAR_TEST_DB_OPS += ",r" 
-#DFLT_ANNOVAR_TEST_DB_NAMES += ",exac03" 
-#DFLT_ANNOVAR_TEST_DB_OPS += ",f" 
+DFLT_ANNOVAR_TEST_DB_FOLDER = DFLT_ANNOVAR_DB_FOLDER
+DFLT_ANNOVAR_TEST_DB_NAMES = "refGene"
+DFLT_ANNOVAR_TEST_DB_OPS = "g"
+DFLT_ANNOVAR_TEST_DB_NAMES += ",cytoBand"
+DFLT_ANNOVAR_TEST_DB_OPS += ",r"
+DFLT_ANNOVAR_TEST_DB_NAMES += ",genomicSuperDups"
+DFLT_ANNOVAR_TEST_DB_OPS += ",r"
 
 
-class TestMutRepPipeline(SafeTester):
+class TestCMMDBPipeline(SafeTester):
 
     def __init__(self, test_name):
         SafeTester.__init__(self,
@@ -46,7 +42,7 @@ class TestMutRepPipeline(SafeTester):
                             )
 
     def setUp(self):
-        self.module_name = 'mutrep'
+        self.module_name = 'cmmdb'
 
     def __create_jobs_setup_file(self,
                                  vcf_tabix_file,
@@ -88,7 +84,7 @@ class TestMutRepPipeline(SafeTester):
         job_name = self.test_function
         dummy_vcf_tabix_file = "/path/to/vcf_tabix_file"
         jobs_setup_file = self.__create_jobs_setup_file(vcf_tabix_file=dummy_vcf_tabix_file)
-        pl = MutRepPipeline(jobs_setup_file)
+        pl = CMMDBPipeline(jobs_setup_file)
         exp_dataset_name = self.test_function
         self.assertEqual(pl.dataset_name,
                          exp_dataset_name,
@@ -149,7 +145,7 @@ class TestMutRepPipeline(SafeTester):
                                                         vcf_region=None,
                                                         patients_list="Co-441",
                                                         )
-        pl = MutRepPipeline(jobs_setup_file)
+        pl = CMMDBPipeline(jobs_setup_file)
         exp_dataset_name = self.test_function
         self.assertEqual(pl.project_code,
                          None,
@@ -172,7 +168,7 @@ class TestMutRepPipeline(SafeTester):
                                                         project_code=None,
                                                         vcf_region=None,
                                                         )
-        pl = MutRepPipeline(jobs_setup_file)
+        pl = CMMDBPipeline(jobs_setup_file)
         pl.cal_mut_stat()
 
     @unittest.skipUnless(settings.FULL_SYSTEM_TEST, "taking too long time to test")
@@ -187,7 +183,7 @@ class TestMutRepPipeline(SafeTester):
                                                         project_code=None,
                                                         vcf_region=None,
                                                         )
-        pl = MutRepPipeline(jobs_setup_file)
+        pl = CMMDBPipeline(jobs_setup_file)
         pl.cal_mut_stat()
 
     @unittest.skipUnless(settings.SLURM_TEST, "taking too much UPPMAX cpu-core hours")
@@ -203,7 +199,7 @@ class TestMutRepPipeline(SafeTester):
                                                         project_code=FAST_PROJECT_CODE,
                                                         vcf_region="X",
                                                         )
-        pl = MutRepPipeline(jobs_setup_file)
+        pl = CMMDBPipeline(jobs_setup_file)
         pl.cal_mut_stat()
 
     @unittest.skipUnless(settings.SLURM_TEST, "taking too much UPPMAX cpu-core hours")
@@ -219,7 +215,7 @@ class TestMutRepPipeline(SafeTester):
                                                         project_code=FAST_PROJECT_CODE,
                                                         vcf_region=None,
                                                         )
-        pl = MutRepPipeline(jobs_setup_file)
+        pl = CMMDBPipeline(jobs_setup_file)
         pl.cal_mut_stat()
 
     @unittest.skipUnless(settings.FULL_SYSTEM_TEST, "taking too long time to test")
@@ -232,7 +228,7 @@ class TestMutRepPipeline(SafeTester):
                                    "input.vcf.gz")
         jobs_setup_file = self.__create_jobs_setup_file(vcf_tabix_file=vcf_tabix_file,
                                                         project_code=None)
-        pl = MutRepPipeline(jobs_setup_file)
+        pl = CMMDBPipeline(jobs_setup_file)
         pl.table_annovar()
 
     @unittest.skipUnless(settings.FULL_SYSTEM_TEST, "taking too long time to test")
@@ -244,14 +240,14 @@ class TestMutRepPipeline(SafeTester):
         vcf_tabix_file = join_path(self.data_dir,
                                    "input.vcf.gz")
         annovar_db_names = DFLT_ANNOVAR_TEST_DB_NAMES
-        annovar_db_names += ",test_pyCMM" 
+        annovar_db_names += ",test_pyCMM"
         annovar_db_ops = DFLT_ANNOVAR_TEST_DB_OPS
-        annovar_db_ops += ",f" 
+        annovar_db_ops += ",f"
         jobs_setup_file = self.__create_jobs_setup_file(vcf_tabix_file=vcf_tabix_file,
                                                         annovar_db_names=annovar_db_names,
                                                         annovar_db_ops=annovar_db_ops,
                                                         project_code=None)
-        pl = MutRepPipeline(jobs_setup_file)
+        pl = CMMDBPipeline(jobs_setup_file)
         pl.table_annovar()
 
     @unittest.skipUnless(settings.SLURM_TEST, "taking too much UPPMAX cpu-core hours")
@@ -264,7 +260,7 @@ class TestMutRepPipeline(SafeTester):
                                    "input.vcf.gz")
         jobs_setup_file = self.__create_jobs_setup_file(vcf_tabix_file=vcf_tabix_file,
                                                         project_code=FAST_PROJECT_CODE)
-        pl = MutRepPipeline(jobs_setup_file)
+        pl = CMMDBPipeline(jobs_setup_file)
         pl.table_annovar()
 
     def tearDown(self):

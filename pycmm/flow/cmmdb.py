@@ -25,7 +25,7 @@ from pycmm.proc.annovar import ANNOVAR_PARAMS_DB_OPS_KEY
 from pycmm.proc.annovar import ANNOVAR_PARAMS_NASTRING_KEY
 #from pycmm.utils.jobman import JOB_STATUS_COMPLETED
 #from pycmm.utils import exec_sh
-from pycmm.settings import MUTREP_ALLOC_TIME
+from pycmm.settings import CMMDB_ALLOC_TIME
 
 ALL_CHROMS = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "MT", "X", "Y"]
 CAL_MUTATIONS_STAT_SCRIPT = "$PYCMM/bash/cal_mutations_stat.sh"
@@ -56,7 +56,7 @@ JOBS_SETUP_TA_NASTRING_KEY = ANNOVAR_PARAMS_NASTRING_KEY
 #JOBS_SETUP_SAMPLES_SECTION = "SAMPLES"
 #JOBS_SETUP_SAMPLE_NAME_KEY = "sample_name"
 
-class MutRepPipeline(JobManager):
+class CMMDBPipeline(JobManager):
     """ A class to control mutation report pipeline """
 
     def __init__(self,
@@ -81,7 +81,7 @@ class MutRepPipeline(JobManager):
 
     @property
     def project_code(self):
-        if JOBS_SETUP_PROJECT_CODE_KEY in self.__jobs_info: 
+        if JOBS_SETUP_PROJECT_CODE_KEY in self.__jobs_info:
             return self.__jobs_info[JOBS_SETUP_PROJECT_CODE_KEY]
         else:
             return None
@@ -201,7 +201,7 @@ class MutRepPipeline(JobManager):
                                 self.project_code,
                                 "core",
                                 "1",
-                                MUTREP_ALLOC_TIME,
+                                CMMDB_ALLOC_TIME,
                                 slurm_log_file,
                                 CAL_MUTATIONS_STAT_SCRIPT,
                                 params,
@@ -223,7 +223,7 @@ class MutRepPipeline(JobManager):
                             self.project_code,
                             "core",
                             "1",
-                            MUTREP_ALLOC_TIME,
+                            CMMDB_ALLOC_TIME,
                             slurm_log_file,
                             CAL_MUTATIONS_STAT_SCRIPT,
                             params,
@@ -241,7 +241,7 @@ class MutRepPipeline(JobManager):
                             self.project_code,
                             "core",
                             "1",
-                            MUTREP_ALLOC_TIME,
+                            CMMDB_ALLOC_TIME,
                             slurm_log_file,
                             annovar.table_annovar_cmd,
                             "",

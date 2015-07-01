@@ -5,11 +5,11 @@ from pycmm import settings
 from pycmm.utils import mylogger
 from pycmm.utils import disp
 from pycmm.utils import log_file_with_time_stamp
-from pycmm.flow.mutrep import MutRepPipeline
-from pycmm.flow.mutrep import create_jobs_setup_file
+from pycmm.flow.cmmdb import CMMDBPipeline
+from pycmm.flow.cmmdb import create_jobs_setup_file
 
 
-def app_pycmm_mutrep_cal_mut_stat(*args, **kwargs):
+def app_pycmm_cmmdb_cal_mut_stat(*args, **kwargs):
     mylogger.getLogger(__name__)
     time_stamp = datetime.datetime.now()
     log_file = log_file_with_time_stamp(kwargs["log_file"],
@@ -28,12 +28,12 @@ def app_pycmm_mutrep_cal_mut_stat(*args, **kwargs):
                      required_params=required_params,
                      optional_params=optional_params,
                      )
-    pl = MutRepPipeline(kwargs['jobs_setup_file'])
+    pl = CMMDBPipeline(kwargs['jobs_setup_file'])
     pl.cal_mut_stat()
     mylogger.getLogger(__name__)
     disp.new_section_txt("F I N I S H <" + func_name + ">")
 
-def app_pycmm_mutrep_table_annovar(*args, **kwargs):
+def app_pycmm_cmmdb_table_annovar(*args, **kwargs):
     mylogger.getLogger(__name__)
     time_stamp = datetime.datetime.now()
     log_file = log_file_with_time_stamp(kwargs["log_file"],
@@ -47,17 +47,17 @@ def app_pycmm_mutrep_table_annovar(*args, **kwargs):
     required_params['jobs setup file (-j)'] = kwargs['jobs_setup_file']
     optional_params=OrderedDict()
     optional_params['log file (-l)'] = log_file
-    disp.show_config(app_description=settings.MUTREP_PIPELINE_DESCRIPTION,
+    disp.show_config(app_description=settings.CMMDB_PIPELINE_DESCRIPTION,
                      time_stamp=time_stamp,
                      required_params=required_params,
                      optional_params=optional_params,
                      )
-    pl = MutRepPipeline(kwargs['jobs_setup_file'])
+    pl = CMMDBPipeline(kwargs['jobs_setup_file'])
     pl.table_annovar()
     mylogger.getLogger(__name__)
     disp.new_section_txt("F I N I S H <" + func_name + ">")
 
-def app_pycmm_mutrep_create_jobs_setup_file(*args, **kwargs):
+def app_pycmm_cmmdb_create_jobs_setup_file(*args, **kwargs):
     mylogger.getLogger(__name__)
     time_stamp = datetime.datetime.now()
     func_name = sys._getframe().f_code.co_name
