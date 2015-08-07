@@ -179,7 +179,6 @@ function count_frequency {
                 else
                     let na_count++
                 fi
-            
                 # count alleles
                 IFS='/' read -ra gt <<< "${rec_col[$j]}"
                 # for both chromosomes

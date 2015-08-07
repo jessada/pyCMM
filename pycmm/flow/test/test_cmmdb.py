@@ -15,11 +15,14 @@ from pycmm.settings import FAST_PROJECT_CODE
 from pycmm.settings import SLOW_PROJECT_CODE
 from pycmm.flow.cmmdb import CMMDBPipeline
 from pycmm.flow.cmmdb import create_jobs_setup_file
+from pycmm.flow.cmmdb import JOBS_SETUP_SAMPLES_INFO_KEY
+from pycmm.flow.cmmdb import JOBS_SETUP_FAMILY_ID_KEY
+from pycmm.flow.cmmdb import JOBS_SETUP_MEMBERS_LIST_KEY
+from pycmm.flow.cmmdb import JOBS_SETUP_MEMBER_NAME_KEY
 from pycmm.proc.annovar import ANNOVAR_PARAMS_INPUT_FILE_KEY
 from pycmm.proc.annovar import ANNOVAR_PARAMS_DB_FOLDER_KEY
 from pycmm.proc.annovar import ANNOVAR_PARAMS_BUILDVER_KEY
 from pycmm.proc.annovar import ANNOVAR_PARAMS_OUT_PREFIX_KEY
-from pycmm.proc.annovar import ANNOVAR_PARAMS_DB_LIST_KEY
 from pycmm.proc.annovar import ANNOVAR_PARAMS_DB_NAMES_KEY
 from pycmm.proc.annovar import ANNOVAR_PARAMS_DB_OPS_KEY
 from pycmm.proc.annovar import ANNOVAR_PARAMS_NASTRING_KEY
@@ -49,7 +52,7 @@ class TestCMMDBPipeline(SafeTester):
                                  dataset_name=None,
                                  project_code=SLOW_PROJECT_CODE,
                                  vcf_region="18",
-                                 patients_list=None,
+                                 samples_info=None,
                                  annovar_human_db_dir=DFLT_ANNOVAR_TEST_DB_FOLDER,
                                  annovar_buildver="hg19",
                                  annovar_db_names=DFLT_ANNOVAR_TEST_DB_NAMES,
@@ -64,7 +67,7 @@ class TestCMMDBPipeline(SafeTester):
                                project_out_dir=self.working_dir,
                                vcf_tabix_file=vcf_tabix_file,
                                vcf_region=vcf_region,
-                               patients_list=patients_list,
+                               samples_info=samples_info,
                                project_code=project_code,
                                annovar_human_db_dir=annovar_human_db_dir,
                                annovar_buildver=annovar_buildver,
@@ -88,75 +91,109 @@ class TestCMMDBPipeline(SafeTester):
         exp_dataset_name = self.test_function
         self.assertEqual(pl.dataset_name,
                          exp_dataset_name,
-                         "GATKBPPipeline cannot correctly read meta info 'dataset name' from jobs setup file")
+                         "CMMDBPipeline cannot correctly read meta info 'dataset name' from jobs setup file")
         self.assertEqual(pl.project_code,
                          SLOW_PROJECT_CODE,
-                         "GATKBPPipeline cannot correctly read meta info 'project code' from jobs setup file")
+                         "CMMDBPipeline cannot correctly read meta info 'project code' from jobs setup file")
         self.assertEqual(pl.input_vcf_tabix,
                          dummy_vcf_tabix_file,
-                         "GATKBPPipeline cannot correctly read meta info 'input vcf tabix' from jobs setup file")
+                         "CMMDBPipeline cannot correctly read meta info 'input vcf tabix' from jobs setup file")
         self.assertEqual(pl.vcf_region,
                          "18",
-                         "GATKBPPipeline cannot correctly read meta info 'vcf region' from jobs setup file")
-        self.assertEqual(pl.patients_list,
+                         "CMMDBPipeline cannot correctly read meta info 'vcf region' from jobs setup file")
+        self.assertEqual(pl.samples_list,
                          None,
-                         "GATKBPPipeline cannot correctly read meta info 'patients list' from jobs setup file")
+                         "CMMDBPipeline cannot correctly read meta info 'samples list' from jobs setup file")
         exp_jobs_report_file = join_path(pl.output_dir,
                                          exp_dataset_name+"_rpt.txt")
         self.assertEqual(pl.jobs_report_file,
                          exp_jobs_report_file,
-                         "GATKBPPipeline cannot correctly read meta info 'jobs report file' from jobs setup file")
+                         "CMMDBPipeline cannot correctly read meta info 'jobs report file' from jobs setup file")
         self.assertEqual(pl.output_dir,
                          self.working_dir,
-                         "GATKBPPipeline cannot correctly read meta info 'output dir' from jobs setup file")
+                         "CMMDBPipeline cannot correctly read meta info 'output dir' from jobs setup file")
         self.assertEqual(pl.annovar_config[ANNOVAR_PARAMS_INPUT_FILE_KEY],
                          dummy_vcf_tabix_file,
-                         "GATKBPPipeline cannot correctly read meta info 'annovar input file' from jobs setup file")
+                         "CMMDBPipeline cannot correctly annovar configs 'annovar input file' from jobs setup file")
         self.assertEqual(pl.annovar_config[ANNOVAR_PARAMS_DB_FOLDER_KEY],
                          DFLT_ANNOVAR_TEST_DB_FOLDER,
-                         "GATKBPPipeline cannot correctly read meta info 'annovar db folder' from jobs setup file")
+                         "CMMDBPipeline cannot correctly annovar configs 'annovar db folder' from jobs setup file")
         self.assertEqual(pl.annovar_config[ANNOVAR_PARAMS_BUILDVER_KEY],
                          "hg19",
-                         "GATKBPPipeline cannot correctly read meta info 'annovar buildver' from jobs setup file")
+                         "CMMDBPipeline cannot correctly annovar configs 'annovar buildver' from jobs setup file")
         exp_annovar_out_prefix = join_path(pl.rpts_out_dir,
                                            exp_dataset_name)
         self.assertEqual(pl.annovar_config[ANNOVAR_PARAMS_OUT_PREFIX_KEY],
                          exp_annovar_out_prefix,
-                         "GATKBPPipeline cannot correctly read meta info 'annovar out prefix' from jobs setup file")
+                         "CMMDBPipeline cannot correctly annovar configs 'annovar out prefix' from jobs setup file")
         self.assertEqual(pl.annovar_config[ANNOVAR_PARAMS_NASTRING_KEY],
                          ".",
-                         "GATKBPPipeline cannot correctly read meta info 'annovar nastring' from jobs setup file")
+                         "CMMDBPipeline cannot correctly annovar configs 'annovar nastring' from jobs setup file")
         self.assertEqual(pl.annovar_config[ANNOVAR_PARAMS_DB_NAMES_KEY],
                          DFLT_ANNOVAR_TEST_DB_NAMES,
-                         "GATKBPPipeline cannot correctly read meta info 'annovar db names' from jobs setup file")
+                         "CMMDBPipeline cannot correctly annovar configs 'annovar db names' from jobs setup file")
         self.assertEqual(pl.annovar_config[ANNOVAR_PARAMS_DB_OPS_KEY],
                          DFLT_ANNOVAR_TEST_DB_OPS,
-                         "GATKBPPipeline cannot correctly read meta info 'annovar db ops' from jobs setup file")
+                         "CMMDBPipeline cannot correctly annovar configs 'annovar db ops' from jobs setup file")
 
-    @unittest.skipUnless(isdir("/proj/b2011117"), "This can only run in UPPMAX")
     def test_load_jobs_info_2(self):
         """ test if modified job configurations are loaded correctly """
 
+        self.individual_debug = True
         self.init_test(self.current_func_name)
         job_name = self.test_function
         dummy_vcf_tabix_file = "/path/to/vcf_tabix_file"
         jobs_setup_file = self.__create_jobs_setup_file(vcf_tabix_file=dummy_vcf_tabix_file,
                                                         project_code=None,
                                                         vcf_region=None,
-                                                        patients_list="Co-441",
+                                                        samples_info="Co-441,Co-666",
                                                         )
         pl = CMMDBPipeline(jobs_setup_file)
         exp_dataset_name = self.test_function
         self.assertEqual(pl.project_code,
                          None,
-                         "GATKBPPipeline cannot correctly read meta info 'project code' from jobs setup file")
+                         "CMMDBPipeline cannot correctly read meta info 'project code' from jobs setup file")
         self.assertEqual(pl.vcf_region,
                          None,
-                         "GATKBPPipeline cannot correctly read meta info 'vcf region' from jobs setup file")
-        self.assertEqual(pl.patients_list,
-                         "Co-441",
-                         "GATKBPPipeline cannot correctly read meta info 'patients list' from jobs setup file")
+                         "CMMDBPipeline cannot correctly read meta info 'vcf region' from jobs setup file")
+        self.assertEqual(pl.samples_list,
+                         ["Co-441","Co-666"],
+                         "CMMDBPipeline cannot correctly read meta info 'samples list' from jobs setup file")
+        self.assertEqual(pl.families_list,
+                         None,
+                         "CMMDBPipeline cannot correctly read meta info 'families list' from jobs setup file")
 
+    def test_load_jobs_info_3(self):
+        """ test iffamilies structures are loaded correctly """
+
+        self.individual_debug = True
+        self.init_test(self.current_func_name)
+        job_name = self.test_function
+        dummy_vcf_tabix_file = "/path/to/vcf_tabix_file"
+        jobs_setup_file = self.__create_jobs_setup_file(vcf_tabix_file=dummy_vcf_tabix_file,
+                                                        samples_info="242:Co-441:Co-666:Co-771,6067:Br-397:884-99D",
+                                                        )
+        pl = CMMDBPipeline(jobs_setup_file)
+        self.assertEqual(pl.samples_list,
+                         ["Co-441","Co-666","Co-771","Br-397","884-99D"],
+                         "CMMDBPipeline cannot correctly read meta info 'samples list' from jobs setup file")
+        self.assertEqual(len(pl.families_list),
+                         2,
+                         "CMMDBPipeline cannot correctly read meta info 'families list' from jobs setup file")
+        self.assertEqual(pl.families_list[1][JOBS_SETUP_FAMILY_ID_KEY],
+                         "6067",
+                         "CMMDBPipeline cannot correctly read meta info 'families list' from jobs setup file")
+        self.assertEqual(len(pl.families_list[0][JOBS_SETUP_MEMBERS_LIST_KEY]),
+                         3,
+                         "CMMDBPipeline cannot correctly read meta info 'families list' from jobs setup file")
+        self.assertEqual(len(pl.families_list[1][JOBS_SETUP_MEMBERS_LIST_KEY]),
+                         2,
+                         "CMMDBPipeline cannot correctly read meta info 'families list' from jobs setup file")
+        self.assertEqual(pl.families_list[1][JOBS_SETUP_MEMBERS_LIST_KEY][1][JOBS_SETUP_MEMBER_NAME_KEY],
+                         "884-99D",
+                         "CMMDBPipeline cannot correctly read meta info 'families list' from jobs setup file")
+
+#    @unittest.skipUnless(isdir("/proj/b2011117"), "This can only run in UPPMAX")
     def test_cal_mut_stat_offline_1(self):
         """ test basic offline version (w/o slurm) of cal_mut_stat (one chrom)"""
 
@@ -164,12 +201,18 @@ class TestCMMDBPipeline(SafeTester):
         self.init_test(self.current_func_name)
         vcf_tabix_file = join_path(self.data_dir,
                                    "input.vcf.gz")
+        exp_result = join_path(self.data_dir,
+                               "exp_stat")
         jobs_setup_file = self.__create_jobs_setup_file(vcf_tabix_file=vcf_tabix_file,
                                                         project_code=None,
                                                         vcf_region=None,
                                                         )
         pl = CMMDBPipeline(jobs_setup_file)
         pl.cal_mut_stat()
+        self.assertTrue(filecmp.cmp(pl.out_stat_file,
+                                    exp_result),
+                        "cal_mut_stat doesn't function correctly")
+
 
     @unittest.skipUnless(settings.FULL_SYSTEM_TEST, "taking too long time to test")
     def test_cal_mut_stat_offline_2(self):
@@ -185,6 +228,25 @@ class TestCMMDBPipeline(SafeTester):
                                                         )
         pl = CMMDBPipeline(jobs_setup_file)
         pl.cal_mut_stat()
+
+    def test_cal_mut_stat_offline_3(self):
+        """ to offline version (w/o slurm) if it can handle multi allelic stat correctly """
+
+        self.individual_debug = True
+        self.init_test(self.current_func_name)
+        vcf_tabix_file = join_path(self.data_dir,
+                                   "input.vcf.gz")
+        exp_result = join_path(self.data_dir,
+                               "exp_stat")
+        jobs_setup_file = self.__create_jobs_setup_file(vcf_tabix_file=vcf_tabix_file,
+                                                        project_code=None,
+                                                        vcf_region=None,
+                                                        )
+        pl = CMMDBPipeline(jobs_setup_file)
+        pl.cal_mut_stat()
+        self.assertTrue(filecmp.cmp(pl.out_stat_file,
+                                    exp_result),
+                        "cal_mut_stat doesn't function correctly")
 
     @unittest.skipUnless(settings.SLURM_TEST, "taking too much UPPMAX cpu-core hours")
     def test_cal_mut_stat_slurm_1(self):
