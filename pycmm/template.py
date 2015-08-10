@@ -102,10 +102,6 @@ class Tester(unittest.TestCase, pyCMMBase):
         unittest.TestCase.__init__(self, test_name)
         pyCMMBase.__init__(self)
         self.test_module_name = test_module_name
-        self.base_working_dir = join_path(module_path,
-                                          'tmp')
-        self.base_data_dir = join_path(module_path,
-                                       'data')
 
     def remove_dir(self, dir_name):
         self.assertTrue(dir_name, '"None" is not a valid directory')
