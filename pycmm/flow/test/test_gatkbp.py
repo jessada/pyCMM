@@ -29,10 +29,11 @@ class TestGATKBPPipeline(SafeTester):
         SafeTester.__init__(self,
                             test_name,
                             dirname(__file__),
+                            test_module_name=__name__,
                             )
 
     def setUp(self):
-        self.module_name = 'gatkbp'
+        pass
 
     def __create_jobs_setup_file(self,
                                  dataset_name=None,

@@ -15,10 +15,11 @@ class TestFunctions(SafeTester):
         SafeTester.__init__(self,
                             test_name,
                             dirname(__file__),
+                            test_module_name=__name__,
                             )
 
     def setUp(self):
-        self.module_name = 'default'
+        pass
 
     def __create_db_instance(self):
         return None

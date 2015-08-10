@@ -13,6 +13,8 @@ SLURM_TEST = False
 FAST_PROJECT_CODE = 'b2011158'
 SLOW_PROJECT_CODE = 'b2011097'
 
+ENV_TEST_DIR = "PYTHON_TEST_DIR"
+
 ## > > > > > > > > > > > > > GATK Best practice (DNA seq) < < < < < < < < < <
 DNASEQ_PIPELINE_DESCRIPTION = "A flow to control a pipeline to process DNA sequencing data"
 DNASEQ_PIPELINE_DFLT_LOG_FILE = "dnaseq_pipeline"

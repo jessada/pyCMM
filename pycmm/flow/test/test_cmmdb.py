@@ -42,10 +42,11 @@ class TestCMMDBPipeline(SafeTester):
         SafeTester.__init__(self,
                             test_name,
                             dirname(__file__),
+                            test_module_name=__name__,
                             )
 
     def setUp(self):
-        self.module_name = 'cmmdb'
+        pass
 
     def __create_jobs_setup_file(self,
                                  vcf_tabix_file,
