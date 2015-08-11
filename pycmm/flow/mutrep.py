@@ -9,6 +9,7 @@ from os import listdir
 from os.path import join as join_path
 from os.path import isdir
 from os.path import isfile
+from pycmm.proc.tavcf import TableAnnovarVCFReader as VCFReader
 from pycmm.template import pyCMMBase
 from pycmm.settings import DFLT_ANNOVAR_DB_FOLDER
 from pycmm.settings import DFLT_ANNOVAR_DB_NAMES
@@ -199,22 +200,16 @@ class MutRepPipeline(CMMDBPipeline):
         ws.write(row, 2, vcf_record.REF)
         ws.write(row, 3, str(alt_allele))
         len_anno_cols = len(anno_cols)
-        debug_msg = "len_anno_cols :"
-        debug_msg += " " + str(len_anno_cols)
-        debug_msg += " len(vcf_record.INFO) :"
-        debug_msg += " " + str(len(vcf_record.INFO))
-        debug_msg += "\n" + str(anno_cols)
-        debug_msg += "\n"
-        debug_msg += "\n" + str(vcf_record.INFO)
-        mylogger.debug(debug_msg)
         for anno_idx in xrange(len_anno_cols):
             info = vcf_record.INFO[anno_cols[anno_idx]]
+            if (type(info) is list) and (len(info) == 1):
+                info = info[0]
+            elif (type(info) is list) and (len(info) > 1):
+                info = info[allele_idx-1]
             if info is None:
                 info = ""
-            elif info == [None]:
+            if info == [None]:
                 info = ""
-            elif (type(info) is list) and (len(info) == 1):
-                info = info[0]
             ws.write(row, anno_idx+LAYOUT_VCF_COLS, str(info))
         sample_start_idx = LAYOUT_VCF_COLS + len_anno_cols
         for sample_idx in xrange(len(samples_list)):
@@ -230,7 +225,7 @@ class MutRepPipeline(CMMDBPipeline):
 
     def __add_muts_sheet(self, sheet_name, samples_list=None):
         if self.input_vcf_tabix.endswith('.vcf.gz'):
-            vcf_reader = vcf.Reader(filename=self.input_vcf_tabix)
+            vcf_reader = VCFReader(filename=self.input_vcf_tabix)
         else:
             self.thrown(self.input_vcf_tabix + ' does not endswith .vcf.gz')
         row = 1
@@ -241,8 +236,6 @@ class MutRepPipeline(CMMDBPipeline):
         if self.report_layout.report_regions is None:
             for vcf_record in vcf_reader:
                 for allele_idx in xrange(1, len(vcf_record.alleles)):
-#                    mylogger.debug(vcf_record)
-#                    mylogger.debug(allele_idx)
                     self.__write_content(ws, row, vcf_record, allele_idx, samples_list)
                     row += 1
         else:
@@ -256,8 +249,6 @@ class MutRepPipeline(CMMDBPipeline):
                                                    )
                 for vcf_record in vcf_records:
                     for allele_idx in xrange(1, len(vcf_record.alleles)):
-#                        mylogger.debug(vcf_record)
-#                        mylogger.debug(allele_idx)
                         self.__write_content(ws, row, vcf_record, allele_idx, samples_list)
                         row += 1
         # freeze panes

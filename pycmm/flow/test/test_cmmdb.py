@@ -194,7 +194,7 @@ class TestCMMDBPipeline(SafeTester):
                          "884-99D",
                          "CMMDBPipeline cannot correctly read meta info 'families list' from jobs setup file")
 
-#    @unittest.skipUnless(isdir("/proj/b2011117"), "This can only run in UPPMAX")
+    @unittest.skipUnless(settings.FULL_SYSTEM_TEST, "taking too long time to test")
     def test_cal_mut_stat_offline_1(self):
         """ test basic offline version (w/o slurm) of cal_mut_stat (one chrom)"""
 
@@ -230,6 +230,7 @@ class TestCMMDBPipeline(SafeTester):
         pl = CMMDBPipeline(jobs_setup_file)
         pl.cal_mut_stat()
 
+    @unittest.skipUnless(settings.FULL_SYSTEM_TEST, "taking too long time to test")
     def test_cal_mut_stat_offline_3(self):
         """ to offline version (w/o slurm) if it can handle multi allelic stat correctly """
 
