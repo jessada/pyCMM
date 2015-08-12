@@ -133,6 +133,11 @@ class MutRepPipeline(CMMDBPipeline):
     def report_layout(self):
         return self.__report_layout
 
+    @property
+    def summary_rpt_file(self):
+        return join_path(self.rpts_out_dir,
+                         self.dataset_name+"_summary.xlsx")
+
     def __cal_gt(self, gt, allele_idx):
         if gt == ".":
             return "."
@@ -254,14 +259,21 @@ class MutRepPipeline(CMMDBPipeline):
         # freeze panes
         ws.freeze_panes(1, 0)
 
-    def gen_report(self, out_file):
+    def gen_summary_report(self, out_file=None):
+        if out_file is None:
+            out_file = self.summary_rpt_file
         self.__wb = xlsxwriter.Workbook(out_file)
-        if self.families_list is None:
-            self.__add_muts_sheet("summary")
-        else:
-            pass
+        self.__add_muts_sheet("summary")
         self.__wb.close()
 
+#    def gen_report(self, out_file):
+#        self.__wb = xlsxwriter.Workbook(out_file)
+#        if self.families_list is None:
+#            self.__add_muts_sheet("summary")
+#        else:
+#            pass
+#        self.__wb.close()
+#
     def __garbage_collecting(self):
         pass
 

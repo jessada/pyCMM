@@ -90,10 +90,6 @@ class TestMutRepPipeline(SafeTester):
         self.assertEqual(pl.report_layout.call_info,
                          False,
                          "MutRepPipeline cannot correctly read report layout info 'call info' from jobs setup file")
-        mylogger.debug(pl.report_layout.freq_ratios)
-        self.assertEqual(pl.report_layout.freq_ratios["esp6500siv2_all"],
-                         0.2,
-                         "MutRepPipeline cannot correctly read report layout info 'frequency ratios' from jobs setup file")
         self.assertEqual(pl.report_layout.freq_ratios["ExAC_ALL"],
                          0.1,
                          "MutRepPipeline cannot correctly read report layout info 'frequency ratios' from jobs setup file")
@@ -146,7 +142,21 @@ class TestMutRepPipeline(SafeTester):
                          None,
                          "MutRepPipeline cannot correctly read report layout info 'frequency ratios' from jobs setup file")
 
-#    @unittest.skip("Disable for temporary")
+    def test_summary_report_1(self):
+        """ test if summary report with default configuration can be correctly generated """
+
+        self.individual_debug = True
+        self.init_test(self.current_func_name)
+        job_name = self.test_function
+        vcf_tabix_file = join_path(self.data_dir,
+                                   "chr6_18.vcf.gz")
+        jobs_setup_file = self.__create_jobs_setup_file(vcf_tabix_file=vcf_tabix_file,
+                                                        anno_cols=DFLT_MUTREP_ANNO_COLS,
+                                                        report_regions=None,
+                                                        )
+        pl = MutRepPipeline(jobs_setup_file)
+        pl.gen_summary_report()
+
     def test_summary_report_2(self):
         """ test if summary reprot with custom configuration can be correctly generated """
 
@@ -155,8 +165,6 @@ class TestMutRepPipeline(SafeTester):
         job_name = self.test_function
         vcf_tabix_file = join_path(self.data_dir,
                                    "chr18.vcf.gz")
-        rpt_out_file = join_path(self.working_dir,
-                                 self.current_func_name + ".xlsx")
         anno_cols=DFLT_TEST_MUTREP_COLS
         anno_cols.remove("1000g2014oct_all")
         jobs_setup_file = self.__create_jobs_setup_file(vcf_tabix_file=vcf_tabix_file,
@@ -164,26 +172,44 @@ class TestMutRepPipeline(SafeTester):
                                                         call_info="YES",
                                                         )
         pl = MutRepPipeline(jobs_setup_file)
-        pl.gen_report(out_file=rpt_out_file)
+        pl.gen_summary_report()
 
-#    @unittest.skip("Disable for temporary")
+    def test_summary_report_3(self):
+        """ test summary with multiple report_regions """
+
+        self.individual_debug = True
+        self.init_test(self.current_func_name)
+        job_name = self.test_function
+        vcf_tabix_file = join_path(self.data_dir,
+                                   "chr6_18.vcf.gz")
+        rpt_out_file = join_path(self.working_dir,
+                                 self.current_func_name + ".xlsx")
+        jobs_setup_file = self.__create_jobs_setup_file(vcf_tabix_file=vcf_tabix_file,
+                                                        anno_cols=DFLT_MUTREP_ANNO_COLS,
+                                                        report_regions="6:78171941-78172992,18:28610988-28611790",
+                                                        call_info="YES",
+                                                        )
+        pl = MutRepPipeline(jobs_setup_file)
+        pl.gen_summary_report(out_file=rpt_out_file)
+
     def test_summary_report_4(self):
-        """ test if summary report with default configuration can be correctly generated """
+        """
+        test if mutations with more than one alternate alleles in summary
+        is correctly generated
+        """
 
         self.individual_debug = True
         self.init_test(self.current_func_name)
         job_name = self.test_function
         vcf_tabix_file = join_path(self.data_dir,
                                    "input.vcf.gz")
-        rpt_out_file = join_path(self.working_dir,
-                                 self.current_func_name + ".xlsx")
         jobs_setup_file = self.__create_jobs_setup_file(vcf_tabix_file=vcf_tabix_file,
                                                         anno_cols=DFLT_MUTREP_ANNO_COLS,
                                                         report_regions="6",
                                                         call_info="YES",
                                                         )
         pl = MutRepPipeline(jobs_setup_file)
-        pl.gen_report(out_file=rpt_out_file)
+        pl.gen_summary_report()
 
     def tearDown(self):
         self.remove_working_dir()
