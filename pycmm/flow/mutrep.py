@@ -266,14 +266,17 @@ class MutRepPipeline(CMMDBPipeline):
         self.__add_muts_sheet("summary")
         self.__wb.close()
 
-#    def gen_report(self, out_file):
-#        self.__wb = xlsxwriter.Workbook(out_file)
-#        if self.families_list is None:
-#            self.__add_muts_sheet("summary")
-#        else:
-#            pass
-#        self.__wb.close()
-#
+    def gen_family_reports(self,
+                           family_info,
+                           out_file=None
+                           ):
+        self.__wb = xlsxwriter.Workbook(out_file)
+        if self.families_list is None:
+            self.__add_muts_sheet("summary")
+        else:
+            pass
+        self.__wb.close()
+
     def __garbage_collecting(self):
         pass
 

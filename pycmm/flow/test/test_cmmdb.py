@@ -15,10 +15,10 @@ from pycmm.settings import FAST_PROJECT_CODE
 from pycmm.settings import SLOW_PROJECT_CODE
 from pycmm.flow.cmmdb import CMMDBPipeline
 from pycmm.flow.cmmdb import create_jobs_setup_file
-from pycmm.flow.cmmdb import JOBS_SETUP_SAMPLES_INFO_KEY
+from pycmm.flow.cmmdb import JOBS_SETUP_SAMPLE_INFOS_KEY
 from pycmm.flow.cmmdb import JOBS_SETUP_FAMILY_ID_KEY
 from pycmm.flow.cmmdb import JOBS_SETUP_MEMBERS_LIST_KEY
-from pycmm.flow.cmmdb import JOBS_SETUP_MEMBER_NAME_KEY
+from pycmm.flow.cmmdb import JOBS_SETUP_SAMPLE_ID_KEY
 from pycmm.proc.annovar import ANNOVAR_PARAMS_INPUT_FILE_KEY
 from pycmm.proc.annovar import ANNOVAR_PARAMS_DB_FOLDER_KEY
 from pycmm.proc.annovar import ANNOVAR_PARAMS_BUILDVER_KEY
@@ -53,7 +53,7 @@ class TestCMMDBPipeline(SafeTester):
                                  dataset_name=None,
                                  project_code=SLOW_PROJECT_CODE,
                                  vcf_region="18",
-                                 samples_info=None,
+                                 sample_infos=None,
                                  annovar_human_db_dir=DFLT_ANNOVAR_TEST_DB_FOLDER,
                                  annovar_buildver="hg19",
                                  annovar_db_names=DFLT_ANNOVAR_TEST_DB_NAMES,
@@ -68,7 +68,7 @@ class TestCMMDBPipeline(SafeTester):
                                project_out_dir=self.working_dir,
                                vcf_tabix_file=vcf_tabix_file,
                                vcf_region=vcf_region,
-                               samples_info=samples_info,
+                               sample_infos=sample_infos,
                                project_code=project_code,
                                annovar_human_db_dir=annovar_human_db_dir,
                                annovar_buildver=annovar_buildver,
@@ -147,7 +147,7 @@ class TestCMMDBPipeline(SafeTester):
         jobs_setup_file = self.__create_jobs_setup_file(vcf_tabix_file=dummy_vcf_tabix_file,
                                                         project_code=None,
                                                         vcf_region=None,
-                                                        samples_info="Co-441,Co-666",
+                                                        sample_infos="Co-441,Co-666",
                                                         )
         pl = CMMDBPipeline(jobs_setup_file)
         exp_dataset_name = self.test_function
@@ -160,37 +160,37 @@ class TestCMMDBPipeline(SafeTester):
         self.assertEqual(pl.samples_list,
                          ["Co-441","Co-666"],
                          "CMMDBPipeline cannot correctly read meta info 'samples list' from jobs setup file")
-        self.assertEqual(pl.families_list,
+        self.assertEqual(pl.family_infos,
                          None,
                          "CMMDBPipeline cannot correctly read meta info 'families list' from jobs setup file")
 
     def test_load_jobs_info_3(self):
-        """ test iffamilies structures are loaded correctly """
+        """ test if families structures are loaded correctly """
 
         self.individual_debug = True
         self.init_test(self.current_func_name)
         job_name = self.test_function
         dummy_vcf_tabix_file = "/path/to/vcf_tabix_file"
         jobs_setup_file = self.__create_jobs_setup_file(vcf_tabix_file=dummy_vcf_tabix_file,
-                                                        samples_info="242:Co-441:Co-666:Co-771,6067:Br-397:884-99D",
+                                                        sample_infos="242:Co-441:Co-666:Co-771,6067:Br-397:884-99D",
                                                         )
         pl = CMMDBPipeline(jobs_setup_file)
         self.assertEqual(pl.samples_list,
                          ["Co-441","Co-666","Co-771","Br-397","884-99D"],
                          "CMMDBPipeline cannot correctly read meta info 'samples list' from jobs setup file")
-        self.assertEqual(len(pl.families_list),
+        self.assertEqual(len(pl.family_infos),
                          2,
                          "CMMDBPipeline cannot correctly read meta info 'families list' from jobs setup file")
-        self.assertEqual(pl.families_list[1][JOBS_SETUP_FAMILY_ID_KEY],
+        self.assertEqual(pl.family_infos[1].fam_id,
                          "6067",
                          "CMMDBPipeline cannot correctly read meta info 'families list' from jobs setup file")
-        self.assertEqual(len(pl.families_list[0][JOBS_SETUP_MEMBERS_LIST_KEY]),
+        self.assertEqual(len(pl.family_infos[0].members),
                          3,
                          "CMMDBPipeline cannot correctly read meta info 'families list' from jobs setup file")
-        self.assertEqual(len(pl.families_list[1][JOBS_SETUP_MEMBERS_LIST_KEY]),
+        self.assertEqual(len(pl.family_infos[1].members),
                          2,
                          "CMMDBPipeline cannot correctly read meta info 'families list' from jobs setup file")
-        self.assertEqual(pl.families_list[1][JOBS_SETUP_MEMBERS_LIST_KEY][1][JOBS_SETUP_MEMBER_NAME_KEY],
+        self.assertEqual(pl.family_infos[1].members[1].sample_id,
                          "884-99D",
                          "CMMDBPipeline cannot correctly read meta info 'families list' from jobs setup file")
 
