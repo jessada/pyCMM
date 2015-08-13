@@ -215,7 +215,6 @@ class CMMDBPipeline(JobManager):
             self.__family_infos = []
             for entry in sample_infos:
                 family_info = FamilyInfo(entry)
-                mylogger.debug(family_info)
                 for member in family_info.members:
                     self.__samples_list.append(member.sample_id)
                 self.__family_infos.append(family_info)
