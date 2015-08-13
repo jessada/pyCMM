@@ -9,7 +9,6 @@ try:
 except ImportError:
     cparse = None
 
-#from vcf.model import _Call, _Record, make_calldata_tuple
 from vcf.model import _Call as _VCFCall
 
 CMMGT_WILDTYPE = 'wt'
@@ -24,6 +23,8 @@ class _CmmGt(object):
       - 0 -> REF
       - 1 -> first ALT
       - and so on
+
+    ** NOTE ** the calculation here based on GT value alone
     """
 
     def __init__(self, gt):
@@ -179,11 +180,17 @@ class TableAnnovarVcfReader(VcfReader):
         return retdict
 
     def _parse_samples(self, samples, samp_fmt, site):
-        '''Parse a sample entry according to the format specified in the FORMAT
+        '''
+        Remake version of pyVCF.parser._parse_samples
+
+        Parse a sample entry according to the format specified in the FORMAT
         column.
 
         NOTE: this method has a cython equivalent and care must be taken
         to keep the two methods equivalent
+
+        ***** Remake part *****
+        - use custom _Call structure, _CmmVcfCall
         '''
 
         # check whether we already know how to parse this format
@@ -250,16 +257,8 @@ class TableAnnovarVcfReader(VcfReader):
 
             # create a call object
             call = _CmmVcfCall(site, name, samp_fmt(*sampdat))
-            if (call.sample == "Br-429") and (call.data.GT == "2/3"):
-                mylogger.debug(sampdat)
-                mylogger.debug(samp_fmt(*sampdat))
-                mylogger.debug(call)
-                mylogger.debug(call.gt_bases)
-                mylogger.debug(call.data.GT)
-                mylogger.debug(call.cmmgt_type)
             samp_data.append(call)
 
-#        mylogger.debug(len(samp_data))
-#        mylogger.debug(samp_data[1])
         return samp_data
+
 
