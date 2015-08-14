@@ -10,7 +10,7 @@ try:
 except ImportError:
     cparse = None
 
-from vcf.model import _Call as _VCFCall
+from vcf.model import _Call as _VcfCall
 
 CMMGT_WILDTYPE = 'wt'
 CMMGT_HOMOZYGOTE = 'hom'
@@ -18,119 +18,121 @@ CMMGT_HETEROZYGOTE = 'het'
 CMMGT_OTHER = 'oth'
 
 
-class _CmmGt(object):
-    """
-    to calculate type of genotype given allele index
-      - 0 -> REF
-      - 1 -> first ALT
-      - and so on
-
-    ** NOTE ** the calculation here based on GT value alone
-    """
-
-    def __init__(self, gt):
-        self.__gt = gt
-
-    def __repr__(self):
-        if (self.__gt == ".") or (self.__gt == "./."):
-            return "."
-        return str(map(lambda x: self[x], range(len(self)+1)))
-
-    def __len__(self):
-        if (self.__gt == ".") or (self.__gt == "./."):
-            return 0
-        return max(map(lambda x: int(x),
-                       self.__gt.split("/")))
-
-    def __getitem__(self, allele_idx):
-        if (self.__gt == ".") or (self.__gt == "./."):
-            return "."
-        gts = self.__gt.split("/")
-        # 0/0 will be translated as "wild type" no matter what allele index is
-        if (gts[0] == "0") and (gts[1] == "0"):
-            return CMMGT_WILDTYPE
-        # The gt of which the allele index doesn't match will be considered
-        # as "other", ex. allele index = 1 but the gt is 2/3
-        if (gts[0] != str(allele_idx)) and (gts[1] != str(allele_idx)):
-            return CMMGT_OTHER
-        # The rest are in the cases one or both of the alleles match with
-        # allele index.
-        # So if they are different then "heterozygote" else "homozygote"
-        if gts[0] != gts[1]:
-            return CMMGT_HETEROZYGOTE
-        return CMMGT_HOMOZYGOTE
-
-class _ActualGt(_CmmGt):
-    """
-    to calculate the actual genotype based allele index and allele frequency
-      - allele index
-        - 0 -> REF
-        - 1 -> first ALT
-        - and so on
-
-    ** NOTE1 ** the calculation here based on GT value alone
-    ** NOTE2 ** the calculation may not be accurate if there are more than
-    one alternate alleles, Ex Ref=A (freq=45%), Alt=T,C,G(freq=10%,10%,35%).
-    But it'll be a very rare case
-    """
-
-    def __init__(self, gt, af=None):
-        self.__gt = gt
-        if (af == "") or (af is None) or (af == "."):
-            self.__af = 0
-        else:
-            self.__af = af
-
-    def __getitem__(self, allele_idx):
-        def get_af(allele_idx):
-            if type(self.__af) is not list:
-                return self.__af
-            af = self.__af[allele_idx-1]
-            if af is None:
-                return 0
-            return af
-
-        if (self.__gt == ".") or (self.__gt == "./."):
-            return "."
-        gts = self.__gt.split("/")
-        # 0/0 will be translated as "wild type" if allele frequency of that
-        # allele index is less than 0.5. Otherwise, it'll be considered as the
-        # opposite, which is homozygote mutation
-        if (gts[0] == "0") and (gts[1] == "0") and (get_af(allele_idx) < 0.5):
-            return CMMGT_WILDTYPE
-        if (gts[0] == "0") and (gts[1] == "0") and (get_af(allele_idx) >= 0.5):
-            return CMMGT_HOMOZYGOTE
-        # Regardless of frequency,
-        # the gt of which the allele index doesn't match will be considered
-        # as "other", ex. allele index = 1 but the gt is 2/3
-        if (gts[0] != str(allele_idx)) and (gts[1] != str(allele_idx)):
-            return CMMGT_OTHER
-        # The rest are in the cases one or both of the alleles match with
-        # allele index.
-        # So if they are different then "heterozygote" else "homozygote"
-        if gts[0] != gts[1]:
-            return CMMGT_HETEROZYGOTE
-        # Otherwise, if the frequency less than 0.5 it'll consider as
-        # "homozygote"
-        if get_af(allele_idx) < 0.5:
-            return CMMGT_HOMOZYGOTE
-        # else "wild type"
-        return CMMGT_WILDTYPE
-
-class _CmmVcfCall(_VCFCall):
+class _CmmVcfCall(_VcfCall):
     """
     An encapsulated version of vcf._Call from pyVCF package to
-      - add extra genotype translation, "cmm_gt", to handle record
+      - add extra genotype translation, "cmm_gts", to handle record
         with more than one alternate alleles
+      - add extra genotype translation, "actual_gts", to determine the 
+        actual genotype based on "cmm_gts" and alleles frequency
     """
 
-    @property
-    def cmm_gt(self):
-        return _CmmGt(self.data.GT)
+    def __init__(self, site, sample, data):
+        _VcfCall.__init__(self,
+                          site=site,
+                          sample=sample,
+                          data=data,
+                          )
+        self.__cmm_gts = None
+        self.__actual_gts = None
+
+    def __cal_extra_attributes(self):
+        self.__cmm_gts = self.__cal_cmm_gts()
+        self.__afs = self.__cal_afs()
+        self.__actual_gts = self.__cal_actual_gts()
+
+    def __cal_cmm_gts(self):
+        """
+        to calculate type of genotype given allele index
+          - 0 -> REF
+          - 1 -> first ALT
+          - and so on
+
+        ** NOTE ** the calculation here based on GT value alone
+        """
+        raw_GT = self.data.GT
+        cmm_gts = ['dummy']
+        for allele_idx in xrange(1, len(self.site.alleles)):
+            if (raw_GT == ".") or (raw_GT == "./."):
+                cmm_gts.append(".")
+                continue
+            raw_gts = raw_GT.split("/")
+            # 0/0 will be translated as "wild type" no matter what allele index is
+            if (raw_gts[0] == "0") and (raw_gts[1] == "0"):
+                cmm_gts.append(CMMGT_WILDTYPE)
+                continue
+            # The gt of which the allele index doesn't match will be considered
+            # as "other", ex. allele index = 1 but the gt is 2/3
+            if (raw_gts[0] != str(allele_idx)) and (raw_gts[1] != str(allele_idx)):
+                cmm_gts.append(CMMGT_OTHER)
+                continue
+            # The rest are in the cases one or both of the alleles match with
+            # allele index.
+            # So if they are different then "heterozygote" else "homozygote"
+            if raw_gts[0] != raw_gts[1]:
+                cmm_gts.append(CMMGT_HETEROZYGOTE)
+                continue
+            cmm_gts.append(CMMGT_HOMOZYGOTE)
+        return cmm_gts
+
+    def __cal_afs(self):
+        raw_afs = self.site.INFO[DFLT_MAF_VAR]
+        if (raw_afs == "") or (raw_afs is None) or (raw_afs == "."):
+            return map(lambda x: 0, xrange(len(self.site.alleles)))
+        if type(raw_afs) is not list:
+            afs = ["dummy", raw_afs]
+        else:
+            afs = ["dummy"]
+            for raw_af in raw_afs:
+                if raw_af is None:
+                    afs.append(0)
+                else:
+                    afs.append(raw_af)
+        return afs
+
+    def __cal_actual_gts(self):
+        """
+        to calculate the actual genotype based allele index and allele frequency
+          - allele index
+            - 0 -> REF
+            - 1 -> first ALT
+            - and so on
+
+        ** NOTE1 ** the calculation here based on GT value alone
+        ** NOTE2 ** the calculation may not be accurate if there are more than
+        one alternate alleles, Ex Ref=A (freq=45%), Alt=T,C,G(freq=10%,10%,35%).
+        But it'll be a very rare case
+        """
+        actual_gts = []
+        for gt_idx in xrange(len(self.cmm_gts)):
+            cmm_gt = self.cmm_gts[gt_idx]
+            # Other than the problematic wild type and homozygote,
+            # the actual gt should be the same as cmm gt
+            if cmm_gt != CMMGT_HOMOZYGOTE and cmm_gt != CMMGT_WILDTYPE:
+                actual_gts.append(cmm_gt)
+                continue
+            # if allele frequency less than 0.5 the actual gt remain the same
+            if self.__afs[gt_idx] < 0.5:
+                actual_gts.append(cmm_gt)
+                continue
+            # below should be only hom and wild type with allele freq >= 0.5
+            if cmm_gt == CMMGT_HOMOZYGOTE:
+                actual_gts.append(CMMGT_WILDTYPE)
+                continue
+            actual_gts.append(CMMGT_HOMOZYGOTE)
+        return actual_gts
 
     @property
-    def actual_gt(self):
-        return _ActualGt(self.data.GT, self.site.INFO[DFLT_MAF_VAR])
+    def cmm_gts(self):
+        if self.__cmm_gts is None:
+            self.__cal_extra_attributes()
+        return self.__cmm_gts
+
+    @property
+    def actual_gts(self):
+        if self.__actual_gts is None:
+            self.__cal_extra_attributes()
+        return self.__actual_gts
 
 
 class TableAnnovarVcfReader(VcfReader):
@@ -330,5 +332,3 @@ class TableAnnovarVcfReader(VcfReader):
             samp_data.append(call)
 
         return samp_data
-
-
