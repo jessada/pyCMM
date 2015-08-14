@@ -37,7 +37,8 @@ MUTREP_ALLOC_TIME = "1-00:00:00"
 
 MUTREP_CREATE_JOB_SETUP_FILE_DESCRIPTION = "An applicationt to generate job setup file to process mutations report"
 
-DFLT_MUTREP_FREQ_RATIOS = "1000g2014oct_all:0.2"
+DFLT_MAF_VAR = "1000g2014oct_all"
+DFLT_MUTREP_FREQ_RATIOS = DFLT_MAF_VAR + ":0.2"
 
 DFLT_MUTREP_ANNO_COLS = []
 #DFLT_MUTREP_ANNO_COLS.append("Chr")
