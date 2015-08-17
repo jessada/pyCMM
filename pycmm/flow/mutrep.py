@@ -9,7 +9,7 @@ from os import listdir
 from os.path import join as join_path
 from os.path import isdir
 from os.path import isfile
-from pycmm.proc.tavcf import TableAnnovarVCFReader as VCFReader
+from pycmm.proc.tavcf import TableAnnovarVcfReader as VcfReader
 from pycmm.template import pyCMMBase
 from pycmm.settings import DFLT_ANNOVAR_DB_FOLDER
 from pycmm.settings import DFLT_ANNOVAR_DB_NAMES
@@ -219,7 +219,7 @@ class MutRepPipeline(CMMDBPipeline):
         sample_start_idx = LAYOUT_VCF_COLS + len_anno_cols
         for sample_idx in xrange(len(samples_list)):
             call = vcf_record.genotype(samples_list[sample_idx])
-            zygo = self.__cal_gt(call["GT"], allele_idx)
+            zygo = call.cmm_gts[allele_idx]
             if self.report_layout.call_info:
                 col_idx = (2*sample_idx) + (sample_start_idx)
                 ws.write(row, col_idx, zygo)
@@ -228,20 +228,29 @@ class MutRepPipeline(CMMDBPipeline):
             else:
                 ws.write(row, sample_idx+sample_start_idx, zygo)
 
-    def __add_muts_sheet(self, sheet_name, samples_list=None):
+    def __add_muts_sheet(self,
+                         sheet_name,
+                         samples_list=None,
+                         check_shared=False,
+                         ):
         if self.input_vcf_tabix.endswith('.vcf.gz'):
-            vcf_reader = VCFReader(filename=self.input_vcf_tabix)
+            vcf_reader = VcfReader(filename=self.input_vcf_tabix)
         else:
             self.thrown(self.input_vcf_tabix + ' does not endswith .vcf.gz')
         row = 1
         if samples_list is None:
-            samples_list = vcf_reader.samples
+            samples = vcf_reader.samples
+        else:
+            samples = samples_list
         ws = self.__add_sheet(sheet_name)
-        self.__write_header(ws, samples_list)
+        self.__write_header(ws, samples)
         if self.report_layout.report_regions is None:
             for vcf_record in vcf_reader:
                 for allele_idx in xrange(1, len(vcf_record.alleles)):
-                    self.__write_content(ws, row, vcf_record, allele_idx, samples_list)
+                    if (check_shared and
+                        not vcf_record.is_shared(allele_idx, samples_list)):
+                        continue
+                    self.__write_content(ws, row, vcf_record, allele_idx, samples)
                     row += 1
         else:
             for report_region in self.report_layout.report_regions:
@@ -254,28 +263,45 @@ class MutRepPipeline(CMMDBPipeline):
                                                    )
                 for vcf_record in vcf_records:
                     for allele_idx in xrange(1, len(vcf_record.alleles)):
-                        self.__write_content(ws, row, vcf_record, allele_idx, samples_list)
+                        if (check_shared and
+                            not vcf_record.is_shared(allele_idx, samples_list)):
+                            continue
+                        self.__write_content(ws, row, vcf_record, allele_idx, samples)
                         row += 1
         # freeze panes
         ws.freeze_panes(1, 0)
 
-    def gen_summary_report(self, out_file=None):
+    def gen_summary_report(self, out_file=None, fam_infos=None):
         if out_file is None:
             out_file = self.summary_rpt_file
         self.__wb = xlsxwriter.Workbook(out_file)
-        self.__add_muts_sheet("summary")
+        self.__add_muts_sheet("summary_all")
+        if fam_infos is not None:
+            samples_list = map(lambda x: x.sample_id,
+                               reduce(lambda x, y: x+y,
+                                      map(lambda x: x.members,
+                                          self.family_infos)))
+            self.__add_muts_sheet("summary_families", samples_list=samples_list)
         self.__wb.close()
 
-    def gen_family_reports(self,
-                           family_info,
-                           out_file=None
-                           ):
+    def __gen_family_report(self,
+                            fam_info,
+                            ):
+        out_file = join_path(self.rpts_out_dir,
+                             self.dataset_name+"_fam"+fam_info.fam_id+".xlsx")
+        samples_list = map(lambda x: x.sample_id, fam_info.members)
         self.__wb = xlsxwriter.Workbook(out_file)
-        if self.families_list is None:
-            self.__add_muts_sheet("summary")
+        if len(samples_list) == 1:
+            self.__add_muts_sheet(samples_list[0], samples_list=samples_list, check_shared=True)
         else:
-            pass
+            self.__add_muts_sheet("shared", samples_list=samples_list, check_shared=True)
+            for sample_name in samples_list:
+                self.__add_muts_sheet(sample_name, samples_list=[sample_name], check_shared=True)
         self.__wb.close()
+
+    def gen_family_reports(self):
+        for family_info in self.family_infos:
+            self.__gen_family_report(family_info)
 
     def __garbage_collecting(self):
         pass
