@@ -202,55 +202,55 @@ class TestCmmVcfCall(SafeTester):
         call = vcf_record.genotype("Br-429")
         self.assertEqual(call.actual_gts[1],
                          "oth",
-                         "cmm genotype cannot be correctly determined")
+                         "cmm actual genotype cannot be correctly determined")
         self.assertEqual(call.actual_gts[2],
                          "het",
-                         "cmm genotype cannot be correctly determined")
+                         "cmm actual genotype cannot be correctly determined")
         self.assertEqual(call.actual_gts[3],
                          "het",
-                         "cmm genotype cannot be correctly determined")
+                         "cmm actual genotype cannot be correctly determined")
         self.assertEqual(call.actual_gts[4],
                          "oth",
-                         "cmm genotype cannot be correctly determined")
+                         "cmm actual genotype cannot be correctly determined")
         call = vcf_record.genotype("Br-432")
         self.assertEqual(call.actual_gts[1],
                          "hom",
-                         "cmm genotype cannot be correctly determined")
+                         "cmm actual genotype cannot be correctly determined")
         self.assertEqual(call.actual_gts[2],
                          "oth",
-                         "cmm genotype cannot be correctly determined")
+                         "cmm actual genotype cannot be correctly determined")
         self.assertEqual(call.actual_gts[3],
                          "oth",
-                         "cmm genotype cannot be correctly determined")
+                         "cmm actual genotype cannot be correctly determined")
         self.assertEqual(call.actual_gts[4],
                          "oth",
-                         "cmm genotype cannot be correctly determined")
+                         "cmm actual genotype cannot be correctly determined")
         call = vcf_record.genotype("Al-161")
         self.assertEqual(call.actual_gts[1],
                          "het",
-                         "cmm genotype cannot be correctly determined")
+                         "cmm actual genotype cannot be correctly determined")
         self.assertEqual(call.actual_gts[2],
                          "oth",
-                         "cmm genotype cannot be correctly determined")
+                         "cmm actual genotype cannot be correctly determined")
         self.assertEqual(call.actual_gts[3],
                          "het",
-                         "cmm genotype cannot be correctly determined")
+                         "cmm actual genotype cannot be correctly determined")
         self.assertEqual(call.actual_gts[4],
                          "oth",
-                         "cmm genotype cannot be correctly determined")
+                         "cmm actual genotype cannot be correctly determined")
         vcf_record = vcf_reader.next()
         call = vcf_record.genotype("Al-65")
         self.assertEqual(call.actual_gts[1],
                          ".",
-                         "cmm genotype cannot be correctly determined")
+                         "cmm actual genotype cannot be correctly determined")
         self.assertEqual(call.actual_gts[2],
                          ".",
-                         "cmm genotype cannot be correctly determined")
+                         "cmm actual genotype cannot be correctly determined")
         vcf_record = vcf_reader.next()
         call = vcf_record.genotype("Al-111")
         self.assertEqual(call.actual_gts[1],
                          "wt",
-                         "cmm genotype cannot be correctly determined")
+                         "cmm actual genotype cannot be correctly determined")
 
     def test_parse_actual_gts_2(self):
         """
@@ -271,55 +271,55 @@ class TestCmmVcfCall(SafeTester):
         call = vcf_record.genotype("Br-429")
         self.assertEqual(call.actual_gts[1],
                          "oth",
-                         "cmm genotype cannot be correctly determined")
+                         "cmm actual genotype cannot be correctly determined")
         self.assertEqual(call.actual_gts[2],
                          "het",
-                         "cmm genotype cannot be correctly determined")
+                         "cmm actual genotype cannot be correctly determined")
         self.assertEqual(call.actual_gts[3],
                          "het",
-                         "cmm genotype cannot be correctly determined")
+                         "cmm actual genotype cannot be correctly determined")
         self.assertEqual(call.actual_gts[4],
                          "oth",
-                         "cmm genotype cannot be correctly determined")
+                         "cmm actual genotype cannot be correctly determined")
         call = vcf_record.genotype("Br-432")
         self.assertEqual(call.actual_gts[1],
                          "hom",
-                         "cmm genotype cannot be correctly determined")
+                         "cmm actual genotype cannot be correctly determined")
         self.assertEqual(call.actual_gts[2],
                          "oth",
-                         "cmm genotype cannot be correctly determined")
+                         "cmm actual genotype cannot be correctly determined")
         self.assertEqual(call.actual_gts[3],
                          "oth",
-                         "cmm genotype cannot be correctly determined")
+                         "cmm actual genotype cannot be correctly determined")
         self.assertEqual(call.actual_gts[4],
                          "oth",
-                         "cmm genotype cannot be correctly determined")
+                         "cmm actual genotype cannot be correctly determined")
         call = vcf_record.genotype("Al-161")
         self.assertEqual(call.actual_gts[1],
                          "het",
-                         "cmm genotype cannot be correctly determined")
+                         "cmm actual genotype cannot be correctly determined")
         self.assertEqual(call.actual_gts[2],
                          "oth",
-                         "cmm genotype cannot be correctly determined")
+                         "cmm actual genotype cannot be correctly determined")
         self.assertEqual(call.actual_gts[3],
                          "het",
-                         "cmm genotype cannot be correctly determined")
+                         "cmm actual genotype cannot be correctly determined")
         self.assertEqual(call.actual_gts[4],
                          "oth",
-                         "cmm genotype cannot be correctly determined")
+                         "cmm actual genotype cannot be correctly determined")
         call = vcf_record.genotype("Br-637")
         self.assertEqual(call.actual_gts[1],
                          "wt",
-                         "cmm genotype cannot be correctly determined")
+                         "cmm actual genotype cannot be correctly determined")
         self.assertEqual(call.actual_gts[2],
                          "wt",
-                         "cmm genotype cannot be correctly determined")
+                         "cmm actual genotype cannot be correctly determined")
         self.assertEqual(call.actual_gts[3],
                          "wt",
-                         "cmm genotype cannot be correctly determined")
+                         "cmm actual genotype cannot be correctly determined")
         self.assertEqual(call.actual_gts[4],
                          "wt",
-                         "cmm genotype cannot be correctly determined")
+                         "cmm actual genotype cannot be correctly determined")
 
     def test_parse_actual_gts_3(self):
         """
@@ -339,23 +339,23 @@ class TestCmmVcfCall(SafeTester):
         call = vcf_record.genotype("Br-429")
         self.assertEqual(call.actual_gts[1],
                          "wt",
-                         "cmm genotype cannot be correctly determined")
+                         "cmm actual genotype cannot be correctly determined")
         call = vcf_record.genotype("Br-432")
         self.assertEqual(call.actual_gts[1],
                          "wt",
-                         "cmm genotype cannot be correctly determined")
+                         "cmm actual genotype cannot be correctly determined")
         call = vcf_record.genotype("Al-111")
         self.assertEqual(call.actual_gts[1],
                          "het",
-                         "cmm genotype cannot be correctly determined")
+                         "cmm actual genotype cannot be correctly determined")
         call = vcf_record.genotype("Br-120")
         self.assertEqual(call.actual_gts[1],
                          ".",
-                         "cmm genotype cannot be correctly determined")
+                         "cmm actual genotype cannot be correctly determined")
         call = vcf_record.genotype("Br-390")
         self.assertEqual(call.actual_gts[1],
                          "hom",
-                         "cmm genotype cannot be correctly determined")
+                         "cmm actual genotype cannot be correctly determined")
 
     def test_parse_actual_gts_4(self):
         """
@@ -378,19 +378,19 @@ class TestCmmVcfCall(SafeTester):
         call = vcf_record.genotype("Br-429")
         self.assertEqual(call.actual_gts[1],
                          "wt",
-                         "cmm genotype cannot be correctly determined")
+                         "cmm actual genotype cannot be correctly determined")
         call = vcf_record.genotype("Br-432")
         self.assertEqual(call.actual_gts[1],
                          "wt",
-                         "cmm genotype cannot be correctly determined")
+                         "cmm actual genotype cannot be correctly determined")
         call = vcf_record.genotype("Alb-31")
         self.assertEqual(call.actual_gts[1],
                          "het",
-                         "cmm genotype cannot be correctly determined")
+                         "cmm actual genotype cannot be correctly determined")
         call = vcf_record.genotype("Br-693")
         self.assertEqual(call.actual_gts[1],
                          "hom",
-                         "cmm genotype cannot be correctly determined")
+                         "cmm actual genotype cannot be correctly determined")
 
     def test_parse_actual_gts_5(self):
         """
@@ -408,19 +408,19 @@ class TestCmmVcfCall(SafeTester):
         call = vcf_record.genotype("Br-429")
         self.assertEqual(call.actual_gts[1],
                          "wt",
-                         "cmm genotype cannot be correctly determined")
+                         "cmm actual genotype cannot be correctly determined")
         call = vcf_record.genotype("Br-432")
         self.assertEqual(call.actual_gts[1],
                          "wt",
-                         "cmm genotype cannot be correctly determined")
+                         "cmm actual genotype cannot be correctly determined")
         call = vcf_record.genotype("Alb-31")
         self.assertEqual(call.actual_gts[1],
                          "het",
-                         "cmm genotype cannot be correctly determined")
+                         "cmm actual genotype cannot be correctly determined")
         call = vcf_record.genotype("Br-466")
         self.assertEqual(call.actual_gts[1],
                          "hom",
-                         "cmm genotype cannot be correctly determined")
+                         "cmm actual genotype cannot be correctly determined")
 
     def test_parse_actual_gts_6(self):
         """
@@ -443,114 +443,114 @@ class TestCmmVcfCall(SafeTester):
         call = vcf_record.genotype("Br-120")
         self.assertEqual(call.actual_gts[1],
                          ".",
-                         "cmm genotype cannot be correctly determined")
+                         "cmm actual genotype cannot be correctly determined")
         self.assertEqual(call.actual_gts[2],
                          ".",
-                         "cmm genotype cannot be correctly determined")
+                         "cmm actual genotype cannot be correctly determined")
         self.assertEqual(call.actual_gts[3],
                          ".",
-                         "cmm genotype cannot be correctly determined")
+                         "cmm actual genotype cannot be correctly determined")
         self.assertEqual(call.actual_gts[4],
                          ".",
-                         "cmm genotype cannot be correctly determined")
+                         "cmm actual genotype cannot be correctly determined")
         # 0/0
         call = vcf_record.genotype("Br-781")
         self.assertEqual(call.actual_gts[1],
                          "wt",
-                         "cmm genotype cannot be correctly determined")
+                         "cmm actual genotype cannot be correctly determined")
         self.assertEqual(call.actual_gts[2],
                          "wt",
-                         "cmm genotype cannot be correctly determined")
+                         "cmm actual genotype cannot be correctly determined")
         self.assertEqual(call.actual_gts[3],
                          "wt",
-                         "cmm genotype cannot be correctly determined")
+                         "cmm actual genotype cannot be correctly determined")
         self.assertEqual(call.actual_gts[4],
                          "wt",
-                         "cmm genotype cannot be correctly determined")
+                         "cmm actual genotype cannot be correctly determined")
         # 0/1
         call = vcf_record.genotype("Al-111")
         self.assertEqual(call.actual_gts[1],
                          "het",
-                         "cmm genotype cannot be correctly determined")
+                         "cmm actual genotype cannot be correctly determined")
         self.assertEqual(call.actual_gts[2],
                          "oth",
-                         "cmm genotype cannot be correctly determined")
+                         "cmm actual genotype cannot be correctly determined")
         self.assertEqual(call.actual_gts[3],
                          "oth",
-                         "cmm genotype cannot be correctly determined")
+                         "cmm actual genotype cannot be correctly determined")
         self.assertEqual(call.actual_gts[4],
                          "oth",
-                         "cmm genotype cannot be correctly determined")
+                         "cmm actual genotype cannot be correctly determined")
         # 0/2
         call = vcf_record.genotype("Al-23")
         self.assertEqual(call.actual_gts[1],
                          "oth",
-                         "cmm genotype cannot be correctly determined")
+                         "cmm actual genotype cannot be correctly determined")
         self.assertEqual(call.actual_gts[2],
                          "het",
-                         "cmm genotype cannot be correctly determined")
+                         "cmm actual genotype cannot be correctly determined")
         self.assertEqual(call.actual_gts[3],
                          "oth",
-                         "cmm genotype cannot be correctly determined")
+                         "cmm actual genotype cannot be correctly determined")
         self.assertEqual(call.actual_gts[4],
                          "oth",
-                         "cmm genotype cannot be correctly determined")
+                         "cmm actual genotype cannot be correctly determined")
         # 1/1
         call = vcf_record.genotype("Br-432")
         self.assertEqual(call.actual_gts[1],
                          "hom",
-                         "cmm genotype cannot be correctly determined")
+                         "cmm actual genotype cannot be correctly determined")
         self.assertEqual(call.actual_gts[2],
                          "oth",
-                         "cmm genotype cannot be correctly determined")
+                         "cmm actual genotype cannot be correctly determined")
         self.assertEqual(call.actual_gts[3],
                          "oth",
-                         "cmm genotype cannot be correctly determined")
+                         "cmm actual genotype cannot be correctly determined")
         self.assertEqual(call.actual_gts[4],
                          "oth",
-                         "cmm genotype cannot be correctly determined")
+                         "cmm actual genotype cannot be correctly determined")
         # 1/2
         call = vcf_record.genotype("Al-92")
         self.assertEqual(call.actual_gts[1],
                          "het",
-                         "cmm genotype cannot be correctly determined")
+                         "cmm actual genotype cannot be correctly determined")
         self.assertEqual(call.actual_gts[2],
                          "het",
-                         "cmm genotype cannot be correctly determined")
+                         "cmm actual genotype cannot be correctly determined")
         self.assertEqual(call.actual_gts[3],
                          "oth",
-                         "cmm genotype cannot be correctly determined")
+                         "cmm actual genotype cannot be correctly determined")
         self.assertEqual(call.actual_gts[4],
                          "oth",
-                         "cmm genotype cannot be correctly determined")
+                         "cmm actual genotype cannot be correctly determined")
         # 2/2
         call = vcf_record.genotype("Br-296")
         self.assertEqual(call.actual_gts[1],
                          "oth",
-                         "cmm genotype cannot be correctly determined")
+                         "cmm actual genotype cannot be correctly determined")
         self.assertEqual(call.actual_gts[2],
                          "hom",
-                         "cmm genotype cannot be correctly determined")
+                         "cmm actual genotype cannot be correctly determined")
         self.assertEqual(call.actual_gts[3],
                          "oth",
-                         "cmm genotype cannot be correctly determined")
+                         "cmm actual genotype cannot be correctly determined")
         self.assertEqual(call.actual_gts[4],
                          "oth",
-                         "cmm genotype cannot be correctly determined")
+                         "cmm actual genotype cannot be correctly determined")
         # random
         call = vcf_record.genotype("Br-429")
         self.assertEqual(call.actual_gts[1],
                          "oth",
-                         "cmm genotype cannot be correctly determined")
+                         "cmm actual genotype cannot be correctly determined")
         self.assertEqual(call.actual_gts[2],
                          "het",
-                         "cmm genotype cannot be correctly determined")
+                         "cmm actual genotype cannot be correctly determined")
         self.assertEqual(call.actual_gts[3],
                          "het",
-                         "cmm genotype cannot be correctly determined")
+                         "cmm actual genotype cannot be correctly determined")
         self.assertEqual(call.actual_gts[4],
                          "oth",
-                         "cmm genotype cannot be correctly determined")
+                         "cmm actual genotype cannot be correctly determined")
 
     def test_parse_actual_gts_7(self):
         """
@@ -573,126 +573,127 @@ class TestCmmVcfCall(SafeTester):
         call = vcf_record.genotype("Br-120")
         self.assertEqual(call.actual_gts[1],
                          ".",
-                         "cmm genotype cannot be correctly determined")
+                         "cmm actual genotype cannot be correctly determined")
         self.assertEqual(call.actual_gts[2],
                          ".",
-                         "cmm genotype cannot be correctly determined")
+                         "cmm actual genotype cannot be correctly determined")
         self.assertEqual(call.actual_gts[3],
                          ".",
-                         "cmm genotype cannot be correctly determined")
+                         "cmm actual genotype cannot be correctly determined")
         self.assertEqual(call.actual_gts[4],
                          ".",
-                         "cmm genotype cannot be correctly determined")
+                         "cmm actual genotype cannot be correctly determined")
         # 0/0
         call = vcf_record.genotype("Br-781")
         self.assertEqual(call.actual_gts[1],
                          "hom",
-                         "cmm genotype cannot be correctly determined")
+                         "cmm actual genotype cannot be correctly determined")
         # this one is still wrong but acceptable
         # it should be "other"
         self.assertEqual(call.actual_gts[2],
                          "wt",
-                         "cmm genotype cannot be correctly determined")
+                         "cmm actual genotype cannot be correctly determined")
         # this one is still wrong but acceptable
         # it should be "other"
         self.assertEqual(call.actual_gts[3],
                          "wt",
-                         "cmm genotype cannot be correctly determined")
+                         "cmm actual genotype cannot be correctly determined")
         # this one is still wrong but acceptable
         # it should be "other"
         self.assertEqual(call.actual_gts[4],
                          "wt",
-                         "cmm genotype cannot be correctly determined")
+                         "cmm actual genotype cannot be correctly determined")
         # 0/1
         call = vcf_record.genotype("Al-111")
         self.assertEqual(call.actual_gts[1],
                          "het",
-                         "cmm genotype cannot be correctly determined")
+                         "cmm actual genotype cannot be correctly determined")
         self.assertEqual(call.actual_gts[2],
                          "oth",
-                         "cmm genotype cannot be correctly determined")
+                         "cmm actual genotype cannot be correctly determined")
         self.assertEqual(call.actual_gts[3],
                          "oth",
-                         "cmm genotype cannot be correctly determined")
+                         "cmm actual genotype cannot be correctly determined")
         self.assertEqual(call.actual_gts[4],
                          "oth",
-                         "cmm genotype cannot be correctly determined")
+                         "cmm actual genotype cannot be correctly determined")
         # 0/2
         call = vcf_record.genotype("Al-23")
         self.assertEqual(call.actual_gts[1],
                          "oth",
-                         "cmm genotype cannot be correctly determined")
+                         "cmm actual genotype cannot be correctly determined")
         self.assertEqual(call.actual_gts[2],
                          "het",
-                         "cmm genotype cannot be correctly determined")
+                         "cmm actual genotype cannot be correctly determined")
         self.assertEqual(call.actual_gts[3],
                          "oth",
-                         "cmm genotype cannot be correctly determined")
+                         "cmm actual genotype cannot be correctly determined")
         self.assertEqual(call.actual_gts[4],
                          "oth",
-                         "cmm genotype cannot be correctly determined")
+                         "cmm actual genotype cannot be correctly determined")
         # 1/1
         call = vcf_record.genotype("Br-432")
         self.assertEqual(call.actual_gts[1],
                          "wt",
-                         "cmm genotype cannot be correctly determined")
+                         "cmm actual genotype cannot be correctly determined")
         # this one is still wrong but acceptable
         # it should be "wt"
         self.assertEqual(call.actual_gts[2],
                          "oth",
-                         "cmm genotype cannot be correctly determined")
+                         "cmm actual genotype cannot be correctly determined")
         # this one is still wrong but acceptable
         # it should be "wt"
         self.assertEqual(call.actual_gts[3],
                          "oth",
-                         "cmm genotype cannot be correctly determined")
+                         "cmm actual genotype cannot be correctly determined")
         # this one is still wrong but acceptable
         # it should be "wt"
         self.assertEqual(call.actual_gts[4],
                          "oth",
-                         "cmm genotype cannot be correctly determined")
+                         "cmm actual genotype cannot be correctly determined")
         # 1/2
         call = vcf_record.genotype("Al-92")
         self.assertEqual(call.actual_gts[1],
                          "het",
-                         "cmm genotype cannot be correctly determined")
+                         "cmm actual genotype cannot be correctly determined")
         self.assertEqual(call.actual_gts[2],
                          "het",
-                         "cmm genotype cannot be correctly determined")
+                         "cmm actual genotype cannot be correctly determined")
         self.assertEqual(call.actual_gts[3],
                          "oth",
-                         "cmm genotype cannot be correctly determined")
+                         "cmm actual genotype cannot be correctly determined")
         self.assertEqual(call.actual_gts[4],
                          "oth",
-                         "cmm genotype cannot be correctly determined")
+                         "cmm actual genotype cannot be correctly determined")
         # 2/2
         call = vcf_record.genotype("Br-296")
         self.assertEqual(call.actual_gts[1],
                          "oth",
-                         "cmm genotype cannot be correctly determined")
+                         "cmm actual genotype cannot be correctly determined")
+        # 2/2
         self.assertEqual(call.actual_gts[2],
                          "hom",
-                         "cmm genotype cannot be correctly determined")
+                         "cmm actual genotype cannot be correctly determined")
         self.assertEqual(call.actual_gts[3],
                          "oth",
-                         "cmm genotype cannot be correctly determined")
+                         "cmm actual genotype cannot be correctly determined")
         self.assertEqual(call.actual_gts[4],
                          "oth",
-                         "cmm genotype cannot be correctly determined")
+                         "cmm actual genotype cannot be correctly determined")
         # random
         call = vcf_record.genotype("Br-429")
         self.assertEqual(call.actual_gts[1],
                          "oth",
-                         "cmm genotype cannot be correctly determined")
+                         "cmm actual genotype cannot be correctly determined")
         self.assertEqual(call.actual_gts[2],
                          "het",
-                         "cmm genotype cannot be correctly determined")
+                         "cmm actual genotype cannot be correctly determined")
         self.assertEqual(call.actual_gts[3],
                          "het",
-                         "cmm genotype cannot be correctly determined")
+                         "cmm actual genotype cannot be correctly determined")
         self.assertEqual(call.actual_gts[4],
                          "oth",
-                         "cmm genotype cannot be correctly determined")
+                         "cmm actual genotype cannot be correctly determined")
 
     def test_parse_mutated_1(self):
         """
@@ -712,23 +713,23 @@ class TestCmmVcfCall(SafeTester):
         call = vcf_record.genotype("Br-429")
         self.assertEqual(call.mutated[1],
                          False,
-                         "cmm genotype cannot be correctly determined")
+                         "cmm mutation cannot be correctly determined")
         call = vcf_record.genotype("Br-432")
         self.assertEqual(call.mutated[1],
                          False,
-                         "cmm genotype cannot be correctly determined")
+                         "cmm mutation cannot be correctly determined")
         call = vcf_record.genotype("Al-111")
         self.assertEqual(call.mutated[1],
                          True,
-                         "cmm genotype cannot be correctly determined")
+                         "cmm mutation cannot be correctly determined")
         call = vcf_record.genotype("Br-120")
         self.assertEqual(call.mutated[1],
                          False,
-                         "cmm genotype cannot be correctly determined")
+                         "cmm mutation cannot be correctly determined")
         call = vcf_record.genotype("Br-390")
         self.assertEqual(call.mutated[1],
                          True,
-                         "cmm genotype cannot be correctly determined")
+                         "cmm mutation cannot be correctly determined")
 
     def test_parse_mutated_2(self):
         """
@@ -751,19 +752,19 @@ class TestCmmVcfCall(SafeTester):
         call = vcf_record.genotype("Br-429")
         self.assertEqual(call.mutated[1],
                          False,
-                         "cmm genotype cannot be correctly determined")
+                         "cmm mutation cannot be correctly determined")
         call = vcf_record.genotype("Br-432")
         self.assertEqual(call.mutated[1],
                          False,
-                         "cmm genotype cannot be correctly determined")
+                         "cmm mutation cannot be correctly determined")
         call = vcf_record.genotype("Alb-31")
         self.assertEqual(call.mutated[1],
                          True,
-                         "cmm genotype cannot be correctly determined")
+                         "cmm mutation cannot be correctly determined")
         call = vcf_record.genotype("Br-693")
         self.assertEqual(call.mutated[1],
                          True,
-                         "cmm genotype cannot be correctly determined")
+                         "cmm mutation cannot be correctly determined")
 
     def test_parse_mutated_3(self):
         """
@@ -781,19 +782,19 @@ class TestCmmVcfCall(SafeTester):
         call = vcf_record.genotype("Br-429")
         self.assertEqual(call.mutated[1],
                          False,
-                         "cmm genotype cannot be correctly determined")
+                         "cmm mutation cannot be correctly determined")
         call = vcf_record.genotype("Br-432")
         self.assertEqual(call.mutated[1],
                          False,
-                         "cmm genotype cannot be correctly determined")
+                         "cmm mutation cannot be correctly determined")
         call = vcf_record.genotype("Alb-31")
         self.assertEqual(call.mutated[1],
                          True,
-                         "cmm genotype cannot be correctly determined")
+                         "cmm mutation cannot be correctly determined")
         call = vcf_record.genotype("Br-466")
         self.assertEqual(call.mutated[1],
                          True,
-                         "cmm genotype cannot be correctly determined")
+                         "cmm mutation cannot be correctly determined")
 
     def test_parse_mutated_4(self):
         """
@@ -816,124 +817,430 @@ class TestCmmVcfCall(SafeTester):
         call = vcf_record.genotype("Br-120")
         self.assertEqual(call.mutated[1],
                          False,
-                         "cmm genotype cannot be correctly determined")
+                         "cmm mutation cannot be correctly determined")
         self.assertEqual(call.mutated[2],
                          False,
-                         "cmm genotype cannot be correctly determined")
+                         "cmm mutation cannot be correctly determined")
         self.assertEqual(call.mutated[3],
                          False,
-                         "cmm genotype cannot be correctly determined")
+                         "cmm mutation cannot be correctly determined")
         self.assertEqual(call.mutated[4],
                          False,
-                         "cmm genotype cannot be correctly determined")
+                         "cmm mutation cannot be correctly determined")
         # 0/0
         call = vcf_record.genotype("Br-781")
         self.assertEqual(call.mutated[1],
                          True,
-                         "cmm genotype cannot be correctly determined")
-        # this one is still wrong but acceptable
-        # it should be "other"
+                         "cmm mutation cannot be correctly determined")
         self.assertEqual(call.mutated[2],
                          False,
-                         "cmm genotype cannot be correctly determined")
-        # this one is still wrong but acceptable
-        # it should be "other"
+                         "cmm mutation cannot be correctly determined")
         self.assertEqual(call.mutated[3],
                          False,
-                         "cmm genotype cannot be correctly determined")
-        # this one is still wrong but acceptable
-        # it should be "other"
+                         "cmm mutation cannot be correctly determined")
         self.assertEqual(call.mutated[4],
                          False,
-                         "cmm genotype cannot be correctly determined")
+                         "cmm mutation cannot be correctly determined")
         # 0/1
         call = vcf_record.genotype("Al-111")
         self.assertEqual(call.mutated[1],
                          True,
-                         "cmm genotype cannot be correctly determined")
+                         "cmm mutation cannot be correctly determined")
         self.assertEqual(call.mutated[2],
                          False,
-                         "cmm genotype cannot be correctly determined")
+                         "cmm mutation cannot be correctly determined")
         self.assertEqual(call.mutated[3],
                          False,
-                         "cmm genotype cannot be correctly determined")
+                         "cmm mutation cannot be correctly determined")
         self.assertEqual(call.mutated[4],
                          False,
-                         "cmm genotype cannot be correctly determined")
+                         "cmm mutation cannot be correctly determined")
         # 0/2
         call = vcf_record.genotype("Al-23")
         self.assertEqual(call.mutated[1],
                          False,
-                         "cmm genotype cannot be correctly determined")
+                         "cmm mutation cannot be correctly determined")
         self.assertEqual(call.mutated[2],
                          True,
-                         "cmm genotype cannot be correctly determined")
+                         "cmm mutation cannot be correctly determined")
         self.assertEqual(call.mutated[3],
                          False,
-                         "cmm genotype cannot be correctly determined")
+                         "cmm mutation cannot be correctly determined")
         self.assertEqual(call.mutated[4],
                          False,
-                         "cmm genotype cannot be correctly determined")
+                         "cmm mutation cannot be correctly determined")
         # 1/1
         call = vcf_record.genotype("Br-432")
         self.assertEqual(call.mutated[1],
                          False,
-                         "cmm genotype cannot be correctly determined")
-        # this one is still wrong but acceptable
-        # it should be "wt"
+                         "cmm mutation cannot be correctly determined")
         self.assertEqual(call.mutated[2],
                          False,
-                         "cmm genotype cannot be correctly determined")
-        # this one is still wrong but acceptable
-        # it should be "wt"
+                         "cmm mutation cannot be correctly determined")
         self.assertEqual(call.mutated[3],
                          False,
-                         "cmm genotype cannot be correctly determined")
-        # this one is still wrong but acceptable
-        # it should be "wt"
+                         "cmm mutation cannot be correctly determined")
         self.assertEqual(call.mutated[4],
                          False,
-                         "cmm genotype cannot be correctly determined")
+                         "cmm mutation cannot be correctly determined")
         # 1/2
         call = vcf_record.genotype("Al-92")
         self.assertEqual(call.mutated[1],
                          True,
-                         "cmm genotype cannot be correctly determined")
+                         "cmm mutation cannot be correctly determined")
         self.assertEqual(call.mutated[2],
                          True,
-                         "cmm genotype cannot be correctly determined")
+                         "cmm mutation cannot be correctly determined")
         self.assertEqual(call.mutated[3],
                          False,
-                         "cmm genotype cannot be correctly determined")
+                         "cmm mutation cannot be correctly determined")
         self.assertEqual(call.mutated[4],
                          False,
-                         "cmm genotype cannot be correctly determined")
+                         "cmm mutation cannot be correctly determined")
         # 2/2
         call = vcf_record.genotype("Br-296")
         self.assertEqual(call.mutated[1],
                          False,
-                         "cmm genotype cannot be correctly determined")
+                         "cmm mutation cannot be correctly determined")
         self.assertEqual(call.mutated[2],
                          True,
-                         "cmm genotype cannot be correctly determined")
+                         "cmm mutation cannot be correctly determined")
         self.assertEqual(call.mutated[3],
                          False,
-                         "cmm genotype cannot be correctly determined")
+                         "cmm mutation cannot be correctly determined")
         self.assertEqual(call.mutated[4],
                          False,
-                         "cmm genotype cannot be correctly determined")
+                         "cmm mutation cannot be correctly determined")
         # random
         call = vcf_record.genotype("Br-429")
         self.assertEqual(call.mutated[1],
                          False,
-                         "cmm genotype cannot be correctly determined")
+                         "cmm mutation cannot be correctly determined")
         self.assertEqual(call.mutated[2],
                          True,
-                         "cmm genotype cannot be correctly determined")
+                         "cmm mutation cannot be correctly determined")
         self.assertEqual(call.mutated[3],
                          True,
-                         "cmm genotype cannot be correctly determined")
+                         "cmm mutation cannot be correctly determined")
         self.assertEqual(call.mutated[4],
                          False,
-                         "cmm genotype cannot be correctly determined")
+                         "cmm mutation cannot be correctly determined")
+
+class TestCmmVcfRecord(SafeTester):
+
+    def __init__(self, test_name):
+        SafeTester.__init__(self,
+                            test_name,
+                            dirname(__file__),
+                            test_module_name=__name__,
+                            )
+
+    def setUp(self):
+        mylogger.getLogger(__name__)
+
+    def test_shared_1(self):
+        """ test shared mutation can be correctly identify in one sample """
+
+        self.individual_debug = True
+        self.init_test(self.current_func_name)
+        in_file = join_path(self.data_dir,
+                               'input.vcf.gz')
+        samples = ["Al-65"]
+        vcf_reader = TableAnnovarVcfReader(filename=in_file)
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.is_shared(1, samples),
+                         False,
+                         "shared mutation cannot be correctly determined")
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.is_shared(1, samples),
+                         False,
+                         "shared mutation cannot be correctly determined")
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.is_shared(1, samples),
+                         True,
+                         "shared mutation cannot be correctly determined")
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.is_shared(1, samples),
+                         False,
+                         "shared mutation cannot be correctly determined")
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.is_shared(1, samples),
+                         True,
+                         "shared mutation cannot be correctly determined")
+        self.assertEqual(vcf_record.is_shared(2, samples),
+                         False,
+                         "shared mutation cannot be correctly determined")
+        self.assertEqual(vcf_record.is_shared(3, samples),
+                         False,
+                         "shared mutation cannot be correctly determined")
+        self.assertEqual(vcf_record.is_shared(4, samples),
+                         False,
+                         "shared mutation cannot be correctly determined")
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.is_shared(1, samples),
+                         False,
+                         "shared mutation cannot be correctly determined")
+        self.assertEqual(vcf_record.is_shared(2, samples),
+                         False,
+                         "shared mutation cannot be correctly determined")
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.is_shared(1, samples),
+                         False,
+                         "shared mutation cannot be correctly determined")
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.is_shared(1, samples),
+                         False,
+                         "shared mutation cannot be correctly determined")
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.is_shared(1, samples),
+                         False,
+                         "shared mutation cannot be correctly determined")
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.is_shared(1, samples),
+                         False,
+                         "shared mutation cannot be correctly determined")
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.is_shared(1, samples),
+                         True,
+                         "shared mutation cannot be correctly determined")
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.is_shared(1, samples),
+                         False,
+                         "shared mutation cannot be correctly determined")
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.is_shared(1, samples),
+                         False,
+                         "shared mutation cannot be correctly determined")
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.is_shared(1, samples),
+                         False,
+                         "shared mutation cannot be correctly determined")
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.is_shared(1, samples),
+                         False,
+                         "shared mutation cannot be correctly determined")
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.is_shared(1, samples),
+                         False,
+                         "shared mutation cannot be correctly determined")
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.is_shared(1, samples),
+                         False,
+                         "shared mutation cannot be correctly determined")
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.is_shared(1, samples),
+                         False,
+                         "shared mutation cannot be correctly determined")
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.is_shared(1, samples),
+                         True,
+                         "shared mutation cannot be correctly determined")
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.is_shared(1, samples),
+                         False,
+                         "shared mutation cannot be correctly determined")
+
+    def test_shared_2(self):
+        """ test shared mutation between two samples can be identified """
+
+        self.individual_debug = True
+        self.init_test(self.current_func_name)
+        in_file = join_path(self.data_dir,
+                               'input.vcf.gz')
+        samples = ["Alb-31", "Br-466"]
+        vcf_reader = TableAnnovarVcfReader(filename=in_file)
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.is_shared(1, samples),
+                         False,
+                         "shared mutation cannot be correctly determined")
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.is_shared(1, samples),
+                         True,
+                         "shared mutation cannot be correctly determined")
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.is_shared(1, samples),
+                         False,
+                         "shared mutation cannot be correctly determined")
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.is_shared(1, samples),
+                         False,
+                         "shared mutation cannot be correctly determined")
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.is_shared(1, samples),
+                         False,
+                         "shared mutation cannot be correctly determined")
+        self.assertEqual(vcf_record.is_shared(2, samples),
+                         False,
+                         "shared mutation cannot be correctly determined")
+        self.assertEqual(vcf_record.is_shared(3, samples),
+                         False,
+                         "shared mutation cannot be correctly determined")
+        self.assertEqual(vcf_record.is_shared(4, samples),
+                         False,
+                         "shared mutation cannot be correctly determined")
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.is_shared(1, samples),
+                         False,
+                         "shared mutation cannot be correctly determined")
+        self.assertEqual(vcf_record.is_shared(2, samples),
+                         False,
+                         "shared mutation cannot be correctly determined")
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.is_shared(1, samples),
+                         False,
+                         "shared mutation cannot be correctly determined")
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.is_shared(1, samples),
+                         False,
+                         "shared mutation cannot be correctly determined")
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.is_shared(1, samples),
+                         True,
+                         "shared mutation cannot be correctly determined")
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.is_shared(1, samples),
+                         False,
+                         "shared mutation cannot be correctly determined")
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.is_shared(1, samples),
+                         False,
+                         "shared mutation cannot be correctly determined")
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.is_shared(1, samples),
+                         False,
+                         "shared mutation cannot be correctly determined")
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.is_shared(1, samples),
+                         False,
+                         "shared mutation cannot be correctly determined")
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.is_shared(1, samples),
+                         False,
+                         "shared mutation cannot be correctly determined")
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.is_shared(1, samples),
+                         False,
+                         "shared mutation cannot be correctly determined")
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.is_shared(1, samples),
+                         False,
+                         "shared mutation cannot be correctly determined")
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.is_shared(1, samples),
+                         False,
+                         "shared mutation cannot be correctly determined")
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.is_shared(1, samples),
+                         False,
+                         "shared mutation cannot be correctly determined")
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.is_shared(1, samples),
+                         False,
+                         "shared mutation cannot be correctly determined")
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.is_shared(1, samples),
+                         False,
+                         "shared mutation cannot be correctly determined")
+
+    def test_shared_3(self):
+        """ test shared mutation between three samples can be identified """
+
+        self.individual_debug = True
+        self.init_test(self.current_func_name)
+        in_file = join_path(self.data_dir,
+                               'input.vcf.gz')
+        samples = ["Br-432", "Al-161", "Br-504"]
+        vcf_reader = TableAnnovarVcfReader(filename=in_file)
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.is_shared(1, samples),
+                         True,
+                         "shared mutation cannot be correctly determined")
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.is_shared(1, samples),
+                         False,
+                         "shared mutation cannot be correctly determined")
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.is_shared(1, samples),
+                         True,
+                         "shared mutation cannot be correctly determined")
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.is_shared(1, samples),
+                         False,
+                         "shared mutation cannot be correctly determined")
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.is_shared(1, samples),
+                         True,
+                         "shared mutation cannot be correctly determined")
+        self.assertEqual(vcf_record.is_shared(2, samples),
+                         False,
+                         "shared mutation cannot be correctly determined")
+        self.assertEqual(vcf_record.is_shared(3, samples),
+                         False,
+                         "shared mutation cannot be correctly determined")
+        self.assertEqual(vcf_record.is_shared(4, samples),
+                         False,
+                         "shared mutation cannot be correctly determined")
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.is_shared(1, samples),
+                         False,
+                         "shared mutation cannot be correctly determined")
+        self.assertEqual(vcf_record.is_shared(2, samples),
+                         False,
+                         "shared mutation cannot be correctly determined")
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.is_shared(1, samples),
+                         False,
+                         "shared mutation cannot be correctly determined")
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.is_shared(1, samples),
+                         False,
+                         "shared mutation cannot be correctly determined")
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.is_shared(1, samples),
+                         False,
+                         "shared mutation cannot be correctly determined")
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.is_shared(1, samples),
+                         False,
+                         "shared mutation cannot be correctly determined")
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.is_shared(1, samples),
+                         False,
+                         "shared mutation cannot be correctly determined")
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.is_shared(1, samples),
+                         False,
+                         "shared mutation cannot be correctly determined")
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.is_shared(1, samples),
+                         False,
+                         "shared mutation cannot be correctly determined")
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.is_shared(1, samples),
+                         False,
+                         "shared mutation cannot be correctly determined")
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.is_shared(1, samples),
+                         False,
+                         "shared mutation cannot be correctly determined")
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.is_shared(1, samples),
+                         False,
+                         "shared mutation cannot be correctly determined")
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.is_shared(1, samples),
+                         False,
+                         "shared mutation cannot be correctly determined")
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.is_shared(1, samples),
+                         False,
+                         "shared mutation cannot be correctly determined")
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.is_shared(1, samples),
+                         False,
+                         "shared mutation cannot be correctly determined")
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.is_shared(1, samples),
+                         False,
+                         "shared mutation cannot be correctly determined")
 

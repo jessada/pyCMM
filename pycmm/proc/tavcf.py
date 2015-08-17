@@ -1,4 +1,5 @@
 import itertools
+import re
 from vcf import Reader as VcfReader
 from vcf import RESERVED_INFO
 from collections import OrderedDict
@@ -10,6 +11,7 @@ try:
 except ImportError:
     cparse = None
 
+from vcf.model import _Record as _VcfRecord
 from vcf.model import _Call as _VcfCall
 
 CMMGT_WILDTYPE = 'wt'
@@ -26,6 +28,8 @@ class _CmmVcfCall(_VcfCall):
         with more than one alternate alleles
       - add extra genotype translation, "actual_gts", to determine the
         actual genotype based on "cmm_gts" and alleles frequency
+      - add an indicator, "mutated", to identify if each genotype is
+        actually mutated
     """
 
     def __init__(self, site, sample, data):
@@ -126,6 +130,13 @@ class _CmmVcfCall(_VcfCall):
         return actual_gts
 
     def __cal_mutated(self):
+        """
+        to identify if a genotype is actually mutated given
+          - allele index
+            - 0 -> REF
+            - 1 -> first ALT
+            - and so on
+        """
         mutated = [CMMGT_DUMMY]
         for gt_idx in xrange(1, len(self.actual_gts)):
             if self.actual_gts[gt_idx] == CMMGT_HOMOZYGOTE:
@@ -155,11 +166,38 @@ class _CmmVcfCall(_VcfCall):
             self.__cal_extra_attributes()
         return self.__mutated
 
+class _CmmVcfRecord(_VcfRecord):
+    """
+    An encapsulated version of vcf._Record from pyVCF package to
+      - determine if mutations are shared between samples
+    """
+
+    def is_shared(self, allele_idx, samples):
+        """
+        to identify if a genotype is shared betwen samples given
+          - allele index
+            - 0 -> REF
+            - 1 -> first ALT
+            - and so on
+           - samples, list of samples to be compared if the list is
+             empty, None, it will return True
+        """
+        if samples is None:
+            return True
+        if len(samples) == 0:
+            return True
+        for sample in samples:
+            if not self.genotype(sample).mutated[allele_idx]:
+                return False
+        return True
 
 class TableAnnovarVcfReader(VcfReader):
     """
-    An encapsulated version of vcf.Reader from pyVCF package to fix
-      - _parse_info  <see _parse_info function>
+    An encapsulated version of vcf.Reader from pyVCF package to
+      - enable _parse_info to recognize INFO annotated by annovar
+        , <see _parse_info function>
+      - redirect _Call to CmmVcfCall
+      - redirect _Record to CmmVcfRecord
     """
 
     def __init__(self,
@@ -192,6 +230,64 @@ class TableAnnovarVcfReader(VcfReader):
             if (val.desc is not None) and (val.desc.endswith("ANNOVAR")):
                 self.__annovar_infos[info_key] = val
         return self.__annovar_infos
+
+    def next(self):
+        '''
+        Remake version of pyVCF.parser._parse_info
+
+        Return the next record in the file.
+
+        ***** Remake part *****
+        - use custom _Record structure, _CmmVcfRecord
+        '''
+        line = self.reader.next()
+        row = re.split(self._separator, line.rstrip())
+        chrom = row[0]
+        if self._prepend_chr:
+            chrom = 'chr' + chrom
+        pos = int(row[1])
+
+        if row[2] != '.':
+            ID = row[2]
+        else:
+            ID = None
+
+        ref = row[3]
+        alt = self._map(self._parse_alt, row[4].split(','))
+
+        try:
+            qual = int(row[5])
+        except ValueError:
+            try:
+                qual = float(row[5])
+            except ValueError:
+                qual = None
+
+        filt = row[6]
+        if filt == '.':
+            filt = None
+        elif filt == 'PASS':
+            filt = []
+        else:
+            filt = filt.split(';')
+        info = self._parse_info(row[7])
+
+        try:
+            fmt = row[8]
+        except IndexError:
+            fmt = None
+        else:
+            if fmt == '.':
+                fmt = None
+
+        record = _CmmVcfRecord(chrom, pos, ID, ref, alt, qual, filt,
+                info, fmt, self._sample_indexes)
+
+        if fmt is not None:
+            samples = self._parse_samples(row[9:], fmt, record)
+            record.samples = samples
+
+        return record
 
     def _parse_info(self, info_str):
         """
