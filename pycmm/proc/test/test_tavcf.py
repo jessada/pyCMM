@@ -686,3 +686,245 @@ class TestTableAnnovarVcfReader(SafeTester):
                          "oth",
                          "cmm genotype cannot be correctly determined")
 
+    def test_parse_mutated_1(self):
+        """
+        test if mutation can be identified
+        - only one alternate allele and no allele frequency
+        """
+
+        self.individual_debug = True
+        self.init_test(self.current_func_name)
+        in_file = join_path(self.data_dir,
+                               'input.vcf.gz')
+        vcf_reader = TableAnnovarVcfReader(filename=in_file)
+        vcf_reader.next()
+        vcf_reader.next()
+        vcf_reader.next()
+        vcf_record = vcf_reader.next()
+        call = vcf_record.genotype("Br-429")
+        self.assertEqual(call.mutated[1],
+                         False,
+                         "cmm genotype cannot be correctly determined")
+        call = vcf_record.genotype("Br-432")
+        self.assertEqual(call.mutated[1],
+                         False,
+                         "cmm genotype cannot be correctly determined")
+        call = vcf_record.genotype("Al-111")
+        self.assertEqual(call.mutated[1],
+                         True,
+                         "cmm genotype cannot be correctly determined")
+        call = vcf_record.genotype("Br-120")
+        self.assertEqual(call.mutated[1],
+                         False,
+                         "cmm genotype cannot be correctly determined")
+        call = vcf_record.genotype("Br-390")
+        self.assertEqual(call.mutated[1],
+                         True,
+                         "cmm genotype cannot be correctly determined")
+
+    def test_parse_mutated_2(self):
+        """
+        test if mutation can be identified
+        - allele frequency is a floating point scalar less than 0.5
+        """
+
+        self.individual_debug = True
+        self.init_test(self.current_func_name)
+        in_file = join_path(self.data_dir,
+                               'input.vcf.gz')
+        vcf_reader = TableAnnovarVcfReader(filename=in_file)
+        vcf_reader.next()
+        vcf_reader.next()
+        vcf_reader.next()
+        vcf_reader.next()
+        vcf_reader.next()
+        vcf_reader.next()
+        vcf_record = vcf_reader.next()
+        call = vcf_record.genotype("Br-429")
+        self.assertEqual(call.mutated[1],
+                         False,
+                         "cmm genotype cannot be correctly determined")
+        call = vcf_record.genotype("Br-432")
+        self.assertEqual(call.mutated[1],
+                         False,
+                         "cmm genotype cannot be correctly determined")
+        call = vcf_record.genotype("Alb-31")
+        self.assertEqual(call.mutated[1],
+                         True,
+                         "cmm genotype cannot be correctly determined")
+        call = vcf_record.genotype("Br-693")
+        self.assertEqual(call.mutated[1],
+                         True,
+                         "cmm genotype cannot be correctly determined")
+
+    def test_parse_mutated_3(self):
+        """
+        test if mutation can be identified
+        - allele frequency is a floating point scalar more than 0.5
+        """
+
+        self.individual_debug = True
+        self.init_test(self.current_func_name)
+        in_file = join_path(self.data_dir,
+                               'input.vcf.gz')
+        vcf_reader = TableAnnovarVcfReader(filename=in_file)
+        vcf_reader.next()
+        vcf_record = vcf_reader.next()
+        call = vcf_record.genotype("Br-429")
+        self.assertEqual(call.mutated[1],
+                         False,
+                         "cmm genotype cannot be correctly determined")
+        call = vcf_record.genotype("Br-432")
+        self.assertEqual(call.mutated[1],
+                         False,
+                         "cmm genotype cannot be correctly determined")
+        call = vcf_record.genotype("Alb-31")
+        self.assertEqual(call.mutated[1],
+                         True,
+                         "cmm genotype cannot be correctly determined")
+        call = vcf_record.genotype("Br-466")
+        self.assertEqual(call.mutated[1],
+                         True,
+                         "cmm genotype cannot be correctly determined")
+
+    def test_parse_mutated_4(self):
+        """
+        test if mutation can be identified
+        - allele frequency is an array of high and low value,
+          like [0.79, 0.02, 0.03, None]
+        """
+
+        self.individual_debug = True
+        self.init_test(self.current_func_name)
+        in_file = join_path(self.data_dir,
+                               'input.vcf.gz')
+        vcf_reader = TableAnnovarVcfReader(filename=in_file)
+        vcf_reader.next()
+        vcf_reader.next()
+        vcf_reader.next()
+        vcf_reader.next()
+        vcf_record = vcf_reader.next()
+        # ./.
+        call = vcf_record.genotype("Br-120")
+        self.assertEqual(call.mutated[1],
+                         False,
+                         "cmm genotype cannot be correctly determined")
+        self.assertEqual(call.mutated[2],
+                         False,
+                         "cmm genotype cannot be correctly determined")
+        self.assertEqual(call.mutated[3],
+                         False,
+                         "cmm genotype cannot be correctly determined")
+        self.assertEqual(call.mutated[4],
+                         False,
+                         "cmm genotype cannot be correctly determined")
+        # 0/0
+        call = vcf_record.genotype("Br-781")
+        self.assertEqual(call.mutated[1],
+                         True,
+                         "cmm genotype cannot be correctly determined")
+        # this one is still wrong but acceptable
+        # it should be "other"
+        self.assertEqual(call.mutated[2],
+                         False,
+                         "cmm genotype cannot be correctly determined")
+        # this one is still wrong but acceptable
+        # it should be "other"
+        self.assertEqual(call.mutated[3],
+                         False,
+                         "cmm genotype cannot be correctly determined")
+        # this one is still wrong but acceptable
+        # it should be "other"
+        self.assertEqual(call.mutated[4],
+                         False,
+                         "cmm genotype cannot be correctly determined")
+        # 0/1
+        call = vcf_record.genotype("Al-111")
+        self.assertEqual(call.mutated[1],
+                         True,
+                         "cmm genotype cannot be correctly determined")
+        self.assertEqual(call.mutated[2],
+                         False,
+                         "cmm genotype cannot be correctly determined")
+        self.assertEqual(call.mutated[3],
+                         False,
+                         "cmm genotype cannot be correctly determined")
+        self.assertEqual(call.mutated[4],
+                         False,
+                         "cmm genotype cannot be correctly determined")
+        # 0/2
+        call = vcf_record.genotype("Al-23")
+        self.assertEqual(call.mutated[1],
+                         False,
+                         "cmm genotype cannot be correctly determined")
+        self.assertEqual(call.mutated[2],
+                         True,
+                         "cmm genotype cannot be correctly determined")
+        self.assertEqual(call.mutated[3],
+                         False,
+                         "cmm genotype cannot be correctly determined")
+        self.assertEqual(call.mutated[4],
+                         False,
+                         "cmm genotype cannot be correctly determined")
+        # 1/1
+        call = vcf_record.genotype("Br-432")
+        self.assertEqual(call.mutated[1],
+                         False,
+                         "cmm genotype cannot be correctly determined")
+        # this one is still wrong but acceptable
+        # it should be "wt"
+        self.assertEqual(call.mutated[2],
+                         False,
+                         "cmm genotype cannot be correctly determined")
+        # this one is still wrong but acceptable
+        # it should be "wt"
+        self.assertEqual(call.mutated[3],
+                         False,
+                         "cmm genotype cannot be correctly determined")
+        # this one is still wrong but acceptable
+        # it should be "wt"
+        self.assertEqual(call.mutated[4],
+                         False,
+                         "cmm genotype cannot be correctly determined")
+        # 1/2
+        call = vcf_record.genotype("Al-92")
+        self.assertEqual(call.mutated[1],
+                         True,
+                         "cmm genotype cannot be correctly determined")
+        self.assertEqual(call.mutated[2],
+                         True,
+                         "cmm genotype cannot be correctly determined")
+        self.assertEqual(call.mutated[3],
+                         False,
+                         "cmm genotype cannot be correctly determined")
+        self.assertEqual(call.mutated[4],
+                         False,
+                         "cmm genotype cannot be correctly determined")
+        # 2/2
+        call = vcf_record.genotype("Br-296")
+        self.assertEqual(call.mutated[1],
+                         False,
+                         "cmm genotype cannot be correctly determined")
+        self.assertEqual(call.mutated[2],
+                         True,
+                         "cmm genotype cannot be correctly determined")
+        self.assertEqual(call.mutated[3],
+                         False,
+                         "cmm genotype cannot be correctly determined")
+        self.assertEqual(call.mutated[4],
+                         False,
+                         "cmm genotype cannot be correctly determined")
+        # random
+        call = vcf_record.genotype("Br-429")
+        self.assertEqual(call.mutated[1],
+                         False,
+                         "cmm genotype cannot be correctly determined")
+        self.assertEqual(call.mutated[2],
+                         True,
+                         "cmm genotype cannot be correctly determined")
+        self.assertEqual(call.mutated[3],
+                         True,
+                         "cmm genotype cannot be correctly determined")
+        self.assertEqual(call.mutated[4],
+                         False,
+                         "cmm genotype cannot be correctly determined")

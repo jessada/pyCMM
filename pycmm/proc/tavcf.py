@@ -16,6 +16,7 @@ CMMGT_WILDTYPE = 'wt'
 CMMGT_HOMOZYGOTE = 'hom'
 CMMGT_HETEROZYGOTE = 'het'
 CMMGT_OTHER = 'oth'
+CMMGT_DUMMY = 'dummy'
 
 
 class _CmmVcfCall(_VcfCall):
@@ -23,7 +24,7 @@ class _CmmVcfCall(_VcfCall):
     An encapsulated version of vcf._Call from pyVCF package to
       - add extra genotype translation, "cmm_gts", to handle record
         with more than one alternate alleles
-      - add extra genotype translation, "actual_gts", to determine the 
+      - add extra genotype translation, "actual_gts", to determine the
         actual genotype based on "cmm_gts" and alleles frequency
     """
 
@@ -35,11 +36,13 @@ class _CmmVcfCall(_VcfCall):
                           )
         self.__cmm_gts = None
         self.__actual_gts = None
+        self.__mutated = None
 
     def __cal_extra_attributes(self):
         self.__cmm_gts = self.__cal_cmm_gts()
         self.__afs = self.__cal_afs()
         self.__actual_gts = self.__cal_actual_gts()
+        self.__mutated = self.__cal_mutated()
 
     def __cal_cmm_gts(self):
         """
@@ -51,7 +54,7 @@ class _CmmVcfCall(_VcfCall):
         ** NOTE ** the calculation here based on GT value alone
         """
         raw_GT = self.data.GT
-        cmm_gts = ['dummy']
+        cmm_gts = [CMMGT_DUMMY]
         for allele_idx in xrange(1, len(self.site.alleles)):
             if (raw_GT == ".") or (raw_GT == "./."):
                 cmm_gts.append(".")
@@ -80,9 +83,9 @@ class _CmmVcfCall(_VcfCall):
         if (raw_afs == "") or (raw_afs is None) or (raw_afs == "."):
             return map(lambda x: 0, xrange(len(self.site.alleles)))
         if type(raw_afs) is not list:
-            afs = ["dummy", raw_afs]
+            afs = [CMMGT_DUMMY, raw_afs]
         else:
-            afs = ["dummy"]
+            afs = [CMMGT_DUMMY]
             for raw_af in raw_afs:
                 if raw_af is None:
                     afs.append(0)
@@ -122,6 +125,18 @@ class _CmmVcfCall(_VcfCall):
             actual_gts.append(CMMGT_HOMOZYGOTE)
         return actual_gts
 
+    def __cal_mutated(self):
+        mutated = [CMMGT_DUMMY]
+        for gt_idx in xrange(1, len(self.actual_gts)):
+            if self.actual_gts[gt_idx] == CMMGT_HOMOZYGOTE:
+                mutated.append(True)
+                continue
+            if self.actual_gts[gt_idx] == CMMGT_HETEROZYGOTE:
+                mutated.append(True)
+                continue
+            mutated.append(False)
+        return mutated
+
     @property
     def cmm_gts(self):
         if self.__cmm_gts is None:
@@ -133,6 +148,12 @@ class _CmmVcfCall(_VcfCall):
         if self.__actual_gts is None:
             self.__cal_extra_attributes()
         return self.__actual_gts
+
+    @property
+    def mutated(self):
+        if self.__mutated is None:
+            self.__cal_extra_attributes()
+        return self.__mutated
 
 
 class TableAnnovarVcfReader(VcfReader):
