@@ -33,7 +33,7 @@ class TestGATKBPPipeline(SafeTester):
                             )
 
     def setUp(self):
-        pass
+        mylogger.getLogger(__name__)
 
     def __create_jobs_setup_file(self,
                                  dataset_name=None,
@@ -708,10 +708,11 @@ class TestFunctions(SafeTester):
         SafeTester.__init__(self,
                             test_name,
                             dirname(__file__),
+                            test_module_name=__name__,
                             )
 
     def setUp(self):
-        self.module_name = 'gatkbp'
+        mylogger.getLogger(__name__)
 
     @unittest.skipUnless(isdir("/proj/b2011117"), "This can only run in UPPMAX")
     def test_create_jobs_setup_file(self):

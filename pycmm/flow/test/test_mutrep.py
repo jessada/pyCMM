@@ -37,7 +37,7 @@ class TestMutRepPipeline(SafeTester):
                             )
 
     def setUp(self):
-        self.module_name = 'mutrep'
+        mylogger.getLogger(__name__)
 
     def __create_jobs_setup_file(self,
                                  vcf_tabix_file,
