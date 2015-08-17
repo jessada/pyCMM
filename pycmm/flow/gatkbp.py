@@ -14,10 +14,8 @@ from pycmm.utils.jobman import JOB_STATUS_COMPLETED
 from pycmm.utils import exec_sh
 from pycmm.settings import GATK_ALLOC_TIME
 
-METADATA_PATTERN = re.compile(r'''##(?P<key>.+?)=(?P<val>.+)''')
-
 BWA_MEM_SCRIPT = "$PYCMM/bash/GATKBP_bwa_mem.sh"
-CONCAT_FILES_SCRIPT = "$PYCMM/bash/concat_files.sh"
+#CONCAT_FILES_SCRIPT = "$PYCMM/bash/concat_files.sh"
 SORT_SAM_SCRIPT = "$PYCMM/bash/GATKBP_sort_sam.sh"
 MARK_DUP_SCRIPT = "$PYCMM/bash/GATKBP_mark_dup.sh"
 INDELS_TARGET_INTERVALS_SCRIPT = "$PYCMM/bash/GATKBP_create_intervals.sh"
@@ -324,10 +322,6 @@ class GATKBPPipeline(JobManager):
             sample_rec = SampleRecord(sample, self.output_dir)
             self.__samples[sample_rec.sample_name] = sample_rec
 
-    def __parse_metadata(self, meta_string):
-        match = METADATA_PATTERN.match(meta_string)
-        return match.group('key'), match.group('val')
-
     def __create_directories(self):
         self.create_dir(self.output_dir)
         self.create_dir(self.vcf_out_dir)
@@ -362,7 +356,7 @@ class GATKBPPipeline(JobManager):
                 sample_name,
                 ):
         """ To generate a SAM file containing aligned reads """
-    
+
         sample_rec = self.__samples[sample_name]
         slurm_log_file = join_path(self.slurm_log_dir,
                                    sample_name)
@@ -394,7 +388,7 @@ class GATKBPPipeline(JobManager):
                  prereq=None,
                  ):
         """ Use picard command to sort the SAM file and convert it to BAM """
-    
+
         sample_rec = self.__samples[sample_name]
         slurm_log_file = join_path(self.slurm_log_dir,
                                    sample_name)
@@ -427,7 +421,7 @@ class GATKBPPipeline(JobManager):
                  prereq=None,
                  ):
         """ Use picard command to mark duplicates """
-    
+
         sample_rec = self.__samples[sample_name]
         slurm_log_file = join_path(self.slurm_log_dir,
                                    sample_name)
@@ -575,7 +569,7 @@ class GATKBPPipeline(JobManager):
         Call SNPs and indels simultaneously via local re-assembly of haplotypes
         in an active region
         """
-    
+
         sample_rec = self.__samples[sample_name]
         slurm_log_file = join_path(self.slurm_log_dir,
                                    sample_name)
@@ -615,7 +609,7 @@ class GATKBPPipeline(JobManager):
         Combines any number of gVCF files that were produced by
         the Haplotype Caller into a single joint gVCF file
         """
-    
+
         slurm_log_file = join_path(self.slurm_log_dir,
                                    self.dataset_name)
         slurm_log_file += "_comb_gvcfs_"
@@ -657,7 +651,7 @@ class GATKBPPipeline(JobManager):
         Combines any number of gVCF files that were produced by
         the Haplotype Caller into a single joint gVCF file
         """
-    
+
         slurm_log_file = join_path(self.slurm_log_dir,
                                    self.dataset_name)
         slurm_log_file += "_genotype_gvcfs_"
@@ -674,7 +668,7 @@ class GATKBPPipeline(JobManager):
             map(lambda x: f_gvcf.write(x+"\n"), gvcf_list)
         f_gvcf.close()
 
-        job_params = " -G " + gvcf_list_file 
+        job_params = " -G " + gvcf_list_file
         job_params += " -o " + self.genotyped_gvcfs_file
         job_params += " -r " + self.reference
         self.submit_job(job_name,
@@ -702,7 +696,7 @@ class GATKBPPipeline(JobManager):
         The flow output a gvcf file for one sample. The return value is the last
         job name of the process.
         """
-    
+
         mylogger.debug("preprocess sample " + sample_name)
         job_name_bwa_mem = self.bwa_mem(sample_name)
         job_name_sort_sam = self.sort_sam(sample_name,
@@ -730,7 +724,6 @@ class GATKBPPipeline(JobManager):
         job name of the process.
         """
 
-        print "abc"
         prereq = []
         for sample_name in self.samples:
             if self.__samples[sample_name].preprocess_sample:

@@ -83,7 +83,7 @@ eval_cmd ()
     msg="executing: $cmd"
 
     info_msg
-    info_msg "executing: $msg"
+    info_msg "$msg"
     eval "$cmd"
 }
 

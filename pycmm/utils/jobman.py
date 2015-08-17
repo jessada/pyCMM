@@ -83,7 +83,7 @@ class JobManager(pyCMMBase):
         if job_rec.email:
             cmd += " -C usage_mail"
         cmd += " -o " + job_rec.slurm_log_file
-        if (job_rec.prereq is not None) and (type(job_rec.prereq) is list):
+        if (job_rec.prereq is not None) and (len(job_rec.prereq) > 0) and (type(job_rec.prereq) is list):
             cmd += " --dependency=afterok"
             mylogger.debug(job_rec.prereq)
             for job_name in job_rec.prereq:

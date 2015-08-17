@@ -8,6 +8,8 @@ from os.path import isdir
 from pycmm import settings
 from pycmm.template import SafeTester
 from pycmm.utils import mylogger
+from pycmm.settings import FAST_PROJECT_CODE
+from pycmm.settings import SLOW_PROJECT_CODE
 from pycmm.flow.gatkbp import GATKBPPipeline
 from pycmm.flow.gatkbp import JOBS_SETUP_DATASET_NAME_KEY
 from pycmm.flow.gatkbp import JOBS_SETUP_PROJECT_CODE_KEY
@@ -21,19 +23,17 @@ from pycmm.flow.gatkbp import JOBS_SETUP_TARGETS_INTERVAL_LIST_KEY
 from pycmm.flow.gatkbp import JOBS_SETUP_DATASET_USAGE_MAIL_KEY
 from pycmm.flow.gatkbp import create_jobs_setup_file
 
-FAST_PROJECT_CODE = 'b2011158'
-SLOW_PROJECT_CODE = 'b2011097'
-
 class TestGATKBPPipeline(SafeTester):
 
     def __init__(self, test_name):
         SafeTester.__init__(self,
                             test_name,
                             dirname(__file__),
+                            test_module_name=__name__,
                             )
 
     def setUp(self):
-        self.module_name = 'gatkbp'
+        pass
 
     def __create_jobs_setup_file(self,
                                  dataset_name=None,
@@ -260,66 +260,91 @@ class TestGATKBPPipeline(SafeTester):
         pl.mark_dup(sample_name, bam_file=bam_file)
 
     @unittest.skipUnless(settings.SLURM_TEST, "taking too much UPPMAX cpu-core hours")
-    def test_create_intervals(self):
-        """ test creating indels target intervals """
+    def test_create_intervals_1(self):
+        """ test standard creating indels target intervals """
 
         self.individual_debug = True
         self.init_test(self.current_func_name)
-        jobs_setup_file = self.__create_jobs_setup_file()
+        jobs_setup_file = self.__create_jobs_setup_file(project_code=FAST_PROJECT_CODE)
         sample_name = "test-sample"
+        pl = GATKBPPipeline(jobs_setup_file)
         bam_file = join_path(self.data_dir,
                              sample_name+"_dedup_reads.bam")
-        self.__add_sample_jobs_setup_file(jobs_setup_file,
-                                          sample_name,
-                                          "NA",
-                                          "NA",
-                                          "NA",
-                                          )
-        pl = GATKBPPipeline(jobs_setup_file)
         pl.create_intervals(sample_name, bam_file=bam_file)
 
     @unittest.skipUnless(settings.SLURM_TEST, "taking too much UPPMAX cpu-core hours")
-    def test_indels_realign(self):
-        """ test creating indels target intervals """
+    def test_create_intervals_2(self):
+        """ test creating indels target intervals with bam file that has extremely high score"""
 
         self.individual_debug = True
         self.init_test(self.current_func_name)
-        jobs_setup_file = self.__create_jobs_setup_file()
+        jobs_setup_file = self.__create_jobs_setup_file(project_code=FAST_PROJECT_CODE)
+        sample_name = "hi_score_sample"
+        pl = GATKBPPipeline(jobs_setup_file)
+        bam_file = join_path(self.data_dir,
+                             sample_name+"_dedup_reads.bam")
+        pl.create_intervals(sample_name, bam_file=bam_file)
+
+    @unittest.skipUnless(settings.SLURM_TEST, "taking too much UPPMAX cpu-core hours")
+    def test_indels_realign_1(self):
+        """ test standard indel realignment """
+
+        self.individual_debug = True
+        self.init_test(self.current_func_name)
+        jobs_setup_file = self.__create_jobs_setup_file(project_code=FAST_PROJECT_CODE)
         sample_name = "test-sample"
+        pl = GATKBPPipeline(jobs_setup_file)
         bam_file = join_path(self.data_dir,
                              sample_name+"_dedup_reads.bam")
         indels_target_intervals_file = join_path(self.data_dir,
                                                  'indels_target_intervals.list')
-        self.__add_sample_jobs_setup_file(jobs_setup_file,
-                                          sample_name,
-                                          "NA",
-                                          "NA",
-                                          "NA",
-                                          )
-        pl = GATKBPPipeline(jobs_setup_file)
         pl.indels_realign(sample_name,
                           bam_file=bam_file,
                           indels_target_intervals_file=indels_target_intervals_file,
                           )
 
     @unittest.skipUnless(settings.SLURM_TEST, "taking too much UPPMAX cpu-core hours")
-    def test_base_recal(self):
-        """ test base recalibration """
+    def test_indels_realign_2(self):
+        """ test indel realignment with high quality score"""
 
         self.individual_debug = True
         self.init_test(self.current_func_name)
-        jobs_setup_file = self.__create_jobs_setup_file()
+        jobs_setup_file = self.__create_jobs_setup_file(project_code=FAST_PROJECT_CODE)
+        sample_name = "hi_score_sample"
+        pl = GATKBPPipeline(jobs_setup_file)
+        bam_file = join_path(self.data_dir,
+                             sample_name+"_dedup_reads.bam")
+        indels_target_intervals_file = join_path(self.data_dir,
+                                                 'indels_target_intervals.list')
+        pl.indels_realign(sample_name,
+                          bam_file=bam_file,
+                          indels_target_intervals_file=indels_target_intervals_file,
+                          )
+
+    @unittest.skipUnless(settings.SLURM_TEST, "taking too much UPPMAX cpu-core hours")
+    def test_base_recal_1(self):
+        """ test standard base recalibration """
+
+        self.individual_debug = True
+        self.init_test(self.current_func_name)
+        jobs_setup_file = self.__create_jobs_setup_file(project_code=FAST_PROJECT_CODE)
         sample_name = "test-sample"
+        pl = GATKBPPipeline(jobs_setup_file)
         bam_file = join_path(self.data_dir,
                              sample_name+"_realigned_reads.bam")
-        self.__add_sample_jobs_setup_file(jobs_setup_file,
-                                          sample_name,
-                                          "NA",
-                                          "NA",
-                                          "NA",
-                                          usage_mail="YES",
-                                          )
+        pl.base_recal(sample_name, bam_file=bam_file)
+
+    @unittest.skipUnless(settings.SLURM_TEST, "taking too much UPPMAX cpu-core hours")
+    def test_base_recal_2(self):
+        """ test base recalibration with high quality score """
+
+        self.individual_debug = True
+        self.init_test(self.current_func_name)
+        jobs_setup_file = self.__create_jobs_setup_file(project_code=FAST_PROJECT_CODE)
+        sample_name = "hi_score_sample"
         pl = GATKBPPipeline(jobs_setup_file)
+        bam_file = join_path(self.data_dir,
+                             sample_name+"_realigned_reads.bam")
         pl.base_recal(sample_name, bam_file=bam_file)
 
     @unittest.skipUnless(settings.SLURM_TEST, "taking too much UPPMAX cpu-core hours")
@@ -515,8 +540,51 @@ class TestGATKBPPipeline(SafeTester):
         targets_interval_list = join_path(self.data_dir,
                                           "targets.interval_list") 
         jobs_setup_file = self.__create_jobs_setup_file(project_code=FAST_PROJECT_CODE,
-                                                        sample_usage_mail=sample_usage_mail,
-#                                                        targets_interval_list=targets_interval_list,
+                                                        )
+        pl = GATKBPPipeline(jobs_setup_file)
+        pl.preprocess_sample(sample_name)
+
+    @unittest.skipUnless(settings.SLURM_TEST, "taking too much UPPMAX cpu-core hours")
+    def test_preprocess_sample_Br_652(self):
+        """ test sample pre-processing workflow (one of problematic sample from Illimina WES) """
+
+        self.individual_debug = True
+        self.init_test(self.current_func_name)
+        sample_name = "Br-652"
+        sample_usage_mail = {sample_name: "YES"}
+        targets_interval_list = join_path(self.data_dir,
+                                          "targets.interval_list") 
+        jobs_setup_file = self.__create_jobs_setup_file(project_code=FAST_PROJECT_CODE,
+                                                        )
+        pl = GATKBPPipeline(jobs_setup_file)
+        pl.preprocess_sample(sample_name)
+
+    @unittest.skipUnless(settings.SLURM_TEST, "taking too much UPPMAX cpu-core hours")
+    def test_preprocess_sample_Br_724(self):
+        """ test sample pre-processing workflow (one of problematic sample from Illimina WES) """
+
+        self.individual_debug = True
+        self.init_test(self.current_func_name)
+        sample_name = "Br-724"
+        sample_usage_mail = {sample_name: "YES"}
+        targets_interval_list = join_path(self.data_dir,
+                                          "targets.interval_list") 
+        jobs_setup_file = self.__create_jobs_setup_file(project_code=FAST_PROJECT_CODE,
+                                                        )
+        pl = GATKBPPipeline(jobs_setup_file)
+        pl.preprocess_sample(sample_name)
+
+    @unittest.skipUnless(settings.SLURM_TEST, "taking too much UPPMAX cpu-core hours")
+    def test_preprocess_sample_Br_732(self):
+        """ test sample pre-processing workflow (one of problematic sample from Illimina WES) """
+
+        self.individual_debug = True
+        self.init_test(self.current_func_name)
+        sample_name = "Br-732"
+        sample_usage_mail = {sample_name: "YES"}
+        targets_interval_list = join_path(self.data_dir,
+                                          "targets.interval_list") 
+        jobs_setup_file = self.__create_jobs_setup_file(project_code=FAST_PROJECT_CODE,
                                                         )
         pl = GATKBPPipeline(jobs_setup_file)
         pl.preprocess_sample(sample_name)

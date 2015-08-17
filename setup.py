@@ -54,7 +54,10 @@ setup(
               ],
     scripts=['bin/pyCMM-vcf2avdb',
              'bin/pyCMM-dnaseq-pipeline',
-             'bin/pyCMM-create-job-setup-file',
+             'bin/pyCMM-dnaseq-create-job-setup-file',
+             'bin/pyCMM-cmmdb-cal-mut-stat',
+             'bin/pyCMM-cmmdb-table-annovar',
+             'bin/pyCMM-cmmdb-create-job-setup-file',
              ],
     package=['pyCMM'],
 #    package_data={'': ['data/CBV/*.cbv']

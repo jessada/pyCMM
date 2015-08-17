@@ -45,7 +45,7 @@ def app_pycmm_create_jobs_setup_file(*args, **kwargs):
     required_params['sample group (-g)'] = kwargs['sample_group']
     required_params['project code (-p)'] = kwargs['project_code']
     required_params['reference file (-R)'] = kwargs['reference_file']
-    required_params['project output directory (-R)'] = kwargs['project_out_dir']
+    required_params['project output directory (-O)'] = kwargs['project_out_dir']
     required_params['samples root directory (-I)'] = kwargs['samples_root_dir']
     optional_params=OrderedDict()
     if kwargs['known_indels_file'] is not None:

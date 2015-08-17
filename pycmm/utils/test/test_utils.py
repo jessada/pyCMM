@@ -4,6 +4,7 @@ from os.path import join as join_path
 from os.path import dirname
 from pycmm import settings
 from pycmm.template import SafeTester
+from pycmm.utils import mylogger
 from pycmm.utils import get_file_prefix
 from pycmm.utils import concat_files
 
@@ -15,10 +16,12 @@ class TestFunctions(SafeTester):
         SafeTester.__init__(self,
                             test_name,
                             dirname(__file__),
+                            test_module_name=__name__,
                             )
 
     def setUp(self):
-        self.module_name = 'default'
+        mylogger.getLogger(__name__)
+        pass
 
     def __create_db_instance(self):
         return None

@@ -8,13 +8,15 @@ import fileinput
 import gc
 from os.path import join as join_path
 from os.path import dirname
+from pycmm.utils import mylogger
+from pycmm.settings import ENV_TEST_DIR
 
 
 class pyCMMBase(object):
     """ pyCMM base class """
 
     def __init__(self):
-        pass
+        self.pkg_root_dir = dirname(dirname(__file__))
 
     def __str__(self):
         return self.__repr__()
@@ -94,14 +96,12 @@ class Tester(unittest.TestCase, pyCMMBase):
 
     def __init__(self,
                  test_name,
-                 module_path
+                 module_path,
+                 test_module_name=None,
                  ):
         unittest.TestCase.__init__(self, test_name)
         pyCMMBase.__init__(self)
-        self.base_working_dir = join_path(module_path,
-                                          'tmp')
-        self.base_data_dir = join_path(module_path,
-                                       'data')
+        self.test_module_name = test_module_name
 
     def remove_dir(self, dir_name):
         self.assertTrue(dir_name, '"None" is not a valid directory')
@@ -121,16 +121,31 @@ class Tester(unittest.TestCase, pyCMMBase):
             self.remove_dir(self.working_dir)
 
     def set_dir(self):
-        self.working_dir = join_path(join_path(join_path(self.base_working_dir,
-                                                         self.module_name),
+        working_subdir = "/".join(self.test_module_name.split('.')[:-2])
+        working_subdir = join_path(working_subdir,
+                                   self.test_module_name.split('.')[-1][5:])
+        self.working_dir = os.getenv(ENV_TEST_DIR,
+                                     join_path(self.pkg_root_dir,
+                                               "tmp"))
+        self.working_dir = join_path(self.working_dir,
+                                     working_subdir)
+        self.working_dir = join_path(join_path(self.working_dir,
                                                self.__class__.__name__[4:]),
                                      self.test_function)
-        self.data_dir = join_path(join_path(join_path(self.base_data_dir,
-                                                      self.module_name),
+        data_subdir = "/".join(self.test_module_name.split('.')[:-1])
+        data_subdir = join_path(data_subdir,
+                                "data")
+        data_subdir = join_path(data_subdir,
+                                self.test_module_name.split('.')[-1][5:])
+        self.data_dir = join_path(self.pkg_root_dir,
+                                  data_subdir)
+        self.data_dir = join_path(join_path(self.data_dir,
                                             self.__class__.__name__[4:]),
                                   self.test_function)
 
-    def init_test(self, test_function):
+    def init_test(self,
+                  test_function,
+                  ):
         self.test_function = test_function
         self.set_dir()
         self.empty_working_dir()
@@ -151,10 +166,12 @@ class SafeTester(Tester):
     def __init__(self,
                  test_name,
                  module_path,
+                 test_module_name=None,
                  ):
         Tester.__init__(self,
                         test_name,
                         module_path,
+                        test_module_name=test_module_name,
                         )
 
 
