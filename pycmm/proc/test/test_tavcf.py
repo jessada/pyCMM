@@ -17,10 +17,6 @@ class TestTableAnnovarVcfReader(SafeTester):
 
     def setUp(self):
         mylogger.getLogger(__name__)
-        self.module_name = 'tavcf'
-
-    def __create_db_instance(self):
-        return None
 
     def test_annovar_info_1(self):
         """ to check if all the variables annotated by ANNOVAR are correctly listed"""
@@ -106,6 +102,18 @@ class TestTableAnnovarVcfReader(SafeTester):
         self.assertEqual(vcf_record.INFO['AXEQ_BR_AF'],
                          ['0.2692', '0.2308'],
                          "TableAnnovarVcfReader cannot identify value for info entries annotated by ANNOVAR")
+
+class TestCmmVcfCall(SafeTester):
+
+    def __init__(self, test_name):
+        SafeTester.__init__(self,
+                            test_name,
+                            dirname(__file__),
+                            test_module_name=__name__,
+                            )
+
+    def setUp(self):
+        mylogger.getLogger(__name__)
 
     def test_parse_cmm_gts(self):
         """ test if zygosity can be correctly determined """
@@ -928,3 +936,4 @@ class TestTableAnnovarVcfReader(SafeTester):
         self.assertEqual(call.mutated[4],
                          False,
                          "cmm genotype cannot be correctly determined")
+
