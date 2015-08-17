@@ -37,7 +37,8 @@ MUTREP_ALLOC_TIME = "1-00:00:00"
 
 MUTREP_CREATE_JOB_SETUP_FILE_DESCRIPTION = "An applicationt to generate job setup file to process mutations report"
 
-DFLT_MUTREP_FREQ_RATIOS = "esp6500siv2_all:0.2"
+DFLT_MAF_VAR = "1000g2014oct_all"
+DFLT_MUTREP_FREQ_RATIOS = DFLT_MAF_VAR + ":0.2"
 
 DFLT_MUTREP_ANNO_COLS = []
 #DFLT_MUTREP_ANNO_COLS.append("Chr")
@@ -46,9 +47,9 @@ DFLT_MUTREP_ANNO_COLS = []
 #DFLT_MUTREP_ANNO_COLS.append("Ref")
 #DFLT_MUTREP_ANNO_COLS.append("Alt")
 DFLT_MUTREP_ANNO_COLS.append("Func.refGene")
+DFLT_MUTREP_ANNO_COLS.append("ExonicFunc.refGene")
 DFLT_MUTREP_ANNO_COLS.append("Gene.refGene")
 DFLT_MUTREP_ANNO_COLS.append("GeneDetail.refGene")
-DFLT_MUTREP_ANNO_COLS.append("ExonicFunc.refGene")
 DFLT_MUTREP_ANNO_COLS.append("1000g2014oct_eur")
 DFLT_MUTREP_ANNO_COLS.append("1000g2014oct_all")
 DFLT_MUTREP_ANNO_COLS.append("ExAC_ALL")

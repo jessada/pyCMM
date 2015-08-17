@@ -10,6 +10,7 @@ from os.path import isfile
 from pycmm.settings import DFLT_ANNOVAR_DB_FOLDER
 from pycmm.settings import DFLT_ANNOVAR_DB_NAMES
 from pycmm.settings import DFLT_ANNOVAR_DB_OPS
+from pycmm.template import pyCMMBase
 from pycmm.utils import exec_sh
 from pycmm.utils import mylogger
 from pycmm.utils.jobman import JobManager
@@ -46,10 +47,10 @@ JOBS_SETUP_TA_DB_OPS_KEY = ANNOVAR_PARAMS_DB_OPS_KEY
 JOBS_SETUP_TA_NASTRING_KEY = ANNOVAR_PARAMS_NASTRING_KEY
 
 # *************** jobs samples section ***************
-JOBS_SETUP_SAMPLES_INFO_KEY = "SAMPLES_INFO"
+JOBS_SETUP_SAMPLE_INFOS_KEY = "SAMPLE_INFOS"
 JOBS_SETUP_FAMILY_ID_KEY = "FAMILY_ID"
 JOBS_SETUP_MEMBERS_LIST_KEY = "MEMBERS"
-JOBS_SETUP_MEMBER_NAME_KEY = "NAME"
+JOBS_SETUP_SAMPLE_ID_KEY = "SAMPLE_ID"
 
 # *************** report layout section ***************
 JOBS_SETUP_REPORT_LAYOUT_SECTION = "REPORT_LAYOUT"
@@ -59,6 +60,42 @@ JOBS_SETUP_REPORT_CALL_INFO_KEY = "CALL_INFO"
 JOBS_SETUP_REPORT_FREQ_RATIOS_KEY = "FREQUENCY_RATIOS"
 JOBS_SETUP_REPORT_FREQ_RATIOS_COL_KEY = "COLUMN"
 JOBS_SETUP_REPORT_FREQ_RATIOS_FREQ_KEY = "FREQUENCY"
+
+class MemberInfo(pyCMMBase):
+    """  To encapsulate family information so that it is readable """
+
+    def __init__(self, info):
+        pyCMMBase.__init__(self)
+        self.__info = info
+
+    def get_raw_repr(self):
+        return {"sample id": self.sample_id,
+                }
+
+    @property
+    def sample_id(self):
+        return self.__info[JOBS_SETUP_SAMPLE_ID_KEY]
+
+class FamilyInfo(pyCMMBase):
+    """  To encapsulate family information so that it is readable """
+
+    def __init__(self, info):
+        pyCMMBase.__init__(self)
+        self.__info = info
+
+    def get_raw_repr(self):
+        return {"family id": self.fam_id,
+                "members": self.members,
+                }
+
+    @property
+    def fam_id(self):
+        return str(self.__info[JOBS_SETUP_FAMILY_ID_KEY])
+
+    @property
+    def members(self):
+        return map(lambda x: MemberInfo(x),
+                   self.__info[JOBS_SETUP_MEMBERS_LIST_KEY])
 
 class CMMDBPipeline(JobManager):
     """ A class to control CMM data(base) workflow """
@@ -70,7 +107,7 @@ class CMMDBPipeline(JobManager):
         self.__load_jobs_info(jobs_setup_file)
         JobManager.__init__(self,
                             jobs_report_file=self.jobs_report_file)
-        self.__parse_samples_info()
+        self.__parse_sample_infos()
         self.__time_stamp = datetime.datetime.now()
         self.__create_directories()
 
@@ -111,8 +148,8 @@ class CMMDBPipeline(JobManager):
         return self.__samples_list
 
     @property
-    def families_list(self):
-        return self.__families_list
+    def family_infos(self):
+        return self.__family_infos
 
     @property
     def jobs_report_file(self):
@@ -164,22 +201,23 @@ class CMMDBPipeline(JobManager):
         stream = file(jobs_setup_file, "r")
         self._jobs_info = yaml.safe_load(stream)
 
-    def __parse_samples_info(self):
-        if JOBS_SETUP_SAMPLES_INFO_KEY not in self._jobs_info:
+    def __parse_sample_infos(self):
+        if JOBS_SETUP_SAMPLE_INFOS_KEY not in self._jobs_info:
             self.__samples_list = None
-            self.__families_list = None
+            self.__family_infos = None
             return
-        samples_info = self._jobs_info[JOBS_SETUP_SAMPLES_INFO_KEY]
-        if type(samples_info) is str:
-            self.__samples_list = samples_info.split(",")
-            self.__families_list = None
+        sample_infos = self._jobs_info[JOBS_SETUP_SAMPLE_INFOS_KEY]
+        if type(sample_infos) is str:
+            self.__samples_list = sample_infos.split(",")
+            self.__family_infos = None
         else:
             self.__samples_list = []
-            for family_info in samples_info:
-                family_info[JOBS_SETUP_FAMILY_ID_KEY] = str(family_info[JOBS_SETUP_FAMILY_ID_KEY])
-                for member in family_info[JOBS_SETUP_MEMBERS_LIST_KEY]:
-                    self.__samples_list.append(member[JOBS_SETUP_MEMBER_NAME_KEY])
-            self.__families_list = samples_info
+            self.__family_infos = []
+            for entry in sample_infos:
+                family_info = FamilyInfo(entry)
+                for member in family_info.members:
+                    self.__samples_list.append(member.sample_id)
+                self.__family_infos.append(family_info)
 
     def __create_directories(self):
         self.create_dir(self.rpts_out_dir)
@@ -293,7 +331,7 @@ def create_jobs_setup_file(dataset_name,
                            project_out_dir,
                            vcf_tabix_file,
                            vcf_region=None,
-                           samples_info=None,
+                           sample_infos=None,
                            project_code=None,
                            jobs_report_file=None,
                            annovar_human_db_dir=DFLT_ANNOVAR_DB_FOLDER,
@@ -327,22 +365,22 @@ def create_jobs_setup_file(dataset_name,
         job_setup_document[JOBS_SETUP_PROJECT_CODE_KEY] = project_code
     if vcf_region is not None:
         job_setup_document[JOBS_SETUP_VCF_REGION_KEY] = vcf_region
-    if (samples_info is not None) and (samples_info.find(":") == -1):
-        job_setup_document[JOBS_SETUP_SAMPLES_INFO_KEY] = samples_info
-    if (samples_info is not None) and (samples_info.find(":") > -1):
+    if (sample_infos is not None) and (sample_infos.find(":") == -1):
+        job_setup_document[JOBS_SETUP_SAMPLE_INFOS_KEY] = sample_infos
+    if (sample_infos is not None) and (sample_infos.find(":") > -1):
         families_info = []
-        for family_item in samples_info.split(","):
+        for family_item in sample_infos.split(","):
             family_info = {}
             family_infos = family_item.split(":")
             family_info[JOBS_SETUP_FAMILY_ID_KEY] = family_infos[0]
             members = []
             for member_infos in family_infos[1:]:
                 member = {}
-                member[JOBS_SETUP_MEMBER_NAME_KEY] = member_infos
+                member[JOBS_SETUP_SAMPLE_ID_KEY] = member_infos
                 members.append(member)
             family_info[JOBS_SETUP_MEMBERS_LIST_KEY] = members
             families_info.append(family_info)
-        job_setup_document[JOBS_SETUP_SAMPLES_INFO_KEY] = families_info
+        job_setup_document[JOBS_SETUP_SAMPLE_INFOS_KEY] = families_info
     job_setup_document[JOBS_SETUP_OUTPUT_DIR_KEY] = project_out_dir
     job_setup_document[JOBS_SETUP_VCF_TABIX_FILE_KEY] = vcf_tabix_file
     job_setup_document[JOBS_SETUP_JOBS_REPORT_FILE_KEY] = jobs_report_file
