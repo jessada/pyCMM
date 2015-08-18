@@ -19,6 +19,7 @@ from pycmm.utils import mylogger
 from pycmm.flow.cmmdb import CMMDBPipeline
 from pycmm.settings import MUTREP_ALLOC_TIME
 from pycmm.flow.cmmdb import JOBS_SETUP_REPORT_LAYOUT_SECTION
+from pycmm.flow.cmmdb import JOBS_SETUP_REPORT_ANNOTATED_VCF_TABIX
 from pycmm.flow.cmmdb import JOBS_SETUP_REPORT_ANNO_COLS_KEY
 from pycmm.flow.cmmdb import JOBS_SETUP_REPORT_REGIONS_KEY
 from pycmm.flow.cmmdb import JOBS_SETUP_REPORT_CALL_INFO_KEY
@@ -29,6 +30,7 @@ from pycmm.flow.cmmdb import JOBS_SETUP_REPORT_FREQ_RATIOS_FREQ_KEY
 
 CHROM_POS_PATTERN = re.compile(r'''(?P<chrom>.+?):(?P<start_pos>.+?)-(?P<end_pos>.+)''')
 LAYOUT_VCF_COLS = 4
+RECORDS_LOG_INTERVAL = 1000
 
 class ReportRegion(pyCMMBase):
     """ A structure to parse and keep mutation report layout """
@@ -84,6 +86,13 @@ class ReportLayout(pyCMMBase):
         return self.__layout_params[JOBS_SETUP_REPORT_ANNO_COLS_KEY]
 
     @property
+    def annotated_vcf_tabix(self):
+        if JOBS_SETUP_REPORT_ANNOTATED_VCF_TABIX in self.__layout_params:
+            return self.__layout_params[JOBS_SETUP_REPORT_ANNOTATED_VCF_TABIX]
+        else:
+            return None
+
+    @property
     def report_regions(self):
         if JOBS_SETUP_REPORT_REGIONS_KEY in self.__layout_params:
             return map(lambda x: ReportRegion(str(x)),
@@ -128,6 +137,13 @@ class MutRepPipeline(CMMDBPipeline):
 
     def __parse_report_layout(self):
         self.__report_layout = ReportLayout(self._jobs_info[JOBS_SETUP_REPORT_LAYOUT_SECTION])
+
+    @property
+    def annotated_vcf_tabix(self):
+        if self.report_layout.annotated_vcf_tabix is not None:
+            return self.report_layout.annotated_vcf_tabix
+        else:
+            return self.annovar_config.annotated_vcf + ".gz"
 
     @property
     def report_layout(self):
@@ -233,10 +249,10 @@ class MutRepPipeline(CMMDBPipeline):
                          samples_list=None,
                          check_shared=False,
                          ):
-        if self.input_vcf_tabix.endswith('.vcf.gz'):
-            vcf_reader = VcfReader(filename=self.input_vcf_tabix)
+        if self.annotated_vcf_tabix.endswith('.vcf.gz'):
+            vcf_reader = VcfReader(filename=self.annotated_vcf_tabix)
         else:
-            self.thrown(self.input_vcf_tabix + ' does not endswith .vcf.gz')
+            self.thrown(self.annotated_vcf_tabix + ' does not endswith .vcf.gz')
         row = 1
         if samples_list is None:
             samples = vcf_reader.samples
@@ -251,6 +267,10 @@ class MutRepPipeline(CMMDBPipeline):
                         not vcf_record.is_shared(allele_idx, samples_list)):
                         continue
                     self.__write_content(ws, row, vcf_record, allele_idx, samples)
+                    if row % RECORDS_LOG_INTERVAL == 0:
+                        log_msg = str(row)
+                        log_msg += " records were written to the sheet"
+                        mylogger.info(log_msg)
                     row += 1
         else:
             for report_region in self.report_layout.report_regions:
@@ -267,20 +287,35 @@ class MutRepPipeline(CMMDBPipeline):
                             not vcf_record.is_shared(allele_idx, samples_list)):
                             continue
                         self.__write_content(ws, row, vcf_record, allele_idx, samples)
+                        if row % RECORDS_LOG_INTERVAL == 0:
+                            log_msg = str(row)
+                            log_msg += " records were written to the sheet"
+                            mylogger.info(log_msg)
                         row += 1
         # freeze panes
+        log_msg = "Finish .. "
+        log_msg += " total of " + str(row-1)
+        log_msg += " records were written to the sheet"
+        mylogger.info(log_msg)
         ws.freeze_panes(1, 0)
 
     def gen_summary_report(self, out_file=None, fam_infos=None):
         if out_file is None:
             out_file = self.summary_rpt_file
+        mylogger.info("")
+        mylogger.info(" >>>> generating summary report")
+        mylogger.info(" >>>> report file: " + out_file)
         self.__wb = xlsxwriter.Workbook(out_file)
+        mylogger.info("")
+        mylogger.info(" >> add 'summary_all' sheet")
         self.__add_muts_sheet("summary_all")
         if fam_infos is not None:
             samples_list = map(lambda x: x.sample_id,
                                reduce(lambda x, y: x+y,
                                       map(lambda x: x.members,
                                           self.family_infos)))
+            mylogger.info("")
+            mylogger.info(" >> add 'summary_families' sheet")
             self.__add_muts_sheet("summary_families", samples_list=samples_list)
         self.__wb.close()
 
@@ -289,17 +324,28 @@ class MutRepPipeline(CMMDBPipeline):
                             ):
         out_file = join_path(self.rpts_out_dir,
                              self.dataset_name+"_fam"+fam_info.fam_id+".xlsx")
+        mylogger.info("")
+        mylogger.info(" >>>> generating family report for family " + fam_info.fam_id)
+        mylogger.info(" >>>> report file: " + out_file)
         samples_list = map(lambda x: x.sample_id, fam_info.members)
         self.__wb = xlsxwriter.Workbook(out_file)
         if len(samples_list) == 1:
+            mylogger.info("")
+            mylogger.info(" >> add '" + samples_list[0] + "' sheet")
             self.__add_muts_sheet(samples_list[0], samples_list=samples_list, check_shared=True)
         else:
+            mylogger.info("")
+            mylogger.info(" >> add 'shared' sheet")
             self.__add_muts_sheet("shared", samples_list=samples_list, check_shared=True)
             for sample_name in samples_list:
+                mylogger.info("")
+                mylogger.info(" >> add '" + sample_name + "' sheet")
                 self.__add_muts_sheet(sample_name, samples_list=[sample_name], check_shared=True)
         self.__wb.close()
 
     def gen_family_reports(self):
+        if self.family_infos is None:
+            return
         for family_info in self.family_infos:
             self.__gen_family_report(family_info)
 

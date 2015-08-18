@@ -46,6 +46,7 @@ class TestMutRepPipeline(SafeTester):
                                  vcf_region="18",
                                  sample_infos=None,
                                  anno_cols=DFLT_TEST_MUTREP_COLS,
+                                 annotated_vcf_tabix=None,
                                  report_regions=DFLT_TEST_REPORT_REGIONS,
                                  call_info="NO",
                                  frequency_ratios=DFLT_TEST_FREQ_RATIOS,
@@ -61,6 +62,7 @@ class TestMutRepPipeline(SafeTester):
                                sample_infos=sample_infos,
                                project_code=project_code,
                                anno_cols=",".join(anno_cols),
+                               annotated_vcf_tabix=annotated_vcf_tabix,
                                report_regions=report_regions,
                                call_info=call_info,
                                frequency_ratios=frequency_ratios,
@@ -81,12 +83,18 @@ class TestMutRepPipeline(SafeTester):
         self.assertEqual(pl.report_layout.anno_cols[3],
                          "GeneDetail.refGene",
                          "MutRepPipeline cannot correctly read report layout info 'layout columns' from jobs setup file")
+        self.assertEqual(pl.report_layout.anno_cols[3],
+                         "GeneDetail.refGene",
+                         "MutRepPipeline cannot correctly read report layout info 'layout columns' from jobs setup file")
         self.assertEqual(pl.report_layout.anno_cols[4],
                          "cytoBand",
                          "MutRepPipeline cannot correctly read report layout info 'layout columns' from jobs setup file")
         self.assertEqual(pl.report_layout.report_regions[0].chrom,
                          "18",
                          "MutRepPipeline cannot correctly read report layout info 'report regions' from jobs setup file")
+        self.assertEqual(pl.annotated_vcf_tabix,
+                         pl.annovar_config.annotated_vcf + ".gz",
+                         "MutRepPipeline cannot correctly determine report layout info 'annotated vcf tabix' file")
         self.assertEqual(pl.report_layout.call_info,
                          False,
                          "MutRepPipeline cannot correctly read report layout info 'call info' from jobs setup file")
@@ -101,10 +109,12 @@ class TestMutRepPipeline(SafeTester):
         self.init_test(self.current_func_name)
         job_name = self.test_function
         dummy_vcf_tabix_file = "/path/to/vcf_tabix_file"
+        dummy_annotated_vcf_tabix = "/path/to/annotated_vcf_tabix.vcf.gz"
         jobs_setup_file = self.__create_jobs_setup_file(vcf_tabix_file=dummy_vcf_tabix_file,
+                                                        annotated_vcf_tabix=dummy_annotated_vcf_tabix,
                                                         report_regions="6:78161823-78164117,"+DFLT_TEST_REPORT_REGIONS+",22",
                                                         call_info="YES",
-                                                        frequency_ratios="ExAC:0.5",
+                                                        frequency_ratios=None,
                                                         )
         pl = MutRepPipeline(jobs_setup_file)
         self.assertEqual(pl.report_layout.report_regions[1].end_pos,
@@ -116,12 +126,12 @@ class TestMutRepPipeline(SafeTester):
         self.assertEqual(pl.report_layout.report_regions[2].start_pos,
                          None,
                          "MutRepPipeline cannot correctly read report layout info 'report regions' from jobs setup file")
+        self.assertEqual(pl.annotated_vcf_tabix,
+                         dummy_annotated_vcf_tabix,
+                         "MutRepPipeline cannot correctly determine report layout info 'annotated vcf tabix' file")
         self.assertEqual(pl.report_layout.call_info,
                          True,
                          "MutRepPipeline cannot correctly read report layout info 'call info' from jobs setup file")
-        self.assertEqual(pl.report_layout.freq_ratios["ExAC"],
-                         0.5,
-                         "MutRepPipeline cannot correctly read report layout info 'frequency ratios' from jobs setup file")
 
     def test_load_jobs_info_3(self):
         """ test if non-default (None) layout configurations are loaded correctly """
@@ -132,14 +142,14 @@ class TestMutRepPipeline(SafeTester):
         dummy_vcf_tabix_file = "/path/to/vcf_tabix_file"
         jobs_setup_file = self.__create_jobs_setup_file(vcf_tabix_file=dummy_vcf_tabix_file,
                                                         report_regions=None,
-                                                        frequency_ratios=None,
+                                                        frequency_ratios="ExAC:0.5",
                                                         )
         pl = MutRepPipeline(jobs_setup_file)
         self.assertEqual(pl.report_layout.report_regions,
                          None,
                          "MutRepPipeline cannot correctly read report layout info 'report regions' from jobs setup file")
-        self.assertEqual(pl.report_layout.freq_ratios,
-                         None,
+        self.assertEqual(pl.report_layout.freq_ratios["ExAC"],
+                         0.5,
                          "MutRepPipeline cannot correctly read report layout info 'frequency ratios' from jobs setup file")
 
     @unittest.skip("Disable for temporary")
@@ -151,8 +161,11 @@ class TestMutRepPipeline(SafeTester):
         job_name = self.test_function
         vcf_tabix_file = join_path(self.data_dir,
                                    "chr6_18.vcf.gz")
+        annotated_vcf_tabix = join_path(self.data_dir,
+                                        "chr6_18.vcf.gz")
         jobs_setup_file = self.__create_jobs_setup_file(vcf_tabix_file=vcf_tabix_file,
                                                         anno_cols=DFLT_MUTREP_ANNO_COLS,
+                                                        annotated_vcf_tabix=annotated_vcf_tabix,
                                                         report_regions=None,
                                                         )
         pl = MutRepPipeline(jobs_setup_file)
@@ -167,9 +180,12 @@ class TestMutRepPipeline(SafeTester):
         job_name = self.test_function
         vcf_tabix_file = join_path(self.data_dir,
                                    "chr18.vcf.gz")
+        annotated_vcf_tabix = join_path(self.data_dir,
+                                        "chr18.vcf.gz")
         anno_cols=DFLT_TEST_MUTREP_COLS
         anno_cols.remove("cytoBand")
         jobs_setup_file = self.__create_jobs_setup_file(vcf_tabix_file=vcf_tabix_file,
+                                                        annotated_vcf_tabix=annotated_vcf_tabix,
                                                         anno_cols=anno_cols,
                                                         call_info="YES",
                                                         )
@@ -185,9 +201,12 @@ class TestMutRepPipeline(SafeTester):
         job_name = self.test_function
         vcf_tabix_file = join_path(self.data_dir,
                                    "chr6_18.vcf.gz")
+        annotated_vcf_tabix = join_path(self.data_dir,
+                                        "chr6_18.vcf.gz")
         rpt_out_file = join_path(self.working_dir,
                                  self.current_func_name + ".xlsx")
         jobs_setup_file = self.__create_jobs_setup_file(vcf_tabix_file=vcf_tabix_file,
+                                                        annotated_vcf_tabix=annotated_vcf_tabix,
                                                         anno_cols=DFLT_MUTREP_ANNO_COLS,
                                                         report_regions="6:78171941-78172992,18:28610988-28611790",
                                                         call_info="YES",
@@ -207,7 +226,10 @@ class TestMutRepPipeline(SafeTester):
         job_name = self.test_function
         vcf_tabix_file = join_path(self.data_dir,
                                    "input.vcf.gz")
+        annotated_vcf_tabix = join_path(self.data_dir,
+                                        "input.vcf.gz")
         jobs_setup_file = self.__create_jobs_setup_file(vcf_tabix_file=vcf_tabix_file,
+                                                        annotated_vcf_tabix=annotated_vcf_tabix,
                                                         anno_cols=DFLT_MUTREP_ANNO_COLS,
                                                         report_regions="6",
                                                         call_info="YES",
@@ -224,7 +246,10 @@ class TestMutRepPipeline(SafeTester):
         job_name = self.test_function
         vcf_tabix_file = join_path(self.data_dir,
                                    "input.vcf.gz")
+        annotated_vcf_tabix = join_path(self.data_dir,
+                                        "input.vcf.gz")
         jobs_setup_file = self.__create_jobs_setup_file(vcf_tabix_file=vcf_tabix_file,
+                                                        annotated_vcf_tabix=annotated_vcf_tabix,
                                                         anno_cols=DFLT_MUTREP_ANNO_COLS,
                                                         call_info="YES",
                                                         report_regions="6",
@@ -242,7 +267,10 @@ class TestMutRepPipeline(SafeTester):
         job_name = self.test_function
         vcf_tabix_file = join_path(self.data_dir,
                                    "input.vcf.gz")
+        annotated_vcf_tabix = join_path(self.data_dir,
+                                        "input.vcf.gz")
         jobs_setup_file = self.__create_jobs_setup_file(vcf_tabix_file=vcf_tabix_file,
+                                                        annotated_vcf_tabix=annotated_vcf_tabix,
                                                         call_info="YES",
                                                         report_regions="6",
                                                         sample_infos="1234:Alb-31:Br-466",
@@ -259,7 +287,10 @@ class TestMutRepPipeline(SafeTester):
         job_name = self.test_function
         vcf_tabix_file = join_path(self.data_dir,
                                    "input.vcf.gz")
+        annotated_vcf_tabix = join_path(self.data_dir,
+                                        "input.vcf.gz")
         jobs_setup_file = self.__create_jobs_setup_file(vcf_tabix_file=vcf_tabix_file,
+                                                        annotated_vcf_tabix=annotated_vcf_tabix,
                                                         anno_cols=DFLT_MUTREP_ANNO_COLS,
                                                         call_info="YES",
                                                         report_regions="6",
@@ -277,7 +308,10 @@ class TestMutRepPipeline(SafeTester):
         job_name = self.test_function
         vcf_tabix_file = join_path(self.data_dir,
                                    "input.vcf.gz")
+        annotated_vcf_tabix = join_path(self.data_dir,
+                                        "input.vcf.gz")
         jobs_setup_file = self.__create_jobs_setup_file(vcf_tabix_file=vcf_tabix_file,
+                                                        annotated_vcf_tabix=annotated_vcf_tabix,
                                                         call_info="YES",
                                                         report_regions="6",
                                                         sample_infos="1234:Alb-31:Br-466,6067:Br-432:Al-161:Br-504,6789:Al-65",
