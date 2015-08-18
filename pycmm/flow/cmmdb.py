@@ -55,6 +55,7 @@ JOBS_SETUP_SAMPLE_ID_KEY = "SAMPLE_ID"
 
 # *************** report layout section ***************
 JOBS_SETUP_REPORT_LAYOUT_SECTION = "REPORT_LAYOUT"
+JOBS_SETUP_REPORT_ANNOTATED_VCF_TABIX = "ANNOTATED_VCF_TABIX"
 JOBS_SETUP_REPORT_ANNO_COLS_KEY = "COLUMNS"
 JOBS_SETUP_REPORT_REGIONS_KEY = "REGIONS"
 JOBS_SETUP_REPORT_CALL_INFO_KEY = "CALL_INFO"
@@ -345,10 +346,11 @@ def create_jobs_setup_file(dataset_name,
                            annovar_db_names=DFLT_ANNOVAR_DB_NAMES,
                            annovar_db_ops=DFLT_ANNOVAR_DB_OPS,
                            annovar_nastring=".",
-                           anno_cols=",".join(DFLT_MUTREP_ANNO_COLS),
+                           anno_cols=None,
+                           annotated_vcf_tabix=None,
                            report_regions=None,
-                           call_info="NO",
-                           frequency_ratios=DFLT_MUTREP_FREQ_RATIOS,
+                           call_info=False,
+                           frequency_ratios=None,
                            out_jobs_setup_file=None,
                            ):
     mylogger.getLogger(__name__)
@@ -392,18 +394,24 @@ def create_jobs_setup_file(dataset_name,
     job_setup_document[JOBS_SETUP_JOBS_REPORT_FILE_KEY] = jobs_report_file
     job_setup_document[JOBS_SETUP_ANNOVAR_SECTION] = annovar_config
     report_layout_config = {}
-    report_layout_config[JOBS_SETUP_REPORT_ANNO_COLS_KEY] = anno_cols.split(",")
+    if anno_cols is None:
+        report_layout_config[JOBS_SETUP_REPORT_ANNO_COLS_KEY] = DFLT_MUTREP_ANNO_COLS
+    else:
+        report_layout_config[JOBS_SETUP_REPORT_ANNO_COLS_KEY] = anno_cols.split(",")
+    if annotated_vcf_tabix is not None:
+        report_layout_config[JOBS_SETUP_REPORT_ANNOTATED_VCF_TABIX] = annotated_vcf_tabix
     if report_regions is not None:
         report_layout_config[JOBS_SETUP_REPORT_REGIONS_KEY] = report_regions.split(",")
     report_layout_config[JOBS_SETUP_REPORT_CALL_INFO_KEY] = call_info
-    if frequency_ratios is not None:
-        job_freq_ratios = []
-        for frequency_ratio in frequency_ratios.split(","):
-            (col, freq) = frequency_ratio.split(":")
-            job_freq_ratios.append({JOBS_SETUP_REPORT_FREQ_RATIOS_COL_KEY: col,
-                                    JOBS_SETUP_REPORT_FREQ_RATIOS_FREQ_KEY: freq,
-                                    })
-        report_layout_config[JOBS_SETUP_REPORT_FREQ_RATIOS_KEY] = job_freq_ratios
+    if frequency_ratios is None:
+        frequency_ratios = DFLT_MUTREP_FREQ_RATIOS
+    job_freq_ratios = []
+    for frequency_ratio in frequency_ratios.split(","):
+        (col, freq) = frequency_ratio.split(":")
+        job_freq_ratios.append({JOBS_SETUP_REPORT_FREQ_RATIOS_COL_KEY: col,
+                                JOBS_SETUP_REPORT_FREQ_RATIOS_FREQ_KEY: freq,
+                                })
+    report_layout_config[JOBS_SETUP_REPORT_FREQ_RATIOS_KEY] = job_freq_ratios
     job_setup_document[JOBS_SETUP_REPORT_LAYOUT_SECTION] = report_layout_config
 
     pyaml.dump(job_setup_document, stream)

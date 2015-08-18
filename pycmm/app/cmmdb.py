@@ -91,12 +91,32 @@ def app_pycmm_cmmdb_create_jobs_setup_file(*args, **kwargs):
                      required_params=required_params,
                      optional_params=optional_params,
                      )
+    layout_params = OrderedDict()
+    if kwargs['anno_cols'] is not None:
+        layout_params['annotation columns (-a)'] = kwargs['anno_cols']
+    else:
+        layout_params['annotation columns (-a)'] = "all"
+    if kwargs['annotated_vcf_tabix'] is not None:
+        layout_params['annotated vcf tablx file (-A)'] = kwargs['annotated_vcf_tabix']
+    if kwargs['report_regions'] is not None:
+        layout_params['report regions (-R)'] = kwargs['report_regions']
+    else:
+        layout_params['report regions (-R)'] = "all"
+    layout_params['call information (-C)'] = kwargs['call_info']
+    if kwargs['frequency_ratios'] is not None:
+        layout_params['rare frequency ratios (-f)'] = kwargs['frequency_ratios']
+    disp.disp_params_set("Report layout parameters", layout_params)
     create_jobs_setup_file(dataset_name=kwargs['dataset_name'],
                            project_out_dir=kwargs['project_out_dir'],
                            vcf_tabix_file=kwargs['vcf_tabix_file'],
                            vcf_region=kwargs['vcf_region'],
                            sample_infos=kwargs['sample_infos'],
                            project_code=kwargs['project_code'],
+                           anno_cols=kwargs['anno_cols'],
+                           annotated_vcf_tabix=kwargs['annotated_vcf_tabix'],
+                           report_regions=kwargs['report_regions'],
+                           call_info=kwargs['call_info'],
+                           frequency_ratios=kwargs['frequency_ratios'],
                            out_jobs_setup_file=kwargs['out_jobs_setup_file'],
                            )
     mylogger.getLogger(__name__)

@@ -286,7 +286,7 @@ class TestCMMDBPipeline(SafeTester):
         pl = CMMDBPipeline(jobs_setup_file)
         pl.cal_mut_stat()
 
-#    @unittest.skipUnless(settings.FULL_SYSTEM_TEST, "taking too long time to test")
+    @unittest.skipUnless(settings.FULL_SYSTEM_TEST, "taking too long time to test")
     def test_table_annovar_offline_1(self):
         """ test offline version (w/o slurm) of table_annovar """
 

@@ -47,6 +47,11 @@ def disp_params_set(params_name,
                     ):
     disp_header(params_name)
     for key in params:
-        disp_param(key, params[key])
-
+        val = params[key]
+        if type(val) is not list:
+            disp_param(key, params[key])
+        else:
+            disp_subheader(key)
+            for entry_idx in xrange(len(val)):
+                disp_subparam("#"+str(entry_idx+1), val[entry_idx])
 
