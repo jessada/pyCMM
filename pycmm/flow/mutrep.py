@@ -255,7 +255,7 @@ class MutRepPipeline(CMMDBPipeline):
         else:
             for report_region in self.report_layout.report_regions:
                 if report_region.start_pos is None:
-                    vcf_records = vcf_reader.fetch(report_region.chrom)
+                    vcf_records = vcf_reader.fetch(report_region.chrom, 0, 1000000000)
                 else:
                     vcf_records = vcf_reader.fetch(report_region.chrom,
                                                    int(report_region.start_pos),

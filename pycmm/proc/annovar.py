@@ -46,6 +46,10 @@ class Annovar(pyCMMBase):
         return self.__annovar_params[ANNOVAR_PARAMS_NASTRING_KEY]
 
     @property
+    def annotated_vcf(self):
+        return self.out_prefix + "." + self.buildver + "_multianno.vcf"
+
+    @property
     def table_annovar_cmd(self):
         cmd = "table_annovar.pl"
         cmd += " " + self.input_file
