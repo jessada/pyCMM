@@ -113,29 +113,33 @@ class TestCMMDBPipeline(SafeTester):
         self.assertEqual(pl.output_dir,
                          self.working_dir,
                          "CMMDBPipeline cannot correctly read meta info 'output dir' from jobs setup file")
-        self.assertEqual(pl.annovar_config[ANNOVAR_PARAMS_INPUT_FILE_KEY],
+        self.assertEqual(pl.annovar_config.input_file,
                          dummy_vcf_tabix_file,
-                         "CMMDBPipeline cannot correctly annovar configs 'annovar input file' from jobs setup file")
-        self.assertEqual(pl.annovar_config[ANNOVAR_PARAMS_DB_FOLDER_KEY],
+                         "CMMDBPipeline cannot corretly read annovar configs 'annovar input file' from jobs setup file")
+        self.assertEqual(pl.annovar_config.db_folder,
                          DFLT_ANNOVAR_TEST_DB_FOLDER,
-                         "CMMDBPipeline cannot correctly annovar configs 'annovar db folder' from jobs setup file")
-        self.assertEqual(pl.annovar_config[ANNOVAR_PARAMS_BUILDVER_KEY],
+                         "CMMDBPipeline cannot corretly read annovar configs 'annovar db folder' from jobs setup file")
+        self.assertEqual(pl.annovar_config.buildver,
                          "hg19",
-                         "CMMDBPipeline cannot correctly annovar configs 'annovar buildver' from jobs setup file")
-        exp_annovar_out_prefix = join_path(pl.rpts_out_dir,
+                         "CMMDBPipeline cannot corretly read annovar configs 'annovar buildver' from jobs setup file")
+        exp_annovar_out_prefix = join_path(pl.data_out_dir,
                                            exp_dataset_name)
-        self.assertEqual(pl.annovar_config[ANNOVAR_PARAMS_OUT_PREFIX_KEY],
+        self.assertEqual(pl.annovar_config.out_prefix,
                          exp_annovar_out_prefix,
-                         "CMMDBPipeline cannot correctly annovar configs 'annovar out prefix' from jobs setup file")
-        self.assertEqual(pl.annovar_config[ANNOVAR_PARAMS_NASTRING_KEY],
+                         "CMMDBPipeline cannot corretly read annovar configs 'annovar out prefix' from jobs setup file")
+        self.assertEqual(pl.annovar_config.nastring,
                          ".",
-                         "CMMDBPipeline cannot correctly annovar configs 'annovar nastring' from jobs setup file")
-        self.assertEqual(pl.annovar_config[ANNOVAR_PARAMS_DB_NAMES_KEY],
+                         "CMMDBPipeline cannot corretly read annovar configs 'annovar nastring' from jobs setup file")
+        self.assertEqual(pl.annovar_config.protocols,
                          DFLT_ANNOVAR_TEST_DB_NAMES,
-                         "CMMDBPipeline cannot correctly annovar configs 'annovar db names' from jobs setup file")
-        self.assertEqual(pl.annovar_config[ANNOVAR_PARAMS_DB_OPS_KEY],
+                         "CMMDBPipeline cannot corretly read annovar configs 'annovar db names' from jobs setup file")
+        self.assertEqual(pl.annovar_config.operations,
                          DFLT_ANNOVAR_TEST_DB_OPS,
-                         "CMMDBPipeline cannot correctly annovar configs 'annovar db ops' from jobs setup file")
+                         "CMMDBPipeline cannot corretly read annovar configs 'annovar db ops' from jobs setup file")
+        exp_annotated_vcf = exp_annovar_out_prefix + ".hg19_multianno.vcf"
+        self.assertEqual(pl.annovar_config.annotated_vcf,
+                         exp_annotated_vcf,
+                         "CMMDBPipeline cannot corretly determine annovar configs 'annovar annotated vcf' file")
 
     def test_load_jobs_info_2(self):
         """ test if modified job configurations are loaded correctly """
@@ -282,7 +286,7 @@ class TestCMMDBPipeline(SafeTester):
         pl = CMMDBPipeline(jobs_setup_file)
         pl.cal_mut_stat()
 
-    @unittest.skipUnless(settings.FULL_SYSTEM_TEST, "taking too long time to test")
+#    @unittest.skipUnless(settings.FULL_SYSTEM_TEST, "taking too long time to test")
     def test_table_annovar_offline_1(self):
         """ test offline version (w/o slurm) of table_annovar """
 

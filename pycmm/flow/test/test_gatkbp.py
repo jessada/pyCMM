@@ -714,7 +714,8 @@ class TestFunctions(SafeTester):
     def setUp(self):
         mylogger.getLogger(__name__)
 
-    @unittest.skipUnless(isdir("/proj/b2011117"), "This can only run in UPPMAX")
+#    @unittest.skipUnless(isdir("/proj/b2011117"), "This can only run in UPPMAX")
+    @unittest.skip("hard to test, temporarily skip")
     def test_create_jobs_setup_file(self):
         """ test if function create_jobs_setup_file can be really used in production """
 

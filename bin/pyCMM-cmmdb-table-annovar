@@ -2,7 +2,7 @@ from pycmm import settings
 from pycmm.app.cmmdb import app_pycmm_cmmdb_table_annovar
 import argparse
 
-argp = argparse.ArgumentParser(description=settings.CMMDB_PIPELINE_DESCRIPTION)
+argp = argparse.ArgumentParser(description=settings.CMMDB_TABLEANNOVAR_DESCRIPTION)
 argp.add_argument('-j',
                   dest='jobs_setup_file',
                   metavar="JOBS SETUP FILE",

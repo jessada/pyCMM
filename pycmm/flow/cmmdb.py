@@ -2,6 +2,7 @@ import sys
 import re
 import datetime
 import pyaml
+import pysam
 import yaml
 from os import listdir
 from os.path import join as join_path
@@ -108,6 +109,7 @@ class CMMDBPipeline(JobManager):
         JobManager.__init__(self,
                             jobs_report_file=self.jobs_report_file)
         self.__parse_sample_infos()
+        self.__parse_annovar_configs()
         self.__time_stamp = datetime.datetime.now()
         self.__create_directories()
 
@@ -186,11 +188,7 @@ class CMMDBPipeline(JobManager):
 
     @property
     def annovar_config(self):
-        cfg = self._jobs_info[JOBS_SETUP_ANNOVAR_SECTION]
-        cfg[ANNOVAR_PARAMS_OUT_PREFIX_KEY] = join_path(self.rpts_out_dir,
-                                                       self.dataset_name)
-        cfg[ANNOVAR_PARAMS_INPUT_FILE_KEY] = self.input_vcf_tabix
-        return cfg
+        return self.__annovar_configs
 
     @property
     def report_layout(self):
@@ -218,6 +216,13 @@ class CMMDBPipeline(JobManager):
                 for member in family_info.members:
                     self.__samples_list.append(member.sample_id)
                 self.__family_infos.append(family_info)
+
+    def __parse_annovar_configs(self):
+        cfg = self._jobs_info[JOBS_SETUP_ANNOVAR_SECTION]
+        cfg[ANNOVAR_PARAMS_OUT_PREFIX_KEY] = join_path(self.data_out_dir,
+                                                       self.dataset_name)
+        cfg[ANNOVAR_PARAMS_INPUT_FILE_KEY] = self.input_vcf_tabix
+        self.__annovar_configs = Annovar(cfg)
 
     def __create_directories(self):
         self.create_dir(self.rpts_out_dir)
@@ -301,7 +306,8 @@ class CMMDBPipeline(JobManager):
                             )
 
     def table_annovar(self):
-        annovar = Annovar(self.annovar_config)
+        mylogger.getLogger(__name__)
+        cfg = self.annovar_config
         if self.project_code is not None:
             job_name = self.dataset_name + "_ta"
             slurm_log_file = join_path(self.slurm_log_dir,
@@ -314,11 +320,11 @@ class CMMDBPipeline(JobManager):
                             "1",
                             CMMDB_ALLOC_TIME,
                             slurm_log_file,
-                            annovar.table_annovar_cmd,
+                            cfg.table_annovar_cmd,
                             "",
                             )
         else:
-            exec_sh(annovar.table_annovar_cmd)
+            exec_sh(cfg.table_annovar_cmd)
 
     def __garbage_collecting(self):
         pass

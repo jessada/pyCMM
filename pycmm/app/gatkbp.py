@@ -19,9 +19,9 @@ def app_pycmm_dnaseq_pipeline(*args, **kwargs):
     func_name = sys._getframe().f_code.co_name
 
     disp.new_section_txt("S T A R T <" + func_name + ">")
-    required_params=OrderedDict()
+    required_params = OrderedDict()
     required_params['jobs setup file (-j)'] = kwargs['jobs_setup_file']
-    optional_params=OrderedDict()
+    optional_params = OrderedDict()
     optional_params['log file (-l)'] = log_file
     disp.show_config(app_description=settings.DNASEQ_PIPELINE_DESCRIPTION,
                      time_stamp=time_stamp,
@@ -40,14 +40,14 @@ def app_pycmm_create_jobs_setup_file(*args, **kwargs):
     func_name = sys._getframe().f_code.co_name
 
     disp.new_section_txt("S T A R T <" + func_name + ">")
-    required_params=OrderedDict()
+    required_params = OrderedDict()
     required_params['dataset name (-d)'] = kwargs['dataset_name']
     required_params['sample group (-g)'] = kwargs['sample_group']
     required_params['project code (-p)'] = kwargs['project_code']
     required_params['reference file (-R)'] = kwargs['reference_file']
     required_params['project output directory (-O)'] = kwargs['project_out_dir']
     required_params['samples root directory (-I)'] = kwargs['samples_root_dir']
-    optional_params=OrderedDict()
+    optional_params = OrderedDict()
     if kwargs['known_indels_file'] is not None:
         known_indels_files = kwargs['known_indels_file']
         for idx in xrange(len(known_indels_files)):

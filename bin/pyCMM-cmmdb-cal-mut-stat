@@ -2,7 +2,7 @@ from pycmm import settings
 from pycmm.app.cmmdb import app_pycmm_cmmdb_cal_mut_stat
 import argparse
 
-argp = argparse.ArgumentParser(description=settings.CMMDB_PIPELINE_DESCRIPTION)
+argp = argparse.ArgumentParser(description=settings.CMMDB_MUTSTAT_DESCRIPTION)
 argp.add_argument('-j',
                   dest='jobs_setup_file',
                   metavar="JOBS SETUP FILE",

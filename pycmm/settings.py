@@ -25,8 +25,11 @@ DNASEQ_CREATE_JOB_SETUP_FILE_DESCRIPTION = "An applicationt to generate job setu
 
 ## > > > > > > > > > > > > > CMM DB < < < < < < < < < <
 CMMDB_PIPELINE_DESCRIPTION = "A flow to control a pipeline to process CMM database"
+CMMDB_MUTSTAT_DESCRIPTION = "A flow to control a pipeline to process mutation statistics database"
+CMMDB_TABLEANNOVAR_DESCRIPTION = "A flow to control a pipeline to run tableannovar"
+CMMDB_MUTATIONREPORTS_DESCRIPTION = "A flow to control a pipeline to run generate mutation reports"
 CMMDB_PIPELINE_DFLT_LOG_FILE = "cmmdb_pipeline"
-CMMDB_ALLOC_TIME = "6:00:00"
+CMMDB_ALLOC_TIME = "4-00:00:00"
 
 CMMDB_CREATE_JOB_SETUP_FILE_DESCRIPTION = "An applicationt to generate job setup file to process CMM database"
 

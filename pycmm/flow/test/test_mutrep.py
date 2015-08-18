@@ -213,7 +213,7 @@ class TestMutRepPipeline(SafeTester):
                                                         call_info="YES",
                                                         )
         pl = MutRepPipeline(jobs_setup_file)
-        pl.gen_summary_report()
+        pl.gen_summary_report(fam_infos=pl.family_infos)
 
 #    @unittest.skip("Disable for temporary")
     def test_family_report_1(self):
