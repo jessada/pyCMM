@@ -18,8 +18,7 @@ ENV_TEST_DIR = "PYTHON_TEST_DIR"
 ## > > > > > > > > > > > > > GATK Best practice (DNA seq) < < < < < < < < < <
 DNASEQ_PIPELINE_DESCRIPTION = "A flow to control a pipeline to process DNA sequencing data"
 DNASEQ_PIPELINE_DFLT_LOG_FILE = "dnaseq_pipeline"
-GATK_ALLOC_TIME = "10:00:00"
-#GATK_ALLOC_TIME = "4-00:00:00"
+GATK_ALLOC_TIME = "4-00:00:00"
 
 DNASEQ_CREATE_JOB_SETUP_FILE_DESCRIPTION = "An applicationt to generate job setup file for DNASEQ_PIPELINE"
 

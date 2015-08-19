@@ -4,7 +4,7 @@ from pycmm import settings
 from pycmm.app.gatkbp import app_pycmm_create_jobs_setup_file
 from collections import OrderedDict
 
-argp = argparse.ArgumentParser(description=settings.CREATE_JOB_SETUP_FILE_DESCRIPTION)
+argp = argparse.ArgumentParser(description=settings.DNASEQ_CREATE_JOB_SETUP_FILE_DESCRIPTION)
 argp.add_argument('-d',
                   dest='dataset_name',
                   metavar="DATASET NAME",
