@@ -192,7 +192,7 @@ class TestMutRepPipeline(SafeTester):
         pl = MutRepPipeline(jobs_setup_file)
         pl.gen_summary_report()
 
-    @unittest.skip("Disable for temporary")
+#    @unittest.skip("Disable for temporary")
     def test_summary_report_3(self):
         """ test summary with multiple report_regions """
 
