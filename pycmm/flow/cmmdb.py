@@ -196,7 +196,6 @@ class CMMDBPipeline(JobManager):
         return self._jobs_info[JOBS_SETUP_REPORT_LAYOUT_SECTION]
 
     def __load_jobs_info(self, jobs_setup_file):
-        self.__meta_data = {}
         stream = file(jobs_setup_file, "r")
         self._jobs_info = yaml.safe_load(stream)
 
@@ -253,7 +252,6 @@ class CMMDBPipeline(JobManager):
         if self.project_code is None:
             self.__out_stat_file = join_path(self.data_out_dir,
                                              self.dataset_name + ".stat")
-            mylogger.debug(self.samples_list)
             params = self.__get_cal_mut_stat_params(dataset_name=self.dataset_name,
                                                     out_stat_file=self.out_stat_file,
                                                     vcf_region=self.vcf_region,
@@ -378,8 +376,9 @@ def create_jobs_setup_file(dataset_name,
     if vcf_region is not None:
         job_setup_document[JOBS_SETUP_VCF_REGION_KEY] = vcf_region
     if (sample_infos is not None) and isfile(sample_infos):
-        f_samples = open(sample_infos, "r")
-        job_setup_document[JOBS_SETUP_SAMPLE_INFOS_KEY] = ",".join(map(lambda x: x.rstrip(), list(f_samples)))
+        s_stream = file(sample_infos, "r")
+        document = yaml.safe_load(s_stream)
+        job_setup_document[JOBS_SETUP_SAMPLE_INFOS_KEY] = document[JOBS_SETUP_SAMPLE_INFOS_KEY]
     elif (sample_infos is not None) and (sample_infos.find(":") == -1):
         job_setup_document[JOBS_SETUP_SAMPLE_INFOS_KEY] = sample_infos
     elif (sample_infos is not None) and (sample_infos.find(":") > -1):

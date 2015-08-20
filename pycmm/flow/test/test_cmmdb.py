@@ -198,7 +198,6 @@ class TestCMMDBPipeline(SafeTester):
     def test_load_jobs_info_4(self):
         """ test if can load sample infos as a file """
 
-        self.individual_debug = True
         self.init_test(self.current_func_name)
         job_name = self.test_function
         dummy_vcf_tabix_file = "/path/to/vcf_tabix_file"
@@ -210,6 +209,23 @@ class TestCMMDBPipeline(SafeTester):
         pl = CMMDBPipeline(jobs_setup_file)
         self.assertEqual(pl.samples_list,
                          ["Co-35", "Co-37", "Co-135", "Co-131", "1322-11D"],
+                         "CMMDBPipeline cannot correctly read 'samples list' from jobs setup file")
+
+    def test_load_jobs_info_5(self):
+        """ test if can load sample infos in family structur format as a file """
+
+        self.individual_debug = True
+        self.init_test(self.current_func_name)
+        job_name = self.test_function
+        dummy_vcf_tabix_file = "/path/to/vcf_tabix_file"
+        sample_infos_file = join_path(self.data_dir,
+                                      "sample_infos")
+        jobs_setup_file = self.__create_jobs_setup_file(vcf_tabix_file=dummy_vcf_tabix_file,
+                                                        sample_infos=sample_infos_file,
+                                                        )
+        pl = CMMDBPipeline(jobs_setup_file)
+        self.assertEqual(pl.samples_list,
+                         ["Alb-31", "Br-466", "Br-432", "Al-161", "Br-504", "Al-65"],
                          "CMMDBPipeline cannot correctly read 'samples list' from jobs setup file")
 
     @unittest.skipUnless(settings.FULL_SYSTEM_TEST, "taking too long time to test")
