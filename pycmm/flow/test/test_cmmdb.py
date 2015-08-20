@@ -181,7 +181,7 @@ class TestCMMDBPipeline(SafeTester):
         pl = CMMDBPipeline(jobs_setup_file)
         self.assertEqual(pl.samples_list,
                          ["Co-441","Co-666","Co-771","Br-397","884-99D"],
-                         "CMMDBPipeline cannot correctly read meta info 'samples list' from jobs setup file")
+                         "CMMDBPipeline cannot correctly read 'samples list' from jobs setup file")
         self.assertEqual(len(pl.family_infos),
                          2,
                          "CMMDBPipeline cannot correctly read meta info 'families list' from jobs setup file")
@@ -247,6 +247,37 @@ class TestCMMDBPipeline(SafeTester):
         jobs_setup_file = self.__create_jobs_setup_file(vcf_tabix_file=vcf_tabix_file,
                                                         project_code=None,
                                                         vcf_region=None,
+                                                        )
+        pl = CMMDBPipeline(jobs_setup_file)
+        pl.cal_mut_stat()
+        self.assertTrue(filecmp.cmp(pl.out_stat_file,
+                                    exp_result),
+                        "cal_mut_stat doesn't function correctly")
+
+#    @unittest.skipUnless(settings.FULL_SYSTEM_TEST, "taking too long time to test")
+    def test_cal_mut_stat_offline_4(self):
+        """ to offline version (w/o slurm) if it can calculate stat of subpopulation """
+
+        self.individual_debug = True
+        self.init_test(self.current_func_name)
+        vcf_tabix_file = join_path(self.data_dir,
+                                   "input.vcf.gz")
+        exp_result = join_path(self.data_dir,
+                               "exp_stat")
+        sample_infos = "Br-176"
+        sample_infos += ",Br-120"
+        sample_infos += ",Alb-31"
+        sample_infos += ",Br-331"
+        sample_infos += ",Al-77"
+        sample_infos += ",Br-472"
+        sample_infos += ",Br-706"
+        sample_infos += ",Br-366"
+        sample_infos += ",Al-140"
+        sample_infos += ",Al-169"
+        jobs_setup_file = self.__create_jobs_setup_file(vcf_tabix_file=vcf_tabix_file,
+                                                        project_code=None,
+                                                        vcf_region=None,
+                                                        sample_infos=sample_infos,
                                                         )
         pl = CMMDBPipeline(jobs_setup_file)
         pl.cal_mut_stat()

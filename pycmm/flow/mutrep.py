@@ -310,13 +310,9 @@ class MutRepPipeline(CMMDBPipeline):
         mylogger.info(" >> add 'summary_all' sheet")
         self.__add_muts_sheet("summary_all")
         if fam_infos is not None:
-            samples_list = map(lambda x: x.sample_id,
-                               reduce(lambda x, y: x+y,
-                                      map(lambda x: x.members,
-                                          self.family_infos)))
             mylogger.info("")
             mylogger.info(" >> add 'summary_families' sheet")
-            self.__add_muts_sheet("summary_families", samples_list=samples_list)
+            self.__add_muts_sheet("summary_families", samples_list=self.samples_list)
         self.__wb.close()
 
     def __gen_family_report(self,

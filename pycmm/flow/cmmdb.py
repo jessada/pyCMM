@@ -242,7 +242,10 @@ class CMMDBPipeline(JobManager):
         if vcf_region is not None:
             params += " -r " + vcf_region
         if samples_list is not None:
-            params += " -c " + samples_list
+            if type(samples_list) is list:
+                params += " -c " + ",".join(samples_list)
+            else:
+                params += " -c " + samples_list
         params += " -o " + out_stat_file
         return params
 
@@ -250,6 +253,7 @@ class CMMDBPipeline(JobManager):
         if self.project_code is None:
             self.__out_stat_file = join_path(self.data_out_dir,
                                              self.dataset_name + ".stat")
+            mylogger.debug(self.samples_list)
             params = self.__get_cal_mut_stat_params(dataset_name=self.dataset_name,
                                                     out_stat_file=self.out_stat_file,
                                                     vcf_region=self.vcf_region,
