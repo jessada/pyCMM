@@ -377,9 +377,12 @@ def create_jobs_setup_file(dataset_name,
         job_setup_document[JOBS_SETUP_PROJECT_CODE_KEY] = project_code
     if vcf_region is not None:
         job_setup_document[JOBS_SETUP_VCF_REGION_KEY] = vcf_region
-    if (sample_infos is not None) and (sample_infos.find(":") == -1):
+    if (sample_infos is not None) and isfile(sample_infos):
+        f_samples = open(sample_infos, "r")
+        job_setup_document[JOBS_SETUP_SAMPLE_INFOS_KEY] = ",".join(map(lambda x: x.rstrip(), list(f_samples)))
+    elif (sample_infos is not None) and (sample_infos.find(":") == -1):
         job_setup_document[JOBS_SETUP_SAMPLE_INFOS_KEY] = sample_infos
-    if (sample_infos is not None) and (sample_infos.find(":") > -1):
+    elif (sample_infos is not None) and (sample_infos.find(":") > -1):
         families_info = []
         for family_item in sample_infos.split(","):
             family_info = {}

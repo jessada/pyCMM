@@ -83,7 +83,6 @@ class TestCMMDBPipeline(SafeTester):
     def test_load_jobs_info_1(self):
         """ test if job configurations are loaded correctly """
 
-        self.individual_debug = True
         self.init_test(self.current_func_name)
         job_name = self.test_function
         dummy_vcf_tabix_file = "/path/to/vcf_tabix_file"
@@ -144,7 +143,6 @@ class TestCMMDBPipeline(SafeTester):
     def test_load_jobs_info_2(self):
         """ test if modified job configurations are loaded correctly """
 
-        self.individual_debug = True
         self.init_test(self.current_func_name)
         job_name = self.test_function
         dummy_vcf_tabix_file = "/path/to/vcf_tabix_file"
@@ -171,7 +169,6 @@ class TestCMMDBPipeline(SafeTester):
     def test_load_jobs_info_3(self):
         """ test if families structures are loaded correctly """
 
-        self.individual_debug = True
         self.init_test(self.current_func_name)
         job_name = self.test_function
         dummy_vcf_tabix_file = "/path/to/vcf_tabix_file"
@@ -197,6 +194,23 @@ class TestCMMDBPipeline(SafeTester):
         self.assertEqual(pl.family_infos[1].members[1].sample_id,
                          "884-99D",
                          "CMMDBPipeline cannot correctly read meta info 'families list' from jobs setup file")
+
+    def test_load_jobs_info_4(self):
+        """ test if can load sample infos as a file """
+
+        self.individual_debug = True
+        self.init_test(self.current_func_name)
+        job_name = self.test_function
+        dummy_vcf_tabix_file = "/path/to/vcf_tabix_file"
+        sample_infos_file = join_path(self.data_dir,
+                                      "sample_infos")
+        jobs_setup_file = self.__create_jobs_setup_file(vcf_tabix_file=dummy_vcf_tabix_file,
+                                                        sample_infos=sample_infos_file,
+                                                        )
+        pl = CMMDBPipeline(jobs_setup_file)
+        self.assertEqual(pl.samples_list,
+                         ["Co-35", "Co-37", "Co-135", "Co-131", "1322-11D"],
+                         "CMMDBPipeline cannot correctly read 'samples list' from jobs setup file")
 
     @unittest.skipUnless(settings.FULL_SYSTEM_TEST, "taking too long time to test")
     def test_cal_mut_stat_offline_1(self):
