@@ -242,7 +242,10 @@ class CMMDBPipeline(JobManager):
         if vcf_region is not None:
             params += " -r " + vcf_region
         if samples_list is not None:
-            params += " -c " + samples_list
+            if type(samples_list) is list:
+                params += " -c " + ",".join(samples_list)
+            else:
+                params += " -c " + samples_list
         params += " -o " + out_stat_file
         return params
 
@@ -250,6 +253,7 @@ class CMMDBPipeline(JobManager):
         if self.project_code is None:
             self.__out_stat_file = join_path(self.data_out_dir,
                                              self.dataset_name + ".stat")
+            mylogger.debug(self.samples_list)
             params = self.__get_cal_mut_stat_params(dataset_name=self.dataset_name,
                                                     out_stat_file=self.out_stat_file,
                                                     vcf_region=self.vcf_region,
@@ -373,9 +377,12 @@ def create_jobs_setup_file(dataset_name,
         job_setup_document[JOBS_SETUP_PROJECT_CODE_KEY] = project_code
     if vcf_region is not None:
         job_setup_document[JOBS_SETUP_VCF_REGION_KEY] = vcf_region
-    if (sample_infos is not None) and (sample_infos.find(":") == -1):
+    if (sample_infos is not None) and isfile(sample_infos):
+        f_samples = open(sample_infos, "r")
+        job_setup_document[JOBS_SETUP_SAMPLE_INFOS_KEY] = ",".join(map(lambda x: x.rstrip(), list(f_samples)))
+    elif (sample_infos is not None) and (sample_infos.find(":") == -1):
         job_setup_document[JOBS_SETUP_SAMPLE_INFOS_KEY] = sample_infos
-    if (sample_infos is not None) and (sample_infos.find(":") > -1):
+    elif (sample_infos is not None) and (sample_infos.find(":") > -1):
         families_info = []
         for family_item in sample_infos.split(","):
             family_info = {}
