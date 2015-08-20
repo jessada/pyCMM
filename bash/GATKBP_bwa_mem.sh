@@ -12,13 +12,14 @@ option:
 -I {fastq list}     list of fastq files (comma separated) (required)
 -R {file}           reference file
 -g {sample group}   sample group (required) 
+-n {sample name}    sample name (required)
 -o {file}           output aligned reads file (required)
 -h                  this help
 EOF
 )
 
 # parse option
-while getopts ":I:R:g:o:h" OPTION; do
+while getopts ":I:R:g:n:o:h" OPTION; do
   case "$OPTION" in
     I)
       sample_list="$OPTARG"
@@ -28,6 +29,9 @@ while getopts ":I:R:g:o:h" OPTION; do
       ;;
     g)
       sample_group="$OPTARG"
+      ;;
+    n)
+      sample_name="$OPTARG"
       ;;
     o)
       out_file="$OPTARG"
@@ -43,6 +47,7 @@ done
 
 [ ! -z $sample_list ] || die "list of fastq files is required (-I)"
 [ ! -z $sample_group ] || die "sample group is required (-g)"
+[ ! -z $sample_name ] || die "sample name is required (-n)"
 [ ! -z $out_file ] || die "output file name is required (-o)"
 [ ! -z $ref ] || die "reference file is required (-R)"
 IFS=',' read -ra fastq_files <<< "$sample_list"
@@ -77,12 +82,12 @@ display_param "sample prefix (-I)" "$sample_prefix"
 display_param "  sample 1" "$sample1"
 display_param "  sample 2" "$sample2"
 display_param "sample group (-g)" "$sample_group"
+display_param "sample name (-n)" "$sample_name"
 display_param "output directory (-o)" "$out_file"
 display_param "reference file (-R)" "$ref"
 
 # ****************************************  executing  ****************************************
 sample_file=$(basename "$sample1")
-sample_name=${sample_file%_1.fastq.gz}
 read_group="$sample_group.$sample_name"
 
 cmd=" bwa mem -M -R '@RG\tID:$read_group\tSM:$sample_name\tPL:illumina\tLB:lib1\tPU:unit1'"
