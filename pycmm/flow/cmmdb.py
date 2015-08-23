@@ -62,6 +62,7 @@ JOBS_SETUP_REPORT_CALL_INFO_KEY = "CALL_INFO"
 JOBS_SETUP_REPORT_FREQ_RATIOS_KEY = "FREQUENCY_RATIOS"
 JOBS_SETUP_REPORT_FREQ_RATIOS_COL_KEY = "COLUMN"
 JOBS_SETUP_REPORT_FREQ_RATIOS_FREQ_KEY = "FREQUENCY"
+JOBS_SETUP_REPORT_ATTRIBUTE_COLORS_KEY = "ATTRIBUTE_COLORS"
 
 class MemberInfo(pyCMMBase):
     """  To encapsulate family information so that it is readable """
@@ -353,6 +354,7 @@ def create_jobs_setup_file(dataset_name,
                            report_regions=None,
                            call_info=False,
                            frequency_ratios=None,
+                           attribute_colors=None,
                            out_jobs_setup_file=None,
                            ):
     mylogger.getLogger(__name__)

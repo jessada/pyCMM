@@ -25,7 +25,6 @@ DFLT_TEST_MUTREP_COLS.append("1000g2014oct_all")
 
 DFLT_TEST_REPORT_REGIONS = "18:12512255-14542551"
 DFLT_TEST_FREQ_RATIOS = DFLT_MUTREP_FREQ_RATIOS
-DFLT_TEST_FREQ_RATIOS += ",ExAC_ALL:0.1"
 
 class TestMutRepPipeline(SafeTester):
 
@@ -98,9 +97,6 @@ class TestMutRepPipeline(SafeTester):
         self.assertEqual(pl.report_layout.call_info,
                          False,
                          "MutRepPipeline cannot correctly read report layout info 'call info' from jobs setup file")
-        self.assertEqual(pl.report_layout.freq_ratios["ExAC_ALL"],
-                         0.1,
-                         "MutRepPipeline cannot correctly read report layout info 'frequency ratios' from jobs setup file")
 
     def test_load_jobs_info_2(self):
         """ test if non-default layout configurations are loaded correctly """
@@ -232,7 +228,7 @@ class TestMutRepPipeline(SafeTester):
                                                         annotated_vcf_tabix=annotated_vcf_tabix,
                                                         anno_cols=DFLT_MUTREP_ANNO_COLS,
                                                         report_regions="6",
-                                                        call_info="YES",
+                                                        call_info="NO",
                                                         )
         pl = MutRepPipeline(jobs_setup_file)
         pl.gen_summary_report(fam_infos=pl.family_infos)

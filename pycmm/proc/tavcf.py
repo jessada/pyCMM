@@ -102,7 +102,7 @@ class _CmmVcfCall(_VcfCall):
 
     def __cal_extra_attributes(self):
         self.__cmm_gts = self.__cal_cmm_gts()
-        self.__afs = self.__cal_afs()
+#        self.__afs = self.__cal_afs()
         self.__actual_gts = self.__cal_actual_gts()
         self.__mutated = self.__cal_mutated()
 
@@ -140,20 +140,20 @@ class _CmmVcfCall(_VcfCall):
             cmm_gts.append(CMMGT_HOMOZYGOTE)
         return cmm_gts
 
-    def __cal_afs(self):
-        raw_afs = self.site.INFO[DFLT_MAF_VAR]
-        if (raw_afs == "") or (raw_afs is None) or (raw_afs == "."):
-            return map(lambda x: 0, xrange(len(self.site.alleles)))
-        if type(raw_afs) is not list:
-            afs = [CMMGT_DUMMY, raw_afs]
-        else:
-            afs = [CMMGT_DUMMY]
-            for raw_af in raw_afs:
-                if raw_af is None:
-                    afs.append(0)
-                else:
-                    afs.append(raw_af)
-        return afs
+#    def __cal_afs(self):
+#        raw_afs = self.site.INFO[DFLT_MAF_VAR]
+#        if (raw_afs == "") or (raw_afs is None) or (raw_afs == "."):
+#            return map(lambda x: 0, xrange(len(self.site.alleles)))
+#        if type(raw_afs) is not list:
+#            afs = [CMMGT_DUMMY, raw_afs]
+#        else:
+#            afs = [CMMGT_DUMMY]
+#            for raw_af in raw_afs:
+#                if raw_af is None:
+#                    afs.append(0)
+#                else:
+#                    afs.append(raw_af)
+#        return afs
 
     def __cal_actual_gts(self):
         """
@@ -169,6 +169,7 @@ class _CmmVcfCall(_VcfCall):
         But it'll be a very rare case
         """
         actual_gts = []
+        afs = self.site.afs
         for gt_idx in xrange(len(self.cmm_gts)):
             cmm_gt = self.cmm_gts[gt_idx]
             # Other than the problematic wild type and homozygote,
@@ -177,7 +178,7 @@ class _CmmVcfCall(_VcfCall):
                 actual_gts.append(cmm_gt)
                 continue
             # if allele frequency less than 0.5 the actual gt remain the same
-            if self.__afs[gt_idx] < 0.5:
+            if afs[gt_idx] < 0.5:
                 actual_gts.append(cmm_gt)
                 continue
             # below should be only hom and wild type with allele freq >= 0.5
@@ -228,7 +229,51 @@ class _CmmVcfRecord(_VcfRecord):
     """
     An encapsulated version of vcf._Record from pyVCF package to
       - determine if mutations are shared between samples
+      - understand if itself is a rare mutation given frequency ratio
     """
+
+    def __init__(self, CHROM, POS, ID, REF, ALT, QUAL, FILTER, INFO, FORMAT,
+            sample_indexes, samples=None):
+        _VcfRecord.__init__(self,
+                            CHROM,
+                            POS,
+                            ID,
+                            REF,
+                            ALT,
+                            QUAL,
+                            FILTER,
+                            INFO,
+                            FORMAT,
+                            sample_indexes,
+                            samples=None,
+                            )
+        self.__afs = self.__cal_afs()
+
+    def __cal_afs(self):
+        """
+        return list of allele frequencies.
+        Number of entry in the list = 1 + number of alternate alleles
+        """
+        if DFLT_MAF_VAR in self.INFO:
+            raw_afs = self.INFO[DFLT_MAF_VAR]
+        else:
+            raw_afs = None
+        if (raw_afs == "") or (raw_afs is None) or (raw_afs == "."):
+            return map(lambda x: 0, xrange(len(self.alleles)))
+        if type(raw_afs) is not list:
+            afs = [CMMGT_DUMMY, raw_afs]
+        else:
+            afs = [CMMGT_DUMMY]
+            for raw_af in raw_afs:
+                if raw_af is None:
+                    afs.append(0)
+                else:
+                    afs.append(raw_af)
+        return afs
+
+    @property
+    def afs(self):
+        return self.__afs
 
     def is_shared(self, allele_idx, samples):
         """
@@ -248,6 +293,24 @@ class _CmmVcfRecord(_VcfRecord):
             if not self.genotype(sample).mutated[allele_idx]:
                 return False
         return True
+
+    def is_rare(self, freq_ratios, allele_idx=1):
+        condition, criteria = freq_ratios.items()[0]
+        criteria = float(criteria)
+        val = self.afs[allele_idx]
+        if (val is None or
+            val == "." or
+            val == ""):
+            return True
+        mylogger.debug(condition)
+        mylogger.debug(type(self.afs))
+        mylogger.debug(criteria)
+        freq = float(val)
+        if freq < float(criteria):
+            return True
+        if freq > (1-float(criteria)):
+            return True
+        return False
 
 class TableAnnovarVcfReader(VcfReader):
     """
