@@ -49,6 +49,7 @@ class TestMutRepPipeline(SafeTester):
                                  report_regions=DFLT_TEST_REPORT_REGIONS,
                                  call_info="NO",
                                  frequency_ratios=DFLT_TEST_FREQ_RATIOS,
+                                 split_chrom=False,
                                  ):
         jobs_setup_file = join_path(self.working_dir,
                                     self.test_function+'_jobs_setup.txt')
@@ -65,6 +66,7 @@ class TestMutRepPipeline(SafeTester):
                                report_regions=report_regions,
                                call_info=call_info,
                                frequency_ratios=frequency_ratios,
+                               split_chrom=split_chrom,
                                out_jobs_setup_file=jobs_setup_file,
                                )
         return jobs_setup_file
@@ -97,6 +99,9 @@ class TestMutRepPipeline(SafeTester):
         self.assertEqual(pl.report_layout.call_info,
                          False,
                          "MutRepPipeline cannot correctly read report layout info 'call info' from jobs setup file")
+        self.assertEqual(pl.report_layout.split_chrom,
+                         False,
+                         "MutRepPipeline cannot correctly read report layout info 'split chrom' from jobs setup file")
 
     def test_load_jobs_info_2(self):
         """ test if non-default layout configurations are loaded correctly """
@@ -111,6 +116,7 @@ class TestMutRepPipeline(SafeTester):
                                                         report_regions="6:78161823-78164117,"+DFLT_TEST_REPORT_REGIONS+",22",
                                                         call_info="YES",
                                                         frequency_ratios=None,
+                                                        split_chrom=True,
                                                         )
         pl = MutRepPipeline(jobs_setup_file)
         self.assertEqual(pl.report_layout.report_regions[1].end_pos,
@@ -128,6 +134,9 @@ class TestMutRepPipeline(SafeTester):
         self.assertEqual(pl.report_layout.call_info,
                          True,
                          "MutRepPipeline cannot correctly read report layout info 'call info' from jobs setup file")
+        self.assertEqual(pl.report_layout.split_chrom,
+                         True,
+                         "MutRepPipeline cannot correctly read report layout info 'split chrom' from jobs setup file")
 
     def test_load_jobs_info_3(self):
         """ test if non-default (None) layout configurations are loaded correctly """
@@ -148,7 +157,7 @@ class TestMutRepPipeline(SafeTester):
                          0.5,
                          "MutRepPipeline cannot correctly read report layout info 'frequency ratios' from jobs setup file")
 
-    @unittest.skip("Disable for temporary")
+#    @unittest.skipUnless(settings.FULL_SYSTEM_TEST, "taking too long time to test")
     def test_summary_report_1(self):
         """ test if summary report with default configuration can be correctly generated """
 
@@ -160,14 +169,14 @@ class TestMutRepPipeline(SafeTester):
         annotated_vcf_tabix = join_path(self.data_dir,
                                         "chr6_18.vcf.gz")
         jobs_setup_file = self.__create_jobs_setup_file(vcf_tabix_file=vcf_tabix_file,
-                                                        anno_cols=DFLT_MUTREP_ANNO_COLS,
+                                                        project_code=None,
                                                         annotated_vcf_tabix=annotated_vcf_tabix,
                                                         report_regions=None,
                                                         )
         pl = MutRepPipeline(jobs_setup_file)
         pl.gen_summary_report()
 
-    @unittest.skip("Disable for temporary")
+    @unittest.skipUnless(settings.FULL_SYSTEM_TEST, "taking too long time to test")
     def test_summary_report_2(self):
         """ test if summary reprot with custom configuration can be correctly generated """
 
@@ -182,13 +191,14 @@ class TestMutRepPipeline(SafeTester):
         anno_cols.remove("cytoBand")
         jobs_setup_file = self.__create_jobs_setup_file(vcf_tabix_file=vcf_tabix_file,
                                                         annotated_vcf_tabix=annotated_vcf_tabix,
+                                                        project_code=None,
                                                         anno_cols=anno_cols,
                                                         call_info="YES",
                                                         )
         pl = MutRepPipeline(jobs_setup_file)
         pl.gen_summary_report()
 
-#    @unittest.skip("Disable for temporary")
+#    @unittest.skipUnless(settings.FULL_SYSTEM_TEST, "taking too long time to test")
     def test_summary_report_3(self):
         """ test summary with multiple report_regions """
 
@@ -203,14 +213,14 @@ class TestMutRepPipeline(SafeTester):
                                  self.current_func_name + ".xlsx")
         jobs_setup_file = self.__create_jobs_setup_file(vcf_tabix_file=vcf_tabix_file,
                                                         annotated_vcf_tabix=annotated_vcf_tabix,
-                                                        anno_cols=DFLT_MUTREP_ANNO_COLS,
+                                                        project_code=None,
                                                         report_regions="6:78171941-78172992,18:28610988-28611790",
                                                         call_info="YES",
                                                         )
         pl = MutRepPipeline(jobs_setup_file)
         pl.gen_summary_report(out_file=rpt_out_file)
 
-#    @unittest.skip("Disable for temporary")
+#    @unittest.skipUnless(settings.FULL_SYSTEM_TEST, "taking too long time to test")
     def test_summary_report_4(self):
         """
         test if mutations with more than one alternate alleles in summary
@@ -226,14 +236,14 @@ class TestMutRepPipeline(SafeTester):
                                         "input.vcf.gz")
         jobs_setup_file = self.__create_jobs_setup_file(vcf_tabix_file=vcf_tabix_file,
                                                         annotated_vcf_tabix=annotated_vcf_tabix,
-                                                        anno_cols=DFLT_MUTREP_ANNO_COLS,
+                                                        project_code=None,
                                                         report_regions="6",
                                                         call_info="NO",
                                                         )
         pl = MutRepPipeline(jobs_setup_file)
-        pl.gen_summary_report(fam_infos=pl.family_infos)
+        pl.gen_summary_report()
 
-#    @unittest.skip("Disable for temporary")
+#    @unittest.skipUnless(settings.FULL_SYSTEM_TEST, "taking too long time to test")
     def test_family_report_1(self):
         """ test with only one family which has only one members """
 
@@ -246,7 +256,7 @@ class TestMutRepPipeline(SafeTester):
                                         "input.vcf.gz")
         jobs_setup_file = self.__create_jobs_setup_file(vcf_tabix_file=vcf_tabix_file,
                                                         annotated_vcf_tabix=annotated_vcf_tabix,
-                                                        anno_cols=DFLT_MUTREP_ANNO_COLS,
+                                                        project_code=None,
                                                         call_info="YES",
                                                         report_regions="6",
                                                         sample_infos="6789:Al-65",
@@ -254,7 +264,7 @@ class TestMutRepPipeline(SafeTester):
         pl = MutRepPipeline(jobs_setup_file)
         pl.gen_family_reports()
 
-#    @unittest.skip("Disable for temporary")
+#    @unittest.skipUnless(settings.FULL_SYSTEM_TEST, "taking too long time to test")
     def test_family_report_2(self):
         """ test with only one family which has two members """
 
@@ -267,6 +277,7 @@ class TestMutRepPipeline(SafeTester):
                                         "input.vcf.gz")
         jobs_setup_file = self.__create_jobs_setup_file(vcf_tabix_file=vcf_tabix_file,
                                                         annotated_vcf_tabix=annotated_vcf_tabix,
+                                                        project_code=None,
                                                         call_info="YES",
                                                         report_regions="6",
                                                         sample_infos="1234:Alb-31:Br-466",
@@ -274,7 +285,7 @@ class TestMutRepPipeline(SafeTester):
         pl = MutRepPipeline(jobs_setup_file)
         pl.gen_family_reports()
 
-#    @unittest.skip("Disable for temporary")
+#    @unittest.skipUnless(settings.FULL_SYSTEM_TEST, "taking too long time to test")
     def test_family_report_3(self):
         """ test with only one family which has three members """
 
@@ -287,7 +298,7 @@ class TestMutRepPipeline(SafeTester):
                                         "input.vcf.gz")
         jobs_setup_file = self.__create_jobs_setup_file(vcf_tabix_file=vcf_tabix_file,
                                                         annotated_vcf_tabix=annotated_vcf_tabix,
-                                                        anno_cols=DFLT_MUTREP_ANNO_COLS,
+                                                        project_code=None,
                                                         call_info="YES",
                                                         report_regions="6",
                                                         sample_infos="6067:Br-432:Al-161:Br-504",
@@ -295,7 +306,7 @@ class TestMutRepPipeline(SafeTester):
         pl = MutRepPipeline(jobs_setup_file)
         pl.gen_family_reports()
 
-#    @unittest.skip("Disable for temporary")
+#    @unittest.skipUnless(settings.FULL_SYSTEM_TEST, "taking too long time to test")
     def test_family_report_4(self):
         """ test with only 3 families """
 
@@ -308,13 +319,34 @@ class TestMutRepPipeline(SafeTester):
                                         "input.vcf.gz")
         jobs_setup_file = self.__create_jobs_setup_file(vcf_tabix_file=vcf_tabix_file,
                                                         annotated_vcf_tabix=annotated_vcf_tabix,
+                                                        project_code=None,
                                                         call_info="YES",
                                                         report_regions="6",
                                                         sample_infos="1234:Alb-31:Br-466,6067:Br-432:Al-161:Br-504,6789:Al-65",
                                                         )
         pl = MutRepPipeline(jobs_setup_file)
         pl.gen_family_reports()
-        pl.gen_summary_report(fam_infos=pl.family_infos)
+        pl.gen_summary_report()
+
+#    @unittest.skipUnless(settings.FULL_SYSTEM_TEST, "taking too long time to test")
+    def test_gen_reports_1(self):
+        """ test generating all the reports """
+
+        self.individual_debug = True
+        self.init_test(self.current_func_name)
+        job_name = self.test_function
+        vcf_tabix_file = join_path(self.data_dir,
+                                   "input.vcf.gz")
+        annotated_vcf_tabix = join_path(self.data_dir,
+                                        "input.vcf.gz")
+        jobs_setup_file = self.__create_jobs_setup_file(vcf_tabix_file=vcf_tabix_file,
+                                                        annotated_vcf_tabix=annotated_vcf_tabix,
+                                                        project_code=None,
+                                                        call_info="YES",
+                                                        sample_infos="1234:Alb-31:Br-466,6067:Br-432:Al-161:Br-504,6789:Al-65",
+                                                        )
+        pl = MutRepPipeline(jobs_setup_file)
+        pl.gen_reports()
 
     def tearDown(self):
         self.remove_working_dir()

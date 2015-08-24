@@ -62,7 +62,7 @@ JOBS_SETUP_REPORT_CALL_INFO_KEY = "CALL_INFO"
 JOBS_SETUP_REPORT_FREQ_RATIOS_KEY = "FREQUENCY_RATIOS"
 JOBS_SETUP_REPORT_FREQ_RATIOS_COL_KEY = "COLUMN"
 JOBS_SETUP_REPORT_FREQ_RATIOS_FREQ_KEY = "FREQUENCY"
-JOBS_SETUP_REPORT_ATTRIBUTE_COLORS_KEY = "ATTRIBUTE_COLORS"
+JOBS_SETUP_REPORT_SPLIT_CHROM_KEY = "SPLIT_CHROM"
 
 class MemberInfo(pyCMMBase):
     """  To encapsulate family information so that it is readable """
@@ -211,12 +211,13 @@ class CMMDBPipeline(JobManager):
             self.__family_infos = None
         else:
             self.__samples_list = []
-            self.__family_infos = []
+            self.__family_infos = {}
             for entry in sample_infos:
                 family_info = FamilyInfo(entry)
                 for member in family_info.members:
                     self.__samples_list.append(member.sample_id)
-                self.__family_infos.append(family_info)
+                self.__family_infos[family_info.fam_id] = family_info
+#                self.__family_infos.append(family_info)
 
     def __parse_annovar_configs(self):
         cfg = self._jobs_info[JOBS_SETUP_ANNOVAR_SECTION]
@@ -354,7 +355,7 @@ def create_jobs_setup_file(dataset_name,
                            report_regions=None,
                            call_info=False,
                            frequency_ratios=None,
-                           attribute_colors=None,
+                           split_chrom=False,
                            out_jobs_setup_file=None,
                            ):
     mylogger.getLogger(__name__)
@@ -420,6 +421,7 @@ def create_jobs_setup_file(dataset_name,
                                 JOBS_SETUP_REPORT_FREQ_RATIOS_FREQ_KEY: freq,
                                 })
     report_layout_config[JOBS_SETUP_REPORT_FREQ_RATIOS_KEY] = job_freq_ratios
+    report_layout_config[JOBS_SETUP_REPORT_SPLIT_CHROM_KEY] = split_chrom
     job_setup_document[JOBS_SETUP_REPORT_LAYOUT_SECTION] = report_layout_config
 
     pyaml.dump(job_setup_document, stream)

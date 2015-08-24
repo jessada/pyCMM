@@ -102,7 +102,6 @@ class _CmmVcfCall(_VcfCall):
 
     def __cal_extra_attributes(self):
         self.__cmm_gts = self.__cal_cmm_gts()
-#        self.__afs = self.__cal_afs()
         self.__actual_gts = self.__cal_actual_gts()
         self.__mutated = self.__cal_mutated()
 
@@ -139,21 +138,6 @@ class _CmmVcfCall(_VcfCall):
                 continue
             cmm_gts.append(CMMGT_HOMOZYGOTE)
         return cmm_gts
-
-#    def __cal_afs(self):
-#        raw_afs = self.site.INFO[DFLT_MAF_VAR]
-#        if (raw_afs == "") or (raw_afs is None) or (raw_afs == "."):
-#            return map(lambda x: 0, xrange(len(self.site.alleles)))
-#        if type(raw_afs) is not list:
-#            afs = [CMMGT_DUMMY, raw_afs]
-#        else:
-#            afs = [CMMGT_DUMMY]
-#            for raw_af in raw_afs:
-#                if raw_af is None:
-#                    afs.append(0)
-#                else:
-#                    afs.append(raw_af)
-#        return afs
 
     def __cal_actual_gts(self):
         """
@@ -302,9 +286,6 @@ class _CmmVcfRecord(_VcfRecord):
             val == "." or
             val == ""):
             return True
-        mylogger.debug(condition)
-        mylogger.debug(type(self.afs))
-        mylogger.debug(criteria)
         freq = float(val)
         if freq < float(criteria):
             return True

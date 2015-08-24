@@ -50,6 +50,6 @@ def app_pycmm_mutation_reports(*args, **kwargs):
     disp.disp_params_set("Report layout parameters", layout_params)
     disp.new_section_txt(" . . . G E N E R A T I N G   R E P O R T S . . . ")
     pl.gen_family_reports()
-    pl.gen_summary_report(fam_infos=pl.family_infos)
+    pl.gen_summary_report()
     mylogger.getLogger(__name__)
     disp.new_section_txt("F I N I S H <" + func_name + ">")

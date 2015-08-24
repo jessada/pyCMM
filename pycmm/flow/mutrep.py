@@ -27,7 +27,7 @@ from pycmm.flow.cmmdb import JOBS_SETUP_REPORT_CALL_INFO_KEY
 from pycmm.flow.cmmdb import JOBS_SETUP_REPORT_FREQ_RATIOS_KEY
 from pycmm.flow.cmmdb import JOBS_SETUP_REPORT_FREQ_RATIOS_COL_KEY
 from pycmm.flow.cmmdb import JOBS_SETUP_REPORT_FREQ_RATIOS_FREQ_KEY
-
+from pycmm.flow.cmmdb import JOBS_SETUP_REPORT_SPLIT_CHROM_KEY
 
 # *** color definition sections ***
 COLOR_RGB = OrderedDict()
@@ -207,6 +207,10 @@ class ReportLayout(pyCMMBase):
         else:
             return None
 
+    @property
+    def split_chrom(self):
+        return self.__layout_params[JOBS_SETUP_REPORT_SPLIT_CHROM_KEY]
+
 class MutRepPipeline(CMMDBPipeline):
     """ A class to control mutation report pipeline """
 
@@ -323,7 +327,6 @@ class MutRepPipeline(CMMDBPipeline):
         anno_cols = self.report_layout.anno_cols
         cell_fmt = self.cell_fmt_mgr.cell_fmts[DFLT_FMT]
         alt_allele = vcf_record.alleles[allele_idx]
-#        vcf_record.is_rare(self.report_layout.freq_ratios)
         ws.write(row, 0, vcf_record.CHROM, cell_fmt)
         ws.write(row, 1, vcf_record.POS, cell_fmt)
         ws.write(row, 2, vcf_record.REF, cell_fmt)
@@ -352,6 +355,30 @@ class MutRepPipeline(CMMDBPipeline):
             else:
                 ws.write(row, sample_idx+sample_start_idx, zygo, cell_fmt)
 
+    def __write_contents(self,
+                         ws,
+                         row,
+                         vcf_records,
+                         samples_list,
+                         check_shared,
+                         ):
+        for vcf_record in vcf_records:
+            for allele_idx in xrange(1, len(vcf_record.alleles)):
+                if (check_shared and
+                    not vcf_record.is_shared(allele_idx, samples_list)):
+                    continue
+                self.__write_content(ws,
+                                     row,
+                                     vcf_record,
+                                     allele_idx,
+                                     samples_list)
+                if row % RECORDS_LOG_INTERVAL == 0:
+                    log_msg = str(row)
+                    log_msg += " records were written to the sheet"
+                    mylogger.info(log_msg)
+                row += 1
+        return row
+
     def __add_muts_sheet(self,
                          wb,
                          sheet_name,
@@ -370,37 +397,27 @@ class MutRepPipeline(CMMDBPipeline):
         ws = self.__add_sheet(wb, sheet_name)
         ncol = self.__write_header(ws, samples)
         if self.report_layout.report_regions is None:
-            for vcf_record in vcf_reader:
-                for allele_idx in xrange(1, len(vcf_record.alleles)):
-                    if (check_shared and
-                        not vcf_record.is_shared(allele_idx, samples_list)):
-                        continue
-                    self.__write_content(ws, row, vcf_record, allele_idx, samples)
-                    if row % RECORDS_LOG_INTERVAL == 0:
-                        log_msg = str(row)
-                        log_msg += " records were written to the sheet"
-                        mylogger.info(log_msg)
-                    row += 1
+            row = self.__write_contents(ws,
+                                        row,
+                                        vcf_reader,
+                                        samples,
+                                        check_shared)
         else:
             for report_region in self.report_layout.report_regions:
                 if report_region.start_pos is None:
-                    vcf_records = vcf_reader.fetch(report_region.chrom, 0, 1000000000)
+                    vcf_records = vcf_reader.fetch(report_region.chrom,
+                                                   0,
+                                                   1000000000)
                 else:
                     vcf_records = vcf_reader.fetch(report_region.chrom,
                                                    int(report_region.start_pos),
                                                    int(report_region.end_pos),
                                                    )
-                for vcf_record in vcf_records:
-                    for allele_idx in xrange(1, len(vcf_record.alleles)):
-                        if (check_shared and
-                            not vcf_record.is_shared(allele_idx, samples_list)):
-                            continue
-                        self.__write_content(ws, row, vcf_record, allele_idx, samples)
-                        if row % RECORDS_LOG_INTERVAL == 0:
-                            log_msg = str(row)
-                            log_msg += " records were written to the sheet"
-                            mylogger.info(log_msg)
-                        row += 1
+                row = self.__write_contents(ws,
+                                            row,
+                                            vcf_records,
+                                            samples,
+                                            check_shared)
         # freeze panes
         log_msg = "Finish .. "
         log_msg += " total of " + str(row-1)
@@ -420,7 +437,7 @@ class MutRepPipeline(CMMDBPipeline):
         mylogger.info("")
         mylogger.info(" >> add 'summary_all' sheet")
         self.__add_muts_sheet(wb, "summary_all")
-        if fam_infos is not None:
+        if self.family_infos is not None:
             mylogger.info("")
             mylogger.info(" >> add 'summary_families' sheet")
             self.__add_muts_sheet(wb,
@@ -429,8 +446,9 @@ class MutRepPipeline(CMMDBPipeline):
         wb.close()
 
     def __gen_family_report(self,
-                            fam_info,
+                            fam_id,
                             ):
+        fam_info = self.family_infos[fam_id]
         out_file = join_path(self.rpts_out_dir,
                              self.dataset_name+"_fam"+fam_info.fam_id+".xlsx")
         mylogger.info("")
@@ -465,8 +483,11 @@ class MutRepPipeline(CMMDBPipeline):
     def gen_family_reports(self):
         if self.family_infos is None:
             return
-        for family_info in self.family_infos:
-            self.__gen_family_report(family_info)
+        for fam_id in self.family_infos:
+            self.__gen_family_report(fam_id)
+
+    def gen_reports(self):
+        pass
 
     def __garbage_collecting(self):
         pass

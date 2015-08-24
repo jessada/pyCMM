@@ -182,16 +182,18 @@ class TestCMMDBPipeline(SafeTester):
         self.assertEqual(len(pl.family_infos),
                          2,
                          "CMMDBPipeline cannot correctly read meta info 'families list' from jobs setup file")
-        self.assertEqual(pl.family_infos[1].fam_id,
+        fam_info_1 = pl.family_infos['242']
+        fam_info_2 = pl.family_infos['6067']
+        self.assertEqual(fam_info_2.fam_id,
                          "6067",
                          "CMMDBPipeline cannot correctly read meta info 'families list' from jobs setup file")
-        self.assertEqual(len(pl.family_infos[0].members),
+        self.assertEqual(len(fam_info_1.members),
                          3,
                          "CMMDBPipeline cannot correctly read meta info 'families list' from jobs setup file")
-        self.assertEqual(len(pl.family_infos[1].members),
+        self.assertEqual(len(fam_info_2.members),
                          2,
                          "CMMDBPipeline cannot correctly read meta info 'families list' from jobs setup file")
-        self.assertEqual(pl.family_infos[1].members[1].sample_id,
+        self.assertEqual(fam_info_2.members[1].sample_id,
                          "884-99D",
                          "CMMDBPipeline cannot correctly read meta info 'families list' from jobs setup file")
 
