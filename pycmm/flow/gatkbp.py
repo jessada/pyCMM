@@ -369,6 +369,7 @@ class GATKBPPipeline(JobManager):
         job_params += "," + sample_rec.fastq_pairs[0]['R2']
         job_params += " -g " + sample_rec.sample_group
         job_params += " -R " + self.reference
+        job_params += " -n " + sample_name
         job_params += " -o " + sample_rec.raw_aligned_reads_file
         self.submit_job(job_name,
                         self.project_code,
