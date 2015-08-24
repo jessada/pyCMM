@@ -4,6 +4,7 @@ import pkgutil
 import os
 import fnmatch
 from setuptools import setup
+from pycmm.settings import MUTREP_BIN
 
 def opj(*args):
     path = os.path.join(*args)
@@ -57,7 +58,7 @@ setup(
              'bin/pyCMM-cmmdb-cal-mut-stat',
              'bin/pyCMM-cmmdb-table-annovar',
              'bin/pyCMM-cmmdb-create-job-setup-file',
-             'bin/pyCMM-mutrep-mutation-reports',
+             'bin/'+MUTREP_BIN,
              ],
     package=['pyCMM'],
 #    package_data={'': ['data/CBV/*.cbv']
