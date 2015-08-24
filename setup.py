@@ -5,6 +5,7 @@ import os
 import fnmatch
 from setuptools import setup
 from pycmm.settings import MUTREP_FAMILY_REPORT_BIN
+from pycmm.settings import MUTREP_SUMMARY_REPORT_BIN
 
 def opj(*args):
     path = os.path.join(*args)
@@ -60,6 +61,7 @@ setup(
              'bin/pyCMM-cmmdb-create-job-setup-file',
              'bin/pyCMM-mutrep-mutation-reports',
              'bin/'+MUTREP_FAMILY_REPORT_BIN,
+             'bin/'+MUTREP_SUMMARY_REPORT_BIN,
              ],
     package=['pyCMM'],
 #    package_data={'': ['data/CBV/*.cbv']
