@@ -23,8 +23,13 @@ def app_pycmm_family_report(*args, **kwargs):
     required_params['jobs setup file (-j)'] = kwargs['jobs_setup_file']
     fam_id = kwargs['fam_id']
     raw_report_regions = kwargs['report_regions']
+    out_file = kwargs['out_file']
     required_params['family id (-f)'] = fam_id
-    required_params['report regions (-r)'] = raw_report_regions 
+    if raw_report_regions is None:
+        required_params['report regions (-r)'] = "All" 
+    else:
+        required_params['report regions (-r)'] = raw_report_regions 
+    required_params['output file (-o)'] = out_file
     optional_params = OrderedDict()
     optional_params['log file (-l)'] = log_file
     disp.show_config(app_description=settings.MUTREP_FAMILY_REPORT_DESCRIPTION,
@@ -42,8 +47,11 @@ def app_pycmm_family_report(*args, **kwargs):
     mylogger.getLogger(__name__)
     disp.disp_params_set("Report layout parameters", layout_params)
     disp.new_section_txt(" . . . G E N E R A T I N G   R E P O R T S . . . ")
-    report_regions = map(lambda x: ReportRegion(x), raw_report_regions.split(","))
-    pl.gen_family_report(fam_id, report_regions)
+    if raw_report_regions is None:
+        report_regions = None
+    else:
+        report_regions = map(lambda x: ReportRegion(x), raw_report_regions.split(","))
+    pl.gen_family_report(fam_id, report_regions, out_file=out_file)
     mylogger.getLogger(__name__)
     disp.new_section_txt("F I N I S H <" + func_name + ">")
 
@@ -60,7 +68,12 @@ def app_pycmm_summary_report(*args, **kwargs):
     required_params = OrderedDict()
     required_params['jobs setup file (-j)'] = kwargs['jobs_setup_file']
     raw_report_regions = kwargs['report_regions']
-    required_params['report regions (-r)'] = raw_report_regions 
+    out_file = kwargs['out_file']
+    if raw_report_regions is None:
+        required_params['report regions (-r)'] = "All" 
+    else:
+        required_params['report regions (-r)'] = raw_report_regions 
+    required_params['output file (-o)'] = out_file
     optional_params = OrderedDict()
     optional_params['log file (-l)'] = log_file
     disp.show_config(app_description=settings.MUTREP_SUMMARY_REPORT_DESCRIPTION,
@@ -78,8 +91,11 @@ def app_pycmm_summary_report(*args, **kwargs):
     mylogger.getLogger(__name__)
     disp.disp_params_set("Report layout parameters", layout_params)
     disp.new_section_txt(" . . . G E N E R A T I N G   R E P O R T S . . . ")
-    report_regions = map(lambda x: ReportRegion(x), raw_report_regions.split(","))
-    pl.gen_summary_report(report_regions)
+    if raw_report_regions is None:
+        report_regions = None
+    else:
+        report_regions = map(lambda x: ReportRegion(x), raw_report_regions.split(","))
+    pl.gen_summary_report(report_regions, out_file=out_file)
     mylogger.getLogger(__name__)
     disp.new_section_txt("F I N I S H <" + func_name + ">")
 
@@ -124,7 +140,8 @@ def app_pycmm_mutation_reports(*args, **kwargs):
     mylogger.getLogger(__name__)
     disp.disp_params_set("Report layout parameters", layout_params)
     disp.new_section_txt(" . . . G E N E R A T I N G   R E P O R T S . . . ")
-    pl.gen_family_reports()
-    pl.gen_summary_report()
+    pl.gen_families_reports()
+    pl.gen_summary_reports()
+    pl.monitor_jobs()
     mylogger.getLogger(__name__)
     disp.new_section_txt("F I N I S H <" + func_name + ">")

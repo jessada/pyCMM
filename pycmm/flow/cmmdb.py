@@ -108,6 +108,7 @@ class CMMDBPipeline(JobManager):
                  ):
         mylogger.getLogger(__name__)
         self.__load_jobs_info(jobs_setup_file)
+        self.__jobs_setup_file = jobs_setup_file
         JobManager.__init__(self,
                             jobs_report_file=self.jobs_report_file)
         self.__parse_sample_infos()
@@ -195,6 +196,10 @@ class CMMDBPipeline(JobManager):
     @property
     def report_layout(self):
         return self._jobs_info[JOBS_SETUP_REPORT_LAYOUT_SECTION]
+
+    @property
+    def jobs_setup_file(self):
+        return self.__jobs_setup_file
 
     def __load_jobs_info(self, jobs_setup_file):
         stream = file(jobs_setup_file, "r")

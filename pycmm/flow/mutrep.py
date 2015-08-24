@@ -15,11 +15,13 @@ from pycmm.settings import DFLT_ANNOVAR_DB_NAMES
 from pycmm.settings import DFLT_ANNOVAR_DB_OPS
 from pycmm.settings import MUTREP_ALLOC_TIME
 from pycmm.settings import MUTREP_FAMILY_REPORT_BIN
+from pycmm.settings import MUTREP_SUMMARY_REPORT_BIN
 from pycmm.template import pyCMMBase
 from pycmm.utils import exec_sh
 from pycmm.utils import mylogger
 from pycmm.proc.tavcf import TableAnnovarVcfReader as VcfReader
 from pycmm.flow.cmmdb import CMMDBPipeline
+from pycmm.flow.cmmdb import ALL_CHROMS
 from pycmm.flow.cmmdb import JOBS_SETUP_REPORT_LAYOUT_SECTION
 from pycmm.flow.cmmdb import JOBS_SETUP_REPORT_ANNOTATED_VCF_TABIX
 from pycmm.flow.cmmdb import JOBS_SETUP_REPORT_ANNO_COLS_KEY
@@ -131,6 +133,7 @@ class ReportRegion(pyCMMBase):
                  raw_region,
                  ):
         self.__parse_region(raw_region)
+        self.__raw_region = raw_region
 
     def get_raw_repr(self):
         if self.start_pos is not None:
@@ -153,6 +156,10 @@ class ReportRegion(pyCMMBase):
     @property
     def end_pos(self):
         return self.__end_pos
+
+    @property
+    def raw_region(self):
+        return self.__raw_region
 
     def __parse_region(self, raw_region):
         match = CHROM_POS_PATTERN.match(raw_region)
@@ -210,7 +217,10 @@ class ReportLayout(pyCMMBase):
 
     @property
     def split_chrom(self):
-        return self.__layout_params[JOBS_SETUP_REPORT_SPLIT_CHROM_KEY]
+        if JOBS_SETUP_REPORT_SPLIT_CHROM_KEY in self.__layout_params:
+            return self.__layout_params[JOBS_SETUP_REPORT_SPLIT_CHROM_KEY]
+        else:
+            return False
 
 class MutRepPipeline(CMMDBPipeline):
     """ A class to control mutation report pipeline """
@@ -428,6 +438,64 @@ class MutRepPipeline(CMMDBPipeline):
         self.__set_layout(ws, ncol)
         ws.freeze_panes(1, 0)
 
+    def __submit_report_jobs(self,
+                             job_script,
+                             job_params_prefix,
+                             job_name_prefix,
+                             slurm_log_prefix,
+                             out_file_prefix,
+                             report_regions,
+                             ):
+        if self.report_layout.split_chrom:
+            if report_regions is None:
+                region_params = ALL_CHROMS
+            else:
+                region_params = map(lambda x: x.raw_region,
+                                    report_regions)
+            for region_param in region_params:
+                slurm_log_file = slurm_log_prefix
+                slurm_log_file += "_chr" + region_param.split(":")[0]
+                slurm_log_file += "_" + self.time_stamp.strftime("%Y%m%d%H%M%S")
+                slurm_log_file += ".log"
+                job_name = job_name_prefix
+                job_name += "_chr" + region_param.split(":")[0]
+                out_file = out_file_prefix
+                out_file += "_chr" + region_param.split(":")[0]
+                out_file += ".xlsx"
+                job_params = job_params_prefix
+                job_params += " -r " + region_param
+                job_params += " -o " + out_file
+                mylogger.debug(job_script + job_params)
+                self.submit_job(job_name,
+                                self.project_code,
+                                "core",
+                                "1",
+                                MUTREP_ALLOC_TIME,
+                                slurm_log_file,
+                                job_script,
+                                job_params,
+                                )
+        else:
+            slurm_log_file = slurm_log_prefix
+            slurm_log_file += "_" + self.time_stamp.strftime("%Y%m%d%H%M%S")
+            slurm_log_file += ".log"
+            job_name = job_name_prefix
+            out_file = out_file_prefix + ".xlsx"
+            job_params = job_params_prefix
+            if report_regions is not None:
+                job_params += " -r " + ",".join(map(lambda x: x.raw_region,
+                                                    report_regions))
+            job_params += " -o " + out_file
+            self.submit_job(job_name,
+                            self.project_code,
+                            "core",
+                            "1",
+                            MUTREP_ALLOC_TIME,
+                            slurm_log_file,
+                            job_script,
+                            job_params,
+                            )
+
     def gen_summary_report(self,
                            report_regions,
                            out_file=None,
@@ -460,7 +528,21 @@ class MutRepPipeline(CMMDBPipeline):
         if self.project_code is None:
             self.gen_summary_report(report_regions)
         else:
-            pass
+            slurm_log_prefix = join_path(self.slurm_log_dir,
+                                         self.dataset_name)
+            slurm_log_prefix += '_rpts_summary'
+            job_name_prefix = self.dataset_name + '_rpts_summary'
+            job_script = MUTREP_SUMMARY_REPORT_BIN
+            job_params_prefix = " -j " + self.jobs_setup_file
+            out_file_prefix = join_path(self.rpts_out_dir,
+                                        self.dataset_name+"_summary")
+            self.__submit_report_jobs(job_script,
+                                      job_params_prefix,
+                                      job_name_prefix,
+                                      slurm_log_prefix,
+                                      out_file_prefix,
+                                      report_regions,
+                                      )
 
     def gen_family_report(self,
                           fam_id,
@@ -509,7 +591,23 @@ class MutRepPipeline(CMMDBPipeline):
         if self.project_code is None:
             self.gen_family_report(fam_id, report_regions)
         else:
-            pass
+            slurm_log_prefix = join_path(self.slurm_log_dir,
+                                         self.dataset_name)
+            slurm_log_prefix += '_rpts_fam'
+            slurm_log_prefix += fam_id
+            job_name_prefix = self.dataset_name + '_rpts_fam' + fam_id
+            job_script = MUTREP_FAMILY_REPORT_BIN
+            job_params_prefix = " -j " + self.jobs_setup_file
+            job_params_prefix += " -f " + fam_id
+            out_file_prefix = join_path(self.rpts_out_dir,
+                                        self.dataset_name+"_fam"+fam_id)
+            self.__submit_report_jobs(job_script,
+                                      job_params_prefix,
+                                      job_name_prefix,
+                                      slurm_log_prefix,
+                                      out_file_prefix,
+                                      report_regions,
+                                      )
 
     def gen_families_reports(self):
         if self.family_infos is None:
