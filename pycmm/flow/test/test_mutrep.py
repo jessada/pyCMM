@@ -262,7 +262,7 @@ class TestMutRepPipeline(SafeTester):
                                                         sample_infos="6789:Al-65",
                                                         )
         pl = MutRepPipeline(jobs_setup_file)
-        pl.gen_family_reports()
+        pl.gen_family_report('6789', pl.report_layout.report_regions)
 
 #    @unittest.skipUnless(settings.FULL_SYSTEM_TEST, "taking too long time to test")
     def test_family_report_2(self):
@@ -283,7 +283,7 @@ class TestMutRepPipeline(SafeTester):
                                                         sample_infos="1234:Alb-31:Br-466",
                                                         )
         pl = MutRepPipeline(jobs_setup_file)
-        pl.gen_family_reports()
+        pl.gen_family_report('1234', pl.report_layout.report_regions)
 
 #    @unittest.skipUnless(settings.FULL_SYSTEM_TEST, "taking too long time to test")
     def test_family_report_3(self):
@@ -304,11 +304,32 @@ class TestMutRepPipeline(SafeTester):
                                                         sample_infos="6067:Br-432:Al-161:Br-504",
                                                         )
         pl = MutRepPipeline(jobs_setup_file)
-        pl.gen_family_reports()
+        pl.gen_family_report('6067', pl.report_layout.report_regions)
 
 #    @unittest.skipUnless(settings.FULL_SYSTEM_TEST, "taking too long time to test")
-    def test_family_report_4(self):
-        """ test with only 3 families """
+    def test_families_reports_1(self):
+        """ test generating offline families reports (1 family)"""
+
+        self.individual_debug = True
+        self.init_test(self.current_func_name)
+        job_name = self.test_function
+        vcf_tabix_file = join_path(self.data_dir,
+                                   "input.vcf.gz")
+        annotated_vcf_tabix = join_path(self.data_dir,
+                                        "input.vcf.gz")
+        jobs_setup_file = self.__create_jobs_setup_file(vcf_tabix_file=vcf_tabix_file,
+                                                        annotated_vcf_tabix=annotated_vcf_tabix,
+                                                        project_code=None,
+                                                        call_info="YES",
+                                                        report_regions="6",
+                                                        sample_infos="6067:Br-432:Al-161:Br-504",
+                                                        )
+        pl = MutRepPipeline(jobs_setup_file)
+        pl.gen_families_reports()
+
+#    @unittest.skipUnless(settings.FULL_SYSTEM_TEST, "taking too long time to test")
+    def test_families_reports_2(self):
+        """ test generating offline families reports (3 families)"""
 
         self.individual_debug = True
         self.init_test(self.current_func_name)
@@ -325,28 +346,27 @@ class TestMutRepPipeline(SafeTester):
                                                         sample_infos="1234:Alb-31:Br-466,6067:Br-432:Al-161:Br-504,6789:Al-65",
                                                         )
         pl = MutRepPipeline(jobs_setup_file)
-        pl.gen_family_reports()
-        pl.gen_summary_report()
+        pl.gen_families_reports()
 
 #    @unittest.skipUnless(settings.FULL_SYSTEM_TEST, "taking too long time to test")
-    def test_gen_reports_1(self):
-        """ test generating all the reports """
-
-        self.individual_debug = True
-        self.init_test(self.current_func_name)
-        job_name = self.test_function
-        vcf_tabix_file = join_path(self.data_dir,
-                                   "input.vcf.gz")
-        annotated_vcf_tabix = join_path(self.data_dir,
-                                        "input.vcf.gz")
-        jobs_setup_file = self.__create_jobs_setup_file(vcf_tabix_file=vcf_tabix_file,
-                                                        annotated_vcf_tabix=annotated_vcf_tabix,
-                                                        project_code=None,
-                                                        call_info="YES",
-                                                        sample_infos="1234:Alb-31:Br-466,6067:Br-432:Al-161:Br-504,6789:Al-65",
-                                                        )
-        pl = MutRepPipeline(jobs_setup_file)
-        pl.gen_reports()
-
+#    def test_gen_reports_1(self):
+#        """ test generating all the reports """
+#
+#        self.individual_debug = True
+#        self.init_test(self.current_func_name)
+#        job_name = self.test_function
+#        vcf_tabix_file = join_path(self.data_dir,
+#                                   "input.vcf.gz")
+#        annotated_vcf_tabix = join_path(self.data_dir,
+#                                        "input.vcf.gz")
+#        jobs_setup_file = self.__create_jobs_setup_file(vcf_tabix_file=vcf_tabix_file,
+#                                                        annotated_vcf_tabix=annotated_vcf_tabix,
+#                                                        project_code=None,
+#                                                        call_info="YES",
+#                                                        sample_infos="1234:Alb-31:Br-466,6067:Br-432:Al-161:Br-504,6789:Al-65",
+#                                                        )
+#        pl = MutRepPipeline(jobs_setup_file)
+#        pl.gen_reports()
+#
     def tearDown(self):
         self.remove_working_dir()

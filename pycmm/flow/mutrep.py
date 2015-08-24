@@ -10,15 +10,16 @@ from os.path import join as join_path
 from os.path import isdir
 from os.path import isfile
 from collections import OrderedDict
-from pycmm.proc.tavcf import TableAnnovarVcfReader as VcfReader
-from pycmm.template import pyCMMBase
 from pycmm.settings import DFLT_ANNOVAR_DB_FOLDER
 from pycmm.settings import DFLT_ANNOVAR_DB_NAMES
 from pycmm.settings import DFLT_ANNOVAR_DB_OPS
+from pycmm.settings import MUTREP_ALLOC_TIME
+from pycmm.settings import MUTREP_BIN
+from pycmm.template import pyCMMBase
 from pycmm.utils import exec_sh
 from pycmm.utils import mylogger
+from pycmm.proc.tavcf import TableAnnovarVcfReader as VcfReader
 from pycmm.flow.cmmdb import CMMDBPipeline
-from pycmm.settings import MUTREP_ALLOC_TIME
 from pycmm.flow.cmmdb import JOBS_SETUP_REPORT_LAYOUT_SECTION
 from pycmm.flow.cmmdb import JOBS_SETUP_REPORT_ANNOTATED_VCF_TABIX
 from pycmm.flow.cmmdb import JOBS_SETUP_REPORT_ANNO_COLS_KEY
@@ -382,6 +383,7 @@ class MutRepPipeline(CMMDBPipeline):
     def __add_muts_sheet(self,
                          wb,
                          sheet_name,
+                         report_regions,
                          samples_list=None,
                          check_shared=False,
                          ):
@@ -396,14 +398,14 @@ class MutRepPipeline(CMMDBPipeline):
             samples = samples_list
         ws = self.__add_sheet(wb, sheet_name)
         ncol = self.__write_header(ws, samples)
-        if self.report_layout.report_regions is None:
+        if report_regions is None:
             row = self.__write_contents(ws,
                                         row,
                                         vcf_reader,
                                         samples,
                                         check_shared)
         else:
-            for report_region in self.report_layout.report_regions:
+            for report_region in report_regions:
                 if report_region.start_pos is None:
                     vcf_records = vcf_reader.fetch(report_region.chrom,
                                                    0,
@@ -426,7 +428,10 @@ class MutRepPipeline(CMMDBPipeline):
         self.__set_layout(ws, ncol)
         ws.freeze_panes(1, 0)
 
-    def gen_summary_report(self, out_file=None, fam_infos=None):
+    def gen_summary_report(self,
+                           report_regions=None,
+                           out_file=None,
+                           fam_infos=None):
         if out_file is None:
             out_file = self.summary_rpt_file
         mylogger.info("")
@@ -436,21 +441,29 @@ class MutRepPipeline(CMMDBPipeline):
         self.__init_cells_format(wb)
         mylogger.info("")
         mylogger.info(" >> add 'summary_all' sheet")
-        self.__add_muts_sheet(wb, "summary_all")
+        self.__add_muts_sheet(wb,
+                              "summary_all",
+                              report_regions,
+                              )
         if self.family_infos is not None:
             mylogger.info("")
             mylogger.info(" >> add 'summary_families' sheet")
             self.__add_muts_sheet(wb,
                                   "summary_families",
-                                  samples_list=self.samples_list)
+                                  report_regions,
+                                  samples_list=self.samples_list,
+                                  )
         wb.close()
 
-    def __gen_family_report(self,
-                            fam_id,
-                            ):
+    def gen_family_report(self,
+                          fam_id,
+                          report_regions,
+                          out_file=None,
+                          ):
         fam_info = self.family_infos[fam_id]
-        out_file = join_path(self.rpts_out_dir,
-                             self.dataset_name+"_fam"+fam_info.fam_id+".xlsx")
+        if out_file is None:
+            out_file = join_path(self.rpts_out_dir,
+                                 self.dataset_name+"_fam"+fam_info.fam_id+".xlsx")
         mylogger.info("")
         mylogger.info(" >>>> generating family report for family " + fam_info.fam_id)
         mylogger.info(" >>>> report file: " + out_file)
@@ -462,13 +475,16 @@ class MutRepPipeline(CMMDBPipeline):
             mylogger.info(" >> add '" + samples_list[0] + "' sheet")
             self.__add_muts_sheet(wb,
                                   samples_list[0],
+                                  report_regions,
                                   samples_list=samples_list,
-                                  check_shared=True)
+                                  check_shared=True,
+                                  )
         else:
             mylogger.info("")
             mylogger.info(" >> add 'shared' sheet")
             self.__add_muts_sheet(wb,
                                   "shared",
+                                  report_regions,
                                   samples_list=samples_list,
                                   check_shared=True)
             for sample_name in samples_list:
@@ -476,15 +492,23 @@ class MutRepPipeline(CMMDBPipeline):
                 mylogger.info(" >> add '" + sample_name + "' sheet")
                 self.__add_muts_sheet(wb,
                                       sample_name,
+                                      report_regions,
                                       samples_list=[sample_name],
                                       check_shared=True)
         wb.close()
 
-    def gen_family_reports(self):
+    def __gen_family_reports(self, fam_id):
+        report_regions = self.report_layout.report_regions
+        if self.project_code is None:
+            self.gen_family_report(fam_id, report_regions)
+        else:
+            pass
+
+    def gen_families_reports(self):
         if self.family_infos is None:
             return
         for fam_id in self.family_infos:
-            self.__gen_family_report(fam_id)
+            self.__gen_family_reports(fam_id)
 
     def gen_reports(self):
         pass
