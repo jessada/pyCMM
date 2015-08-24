@@ -174,7 +174,7 @@ class TestMutRepPipeline(SafeTester):
                                                         report_regions=None,
                                                         )
         pl = MutRepPipeline(jobs_setup_file)
-        pl.gen_summary_report()
+        pl.gen_summary_report(pl.report_layout.report_regions)
 
     @unittest.skipUnless(settings.FULL_SYSTEM_TEST, "taking too long time to test")
     def test_summary_report_2(self):
@@ -196,7 +196,7 @@ class TestMutRepPipeline(SafeTester):
                                                         call_info="YES",
                                                         )
         pl = MutRepPipeline(jobs_setup_file)
-        pl.gen_summary_report()
+        pl.gen_summary_report(pl.report_layout.report_regions)
 
 #    @unittest.skipUnless(settings.FULL_SYSTEM_TEST, "taking too long time to test")
     def test_summary_report_3(self):
@@ -218,7 +218,7 @@ class TestMutRepPipeline(SafeTester):
                                                         call_info="YES",
                                                         )
         pl = MutRepPipeline(jobs_setup_file)
-        pl.gen_summary_report(out_file=rpt_out_file)
+        pl.gen_summary_report(pl.report_layout.report_regions, out_file=rpt_out_file)
 
 #    @unittest.skipUnless(settings.FULL_SYSTEM_TEST, "taking too long time to test")
     def test_summary_report_4(self):
@@ -241,7 +241,53 @@ class TestMutRepPipeline(SafeTester):
                                                         call_info="NO",
                                                         )
         pl = MutRepPipeline(jobs_setup_file)
-        pl.gen_summary_report()
+        pl.gen_summary_report(pl.report_layout.report_regions)
+
+#    @unittest.skipUnless(settings.FULL_SYSTEM_TEST, "taking too long time to test")
+    def test_summary_report_5(self):
+        """ test summary with multiple report_regions and many sample infos """
+
+        self.individual_debug = True
+        self.init_test(self.current_func_name)
+        job_name = self.test_function
+        vcf_tabix_file = join_path(self.data_dir,
+                                   "chr6_18.vcf.gz")
+        annotated_vcf_tabix = join_path(self.data_dir,
+                                        "chr6_18.vcf.gz")
+        rpt_out_file = join_path(self.working_dir,
+                                 self.current_func_name + ".xlsx")
+        jobs_setup_file = self.__create_jobs_setup_file(vcf_tabix_file=vcf_tabix_file,
+                                                        annotated_vcf_tabix=annotated_vcf_tabix,
+                                                        project_code=None,
+                                                        report_regions="6:78171941-78172992,18:28610988-28611790",
+                                                        sample_infos="1234:Alb-31:Br-466,6067:Br-432:Al-161:Br-504,6789:Al-65",
+                                                        call_info="YES",
+                                                        )
+        pl = MutRepPipeline(jobs_setup_file)
+        pl.gen_summary_report(pl.report_layout.report_regions)
+
+#    @unittest.skipUnless(settings.FULL_SYSTEM_TEST, "taking too long time to test")
+    def test_summary_reports_1(self):
+        """ test generating offline summary report (3 families)"""
+
+        self.individual_debug = True
+        self.init_test(self.current_func_name)
+        job_name = self.test_function
+        vcf_tabix_file = join_path(self.data_dir,
+                                   "chr6_18.vcf.gz")
+        annotated_vcf_tabix = join_path(self.data_dir,
+                                        "chr6_18.vcf.gz")
+        rpt_out_file = join_path(self.working_dir,
+                                 self.current_func_name + ".xlsx")
+        jobs_setup_file = self.__create_jobs_setup_file(vcf_tabix_file=vcf_tabix_file,
+                                                        annotated_vcf_tabix=annotated_vcf_tabix,
+                                                        project_code=None,
+                                                        report_regions="6:78171941-78172992,18:28610988-28611790",
+                                                        sample_infos="1234:Alb-31:Br-466,6067:Br-432:Al-161:Br-504,6789:Al-65",
+                                                        call_info="YES",
+                                                        )
+        pl = MutRepPipeline(jobs_setup_file)
+        pl.gen_summary_reports()
 
 #    @unittest.skipUnless(settings.FULL_SYSTEM_TEST, "taking too long time to test")
     def test_family_report_1(self):

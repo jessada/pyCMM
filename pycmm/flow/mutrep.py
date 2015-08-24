@@ -429,9 +429,9 @@ class MutRepPipeline(CMMDBPipeline):
         ws.freeze_panes(1, 0)
 
     def gen_summary_report(self,
-                           report_regions=None,
+                           report_regions,
                            out_file=None,
-                           fam_infos=None):
+                           ):
         if out_file is None:
             out_file = self.summary_rpt_file
         mylogger.info("")
@@ -454,6 +454,13 @@ class MutRepPipeline(CMMDBPipeline):
                                   samples_list=self.samples_list,
                                   )
         wb.close()
+
+    def gen_summary_reports(self):
+        report_regions = self.report_layout.report_regions
+        if self.project_code is None:
+            self.gen_summary_report(report_regions)
+        else:
+            pass
 
     def gen_family_report(self,
                           fam_id,
