@@ -33,13 +33,14 @@ CMMDB_ALLOC_TIME = "4-00:00:00"
 CMMDB_CREATE_JOB_SETUP_FILE_DESCRIPTION = "An applicationt to generate job setup file to process CMM database"
 
 ## > > > > > > > > > > > > > Mutation report < < < < < < < < < <
-MUTREP_BIN = 'pyCMM-mutrep-mutation-reports'
+MUTREP_FAMILY_REPORT_BIN = 'pyCMM-mutrep-family-report'
 
 MUTREP_PIPELINE_DESCRIPTION = "A flow to control a pipeline to process mutations report"
-MuTREP_PIPELINE_DFLT_LOG_FILE = "mutrep_pipeline"
+MUTREP_PIPELINE_DFLT_LOG_FILE = "mutrep_pipeline"
 MUTREP_ALLOC_TIME = "1-00:00:00"
 
-MUTREP_CREATE_JOB_SETUP_FILE_DESCRIPTION = "An applicationt to generate job setup file to process mutations report"
+MUTREP_FAMILY_REPORT_DESCRIPTION = "An appliation to generate mutation for a given family at given regions"
+MUTREP_CREATE_JOB_SETUP_FILE_DESCRIPTION = "An application to generate job setup file to process mutations report"
 
 DFLT_MAF_VAR = "1000g2014oct_all"
 DFLT_MUTREP_FREQ_RATIOS = DFLT_MAF_VAR + ":0.2"

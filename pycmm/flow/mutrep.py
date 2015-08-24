@@ -14,7 +14,7 @@ from pycmm.settings import DFLT_ANNOVAR_DB_FOLDER
 from pycmm.settings import DFLT_ANNOVAR_DB_NAMES
 from pycmm.settings import DFLT_ANNOVAR_DB_OPS
 from pycmm.settings import MUTREP_ALLOC_TIME
-from pycmm.settings import MUTREP_BIN
+from pycmm.settings import MUTREP_FAMILY_REPORT_BIN
 from pycmm.template import pyCMMBase
 from pycmm.utils import exec_sh
 from pycmm.utils import mylogger
