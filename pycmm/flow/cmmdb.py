@@ -327,7 +327,7 @@ class CMMDBPipeline(JobManager):
             self.submit_job(job_name,
                             self.project_code,
                             "core",
-                            "1",
+                            "2",
                             CMMDB_ALLOC_TIME,
                             slurm_log_file,
                             cfg.table_annovar_cmd,
