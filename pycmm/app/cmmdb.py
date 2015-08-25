@@ -105,6 +105,7 @@ def app_pycmm_cmmdb_create_jobs_setup_file(*args, **kwargs):
     layout_params['call information (-C)'] = kwargs['call_info']
     if kwargs['frequency_ratios'] is not None:
         layout_params['rare frequency ratios (-f)'] = kwargs['frequency_ratios']
+    layout_params['split chromosome (-s)'] = kwargs['split_chrom']
     disp.disp_params_set("Report layout parameters", layout_params)
     create_jobs_setup_file(dataset_name=kwargs['dataset_name'],
                            project_out_dir=kwargs['project_out_dir'],
@@ -117,6 +118,7 @@ def app_pycmm_cmmdb_create_jobs_setup_file(*args, **kwargs):
                            report_regions=kwargs['report_regions'],
                            call_info=kwargs['call_info'],
                            frequency_ratios=kwargs['frequency_ratios'],
+                           split_chrom=kwargs['split_chrom'],
                            out_jobs_setup_file=kwargs['out_jobs_setup_file'],
                            )
     mylogger.getLogger(__name__)

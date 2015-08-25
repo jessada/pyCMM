@@ -513,14 +513,14 @@ class MutRepPipeline(CMMDBPipeline):
                               "summary_all",
                               report_regions,
                               )
-        if self.family_infos is not None:
-            mylogger.info("")
-            mylogger.info(" >> add 'summary_families' sheet")
-            self.__add_muts_sheet(wb,
-                                  "summary_families",
-                                  report_regions,
-                                  samples_list=self.samples_list,
-                                  )
+#        if self.family_infos is not None:
+#            mylogger.info("")
+#            mylogger.info(" >> add 'summary_families' sheet")
+#            self.__add_muts_sheet(wb,
+#                                  "summary_families",
+#                                  report_regions,
+#                                  samples_list=self.samples_list,
+#                                  )
         wb.close()
 
     def gen_summary_reports(self):
