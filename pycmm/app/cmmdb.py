@@ -82,7 +82,7 @@ def app_pycmm_cmmdb_create_jobs_setup_file(*args, **kwargs):
     if kwargs['vcf_region'] is not None:
         optional_params['vcf region (-r)'] = kwargs['vcf_region']
     if kwargs['sample_infos'] is not None:
-        optional_params['patients list (-c)'] = kwargs['sample_infos']
+        optional_params['sample information (-s)'] = kwargs['sample_infos']
     if kwargs['project_code'] is not None:
         optional_params['project code (-p)'] = kwargs['project_code']
     optional_params['output jobs setup file (-o)'] = kwargs['out_jobs_setup_file']
@@ -102,10 +102,11 @@ def app_pycmm_cmmdb_create_jobs_setup_file(*args, **kwargs):
         layout_params['report regions (-R)'] = kwargs['report_regions']
     else:
         layout_params['report regions (-R)'] = "all"
-    layout_params['call information (-C)'] = kwargs['call_info']
+    layout_params['call information (--call_info)'] = kwargs['call_info']
     if kwargs['frequency_ratios'] is not None:
         layout_params['rare frequency ratios (-f)'] = kwargs['frequency_ratios']
-    layout_params['split chromosome (-s)'] = kwargs['split_chrom']
+    layout_params['split chromosome (--split_chrom)'] = kwargs['split_chrom']
+    layout_params['exclude common mutations (--exclude_common)'] = kwargs['exclude_common']
     disp.disp_params_set("Report layout parameters", layout_params)
     create_jobs_setup_file(dataset_name=kwargs['dataset_name'],
                            project_out_dir=kwargs['project_out_dir'],
@@ -119,6 +120,7 @@ def app_pycmm_cmmdb_create_jobs_setup_file(*args, **kwargs):
                            call_info=kwargs['call_info'],
                            frequency_ratios=kwargs['frequency_ratios'],
                            split_chrom=kwargs['split_chrom'],
+                           exclude_common=kwargs['exclude_common'],
                            out_jobs_setup_file=kwargs['out_jobs_setup_file'],
                            )
     mylogger.getLogger(__name__)

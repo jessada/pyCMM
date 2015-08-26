@@ -50,6 +50,7 @@ class TestMutRepPipeline(SafeTester):
                                  call_info="NO",
                                  frequency_ratios=DFLT_TEST_FREQ_RATIOS,
                                  split_chrom=False,
+                                 exclude_common=False,
                                  ):
         jobs_setup_file = join_path(self.working_dir,
                                     self.test_function+'_jobs_setup.txt')
@@ -67,6 +68,7 @@ class TestMutRepPipeline(SafeTester):
                                call_info=call_info,
                                frequency_ratios=frequency_ratios,
                                split_chrom=split_chrom,
+                               exclude_common=exclude_common,
                                out_jobs_setup_file=jobs_setup_file,
                                )
         return jobs_setup_file
@@ -102,6 +104,9 @@ class TestMutRepPipeline(SafeTester):
         self.assertEqual(pl.report_layout.split_chrom,
                          False,
                          "MutRepPipeline cannot correctly read report layout info 'split chrom' from jobs setup file")
+        self.assertEqual(pl.report_layout.exclude_common,
+                         False,
+                         "MutRepPipeline cannot correctly read report layout info 'exclude common' from jobs setup file")
 
     def test_load_jobs_info_2(self):
         """ test if non-default layout configurations are loaded correctly """
@@ -117,6 +122,7 @@ class TestMutRepPipeline(SafeTester):
                                                         call_info="YES",
                                                         frequency_ratios=None,
                                                         split_chrom=True,
+                                                        exclude_common=True,
                                                         )
         pl = MutRepPipeline(jobs_setup_file)
         self.assertEqual(pl.report_layout.report_regions[1].end_pos,
@@ -137,6 +143,9 @@ class TestMutRepPipeline(SafeTester):
         self.assertEqual(pl.report_layout.split_chrom,
                          True,
                          "MutRepPipeline cannot correctly read report layout info 'split chrom' from jobs setup file")
+        self.assertEqual(pl.report_layout.exclude_common,
+                         True,
+                         "MutRepPipeline cannot correctly read report layout info 'exclude common' from jobs setup file")
 
     def test_load_jobs_info_3(self):
         """ test if non-default (None) layout configurations are loaded correctly """
@@ -262,6 +271,27 @@ class TestMutRepPipeline(SafeTester):
                                                         report_regions="6:78171941-78172992,18:28610988-28611790",
                                                         sample_infos="1234:Alb-31:Br-466,6067:Br-432:Al-161:Br-504,6789:Al-65",
                                                         call_info="YES",
+                                                        )
+        pl = MutRepPipeline(jobs_setup_file)
+        pl.gen_summary_report(pl.report_layout.report_regions)
+
+#    @unittest.skipUnless(settings.FULL_SYSTEM_TEST, "taking too long time to test")
+    def test_summary_report_6(self):
+        """ test summary report that will exclude common mutation MAF > 0.2  """
+
+        self.individual_debug = True
+        self.init_test(self.current_func_name)
+        job_name = self.test_function
+        vcf_tabix_file = join_path(self.data_dir,
+                                   "input.vcf.gz")
+        annotated_vcf_tabix = join_path(self.data_dir,
+                                        "input.vcf.gz")
+        jobs_setup_file = self.__create_jobs_setup_file(vcf_tabix_file=vcf_tabix_file,
+                                                        annotated_vcf_tabix=annotated_vcf_tabix,
+                                                        project_code=None,
+                                                        report_regions="6",
+                                                        call_info="NO",
+                                                        exclude_common=True,
                                                         )
         pl = MutRepPipeline(jobs_setup_file)
         pl.gen_summary_report(pl.report_layout.report_regions)
@@ -523,6 +553,30 @@ class TestMutRepPipeline(SafeTester):
                                                         )
         pl = MutRepPipeline(jobs_setup_file)
         pl.gen_families_reports()
+
+#    @unittest.skipUnless(settings.FULL_SYSTEM_TEST, "taking too long time to test")
+    def test_families_reports_6(self):
+        """ test generating 101 CRC families reports """
+
+        self.individual_debug = True
+        self.init_test(self.current_func_name)
+        job_name = self.test_function
+        vcf_tabix_file = join_path(self.data_dir,
+                                   "input.vcf.gz")
+        annotated_vcf_tabix = join_path(self.data_dir,
+                                        "input.vcf.gz")
+        jobs_setup_file = self.__create_jobs_setup_file(vcf_tabix_file=vcf_tabix_file,
+                                                        annotated_vcf_tabix=annotated_vcf_tabix,
+                                                        project_code=None,
+                                                        report_regions=None,
+                                                        call_info="NO",
+                                                        sample_infos="8:Co-35:Co-37,12:Co-89:Co-90,13:Co-95,26:Co-131:Co-135,31:1793-11D:1322-11D,87:Co-218:Co-258,91:Co-454:Co-700,94:Co-238,110:1526-02D:Co-1301,134:Co-460:Co-553,141:Co-305:Co-785,185:Co-603:Co-669,191:Co-384,214:Co-484,216:Co-367:Co-446,221:Co-358,227:Co-364,231:Co-555:Co-572,254:Co-616:Co-1156,275:Co-618:Co-1262,288:Co-1141,296:Co-793:Co-876,301:Co-837:Co-840:Co-1053,306:Co-779,309:Co-783,312:Co-1116,315:1462-01D,325:Co-851:Co-859,348:Co-846:Co-857,350:1104-03D:Co-866,409:Co-1254,415:Co-1031:Co-1037,425:Co-1458:Co-1595,434:Co-1051:Co-1534,445:Co-1157:Co-1158,478:Co-1207:Co-1274,485:Co-1302:Co-1322,532:Co-1583:Co-1584,574:468-04:474-05,578:531-04o:Co-1349,650:398-05o:729-05o,695:Co-1354:Co-1359:Co-1368,739:529-05:Co-1467,740:602-05o:Co-1373:Co-1383,849:Co-1764:Co-1765,869:Co-1685,871:Co-1618:Co-1661,918:134-06:354-06,975:Co-1591:Co-1600,1025:Co-1529,1085:Co-1518,1113:642-06:Co-1538,1206:1052-05D:Co-1552,1207:2818-07D,1213:Co-1666,1252:Co-1719,1290:Co-1723,prostate:P001:P002:P003",
+                                                        )
+        pl = MutRepPipeline(jobs_setup_file)
+        pl.gen_families_reports()
+        mylogger.debug(len(pl.samples_list))
+#        pl.samples_list.sort
+#        mylogger.debug(",".join(pl.samples_list))
 
     def tearDown(self):
         self.remove_working_dir()

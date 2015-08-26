@@ -63,6 +63,8 @@ JOBS_SETUP_REPORT_FREQ_RATIOS_KEY = "FREQUENCY_RATIOS"
 JOBS_SETUP_REPORT_FREQ_RATIOS_COL_KEY = "COLUMN"
 JOBS_SETUP_REPORT_FREQ_RATIOS_FREQ_KEY = "FREQUENCY"
 JOBS_SETUP_REPORT_SPLIT_CHROM_KEY = "SPLIT_CHROM"
+JOBS_SETUP_REPORT_EXCLUSION_CRITERIA_KEY = "EXCLUSSION_CRITERIA"
+JOBS_SETUP_REPORT_EXCLUDE_COMMON = "Common"
 
 class MemberInfo(pyCMMBase):
     """  To encapsulate family information so that it is readable """
@@ -361,6 +363,7 @@ def create_jobs_setup_file(dataset_name,
                            call_info=False,
                            frequency_ratios=None,
                            split_chrom=False,
+                           exclude_common=False,
                            out_jobs_setup_file=None,
                            ):
     mylogger.getLogger(__name__)
@@ -427,6 +430,11 @@ def create_jobs_setup_file(dataset_name,
                                 })
     report_layout_config[JOBS_SETUP_REPORT_FREQ_RATIOS_KEY] = job_freq_ratios
     report_layout_config[JOBS_SETUP_REPORT_SPLIT_CHROM_KEY] = split_chrom
+    if exclude_common:
+        exclusion_criteria = []
+        exclusion_criteria.append(JOBS_SETUP_REPORT_EXCLUDE_COMMON)
+        report_layout_config[JOBS_SETUP_REPORT_EXCLUSION_CRITERIA_KEY] = exclusion_criteria
     job_setup_document[JOBS_SETUP_REPORT_LAYOUT_SECTION] = report_layout_config
+
 
     pyaml.dump(job_setup_document, stream)

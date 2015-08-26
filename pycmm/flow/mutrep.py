@@ -31,6 +31,8 @@ from pycmm.flow.cmmdb import JOBS_SETUP_REPORT_FREQ_RATIOS_KEY
 from pycmm.flow.cmmdb import JOBS_SETUP_REPORT_FREQ_RATIOS_COL_KEY
 from pycmm.flow.cmmdb import JOBS_SETUP_REPORT_FREQ_RATIOS_FREQ_KEY
 from pycmm.flow.cmmdb import JOBS_SETUP_REPORT_SPLIT_CHROM_KEY
+from pycmm.flow.cmmdb import JOBS_SETUP_REPORT_EXCLUSION_CRITERIA_KEY
+from pycmm.flow.cmmdb import JOBS_SETUP_REPORT_EXCLUDE_COMMON
 
 # *** color definition sections ***
 COLOR_RGB = OrderedDict()
@@ -222,6 +224,13 @@ class ReportLayout(pyCMMBase):
         else:
             return False
 
+    @property
+    def exclude_common(self):
+        if JOBS_SETUP_REPORT_EXCLUSION_CRITERIA_KEY not in self.__layout_params:
+            return False
+        else:
+            return JOBS_SETUP_REPORT_EXCLUDE_COMMON in self.__layout_params[JOBS_SETUP_REPORT_EXCLUSION_CRITERIA_KEY]
+
 class MutRepPipeline(CMMDBPipeline):
     """ A class to control mutation report pipeline """
 
@@ -339,7 +348,7 @@ class MutRepPipeline(CMMDBPipeline):
         cell_fmt = self.cell_fmt_mgr.cell_fmts[DFLT_FMT]
         alt_allele = vcf_record.alleles[allele_idx]
         ws.write(row, 0, vcf_record.CHROM, cell_fmt)
-        ws.write(row, 1, vcf_record.POS, cell_fmt)
+        ws.write(row, 1, str(vcf_record.POS), cell_fmt)
         ws.write(row, 2, vcf_record.REF, cell_fmt)
         ws.write(row, 3, str(alt_allele), cell_fmt)
         len_anno_cols = len(anno_cols)
@@ -377,6 +386,10 @@ class MutRepPipeline(CMMDBPipeline):
             for allele_idx in xrange(1, len(vcf_record.alleles)):
                 if (check_shared and
                     not vcf_record.is_shared(allele_idx, samples_list)):
+                    continue
+                if (self.report_layout.exclude_common and
+                    not vcf_record.is_rare(self.report_layout.freq_ratios,
+                                           allele_idx=allele_idx)):
                     continue
                 self.__write_content(ws,
                                      row,
