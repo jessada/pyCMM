@@ -59,13 +59,17 @@ LJB_LR_PREDICTION_COL_NAME = "LR_pred"
 
 # This list will show all possible annotation columns (based on the dbs
 # annotated by table_annovar.pl), in the INFO fields.
+#
+# Note. I use variable names instead of hard-code because I want to emphasize 
+# that these columns are used somewhere else.
 DFLT_MUTREP_ANNO_COLS = []
 DFLT_MUTREP_ANNO_COLS.append("Func.refGene")
 DFLT_MUTREP_ANNO_COLS.append("ExonicFunc.refGene")
 DFLT_MUTREP_ANNO_COLS.append("Gene.refGene")
 DFLT_MUTREP_ANNO_COLS.append("GeneDetail.refGene")
+DFLT_MUTREP_ANNO_COLS.append("snp138")
 DFLT_MUTREP_ANNO_COLS.append("1000g2014oct_eur")
-DFLT_MUTREP_ANNO_COLS.append("1000g2014oct_all")
+DFLT_MUTREP_ANNO_COLS.append(DFLT_MAF_VAR)
 DFLT_MUTREP_ANNO_COLS.append("ILL_BR_AF")
 DFLT_MUTREP_ANNO_COLS.append("ILL_BR_GF")
 DFLT_MUTREP_ANNO_COLS.append("101CRC_ALL_AF")
@@ -90,7 +94,6 @@ DFLT_MUTREP_ANNO_COLS.append("AAChange.refGene")
 DFLT_MUTREP_ANNO_COLS.append("cytoBand")
 DFLT_MUTREP_ANNO_COLS.append("genomicSuperDups")
 DFLT_MUTREP_ANNO_COLS.append("esp6500siv2_all")
-DFLT_MUTREP_ANNO_COLS.append("snp138")
 DFLT_MUTREP_ANNO_COLS.append("cg69")
 DFLT_MUTREP_ANNO_COLS.append("cosmic70")
 DFLT_MUTREP_ANNO_COLS.append("nci60")
