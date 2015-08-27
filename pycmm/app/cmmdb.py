@@ -106,6 +106,7 @@ def app_pycmm_cmmdb_create_jobs_setup_file(*args, **kwargs):
     if kwargs['frequency_ratios'] is not None:
         layout_params['rare frequency ratios (-f)'] = kwargs['frequency_ratios']
     layout_params['split chromosome (--split_chrom)'] = kwargs['split_chrom']
+    layout_params['summary_families sheet (--summary_families)'] = kwargs['summary_families_sheet']
     layout_params['exclude common mutations (--exclude_common)'] = kwargs['exclude_common']
     disp.disp_params_set("Report layout parameters", layout_params)
     create_jobs_setup_file(dataset_name=kwargs['dataset_name'],
@@ -120,6 +121,7 @@ def app_pycmm_cmmdb_create_jobs_setup_file(*args, **kwargs):
                            call_info=kwargs['call_info'],
                            frequency_ratios=kwargs['frequency_ratios'],
                            split_chrom=kwargs['split_chrom'],
+                           summary_families_sheet=kwargs['summary_families_sheet'],
                            exclude_common=kwargs['exclude_common'],
                            out_jobs_setup_file=kwargs['out_jobs_setup_file'],
                            )

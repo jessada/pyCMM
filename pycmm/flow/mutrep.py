@@ -31,6 +31,7 @@ from pycmm.flow.cmmdb import JOBS_SETUP_REPORT_FREQ_RATIOS_KEY
 from pycmm.flow.cmmdb import JOBS_SETUP_REPORT_FREQ_RATIOS_COL_KEY
 from pycmm.flow.cmmdb import JOBS_SETUP_REPORT_FREQ_RATIOS_FREQ_KEY
 from pycmm.flow.cmmdb import JOBS_SETUP_REPORT_SPLIT_CHROM_KEY
+from pycmm.flow.cmmdb import JOBS_SETUP_REPORT_SUMMARY_FAMILIES_KEY
 from pycmm.flow.cmmdb import JOBS_SETUP_REPORT_EXCLUSION_CRITERIA_KEY
 from pycmm.flow.cmmdb import JOBS_SETUP_REPORT_EXCLUDE_COMMON
 
@@ -129,7 +130,7 @@ class CellFormatManager(pyCMMBase):
         return self.__cell_fmts
 
 class ReportRegion(pyCMMBase):
-    """ A structure to parse and keep mutation report layout """
+    """ A structure to parse and keep mutation report region """
 
     def __init__(self,
                  raw_region,
@@ -221,6 +222,13 @@ class ReportLayout(pyCMMBase):
     def split_chrom(self):
         if JOBS_SETUP_REPORT_SPLIT_CHROM_KEY in self.__layout_params:
             return self.__layout_params[JOBS_SETUP_REPORT_SPLIT_CHROM_KEY]
+        else:
+            return False
+
+    @property
+    def summary_families_sheet(self):
+        if JOBS_SETUP_REPORT_SUMMARY_FAMILIES_KEY in self.__layout_params:
+            return self.__layout_params[JOBS_SETUP_REPORT_SUMMARY_FAMILIES_KEY]
         else:
             return False
 
@@ -526,14 +534,15 @@ class MutRepPipeline(CMMDBPipeline):
                               "summary_all",
                               report_regions,
                               )
-#        if self.family_infos is not None:
-#            mylogger.info("")
-#            mylogger.info(" >> add 'summary_families' sheet")
-#            self.__add_muts_sheet(wb,
-#                                  "summary_families",
-#                                  report_regions,
-#                                  samples_list=self.samples_list,
-#                                  )
+        if (self.report_layout.summary_families_sheet and
+            self.family_infos is not None):
+            mylogger.info("")
+            mylogger.info(" >> add 'summary_families' sheet")
+            self.__add_muts_sheet(wb,
+                                  "summary_families",
+                                  report_regions,
+                                  samples_list=self.samples_list,
+                                  )
         wb.close()
 
     def gen_summary_reports(self):

@@ -50,6 +50,7 @@ class TestMutRepPipeline(SafeTester):
                                  call_info="NO",
                                  frequency_ratios=DFLT_TEST_FREQ_RATIOS,
                                  split_chrom=False,
+                                 summary_families_sheet=False,
                                  exclude_common=False,
                                  ):
         jobs_setup_file = join_path(self.working_dir,
@@ -68,6 +69,7 @@ class TestMutRepPipeline(SafeTester):
                                call_info=call_info,
                                frequency_ratios=frequency_ratios,
                                split_chrom=split_chrom,
+                               summary_families_sheet=summary_families_sheet,
                                exclude_common=exclude_common,
                                out_jobs_setup_file=jobs_setup_file,
                                )
@@ -104,6 +106,9 @@ class TestMutRepPipeline(SafeTester):
         self.assertEqual(pl.report_layout.split_chrom,
                          False,
                          "MutRepPipeline cannot correctly read report layout info 'split chrom' from jobs setup file")
+        self.assertEqual(pl.report_layout.summary_families_sheet,
+                         False,
+                         "MutRepPipeline cannot correctly read report layout info 'summary families sheet' from jobs setup file")
         self.assertEqual(pl.report_layout.exclude_common,
                          False,
                          "MutRepPipeline cannot correctly read report layout info 'exclude common' from jobs setup file")
@@ -122,6 +127,7 @@ class TestMutRepPipeline(SafeTester):
                                                         call_info="YES",
                                                         frequency_ratios=None,
                                                         split_chrom=True,
+                                                        summary_families_sheet=True,
                                                         exclude_common=True,
                                                         )
         pl = MutRepPipeline(jobs_setup_file)
@@ -143,6 +149,9 @@ class TestMutRepPipeline(SafeTester):
         self.assertEqual(pl.report_layout.split_chrom,
                          True,
                          "MutRepPipeline cannot correctly read report layout info 'split chrom' from jobs setup file")
+        self.assertEqual(pl.report_layout.summary_families_sheet,
+                         True,
+                         "MutRepPipeline cannot correctly read report layout info 'summary families sheet' from jobs setup file")
         self.assertEqual(pl.report_layout.exclude_common,
                          True,
                          "MutRepPipeline cannot correctly read report layout info 'exclude common' from jobs setup file")
@@ -315,6 +324,7 @@ class TestMutRepPipeline(SafeTester):
                                                         report_regions="6:78171941-78172992,18:28610988-28611790",
                                                         sample_infos="1234:Alb-31:Br-466,6067:Br-432:Al-161:Br-504,6789:Al-65",
                                                         call_info="YES",
+                                                        summary_families_sheet=True,
                                                         )
         pl = MutRepPipeline(jobs_setup_file)
         pl.gen_summary_reports()
