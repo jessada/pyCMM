@@ -46,6 +46,7 @@ MUTREP_CREATE_JOB_SETUP_FILE_DESCRIPTION = "An application to generate job setup
 
 DFLT_MAF_VAR = "1000g2014oct_all"
 DFLT_MUTREP_FREQ_RATIOS = DFLT_MAF_VAR + ":0.2"
+FUNC_REFGENE_VAR = "Func.refGene"
 
 LJB_SIFT_PREDICTION_COL_NAME = "SIFT_pred"
 LJB_POLYPHEN2_HDIV_PREDICTION_COL_NAME = "Polyphen2_HDIV_pred"
@@ -63,7 +64,7 @@ LJB_LR_PREDICTION_COL_NAME = "LR_pred"
 # Note. I use variable names instead of hard-code because I want to emphasize 
 # that these columns are used somewhere else.
 DFLT_MUTREP_ANNO_COLS = []
-DFLT_MUTREP_ANNO_COLS.append("Func.refGene")
+DFLT_MUTREP_ANNO_COLS.append(FUNC_REFGENE_VAR)
 DFLT_MUTREP_ANNO_COLS.append("ExonicFunc.refGene")
 DFLT_MUTREP_ANNO_COLS.append("Gene.refGene")
 DFLT_MUTREP_ANNO_COLS.append("GeneDetail.refGene")

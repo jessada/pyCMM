@@ -66,6 +66,8 @@ JOBS_SETUP_REPORT_SPLIT_CHROM_KEY = "SPLIT_CHROM"
 JOBS_SETUP_REPORT_SUMMARY_FAMILIES_KEY = "SUMMARY_FAMILIES"
 JOBS_SETUP_REPORT_EXCLUSION_CRITERIA_KEY = "EXCLUSSION_CRITERIA"
 JOBS_SETUP_REPORT_EXCLUDE_COMMON = "Common"
+JOBS_SETUP_REPORT_EXCLUDE_INTERGENIC = "Intergenic"
+JOBS_SETUP_REPORT_EXCLUDE_INTRONIC = "Intronic"
 
 class MemberInfo(pyCMMBase):
     """  To encapsulate family information so that it is readable """
@@ -366,6 +368,8 @@ def create_jobs_setup_file(dataset_name,
                            split_chrom=False,
                            summary_families_sheet=False,
                            exclude_common=False,
+                           exclude_intergenic=False,
+                           exclude_intronic=False,
                            out_jobs_setup_file=None,
                            ):
     mylogger.getLogger(__name__)
@@ -433,9 +437,14 @@ def create_jobs_setup_file(dataset_name,
     report_layout_config[JOBS_SETUP_REPORT_FREQ_RATIOS_KEY] = job_freq_ratios
     report_layout_config[JOBS_SETUP_REPORT_SPLIT_CHROM_KEY] = split_chrom
     report_layout_config[JOBS_SETUP_REPORT_SUMMARY_FAMILIES_KEY] = summary_families_sheet
-    if exclude_common:
+    if exclude_common or exclude_intergenic or exclude_intronic:
         exclusion_criteria = []
-        exclusion_criteria.append(JOBS_SETUP_REPORT_EXCLUDE_COMMON)
+        if exclude_common:
+            exclusion_criteria.append(JOBS_SETUP_REPORT_EXCLUDE_COMMON)
+        if exclude_intergenic:
+            exclusion_criteria.append(JOBS_SETUP_REPORT_EXCLUDE_INTERGENIC)
+        if exclude_intronic:
+            exclusion_criteria.append(JOBS_SETUP_REPORT_EXCLUDE_INTRONIC)
         report_layout_config[JOBS_SETUP_REPORT_EXCLUSION_CRITERIA_KEY] = exclusion_criteria
     job_setup_document[JOBS_SETUP_REPORT_LAYOUT_SECTION] = report_layout_config
 

@@ -34,6 +34,8 @@ from pycmm.flow.cmmdb import JOBS_SETUP_REPORT_SPLIT_CHROM_KEY
 from pycmm.flow.cmmdb import JOBS_SETUP_REPORT_SUMMARY_FAMILIES_KEY
 from pycmm.flow.cmmdb import JOBS_SETUP_REPORT_EXCLUSION_CRITERIA_KEY
 from pycmm.flow.cmmdb import JOBS_SETUP_REPORT_EXCLUDE_COMMON
+from pycmm.flow.cmmdb import JOBS_SETUP_REPORT_EXCLUDE_INTERGENIC
+from pycmm.flow.cmmdb import JOBS_SETUP_REPORT_EXCLUDE_INTRONIC
 
 # *** color definition sections ***
 COLOR_RGB = OrderedDict()
@@ -239,6 +241,20 @@ class ReportLayout(pyCMMBase):
         else:
             return JOBS_SETUP_REPORT_EXCLUDE_COMMON in self.__layout_params[JOBS_SETUP_REPORT_EXCLUSION_CRITERIA_KEY]
 
+    @property
+    def exclude_intergenic(self):
+        if JOBS_SETUP_REPORT_EXCLUSION_CRITERIA_KEY not in self.__layout_params:
+            return False
+        else:
+            return JOBS_SETUP_REPORT_EXCLUDE_INTERGENIC in self.__layout_params[JOBS_SETUP_REPORT_EXCLUSION_CRITERIA_KEY]
+
+    @property
+    def exclude_intronic(self):
+        if JOBS_SETUP_REPORT_EXCLUSION_CRITERIA_KEY not in self.__layout_params:
+            return False
+        else:
+            return JOBS_SETUP_REPORT_EXCLUDE_INTRONIC in self.__layout_params[JOBS_SETUP_REPORT_EXCLUSION_CRITERIA_KEY]
+
 class MutRepPipeline(CMMDBPipeline):
     """ A class to control mutation report pipeline """
 
@@ -393,11 +409,17 @@ class MutRepPipeline(CMMDBPipeline):
         for vcf_record in vcf_records:
             for allele_idx in xrange(1, len(vcf_record.alleles)):
                 if (check_shared and
-                    not vcf_record.is_shared(allele_idx, samples_list)):
+                    not vcf_record.is_shared(samples_list, allele_idx)):
                     continue
                 if (self.report_layout.exclude_common and
                     not vcf_record.is_rare(self.report_layout.freq_ratios,
                                            allele_idx=allele_idx)):
+                    continue
+                if (self.report_layout.exclude_intergenic and
+                    vcf_record.is_intergenic[allele_idx]):
+                    continue
+                if (self.report_layout.exclude_intronic and
+                    vcf_record.is_intronic[allele_idx]):
                     continue
                 self.__write_content(ws,
                                      row,

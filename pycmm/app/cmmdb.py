@@ -108,6 +108,8 @@ def app_pycmm_cmmdb_create_jobs_setup_file(*args, **kwargs):
     layout_params['split chromosome (--split_chrom)'] = kwargs['split_chrom']
     layout_params['summary_families sheet (--summary_families)'] = kwargs['summary_families_sheet']
     layout_params['exclude common mutations (--exclude_common)'] = kwargs['exclude_common']
+    layout_params['exclude intergenic mutations (--exclude_intergenic)'] = kwargs['exclude_intergenic']
+    layout_params['exclude intronic mutations (--exclude_intronic)'] = kwargs['exclude_intronic']
     disp.disp_params_set("Report layout parameters", layout_params)
     create_jobs_setup_file(dataset_name=kwargs['dataset_name'],
                            project_out_dir=kwargs['project_out_dir'],
@@ -123,6 +125,8 @@ def app_pycmm_cmmdb_create_jobs_setup_file(*args, **kwargs):
                            split_chrom=kwargs['split_chrom'],
                            summary_families_sheet=kwargs['summary_families_sheet'],
                            exclude_common=kwargs['exclude_common'],
+                           exclude_intergenic=kwargs['exclude_intergenic'],
+                           exclude_intronic=kwargs['exclude_intronic'],
                            out_jobs_setup_file=kwargs['out_jobs_setup_file'],
                            )
     mylogger.getLogger(__name__)

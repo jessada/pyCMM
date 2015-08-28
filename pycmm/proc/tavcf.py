@@ -6,6 +6,7 @@ from collections import OrderedDict
 from pycmm.template import pyCMMBase
 from pycmm.utils import mylogger
 from pycmm.settings import DFLT_MAF_VAR
+from pycmm.settings import FUNC_REFGENE_VAR
 
 try:
     import cparse
@@ -214,6 +215,8 @@ class _CmmVcfRecord(_VcfRecord):
     An encapsulated version of vcf._Record from pyVCF package to
       - determine if mutations are shared between samples
       - understand if itself is a rare mutation given frequency ratio
+      - understand if itself is an intergenic mutation
+      - understand if itself is an intronic mutation
     """
 
     def __init__(self, CHROM, POS, ID, REF, ALT, QUAL, FILTER, INFO, FORMAT,
@@ -232,6 +235,20 @@ class _CmmVcfRecord(_VcfRecord):
                             samples=None,
                             )
         self.__afs = self.__cal_afs()
+        self.__is_intergenic = self.__compare_infos(FUNC_REFGENE_VAR, 'intergenic')
+        self.__is_intronic = self.__compare_infos(FUNC_REFGENE_VAR, 'intronic')
+
+    @property
+    def afs(self):
+        return self.__afs
+
+    @property
+    def is_intergenic(self):
+        return self.__is_intergenic
+
+    @property
+    def is_intronic(self):
+        return self.__is_intronic
 
     def __cal_afs(self):
         """
@@ -255,11 +272,28 @@ class _CmmVcfRecord(_VcfRecord):
                     afs.append(raw_af)
         return afs
 
-    @property
-    def afs(self):
-        return self.__afs
+    def __compare_infos(self, var_name, val):
+        """
+        return list of booleans identified if each INFO[var_name] == val
+        Number of entry in the list = 1 + number of alternate alleles
+        """
+        if var_name in self.INFO:
+            raw_results = self.INFO[var_name]
+        else:
+            raw_results = None
+        if (raw_results == "") or (raw_results is None) or (raw_results == "."):
+            return map(lambda x: True, xrange(len(self.alleles)))
+        if type(raw_results) is not list:
+            raw_results = [raw_results]
+        results = [CMMGT_DUMMY]
+        for entry in raw_results:
+            if entry == val:
+                results.append(True)
+            else:
+                results.append(False)
+        return results
 
-    def is_shared(self, allele_idx, samples):
+    def is_shared(self, samples, allele_idx):
         """
         to identify if a genotype is shared betwen samples given
           - allele index

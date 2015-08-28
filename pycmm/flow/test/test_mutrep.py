@@ -52,6 +52,8 @@ class TestMutRepPipeline(SafeTester):
                                  split_chrom=False,
                                  summary_families_sheet=False,
                                  exclude_common=False,
+                                 exclude_intergenic=False,
+                                 exclude_intronic=False,
                                  ):
         jobs_setup_file = join_path(self.working_dir,
                                     self.test_function+'_jobs_setup.txt')
@@ -71,6 +73,8 @@ class TestMutRepPipeline(SafeTester):
                                split_chrom=split_chrom,
                                summary_families_sheet=summary_families_sheet,
                                exclude_common=exclude_common,
+                               exclude_intergenic=exclude_intergenic,
+                               exclude_intronic=exclude_intronic,
                                out_jobs_setup_file=jobs_setup_file,
                                )
         return jobs_setup_file
@@ -112,6 +116,12 @@ class TestMutRepPipeline(SafeTester):
         self.assertEqual(pl.report_layout.exclude_common,
                          False,
                          "MutRepPipeline cannot correctly read report layout info 'exclude common' from jobs setup file")
+        self.assertEqual(pl.report_layout.exclude_intergenic,
+                         False,
+                         "MutRepPipeline cannot correctly read report layout info 'exclude intergenic' from jobs setup file")
+        self.assertEqual(pl.report_layout.exclude_intronic,
+                         False,
+                         "MutRepPipeline cannot correctly read report layout info 'exclude intronic' from jobs setup file")
 
     def test_load_jobs_info_2(self):
         """ test if non-default layout configurations are loaded correctly """
@@ -129,6 +139,8 @@ class TestMutRepPipeline(SafeTester):
                                                         split_chrom=True,
                                                         summary_families_sheet=True,
                                                         exclude_common=True,
+                                                        exclude_intergenic=True,
+                                                        exclude_intronic=True,
                                                         )
         pl = MutRepPipeline(jobs_setup_file)
         self.assertEqual(pl.report_layout.report_regions[1].end_pos,
@@ -155,6 +167,12 @@ class TestMutRepPipeline(SafeTester):
         self.assertEqual(pl.report_layout.exclude_common,
                          True,
                          "MutRepPipeline cannot correctly read report layout info 'exclude common' from jobs setup file")
+        self.assertEqual(pl.report_layout.exclude_intergenic,
+                         True,
+                         "MutRepPipeline cannot correctly read report layout info 'exclude intergenic' from jobs setup file")
+        self.assertEqual(pl.report_layout.exclude_intronic,
+                         True,
+                         "MutRepPipeline cannot correctly read report layout info 'exclude intronic' from jobs setup file")
 
     def test_load_jobs_info_3(self):
         """ test if non-default (None) layout configurations are loaded correctly """
@@ -301,6 +319,48 @@ class TestMutRepPipeline(SafeTester):
                                                         report_regions="6",
                                                         call_info="NO",
                                                         exclude_common=True,
+                                                        )
+        pl = MutRepPipeline(jobs_setup_file)
+        pl.gen_summary_report(pl.report_layout.report_regions)
+
+#    @unittest.skipUnless(settings.FULL_SYSTEM_TEST, "taking too long time to test")
+    def test_summary_report_7(self):
+        """ test summary report of 101CRC w/o intergenic region"""
+
+        self.individual_debug = True
+        self.init_test(self.current_func_name)
+        job_name = self.test_function
+        vcf_tabix_file = join_path(self.data_dir,
+                                   "input.vcf.gz")
+        annotated_vcf_tabix = join_path(self.data_dir,
+                                        "input.vcf.gz")
+        jobs_setup_file = self.__create_jobs_setup_file(vcf_tabix_file=vcf_tabix_file,
+                                                        annotated_vcf_tabix=annotated_vcf_tabix,
+                                                        project_code=None,
+                                                        report_regions=None,
+                                                        call_info="NO",
+                                                        exclude_intergenic=True,
+                                                        )
+        pl = MutRepPipeline(jobs_setup_file)
+        pl.gen_summary_report(pl.report_layout.report_regions)
+
+#    @unittest.skipUnless(settings.FULL_SYSTEM_TEST, "taking too long time to test")
+    def test_summary_report_8(self):
+        """ test summary report of 101CRC w/o intronic region"""
+
+        self.individual_debug = True
+        self.init_test(self.current_func_name)
+        job_name = self.test_function
+        vcf_tabix_file = join_path(self.data_dir,
+                                   "input.vcf.gz")
+        annotated_vcf_tabix = join_path(self.data_dir,
+                                        "input.vcf.gz")
+        jobs_setup_file = self.__create_jobs_setup_file(vcf_tabix_file=vcf_tabix_file,
+                                                        annotated_vcf_tabix=annotated_vcf_tabix,
+                                                        project_code=None,
+                                                        report_regions=None,
+                                                        call_info="NO",
+                                                        exclude_intronic=True,
                                                         )
         pl = MutRepPipeline(jobs_setup_file)
         pl.gen_summary_report(pl.report_layout.report_regions)

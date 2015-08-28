@@ -83,7 +83,7 @@ def app_pycmm_summary_report(*args, **kwargs):
                      )
     pl = MutRepPipeline(kwargs['jobs_setup_file'])
     layout_params = OrderedDict()
-    layout_params['annoated vcf tabix file'] = pl.annotated_vcf_tabix
+    layout_params['annotated vcf tabix file'] = pl.annotated_vcf_tabix
     layout_params['annotated columns'] = pl.report_layout.anno_cols
     layout_params['extra call information'] = pl.report_layout.call_info
     layout_params['frequency ratios'] = pl.report_layout.freq_ratios
