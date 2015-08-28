@@ -107,9 +107,11 @@ def app_pycmm_cmmdb_create_jobs_setup_file(*args, **kwargs):
         layout_params['rare frequency ratios (-f)'] = kwargs['frequency_ratios']
     layout_params['split chromosome (--split_chrom)'] = kwargs['split_chrom']
     layout_params['summary_families sheet (--summary_families)'] = kwargs['summary_families_sheet']
-    layout_params['exclude common mutations (--exclude_common)'] = kwargs['exclude_common']
-    layout_params['exclude intergenic mutations (--exclude_intergenic)'] = kwargs['exclude_intergenic']
-    layout_params['exclude intronic mutations (--exclude_intronic)'] = kwargs['exclude_intronic']
+    exclusion_out = {}
+    exclusion_out['common mutations (--exclude_common)'] = kwargs['exclude_common']
+    exclusion_out['intergenic mutations (--exclude_intergenic)'] = kwargs['exclude_intergenic']
+    exclusion_out['intronic mutations (--exclude_intronic)'] = kwargs['exclude_intronic']
+    layout_params['exclusion'] = exclusion_out
     disp.disp_params_set("Report layout parameters", layout_params)
     create_jobs_setup_file(dataset_name=kwargs['dataset_name'],
                            project_out_dir=kwargs['project_out_dir'],
