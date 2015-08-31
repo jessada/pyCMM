@@ -1,3 +1,4 @@
+# This Python file uses the following encoding: utf-8
 import unittest
 import filecmp
 import datetime
@@ -211,7 +212,7 @@ class TestMutRepPipeline(SafeTester):
                          0.5,
                          "MutRepPipeline cannot correctly read report layout info 'frequency ratios' from jobs setup file")
 
-#    @unittest.skipUnless(settings.FULL_SYSTEM_TEST, "taking too long time to test")
+    @unittest.skipUnless(settings.FULL_SYSTEM_TEST, "taking too long time to test")
     def test_summary_report_1(self):
         """ test if summary report with default configuration can be correctly generated """
 
@@ -252,7 +253,7 @@ class TestMutRepPipeline(SafeTester):
         pl = MutRepPipeline(jobs_setup_file)
         pl.gen_summary_report(pl.report_layout.report_regions)
 
-#    @unittest.skipUnless(settings.FULL_SYSTEM_TEST, "taking too long time to test")
+    @unittest.skipUnless(settings.FULL_SYSTEM_TEST, "taking too long time to test")
     def test_summary_report_3(self):
         """ test summary with multiple report_regions """
 
@@ -274,7 +275,7 @@ class TestMutRepPipeline(SafeTester):
         pl = MutRepPipeline(jobs_setup_file)
         pl.gen_summary_report(pl.report_layout.report_regions, out_file=rpt_out_file)
 
-#    @unittest.skipUnless(settings.FULL_SYSTEM_TEST, "taking too long time to test")
+    @unittest.skipUnless(settings.FULL_SYSTEM_TEST, "taking too long time to test")
     def test_summary_report_4(self):
         """
         test if mutations with more than one alternate alleles in summary
@@ -297,7 +298,7 @@ class TestMutRepPipeline(SafeTester):
         pl = MutRepPipeline(jobs_setup_file)
         pl.gen_summary_report(pl.report_layout.report_regions)
 
-#    @unittest.skipUnless(settings.FULL_SYSTEM_TEST, "taking too long time to test")
+    @unittest.skipUnless(settings.FULL_SYSTEM_TEST, "taking too long time to test")
     def test_summary_report_5(self):
         """ test summary with multiple report_regions and many sample infos """
 
@@ -320,7 +321,7 @@ class TestMutRepPipeline(SafeTester):
         pl = MutRepPipeline(jobs_setup_file)
         pl.gen_summary_report(pl.report_layout.report_regions)
 
-#    @unittest.skipUnless(settings.FULL_SYSTEM_TEST, "taking too long time to test")
+    @unittest.skipUnless(settings.FULL_SYSTEM_TEST, "taking too long time to test")
     def test_summary_report_6(self):
         """ test summary report that will exclude common mutation MAF > 0.2  """
 
@@ -341,7 +342,7 @@ class TestMutRepPipeline(SafeTester):
         pl = MutRepPipeline(jobs_setup_file)
         pl.gen_summary_report(pl.report_layout.report_regions)
 
-#    @unittest.skipUnless(settings.FULL_SYSTEM_TEST, "taking too long time to test")
+    @unittest.skipUnless(settings.FULL_SYSTEM_TEST, "taking too long time to test")
     def test_summary_report_7(self):
         """ test summary report of 101CRC w/o intergenic region"""
 
@@ -362,7 +363,7 @@ class TestMutRepPipeline(SafeTester):
         pl = MutRepPipeline(jobs_setup_file)
         pl.gen_summary_report(pl.report_layout.report_regions)
 
-#    @unittest.skipUnless(settings.FULL_SYSTEM_TEST, "taking too long time to test")
+    @unittest.skipUnless(settings.FULL_SYSTEM_TEST, "taking too long time to test")
     def test_summary_report_8(self):
         """ test summary report of 101CRC w/o intronic region"""
 
@@ -383,7 +384,29 @@ class TestMutRepPipeline(SafeTester):
         pl = MutRepPipeline(jobs_setup_file)
         pl.gen_summary_report(pl.report_layout.report_regions)
 
-#    @unittest.skipUnless(settings.FULL_SYSTEM_TEST, "taking too long time to test")
+    @unittest.skipUnless(settings.FULL_SYSTEM_TEST, "taking too long time to test")
+    def test_summary_report_9(self):
+        """ test if unicode character 'ö' is allowed in the report """
+
+        self.individual_debug = True
+        self.init_test(self.current_func_name)
+        job_name = self.test_function
+        vcf_tabix_file = join_path(self.data_dir,
+                                   "input.vcf.gz")
+        annotated_vcf_tabix = join_path(self.data_dir,
+                                        "input.vcf.gz")
+        jobs_setup_file = self.__create_jobs_setup_file(vcf_tabix_file=vcf_tabix_file,
+                                                        annotated_vcf_tabix=annotated_vcf_tabix,
+                                                        anno_cols=DFLT_MUTREP_ANNO_COLS,
+                                                        project_code=None,
+                                                        report_regions=None,
+                                                        call_info="NO",
+                                                        exclude_intronic=True,
+                                                        )
+        pl = MutRepPipeline(jobs_setup_file)
+        pl.gen_summary_report(pl.report_layout.report_regions)
+
+    @unittest.skipUnless(settings.FULL_SYSTEM_TEST, "taking too long time to test")
     def test_summary_reports_1(self):
         """ test generating offline summary report (3 families)"""
 
@@ -475,7 +498,7 @@ class TestMutRepPipeline(SafeTester):
         pl = MutRepPipeline(jobs_setup_file)
         pl.gen_summary_reports()
 
-#    @unittest.skipUnless(settings.FULL_SYSTEM_TEST, "taking too long time to test")
+    @unittest.skipUnless(settings.FULL_SYSTEM_TEST, "taking too long time to test")
     def test_family_report_1(self):
         """ test with only one family which has only one members """
 
@@ -496,7 +519,7 @@ class TestMutRepPipeline(SafeTester):
         pl = MutRepPipeline(jobs_setup_file)
         pl.gen_family_report('6789', pl.report_layout.report_regions)
 
-#    @unittest.skipUnless(settings.FULL_SYSTEM_TEST, "taking too long time to test")
+    @unittest.skipUnless(settings.FULL_SYSTEM_TEST, "taking too long time to test")
     def test_family_report_2(self):
         """ test with only one family which has two members """
 
@@ -517,7 +540,7 @@ class TestMutRepPipeline(SafeTester):
         pl = MutRepPipeline(jobs_setup_file)
         pl.gen_family_report('1234', pl.report_layout.report_regions)
 
-#    @unittest.skipUnless(settings.FULL_SYSTEM_TEST, "taking too long time to test")
+    @unittest.skipUnless(settings.FULL_SYSTEM_TEST, "taking too long time to test")
     def test_family_report_3(self):
         """ test with only one family which has three members """
 
@@ -538,7 +561,7 @@ class TestMutRepPipeline(SafeTester):
         pl = MutRepPipeline(jobs_setup_file)
         pl.gen_family_report('6067', pl.report_layout.report_regions)
 
-#    @unittest.skipUnless(settings.FULL_SYSTEM_TEST, "taking too long time to test")
+    @unittest.skipUnless(settings.FULL_SYSTEM_TEST, "taking too long time to test")
     def test_families_reports_1(self):
         """ test generating offline families reports (1 family)"""
 
@@ -559,7 +582,7 @@ class TestMutRepPipeline(SafeTester):
         pl = MutRepPipeline(jobs_setup_file)
         pl.gen_families_reports()
 
-#    @unittest.skipUnless(settings.FULL_SYSTEM_TEST, "taking too long time to test")
+    @unittest.skipUnless(settings.FULL_SYSTEM_TEST, "taking too long time to test")
     def test_families_reports_2(self):
         """ test generating offline families reports (3 families)"""
 
@@ -663,8 +686,6 @@ class TestMutRepPipeline(SafeTester):
         pl = MutRepPipeline(jobs_setup_file)
         pl.gen_families_reports()
         mylogger.debug(len(pl.samples_list))
-#        pl.samples_list.sort
-#        mylogger.debug(",".join(pl.samples_list))
 
     def tearDown(self):
         self.remove_working_dir()

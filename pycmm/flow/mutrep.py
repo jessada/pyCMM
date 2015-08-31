@@ -1,3 +1,4 @@
+# This Python file uses the following encoding: utf-8
 import sys
 import re
 import datetime
@@ -402,7 +403,7 @@ class MutRepPipeline(CMMDBPipeline):
                 info = ""
             if info == [None]:
                 info = ""
-            ws.write(row, anno_idx+LAYOUT_VCF_COLS, str(info), cell_fmt)
+            ws.write(row, anno_idx+LAYOUT_VCF_COLS, str(info).decode('utf-8'), cell_fmt)
         sample_start_idx = LAYOUT_VCF_COLS + len_anno_cols
         for sample_idx in xrange(len(samples_list)):
             call = vcf_record.genotype(samples_list[sample_idx])

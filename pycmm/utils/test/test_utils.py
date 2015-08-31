@@ -52,22 +52,5 @@ class TestFunctions(SafeTester):
                                     exp_file),
                         "concat_files cannot concat small avinput files correctly")
 
-    @unittest.skipUnless(settings.FULL_SYSTEM_TEST, "taking too long time to test")
-    def test_concat_files_2(self):
-        """ to check if 400K-lined avinput files can be concantenated """
-
-        self.individual_debug = True
-        self.init_test(self.current_func_name)
-        in_file_wildcards = join_path(self.data_dir,
-                                         'in_'+self.current_func_name+'*')
-        out_file = join_path(self.working_dir,
-                                'out_'+self.current_func_name)
-        concat_files(in_file_wildcards, out_file)
-        exp_file = join_path(self.data_dir,
-                                'exp_'+self.current_func_name)
-        self.assertTrue(filecmp.cmp(out_file,
-                                    exp_file),
-                        "concat_files cannot concat small avinput files correctly")
-
     def tearDown(self):
         self.remove_working_dir()
