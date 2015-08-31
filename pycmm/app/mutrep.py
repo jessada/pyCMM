@@ -62,7 +62,9 @@ def __display_report_config(func_name,
     exclusion_out['common mutations'] = pl.report_layout.exclude_common
     exclusion_out['intergenic mutations'] = pl.report_layout.exclude_intergenic
     exclusion_out['intronic mutations'] = pl.report_layout.exclude_intronic
-    layout_params['exclusion'] = exclusion_out
+    layout_params['exclusion criteria'] = exclusion_out
+    exclusion_out['only summary'] = pl.report_layout.only_summary
+    exclusion_out['only families'] = pl.report_layout.only_families
     disp.disp_params_set("Report layout parameters", layout_params)
     disp.new_section_txt(" . . . G E N E R A T I N G   R E P O R T S . . . ")
 
@@ -105,8 +107,13 @@ def app_pycmm_mutation_reports(*args, **kwargs):
     pl = MutRepPipeline(kwargs['jobs_setup_file'])
     mylogger.getLogger(__name__)
     __display_report_config(func_name, kwargs, pl)
-    pl.gen_families_reports()
-    pl.gen_summary_reports()
+    if pl.report_layout.only_summary:
+        pl.gen_summary_reports()
+    elif pl.report_layout.only_families:
+        pl.gen_families_reports()
+    else:
+        pl.gen_families_reports()
+        pl.gen_summary_reports()
     pl.monitor_jobs()
     mylogger.getLogger(__name__)
     disp.new_section_txt("F I N I S H <" + func_name + ">")

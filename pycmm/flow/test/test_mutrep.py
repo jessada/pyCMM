@@ -54,6 +54,8 @@ class TestMutRepPipeline(SafeTester):
                                  exclude_common=False,
                                  exclude_intergenic=False,
                                  exclude_intronic=False,
+                                 only_summary=False,
+                                 only_families=False,
                                  ):
         jobs_setup_file = join_path(self.working_dir,
                                     self.test_function+'_jobs_setup.txt')
@@ -75,6 +77,8 @@ class TestMutRepPipeline(SafeTester):
                                exclude_common=exclude_common,
                                exclude_intergenic=exclude_intergenic,
                                exclude_intronic=exclude_intronic,
+                               only_summary=only_summary,
+                               only_families=only_families,
                                out_jobs_setup_file=jobs_setup_file,
                                )
         return jobs_setup_file
@@ -122,6 +126,12 @@ class TestMutRepPipeline(SafeTester):
         self.assertEqual(pl.report_layout.exclude_intronic,
                          False,
                          "MutRepPipeline cannot correctly read report layout info 'exclude intronic' from jobs setup file")
+        self.assertEqual(pl.report_layout.only_summary,
+                         False,
+                         "MutRepPipeline cannot correctly read report layout info 'only summary' from jobs setup file")
+        self.assertEqual(pl.report_layout.only_families,
+                         False,
+                         "MutRepPipeline cannot correctly read report layout info 'only families' from jobs setup file")
 
     def test_load_jobs_info_2(self):
         """ test if non-default layout configurations are loaded correctly """
@@ -141,6 +151,8 @@ class TestMutRepPipeline(SafeTester):
                                                         exclude_common=True,
                                                         exclude_intergenic=True,
                                                         exclude_intronic=True,
+                                                        only_summary=True,
+                                                        only_families=True,
                                                         )
         pl = MutRepPipeline(jobs_setup_file)
         self.assertEqual(pl.report_layout.report_regions[1].end_pos,
@@ -173,6 +185,12 @@ class TestMutRepPipeline(SafeTester):
         self.assertEqual(pl.report_layout.exclude_intronic,
                          True,
                          "MutRepPipeline cannot correctly read report layout info 'exclude intronic' from jobs setup file")
+        self.assertEqual(pl.report_layout.only_summary,
+                         True,
+                         "MutRepPipeline cannot correctly read report layout info 'only summary' from jobs setup file")
+        self.assertEqual(pl.report_layout.only_families,
+                         True,
+                         "MutRepPipeline cannot correctly read report layout info 'only families' from jobs setup file")
 
     def test_load_jobs_info_3(self):
         """ test if non-default (None) layout configurations are loaded correctly """

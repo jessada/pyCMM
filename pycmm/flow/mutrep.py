@@ -36,6 +36,8 @@ from pycmm.flow.cmmdb import JOBS_SETUP_REPORT_EXCLUSION_CRITERIA_KEY
 from pycmm.flow.cmmdb import JOBS_SETUP_REPORT_EXCLUDE_COMMON
 from pycmm.flow.cmmdb import JOBS_SETUP_REPORT_EXCLUDE_INTERGENIC
 from pycmm.flow.cmmdb import JOBS_SETUP_REPORT_EXCLUDE_INTRONIC
+from pycmm.flow.cmmdb import JOBS_SETUP_REPORT_ONLY_SUMMARY_KEY
+from pycmm.flow.cmmdb import JOBS_SETUP_REPORT_ONLY_FAMILIES_KEY
 
 # *** color definition sections ***
 COLOR_RGB = OrderedDict()
@@ -254,6 +256,20 @@ class ReportLayout(pyCMMBase):
             return False
         else:
             return JOBS_SETUP_REPORT_EXCLUDE_INTRONIC in self.__layout_params[JOBS_SETUP_REPORT_EXCLUSION_CRITERIA_KEY]
+
+    @property
+    def only_summary(self):
+        if JOBS_SETUP_REPORT_ONLY_SUMMARY_KEY in self.__layout_params:
+            return self.__layout_params[JOBS_SETUP_REPORT_ONLY_SUMMARY_KEY]
+        else:
+            return False
+
+    @property
+    def only_families(self):
+        if JOBS_SETUP_REPORT_ONLY_FAMILIES_KEY in self.__layout_params:
+            return self.__layout_params[JOBS_SETUP_REPORT_ONLY_FAMILIES_KEY]
+        else:
+            return False
 
 class MutRepPipeline(CMMDBPipeline):
     """ A class to control mutation report pipeline """

@@ -112,6 +112,8 @@ def app_pycmm_cmmdb_create_jobs_setup_file(*args, **kwargs):
     exclusion_out['intergenic mutations (--exclude_intergenic)'] = kwargs['exclude_intergenic']
     exclusion_out['intronic mutations (--exclude_intronic)'] = kwargs['exclude_intronic']
     layout_params['exclusion'] = exclusion_out
+    layout_params['only summary report (--only_summary)'] = kwargs['only_summary']
+    layout_params['only families report (--only_families)'] = kwargs['only_families']
     disp.disp_params_set("Report layout parameters", layout_params)
     create_jobs_setup_file(dataset_name=kwargs['dataset_name'],
                            project_out_dir=kwargs['project_out_dir'],
@@ -129,6 +131,8 @@ def app_pycmm_cmmdb_create_jobs_setup_file(*args, **kwargs):
                            exclude_common=kwargs['exclude_common'],
                            exclude_intergenic=kwargs['exclude_intergenic'],
                            exclude_intronic=kwargs['exclude_intronic'],
+                           only_summary=kwargs['only_summary'],
+                           only_families=kwargs['only_families'],
                            out_jobs_setup_file=kwargs['out_jobs_setup_file'],
                            )
     mylogger.getLogger(__name__)

@@ -68,6 +68,8 @@ JOBS_SETUP_REPORT_EXCLUSION_CRITERIA_KEY = "EXCLUSSION_CRITERIA"
 JOBS_SETUP_REPORT_EXCLUDE_COMMON = "Common"
 JOBS_SETUP_REPORT_EXCLUDE_INTERGENIC = "Intergenic"
 JOBS_SETUP_REPORT_EXCLUDE_INTRONIC = "Intronic"
+JOBS_SETUP_REPORT_ONLY_SUMMARY_KEY = "ONLY_SUMMARY"
+JOBS_SETUP_REPORT_ONLY_FAMILIES_KEY = "ONLY_FAMILIES"
 
 class MemberInfo(pyCMMBase):
     """  To encapsulate family information so that it is readable """
@@ -370,6 +372,8 @@ def create_jobs_setup_file(dataset_name,
                            exclude_common=False,
                            exclude_intergenic=False,
                            exclude_intronic=False,
+                           only_summary=False,
+                           only_families=False,
                            out_jobs_setup_file=None,
                            ):
     mylogger.getLogger(__name__)
@@ -446,6 +450,8 @@ def create_jobs_setup_file(dataset_name,
         if exclude_intronic:
             exclusion_criteria.append(JOBS_SETUP_REPORT_EXCLUDE_INTRONIC)
         report_layout_config[JOBS_SETUP_REPORT_EXCLUSION_CRITERIA_KEY] = exclusion_criteria
+    report_layout_config[JOBS_SETUP_REPORT_ONLY_SUMMARY_KEY] = only_summary
+    report_layout_config[JOBS_SETUP_REPORT_ONLY_FAMILIES_KEY] = only_families
     job_setup_document[JOBS_SETUP_REPORT_LAYOUT_SECTION] = report_layout_config
 
 
