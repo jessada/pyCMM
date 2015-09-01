@@ -1,10 +1,9 @@
 import sys
-import datetime
 from collections import OrderedDict
 from pycmm import settings
 from pycmm.utils import mylogger
 from pycmm.utils import disp
-from pycmm.utils import log_file_with_time_stamp
+from pycmm.utils import set_log_file
 from pycmm.flow.mutrep import MutRepPipeline
 from pycmm.flow.mutrep import ReportRegion
 
@@ -12,11 +11,7 @@ def __display_report_config(func_name,
                             kwargs,
                             pl,
                             ):
-    time_stamp = datetime.datetime.now()
-    log_file = log_file_with_time_stamp(kwargs["log_file"],
-                                        time_stamp,
-                                        )
-    mylogger.set_log_file(log_file)
+    log_file = set_log_file(kwargs['log_file'])
     disp.new_section_txt("S T A R T <" + func_name + ">")
     required_params = OrderedDict()
     required_params['jobs setup file (-j)'] = kwargs['jobs_setup_file']
@@ -30,10 +25,11 @@ def __display_report_config(func_name,
             required_params['report regions (-r)'] = raw_report_regions 
     if 'out_file' in kwargs:
         required_params['output file (-o)'] = kwargs['out_file']
-    optional_params = OrderedDict()
-    optional_params['log file (-l)'] = log_file
+    optional_params = None
+    if log_file is not None:
+        optional_params = OrderedDict()
+        optional_params['log file (-l)'] = log_file
     disp.show_config(app_description=settings.MUTREP_FAMILY_REPORT_DESCRIPTION,
-                     time_stamp=time_stamp,
                      required_params=required_params,
                      optional_params=optional_params,
                      )
@@ -72,6 +68,7 @@ def __display_report_config(func_name,
 
 def app_pycmm_family_report(*args, **kwargs):
     mylogger.getLogger(__name__)
+
     func_name = sys._getframe().f_code.co_name
     pl = MutRepPipeline(kwargs['jobs_setup_file'])
     mylogger.getLogger(__name__)

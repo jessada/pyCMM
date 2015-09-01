@@ -25,7 +25,7 @@ argp.add_argument('-l',
                   dest='log_file',
                   metavar='FILE',
                   help='log file',
-                  default=settings.MUTREP_PIPELINE_DFLT_LOG_FILE)
+                  default=None)
 args = argp.parse_args()
 app_pycmm_summary_report(jobs_setup_file=args.jobs_setup_file,
                          report_regions=args.report_regions,

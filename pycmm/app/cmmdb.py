@@ -1,30 +1,26 @@
 import sys
-import datetime
 from collections import OrderedDict
 from pycmm import settings
 from pycmm.utils import mylogger
 from pycmm.utils import disp
-from pycmm.utils import log_file_with_time_stamp
+from pycmm.utils import set_log_file
 from pycmm.flow.cmmdb import CMMDBPipeline
 from pycmm.flow.cmmdb import create_jobs_setup_file
 
 
 def app_pycmm_cmmdb_cal_mut_stat(*args, **kwargs):
     mylogger.getLogger(__name__)
-    time_stamp = datetime.datetime.now()
-    log_file = log_file_with_time_stamp(kwargs["log_file"],
-                                        time_stamp,
-                                        )
-    mylogger.set_log_file(log_file)
+    log_file = set_log_file(kwargs['log_file'])
     func_name = sys._getframe().f_code.co_name
 
     disp.new_section_txt("S T A R T <" + func_name + ">")
     required_params = OrderedDict()
     required_params['jobs setup file (-j)'] = kwargs['jobs_setup_file']
-    optional_params = OrderedDict()
-    optional_params['log file (-l)'] = log_file
+    optional_params = None
+    if log_file is not None:
+        optional_params = OrderedDict()
+        optional_params['log file (-l)'] = log_file
     disp.show_config(app_description=settings.CMMDB_MUTSTAT_DESCRIPTION,
-                     time_stamp=time_stamp,
                      required_params=required_params,
                      optional_params=optional_params,
                      )
@@ -35,20 +31,17 @@ def app_pycmm_cmmdb_cal_mut_stat(*args, **kwargs):
 
 def app_pycmm_cmmdb_table_annovar(*args, **kwargs):
     mylogger.getLogger(__name__)
-    time_stamp = datetime.datetime.now()
-    log_file = log_file_with_time_stamp(kwargs["log_file"],
-                                        time_stamp,
-                                        )
-    mylogger.set_log_file(log_file)
+    log_file = set_log_file(kwargs['log_file'])
     func_name = sys._getframe().f_code.co_name
 
     disp.new_section_txt("S T A R T <" + func_name + ">")
     required_params = OrderedDict()
     required_params['jobs setup file (-j)'] = kwargs['jobs_setup_file']
-    optional_params = OrderedDict()
-    optional_params['log file (-l)'] = log_file
+    optional_params = None
+    if log_file is not None:
+        optional_params = OrderedDict()
+        optional_params['log file (-l)'] = log_file
     disp.show_config(app_description=settings.CMMDB_TABLEANNOVAR_DESCRIPTION,
-                     time_stamp=time_stamp,
                      required_params=required_params,
                      optional_params=optional_params,
                      )
@@ -70,7 +63,6 @@ def app_pycmm_cmmdb_table_annovar(*args, **kwargs):
 
 def app_pycmm_cmmdb_create_jobs_setup_file(*args, **kwargs):
     mylogger.getLogger(__name__)
-    time_stamp = datetime.datetime.now()
     func_name = sys._getframe().f_code.co_name
 
     disp.new_section_txt("S T A R T <" + func_name + ">")
@@ -87,7 +79,6 @@ def app_pycmm_cmmdb_create_jobs_setup_file(*args, **kwargs):
         optional_params['project code (-p)'] = kwargs['project_code']
     optional_params['output jobs setup file (-o)'] = kwargs['out_jobs_setup_file']
     disp.show_config(app_description=settings.CMMDB_PIPELINE_DESCRIPTION,
-                     time_stamp=time_stamp,
                      required_params=required_params,
                      optional_params=optional_params,
                      )
