@@ -52,12 +52,14 @@ def __display_report_config(func_name,
         layout_params['report regions'] = report_region_outs
     else:
         layout_params['report regions'] = "all"
-    layout_params['extra call information'] = pl.report_layout.call_info
     layout_params['frequency ratios'] = pl.report_layout.freq_ratios
     layout_params['reports output folder'] = pl.rpts_out_dir
-    layout_params['call information'] = pl.report_layout.call_info
     layout_params['split chromosome'] = pl.report_layout.split_chrom
     layout_params['summary_families sheet'] = pl.report_layout.summary_families_sheet
+    extra_anno_cols ={}
+    extra_anno_cols['call detail'] = pl.report_layout.call_detail
+    extra_anno_cols['mitochondria'] = pl.report_layout.anno_mt
+    layout_params['extra annotation columns'] = extra_anno_cols
     exclusion_out = {}
     exclusion_out['common mutations'] = pl.report_layout.exclude_common
     exclusion_out['intergenic mutations'] = pl.report_layout.exclude_intergenic

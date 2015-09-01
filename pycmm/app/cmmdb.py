@@ -79,8 +79,8 @@ def app_pycmm_cmmdb_create_jobs_setup_file(*args, **kwargs):
     required_params['project output directory (-O)'] = kwargs['project_out_dir']
     required_params['vcf tabix file (-i)'] = kwargs['vcf_tabix_file']
     optional_params = OrderedDict()
-    if kwargs['vcf_region'] is not None:
-        optional_params['vcf region (-r)'] = kwargs['vcf_region']
+    if kwargs['db_region'] is not None:
+        optional_params['vcf region (-r)'] = kwargs['db_region']
     if kwargs['sample_infos'] is not None:
         optional_params['sample information (-s)'] = kwargs['sample_infos']
     if kwargs['project_code'] is not None:
@@ -102,11 +102,14 @@ def app_pycmm_cmmdb_create_jobs_setup_file(*args, **kwargs):
         layout_params['report regions (-R)'] = kwargs['report_regions']
     else:
         layout_params['report regions (-R)'] = "all"
-    layout_params['call information (--call_info)'] = kwargs['call_info']
     if kwargs['frequency_ratios'] is not None:
         layout_params['rare frequency ratios (-f)'] = kwargs['frequency_ratios']
     layout_params['split chromosome (--split_chrom)'] = kwargs['split_chrom']
     layout_params['summary_families sheet (--summary_families)'] = kwargs['summary_families_sheet']
+    extra_anno_cols = {}
+    extra_anno_cols['call detail (--call_detail)'] = kwargs['call_detail']
+    extra_anno_cols['mitochondria (--anno_mt)'] = kwargs['anno_mt']
+    layout_params['extra annotation columns'] = extra_anno_cols
     exclusion_out = {}
     exclusion_out['common mutations (--exclude_common)'] = kwargs['exclude_common']
     exclusion_out['intergenic mutations (--exclude_intergenic)'] = kwargs['exclude_intergenic']
@@ -118,16 +121,17 @@ def app_pycmm_cmmdb_create_jobs_setup_file(*args, **kwargs):
     create_jobs_setup_file(dataset_name=kwargs['dataset_name'],
                            project_out_dir=kwargs['project_out_dir'],
                            vcf_tabix_file=kwargs['vcf_tabix_file'],
-                           vcf_region=kwargs['vcf_region'],
+                           db_region=kwargs['db_region'],
                            sample_infos=kwargs['sample_infos'],
                            project_code=kwargs['project_code'],
                            anno_cols=kwargs['anno_cols'],
                            annotated_vcf_tabix=kwargs['annotated_vcf_tabix'],
                            report_regions=kwargs['report_regions'],
-                           call_info=kwargs['call_info'],
                            frequency_ratios=kwargs['frequency_ratios'],
                            split_chrom=kwargs['split_chrom'],
                            summary_families_sheet=kwargs['summary_families_sheet'],
+                           call_detail=kwargs['call_detail'],
+                           anno_mt=kwargs['anno_mt'],
                            exclude_common=kwargs['exclude_common'],
                            exclude_intergenic=kwargs['exclude_intergenic'],
                            exclude_intronic=kwargs['exclude_intronic'],

@@ -17,28 +17,31 @@ from pycmm.settings import DFLT_ANNOVAR_DB_OPS
 from pycmm.settings import MUTREP_ALLOC_TIME
 from pycmm.settings import MUTREP_FAMILY_REPORT_BIN
 from pycmm.settings import MUTREP_SUMMARY_REPORT_BIN
+from pycmm.settings import MT_ANNO_COLS
 from pycmm.template import pyCMMBase
 from pycmm.utils import exec_sh
 from pycmm.utils import mylogger
 from pycmm.proc.tavcf import TableAnnovarVcfReader as VcfReader
 from pycmm.flow.cmmdb import CMMDBPipeline
 from pycmm.flow.cmmdb import ALL_CHROMS
-from pycmm.flow.cmmdb import JOBS_SETUP_REPORT_LAYOUT_SECTION
-from pycmm.flow.cmmdb import JOBS_SETUP_REPORT_ANNOTATED_VCF_TABIX
-from pycmm.flow.cmmdb import JOBS_SETUP_REPORT_ANNO_COLS_KEY
-from pycmm.flow.cmmdb import JOBS_SETUP_REPORT_REGIONS_KEY
-from pycmm.flow.cmmdb import JOBS_SETUP_REPORT_CALL_INFO_KEY
-from pycmm.flow.cmmdb import JOBS_SETUP_REPORT_FREQ_RATIOS_KEY
-from pycmm.flow.cmmdb import JOBS_SETUP_REPORT_FREQ_RATIOS_COL_KEY
-from pycmm.flow.cmmdb import JOBS_SETUP_REPORT_FREQ_RATIOS_FREQ_KEY
-from pycmm.flow.cmmdb import JOBS_SETUP_REPORT_SPLIT_CHROM_KEY
-from pycmm.flow.cmmdb import JOBS_SETUP_REPORT_SUMMARY_FAMILIES_KEY
-from pycmm.flow.cmmdb import JOBS_SETUP_REPORT_EXCLUSION_CRITERIA_KEY
-from pycmm.flow.cmmdb import JOBS_SETUP_REPORT_EXCLUDE_COMMON
-from pycmm.flow.cmmdb import JOBS_SETUP_REPORT_EXCLUDE_INTERGENIC
-from pycmm.flow.cmmdb import JOBS_SETUP_REPORT_EXCLUDE_INTRONIC
-from pycmm.flow.cmmdb import JOBS_SETUP_REPORT_ONLY_SUMMARY_KEY
-from pycmm.flow.cmmdb import JOBS_SETUP_REPORT_ONLY_FAMILIES_KEY
+from pycmm.flow.cmmdb import JOBS_SETUP_RPT_LAYOUT_SECTION
+from pycmm.flow.cmmdb import JOBS_SETUP_RPT_ANNOTATED_VCF_TABIX
+from pycmm.flow.cmmdb import JOBS_SETUP_RPT_ANNO_COLS_KEY
+from pycmm.flow.cmmdb import JOBS_SETUP_RPT_REGIONS_KEY
+from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FREQ_RATIOS_KEY
+from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FREQ_RATIOS_COL_KEY
+from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FREQ_RATIOS_FREQ_KEY
+from pycmm.flow.cmmdb import JOBS_SETUP_RPT_SPLIT_CHROM_KEY
+from pycmm.flow.cmmdb import JOBS_SETUP_RPT_SUMMARY_FAMILIES_KEY
+from pycmm.flow.cmmdb import JOBS_SETUP_RPT_EXTRA_ANNO_COLS_KEY
+from pycmm.flow.cmmdb import JOBS_SETUP_RPT_CALL_DETAIL_KEY
+from pycmm.flow.cmmdb import JOBS_SETUP_RPT_MT_KEY
+from pycmm.flow.cmmdb import JOBS_SETUP_RPT_ROW_EXCLUSION_CRITERIA_KEY
+from pycmm.flow.cmmdb import JOBS_SETUP_RPT_EXCLUDE_COMMON
+from pycmm.flow.cmmdb import JOBS_SETUP_RPT_EXCLUDE_INTERGENIC
+from pycmm.flow.cmmdb import JOBS_SETUP_RPT_EXCLUDE_INTRONIC
+from pycmm.flow.cmmdb import JOBS_SETUP_RPT_ONLY_SUMMARY_KEY
+from pycmm.flow.cmmdb import JOBS_SETUP_RPT_ONLY_FAMILIES_KEY
 
 # *** color definition sections ***
 COLOR_RGB = OrderedDict()
@@ -187,37 +190,40 @@ class ReportLayout(pyCMMBase):
                  layout_params,
                  ):
         self.__layout_params = layout_params
+        self.__anno_cols = self.__cal_anno_cols()
+
+    def __cal_anno_cols(self):
+        anno_cols = self.__layout_params[JOBS_SETUP_RPT_ANNO_COLS_KEY]
+        if not self.anno_mt:
+            anno_cols = [x for x in anno_cols if x not in MT_ANNO_COLS]
+        return anno_cols
 
     @property
     def anno_cols(self):
-        return self.__layout_params[JOBS_SETUP_REPORT_ANNO_COLS_KEY]
+        return self.__anno_cols
 
     @property
     def annotated_vcf_tabix(self):
-        if JOBS_SETUP_REPORT_ANNOTATED_VCF_TABIX in self.__layout_params:
-            return self.__layout_params[JOBS_SETUP_REPORT_ANNOTATED_VCF_TABIX]
+        if JOBS_SETUP_RPT_ANNOTATED_VCF_TABIX in self.__layout_params:
+            return self.__layout_params[JOBS_SETUP_RPT_ANNOTATED_VCF_TABIX]
         else:
             return None
 
     @property
     def report_regions(self):
-        if JOBS_SETUP_REPORT_REGIONS_KEY in self.__layout_params:
+        if JOBS_SETUP_RPT_REGIONS_KEY in self.__layout_params:
             return map(lambda x: ReportRegion(str(x)),
-                       self.__layout_params[JOBS_SETUP_REPORT_REGIONS_KEY])
+                       self.__layout_params[JOBS_SETUP_RPT_REGIONS_KEY])
         else:
             return None
 
     @property
-    def call_info(self):
-        return self.__layout_params[JOBS_SETUP_REPORT_CALL_INFO_KEY]
-
-    @property
     def freq_ratios(self):
-        if JOBS_SETUP_REPORT_FREQ_RATIOS_KEY in self.__layout_params:
+        if JOBS_SETUP_RPT_FREQ_RATIOS_KEY in self.__layout_params:
             freq_ratios = {}
-            for freq_ratio in self.__layout_params[JOBS_SETUP_REPORT_FREQ_RATIOS_KEY]:
-                col = freq_ratio[JOBS_SETUP_REPORT_FREQ_RATIOS_COL_KEY]
-                freq = freq_ratio[JOBS_SETUP_REPORT_FREQ_RATIOS_FREQ_KEY]
+            for freq_ratio in self.__layout_params[JOBS_SETUP_RPT_FREQ_RATIOS_KEY]:
+                col = freq_ratio[JOBS_SETUP_RPT_FREQ_RATIOS_COL_KEY]
+                freq = freq_ratio[JOBS_SETUP_RPT_FREQ_RATIOS_FREQ_KEY]
                 freq_ratios[col] = freq
             return freq_ratios
         else:
@@ -225,50 +231,64 @@ class ReportLayout(pyCMMBase):
 
     @property
     def split_chrom(self):
-        if JOBS_SETUP_REPORT_SPLIT_CHROM_KEY in self.__layout_params:
-            return self.__layout_params[JOBS_SETUP_REPORT_SPLIT_CHROM_KEY]
+        if JOBS_SETUP_RPT_SPLIT_CHROM_KEY in self.__layout_params:
+            return self.__layout_params[JOBS_SETUP_RPT_SPLIT_CHROM_KEY]
         else:
             return False
 
     @property
     def summary_families_sheet(self):
-        if JOBS_SETUP_REPORT_SUMMARY_FAMILIES_KEY in self.__layout_params:
-            return self.__layout_params[JOBS_SETUP_REPORT_SUMMARY_FAMILIES_KEY]
+        if JOBS_SETUP_RPT_SUMMARY_FAMILIES_KEY in self.__layout_params:
+            return self.__layout_params[JOBS_SETUP_RPT_SUMMARY_FAMILIES_KEY]
         else:
             return False
+
+    @property
+    def call_detail(self):
+        if JOBS_SETUP_RPT_EXTRA_ANNO_COLS_KEY not in self.__layout_params:
+            return False
+        else:
+            return JOBS_SETUP_RPT_CALL_DETAIL_KEY in self.__layout_params[JOBS_SETUP_RPT_EXTRA_ANNO_COLS_KEY]
+
+    @property
+    def anno_mt(self):
+        if JOBS_SETUP_RPT_EXTRA_ANNO_COLS_KEY not in self.__layout_params:
+            return False
+        else:
+            return JOBS_SETUP_RPT_MT_KEY in self.__layout_params[JOBS_SETUP_RPT_EXTRA_ANNO_COLS_KEY]
 
     @property
     def exclude_common(self):
-        if JOBS_SETUP_REPORT_EXCLUSION_CRITERIA_KEY not in self.__layout_params:
+        if JOBS_SETUP_RPT_ROW_EXCLUSION_CRITERIA_KEY not in self.__layout_params:
             return False
         else:
-            return JOBS_SETUP_REPORT_EXCLUDE_COMMON in self.__layout_params[JOBS_SETUP_REPORT_EXCLUSION_CRITERIA_KEY]
+            return JOBS_SETUP_RPT_EXCLUDE_COMMON in self.__layout_params[JOBS_SETUP_RPT_ROW_EXCLUSION_CRITERIA_KEY]
 
     @property
     def exclude_intergenic(self):
-        if JOBS_SETUP_REPORT_EXCLUSION_CRITERIA_KEY not in self.__layout_params:
+        if JOBS_SETUP_RPT_ROW_EXCLUSION_CRITERIA_KEY not in self.__layout_params:
             return False
         else:
-            return JOBS_SETUP_REPORT_EXCLUDE_INTERGENIC in self.__layout_params[JOBS_SETUP_REPORT_EXCLUSION_CRITERIA_KEY]
+            return JOBS_SETUP_RPT_EXCLUDE_INTERGENIC in self.__layout_params[JOBS_SETUP_RPT_ROW_EXCLUSION_CRITERIA_KEY]
 
     @property
     def exclude_intronic(self):
-        if JOBS_SETUP_REPORT_EXCLUSION_CRITERIA_KEY not in self.__layout_params:
+        if JOBS_SETUP_RPT_ROW_EXCLUSION_CRITERIA_KEY not in self.__layout_params:
             return False
         else:
-            return JOBS_SETUP_REPORT_EXCLUDE_INTRONIC in self.__layout_params[JOBS_SETUP_REPORT_EXCLUSION_CRITERIA_KEY]
+            return JOBS_SETUP_RPT_EXCLUDE_INTRONIC in self.__layout_params[JOBS_SETUP_RPT_ROW_EXCLUSION_CRITERIA_KEY]
 
     @property
     def only_summary(self):
-        if JOBS_SETUP_REPORT_ONLY_SUMMARY_KEY in self.__layout_params:
-            return self.__layout_params[JOBS_SETUP_REPORT_ONLY_SUMMARY_KEY]
+        if JOBS_SETUP_RPT_ONLY_SUMMARY_KEY in self.__layout_params:
+            return self.__layout_params[JOBS_SETUP_RPT_ONLY_SUMMARY_KEY]
         else:
             return False
 
     @property
     def only_families(self):
-        if JOBS_SETUP_REPORT_ONLY_FAMILIES_KEY in self.__layout_params:
-            return self.__layout_params[JOBS_SETUP_REPORT_ONLY_FAMILIES_KEY]
+        if JOBS_SETUP_RPT_ONLY_FAMILIES_KEY in self.__layout_params:
+            return self.__layout_params[JOBS_SETUP_RPT_ONLY_FAMILIES_KEY]
         else:
             return False
 
@@ -292,7 +312,7 @@ class MutRepPipeline(CMMDBPipeline):
                 }
 
     def __parse_report_layout(self):
-        self.__report_layout = ReportLayout(self._jobs_info[JOBS_SETUP_REPORT_LAYOUT_SECTION])
+        self.__report_layout = ReportLayout(self._jobs_info[JOBS_SETUP_RPT_LAYOUT_SECTION])
 
     @property
     def annotated_vcf_tabix(self):
@@ -332,19 +352,19 @@ class MutRepPipeline(CMMDBPipeline):
     def __set_layout(self, ws, record_size):
         ws.autofilter(0, 0, 0, record_size-1)
 
-    def __format_call_info(self, call, call_fmt):
-        call_info = []
+    def __format_call_detail(self, call, call_fmt):
+        call_detail = []
         for fmt_idx in xrange(len(call_fmt)):
             fmt = call_fmt[fmt_idx]
             data = call.data[fmt_idx]
             if type(data) is list:
                 data = map(lambda x: str(x), data)
-                call_info.append(fmt + "=" + ",".join(data))
+                call_detail.append(fmt + "=" + ",".join(data))
             else:
                 if data is None:
                     data = "."
-                call_info.append(fmt + "=" + str(data))
-        return ":".join(call_info)
+                call_detail.append(fmt + "=" + str(data))
+        return ":".join(call_detail)
 
     def __init_cells_format(self, wb):
         self.__cell_fmt_mgr = CellFormatManager(wb, COLOR_RGB)
@@ -368,10 +388,10 @@ class MutRepPipeline(CMMDBPipeline):
         ncol = sample_start_idx
         for sample_idx in xrange(len(samples_list)):
             sample_id = samples_list[sample_idx]
-            if self.report_layout.call_info:
+            if self.report_layout.call_detail:
                 col_idx = (2*sample_idx) + (sample_start_idx)
                 ws.write(0, col_idx, sample_id, cell_fmt)
-                ws.write(0, col_idx+1, sample_id+"(call info)", cell_fmt)
+                ws.write(0, col_idx+1, sample_id+"(detail)", cell_fmt)
                 ncol += 2
             else:
                 ws.write(0, sample_idx+sample_start_idx, sample_id, cell_fmt)
@@ -408,10 +428,10 @@ class MutRepPipeline(CMMDBPipeline):
         for sample_idx in xrange(len(samples_list)):
             call = vcf_record.genotype(samples_list[sample_idx])
             zygo = call.cmm_gts[allele_idx]
-            if self.report_layout.call_info:
+            if self.report_layout.call_detail:
                 col_idx = (2*sample_idx) + (sample_start_idx)
                 ws.write(row, col_idx, zygo, cell_fmt)
-                formatted_call = self.__format_call_info(call, vcf_record.FORMAT.split(":"))
+                formatted_call = self.__format_call_detail(call, vcf_record.FORMAT.split(":"))
                 ws.write(row, col_idx+1, formatted_call, cell_fmt)
             else:
                 ws.write(row, sample_idx+sample_start_idx, zygo, cell_fmt)
