@@ -21,7 +21,7 @@ from pycmm.settings import MT_ANNO_COLS
 from pycmm.template import pyCMMBase
 from pycmm.utils import exec_sh
 from pycmm.utils import mylogger
-from pycmm.proc.tavcf import TableAnnovarVcfReader as VcfReader
+from pycmm.proc.taparser import TAVcfReader as VcfReader
 from pycmm.flow.cmmdb import CMMDBPipeline
 from pycmm.flow.cmmdb import ALL_CHROMS
 from pycmm.flow.cmmdb import JOBS_SETUP_RPT_LAYOUT_SECTION
@@ -413,6 +413,7 @@ class MutRepPipeline(CMMDBPipeline):
         ws.write(row, 2, vcf_record.REF, cell_fmt)
         ws.write(row, 3, str(alt_allele), cell_fmt)
         len_anno_cols = len(anno_cols)
+        # annotate INFO columns
         for anno_idx in xrange(len_anno_cols):
             info = vcf_record.INFO[anno_cols[anno_idx]]
             if (type(info) is list) and (len(info) == 1):
@@ -611,8 +612,8 @@ class MutRepPipeline(CMMDBPipeline):
         else:
             slurm_log_prefix = join_path(self.slurm_log_dir,
                                          self.dataset_name)
-            slurm_log_prefix += '_rpts_summary'
-            job_name_prefix = self.dataset_name + '_rpts_summary'
+            slurm_log_prefix += '_rpts_smy'
+            job_name_prefix = self.dataset_name + '_rpts_smy'
             job_script = MUTREP_SUMMARY_REPORT_BIN
             job_params_prefix = " -j " + self.jobs_setup_file
             out_file_prefix = join_path(self.rpts_out_dir,
