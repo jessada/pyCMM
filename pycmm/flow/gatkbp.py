@@ -698,7 +698,7 @@ class GATKBPPipeline(JobManager):
         job name of the process.
         """
 
-        mylogger.debug("preprocess sample " + sample_name)
+        mylogger.info("preprocess sample " + sample_name)
         job_name_bwa_mem = self.bwa_mem(sample_name)
         job_name_sort_sam = self.sort_sam(sample_name,
                                           prereq=[job_name_bwa_mem])
@@ -782,7 +782,7 @@ def create_jobs_setup_file(dataset_name,
             for subdir_item in listdir(item_path):
                 if subdir_item.endswith('.fastq.gz'):
                     sample = {}
-                    sample[JOBS_SETUP_SAMPLE_NAME_KEY] = item
+                    sample[JOBS_SETUP_SAMPLE_NAME_KEY] = '"' + item + '"'
                     sample[JOBS_SETUP_PLATFORM_KEY] = platform
                     sample[JOBS_SETUP_SAMPLE_GROUP_KEY] = sample_group
                     if item in sample_usage_mail:
