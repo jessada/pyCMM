@@ -15,7 +15,7 @@ def app_pycmm_dnaseq_pipeline(*args, **kwargs):
     log_file = log_file_with_time_stamp(kwargs["log_file"],
                                         time_stamp,
                                         )
-    mylogger.set_log_file(log_file)
+    mylogger.set_log_file(kwargs["log_file"])
     func_name = sys._getframe().f_code.co_name
 
     disp.new_section_txt("S T A R T <" + func_name + ">")
@@ -24,7 +24,6 @@ def app_pycmm_dnaseq_pipeline(*args, **kwargs):
     optional_params = OrderedDict()
     optional_params['log file (-l)'] = log_file
     disp.show_config(app_description=settings.DNASEQ_PIPELINE_DESCRIPTION,
-                     time_stamp=time_stamp,
                      required_params=required_params,
                      optional_params=optional_params,
                      )
@@ -36,7 +35,6 @@ def app_pycmm_dnaseq_pipeline(*args, **kwargs):
 
 def app_pycmm_create_jobs_setup_file(*args, **kwargs):
     mylogger.getLogger(__name__)
-    time_stamp = datetime.datetime.now()
     func_name = sys._getframe().f_code.co_name
 
     disp.new_section_txt("S T A R T <" + func_name + ">")
@@ -59,7 +57,6 @@ def app_pycmm_create_jobs_setup_file(*args, **kwargs):
         optional_params['targets interval list (--targets_interval_list)'] = kwargs['targets_interval_list']
     optional_params['output jobs setup file (-o)'] = kwargs['out_jobs_setup_file']
     disp.show_config(app_description=settings.DNASEQ_PIPELINE_DESCRIPTION,
-                     time_stamp=time_stamp,
                      required_params=required_params,
                      optional_params=optional_params,
                      )

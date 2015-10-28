@@ -1,30 +1,26 @@
 import sys
-import datetime
 from collections import OrderedDict
 from pycmm import settings
 from pycmm.utils import mylogger
 from pycmm.utils import disp
-from pycmm.utils import log_file_with_time_stamp
+from pycmm.utils import set_log_file
 from pycmm.flow.cmmdb import CMMDBPipeline
 from pycmm.flow.cmmdb import create_jobs_setup_file
 
 
 def app_pycmm_cmmdb_cal_mut_stat(*args, **kwargs):
     mylogger.getLogger(__name__)
-    time_stamp = datetime.datetime.now()
-    log_file = log_file_with_time_stamp(kwargs["log_file"],
-                                        time_stamp,
-                                        )
-    mylogger.set_log_file(log_file)
+    log_file = set_log_file(kwargs['log_file'])
     func_name = sys._getframe().f_code.co_name
 
     disp.new_section_txt("S T A R T <" + func_name + ">")
     required_params = OrderedDict()
     required_params['jobs setup file (-j)'] = kwargs['jobs_setup_file']
-    optional_params = OrderedDict()
-    optional_params['log file (-l)'] = log_file
+    optional_params = None
+    if log_file is not None:
+        optional_params = OrderedDict()
+        optional_params['log file (-l)'] = log_file
     disp.show_config(app_description=settings.CMMDB_MUTSTAT_DESCRIPTION,
-                     time_stamp=time_stamp,
                      required_params=required_params,
                      optional_params=optional_params,
                      )
@@ -35,20 +31,17 @@ def app_pycmm_cmmdb_cal_mut_stat(*args, **kwargs):
 
 def app_pycmm_cmmdb_table_annovar(*args, **kwargs):
     mylogger.getLogger(__name__)
-    time_stamp = datetime.datetime.now()
-    log_file = log_file_with_time_stamp(kwargs["log_file"],
-                                        time_stamp,
-                                        )
-    mylogger.set_log_file(log_file)
+    log_file = set_log_file(kwargs['log_file'])
     func_name = sys._getframe().f_code.co_name
 
     disp.new_section_txt("S T A R T <" + func_name + ">")
     required_params = OrderedDict()
     required_params['jobs setup file (-j)'] = kwargs['jobs_setup_file']
-    optional_params = OrderedDict()
-    optional_params['log file (-l)'] = log_file
+    optional_params = None
+    if log_file is not None:
+        optional_params = OrderedDict()
+        optional_params['log file (-l)'] = log_file
     disp.show_config(app_description=settings.CMMDB_TABLEANNOVAR_DESCRIPTION,
-                     time_stamp=time_stamp,
                      required_params=required_params,
                      optional_params=optional_params,
                      )
@@ -70,7 +63,6 @@ def app_pycmm_cmmdb_table_annovar(*args, **kwargs):
 
 def app_pycmm_cmmdb_create_jobs_setup_file(*args, **kwargs):
     mylogger.getLogger(__name__)
-    time_stamp = datetime.datetime.now()
     func_name = sys._getframe().f_code.co_name
 
     disp.new_section_txt("S T A R T <" + func_name + ">")
@@ -79,15 +71,14 @@ def app_pycmm_cmmdb_create_jobs_setup_file(*args, **kwargs):
     required_params['project output directory (-O)'] = kwargs['project_out_dir']
     required_params['vcf tabix file (-i)'] = kwargs['vcf_tabix_file']
     optional_params = OrderedDict()
-    if kwargs['vcf_region'] is not None:
-        optional_params['vcf region (-r)'] = kwargs['vcf_region']
+    if kwargs['db_region'] is not None:
+        optional_params['vcf region (-r)'] = kwargs['db_region']
     if kwargs['sample_infos'] is not None:
-        optional_params['patients list (-c)'] = kwargs['sample_infos']
+        optional_params['sample information (-s)'] = kwargs['sample_infos']
     if kwargs['project_code'] is not None:
         optional_params['project code (-p)'] = kwargs['project_code']
     optional_params['output jobs setup file (-o)'] = kwargs['out_jobs_setup_file']
     disp.show_config(app_description=settings.CMMDB_PIPELINE_DESCRIPTION,
-                     time_stamp=time_stamp,
                      required_params=required_params,
                      optional_params=optional_params,
                      )
@@ -102,21 +93,41 @@ def app_pycmm_cmmdb_create_jobs_setup_file(*args, **kwargs):
         layout_params['report regions (-R)'] = kwargs['report_regions']
     else:
         layout_params['report regions (-R)'] = "all"
-    layout_params['call information (-C)'] = kwargs['call_info']
     if kwargs['frequency_ratios'] is not None:
         layout_params['rare frequency ratios (-f)'] = kwargs['frequency_ratios']
+    layout_params['split chromosome (--split_chrom)'] = kwargs['split_chrom']
+    layout_params['summary_families sheet (--summary_families)'] = kwargs['summary_families_sheet']
+    extra_anno_cols = {}
+    extra_anno_cols['call detail (--call_detail)'] = kwargs['call_detail']
+    extra_anno_cols['mitochondria (--anno_mt)'] = kwargs['anno_mt']
+    layout_params['extra annotation columns'] = extra_anno_cols
+    exclusion_out = {}
+    exclusion_out['common mutations (--exclude_common)'] = kwargs['exclude_common']
+    exclusion_out['intergenic mutations (--exclude_intergenic)'] = kwargs['exclude_intergenic']
+    exclusion_out['intronic mutations (--exclude_intronic)'] = kwargs['exclude_intronic']
+    layout_params['exclusion'] = exclusion_out
+    layout_params['only summary report (--only_summary)'] = kwargs['only_summary']
+    layout_params['only families report (--only_families)'] = kwargs['only_families']
     disp.disp_params_set("Report layout parameters", layout_params)
     create_jobs_setup_file(dataset_name=kwargs['dataset_name'],
                            project_out_dir=kwargs['project_out_dir'],
                            vcf_tabix_file=kwargs['vcf_tabix_file'],
-                           vcf_region=kwargs['vcf_region'],
+                           db_region=kwargs['db_region'],
                            sample_infos=kwargs['sample_infos'],
                            project_code=kwargs['project_code'],
                            anno_cols=kwargs['anno_cols'],
                            annotated_vcf_tabix=kwargs['annotated_vcf_tabix'],
                            report_regions=kwargs['report_regions'],
-                           call_info=kwargs['call_info'],
                            frequency_ratios=kwargs['frequency_ratios'],
+                           split_chrom=kwargs['split_chrom'],
+                           summary_families_sheet=kwargs['summary_families_sheet'],
+                           call_detail=kwargs['call_detail'],
+                           anno_mt=kwargs['anno_mt'],
+                           exclude_common=kwargs['exclude_common'],
+                           exclude_intergenic=kwargs['exclude_intergenic'],
+                           exclude_intronic=kwargs['exclude_intronic'],
+                           only_summary=kwargs['only_summary'],
+                           only_families=kwargs['only_families'],
                            out_jobs_setup_file=kwargs['out_jobs_setup_file'],
                            )
     mylogger.getLogger(__name__)

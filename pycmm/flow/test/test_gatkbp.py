@@ -75,6 +75,7 @@ class TestGATKBPPipeline(SafeTester):
     def test_load_jobs_info(self):
         """ test if meta data and sample info are loaded correctly """
 
+        self.individual_debug = True
         self.init_test(self.current_func_name)
         job_name = self.test_function
         jobs_setup_file = join_path(self.data_dir,
@@ -114,7 +115,7 @@ class TestGATKBPPipeline(SafeTester):
                          False,
                          "GATKBPPipeline cannot correctly read meta info 'usage mail' from jobs setup file")
         self.assertEqual(len(pl.samples),
-                         3,
+                         4,
                          "GATKBPPipeline cannot correctly identify number of sampels from jobs setup file")
         self.assertEqual(pl.samples['test_sample3'].sample_name,
                          'test_sample3',
@@ -148,6 +149,9 @@ class TestGATKBPPipeline(SafeTester):
                          "GATKBPPipeline cannot correctly read sample information from jobs setup file")
         self.assertEqual(pl.samples['test_sample10000'].usage_mail,
                          False,
+                         "GATKBPPipeline cannot correctly read sample information from jobs setup file")
+        self.assertEqual(pl.samples['1015_05'].sample_name,
+                         "1015_05",
                          "GATKBPPipeline cannot correctly read sample information from jobs setup file")
 
     @unittest.skipUnless(settings.SLURM_TEST, "taking too much UPPMAX cpu-core hours")
@@ -735,6 +739,7 @@ class TestFunctions(SafeTester):
                               samples_root_dir=samples_root_dir,
                               out_jobs_setup_file=out_jobs_setup_file,
                               )
+        mylogger.debug(out_jobs_setup_file)
         self.assertTrue(filecmp.cmp(out_jobs_setup_file,
                                     exp_jobs_setup_file),
                         "create_jobs_setup_file doesn't funciton correctly")

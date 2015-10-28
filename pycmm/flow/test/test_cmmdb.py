@@ -19,13 +19,13 @@ from pycmm.flow.cmmdb import JOBS_SETUP_SAMPLE_INFOS_KEY
 from pycmm.flow.cmmdb import JOBS_SETUP_FAMILY_ID_KEY
 from pycmm.flow.cmmdb import JOBS_SETUP_MEMBERS_LIST_KEY
 from pycmm.flow.cmmdb import JOBS_SETUP_SAMPLE_ID_KEY
-from pycmm.proc.annovar import ANNOVAR_PARAMS_INPUT_FILE_KEY
-from pycmm.proc.annovar import ANNOVAR_PARAMS_DB_FOLDER_KEY
-from pycmm.proc.annovar import ANNOVAR_PARAMS_BUILDVER_KEY
-from pycmm.proc.annovar import ANNOVAR_PARAMS_OUT_PREFIX_KEY
-from pycmm.proc.annovar import ANNOVAR_PARAMS_DB_NAMES_KEY
-from pycmm.proc.annovar import ANNOVAR_PARAMS_DB_OPS_KEY
-from pycmm.proc.annovar import ANNOVAR_PARAMS_NASTRING_KEY
+from pycmm.proc.annovarlib import ANNOVAR_PARAMS_INPUT_FILE_KEY
+from pycmm.proc.annovarlib import ANNOVAR_PARAMS_DB_FOLDER_KEY
+from pycmm.proc.annovarlib import ANNOVAR_PARAMS_BUILDVER_KEY
+from pycmm.proc.annovarlib import ANNOVAR_PARAMS_OUT_PREFIX_KEY
+from pycmm.proc.annovarlib import ANNOVAR_PARAMS_DB_NAMES_KEY
+from pycmm.proc.annovarlib import ANNOVAR_PARAMS_DB_OPS_KEY
+from pycmm.proc.annovarlib import ANNOVAR_PARAMS_NASTRING_KEY
 
 DFLT_ANNOVAR_TEST_DB_FOLDER = DFLT_ANNOVAR_DB_FOLDER
 DFLT_ANNOVAR_TEST_DB_NAMES = "refGene"
@@ -52,7 +52,7 @@ class TestCMMDBPipeline(SafeTester):
                                  vcf_tabix_file,
                                  dataset_name=None,
                                  project_code=SLOW_PROJECT_CODE,
-                                 vcf_region="18",
+                                 db_region="18",
                                  sample_infos=None,
                                  annovar_human_db_dir=DFLT_ANNOVAR_TEST_DB_FOLDER,
                                  annovar_buildver="hg19",
@@ -67,7 +67,7 @@ class TestCMMDBPipeline(SafeTester):
         create_jobs_setup_file(dataset_name=dataset_name,
                                project_out_dir=self.working_dir,
                                vcf_tabix_file=vcf_tabix_file,
-                               vcf_region=vcf_region,
+                               db_region=db_region,
                                sample_infos=sample_infos,
                                project_code=project_code,
                                annovar_human_db_dir=annovar_human_db_dir,
@@ -98,7 +98,7 @@ class TestCMMDBPipeline(SafeTester):
         self.assertEqual(pl.input_vcf_tabix,
                          dummy_vcf_tabix_file,
                          "CMMDBPipeline cannot correctly read meta info 'input vcf tabix' from jobs setup file")
-        self.assertEqual(pl.vcf_region,
+        self.assertEqual(pl.db_region,
                          "18",
                          "CMMDBPipeline cannot correctly read meta info 'vcf region' from jobs setup file")
         self.assertEqual(pl.samples_list,
@@ -148,7 +148,7 @@ class TestCMMDBPipeline(SafeTester):
         dummy_vcf_tabix_file = "/path/to/vcf_tabix_file"
         jobs_setup_file = self.__create_jobs_setup_file(vcf_tabix_file=dummy_vcf_tabix_file,
                                                         project_code=None,
-                                                        vcf_region=None,
+                                                        db_region=None,
                                                         sample_infos="Co-441,Co-666",
                                                         )
         pl = CMMDBPipeline(jobs_setup_file)
@@ -156,7 +156,7 @@ class TestCMMDBPipeline(SafeTester):
         self.assertEqual(pl.project_code,
                          None,
                          "CMMDBPipeline cannot correctly read meta info 'project code' from jobs setup file")
-        self.assertEqual(pl.vcf_region,
+        self.assertEqual(pl.db_region,
                          None,
                          "CMMDBPipeline cannot correctly read meta info 'vcf region' from jobs setup file")
         self.assertEqual(pl.samples_list,
@@ -182,16 +182,18 @@ class TestCMMDBPipeline(SafeTester):
         self.assertEqual(len(pl.family_infos),
                          2,
                          "CMMDBPipeline cannot correctly read meta info 'families list' from jobs setup file")
-        self.assertEqual(pl.family_infos[1].fam_id,
+        fam_info_1 = pl.family_infos['242']
+        fam_info_2 = pl.family_infos['6067']
+        self.assertEqual(fam_info_2.fam_id,
                          "6067",
                          "CMMDBPipeline cannot correctly read meta info 'families list' from jobs setup file")
-        self.assertEqual(len(pl.family_infos[0].members),
+        self.assertEqual(len(fam_info_1.members),
                          3,
                          "CMMDBPipeline cannot correctly read meta info 'families list' from jobs setup file")
-        self.assertEqual(len(pl.family_infos[1].members),
+        self.assertEqual(len(fam_info_2.members),
                          2,
                          "CMMDBPipeline cannot correctly read meta info 'families list' from jobs setup file")
-        self.assertEqual(pl.family_infos[1].members[1].sample_id,
+        self.assertEqual(fam_info_2.members[1].sample_id,
                          "884-99D",
                          "CMMDBPipeline cannot correctly read meta info 'families list' from jobs setup file")
 
@@ -240,7 +242,7 @@ class TestCMMDBPipeline(SafeTester):
                                "exp_stat")
         jobs_setup_file = self.__create_jobs_setup_file(vcf_tabix_file=vcf_tabix_file,
                                                         project_code=None,
-                                                        vcf_region=None,
+                                                        db_region=None,
                                                         )
         pl = CMMDBPipeline(jobs_setup_file)
         pl.cal_mut_stat()
@@ -259,7 +261,7 @@ class TestCMMDBPipeline(SafeTester):
                                    "multi_chrs.vcf.gz")
         jobs_setup_file = self.__create_jobs_setup_file(vcf_tabix_file=vcf_tabix_file,
                                                         project_code=None,
-                                                        vcf_region=None,
+                                                        db_region=None,
                                                         )
         pl = CMMDBPipeline(jobs_setup_file)
         pl.cal_mut_stat()
@@ -276,7 +278,7 @@ class TestCMMDBPipeline(SafeTester):
                                "exp_stat")
         jobs_setup_file = self.__create_jobs_setup_file(vcf_tabix_file=vcf_tabix_file,
                                                         project_code=None,
-                                                        vcf_region=None,
+                                                        db_region=None,
                                                         )
         pl = CMMDBPipeline(jobs_setup_file)
         pl.cal_mut_stat()
@@ -306,7 +308,7 @@ class TestCMMDBPipeline(SafeTester):
         sample_infos += ",Al-169"
         jobs_setup_file = self.__create_jobs_setup_file(vcf_tabix_file=vcf_tabix_file,
                                                         project_code=None,
-                                                        vcf_region=None,
+                                                        db_region=None,
                                                         sample_infos=sample_infos,
                                                         )
         pl = CMMDBPipeline(jobs_setup_file)
@@ -326,7 +328,7 @@ class TestCMMDBPipeline(SafeTester):
         jobs_setup_file = self.__create_jobs_setup_file(dataset_name="test_cal_stat_1",
                                                         vcf_tabix_file=vcf_tabix_file,
                                                         project_code=FAST_PROJECT_CODE,
-                                                        vcf_region="X",
+                                                        db_region="X",
                                                         )
         pl = CMMDBPipeline(jobs_setup_file)
         pl.cal_mut_stat()
@@ -342,7 +344,7 @@ class TestCMMDBPipeline(SafeTester):
         jobs_setup_file = self.__create_jobs_setup_file(dataset_name="test_cal_stat_2",
                                                         vcf_tabix_file=vcf_tabix_file,
                                                         project_code=FAST_PROJECT_CODE,
-                                                        vcf_region=None,
+                                                        db_region=None,
                                                         )
         pl = CMMDBPipeline(jobs_setup_file)
         pl.cal_mut_stat()

@@ -49,5 +49,13 @@ SAMPLES:
     sample_group: NA
     sample_name: test_sample3
     usage_mail: NO
+  - fastq_files:
+      - R1: /home/jessada/private/projects/CMM/scripts/gatkbp/axeq_chr5_19/resources/1015_05/1015_05_R1.fastq.gz
+        R2: /home/jessada/private/projects/CMM/scripts/gatkbp/axeq_chr5_19/resources/1015_05/1015_05_R2.fastq.gz
+    platform: Illumina
+    preprocess_sample: YES
+    sample_group: 1303AHS-0016
+    sample_name: "1015_05"
+    usage_mail: NO
 USAGE_MAIL: NO
 VARIANTS_CALLING: Yes

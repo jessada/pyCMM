@@ -15,14 +15,14 @@ from pycmm.template import pyCMMBase
 from pycmm.utils import exec_sh
 from pycmm.utils import mylogger
 from pycmm.utils.jobman import JobManager
-from pycmm.proc.annovar import Annovar
-from pycmm.proc.annovar import ANNOVAR_PARAMS_INPUT_FILE_KEY
-from pycmm.proc.annovar import ANNOVAR_PARAMS_DB_FOLDER_KEY
-from pycmm.proc.annovar import ANNOVAR_PARAMS_BUILDVER_KEY
-from pycmm.proc.annovar import ANNOVAR_PARAMS_OUT_PREFIX_KEY
-from pycmm.proc.annovar import ANNOVAR_PARAMS_DB_NAMES_KEY
-from pycmm.proc.annovar import ANNOVAR_PARAMS_DB_OPS_KEY
-from pycmm.proc.annovar import ANNOVAR_PARAMS_NASTRING_KEY
+from pycmm.proc.annovarlib import Annovar
+from pycmm.proc.annovarlib import ANNOVAR_PARAMS_INPUT_FILE_KEY
+from pycmm.proc.annovarlib import ANNOVAR_PARAMS_DB_FOLDER_KEY
+from pycmm.proc.annovarlib import ANNOVAR_PARAMS_BUILDVER_KEY
+from pycmm.proc.annovarlib import ANNOVAR_PARAMS_OUT_PREFIX_KEY
+from pycmm.proc.annovarlib import ANNOVAR_PARAMS_DB_NAMES_KEY
+from pycmm.proc.annovarlib import ANNOVAR_PARAMS_DB_OPS_KEY
+from pycmm.proc.annovarlib import ANNOVAR_PARAMS_NASTRING_KEY
 from pycmm.settings import CMMDB_ALLOC_TIME
 from pycmm.settings import DFLT_MUTREP_ANNO_COLS
 from pycmm.settings import DFLT_MUTREP_FREQ_RATIOS
@@ -36,7 +36,7 @@ JOBS_SETUP_PROJECT_CODE_KEY = "PROJECT_CODE"
 JOBS_SETUP_OUTPUT_DIR_KEY = "OUTPUT_DIR"
 JOBS_SETUP_JOBS_REPORT_FILE_KEY = "JOBS_REPORT_FILE"
 JOBS_SETUP_VCF_TABIX_FILE_KEY = "VCF_TABIX_FILE"
-JOBS_SETUP_VCF_REGION_KEY = "VCF_REGION"
+JOBS_SETUP_DB_REGION_KEY = "DB_REGION"
 
 # *************** jobs ANNOVAR section ***************
 JOBS_SETUP_ANNOVAR_SECTION = "ANNOVAR"
@@ -54,14 +54,24 @@ JOBS_SETUP_MEMBERS_LIST_KEY = "MEMBERS"
 JOBS_SETUP_SAMPLE_ID_KEY = "SAMPLE_ID"
 
 # *************** report layout section ***************
-JOBS_SETUP_REPORT_LAYOUT_SECTION = "REPORT_LAYOUT"
-JOBS_SETUP_REPORT_ANNOTATED_VCF_TABIX = "ANNOTATED_VCF_TABIX"
-JOBS_SETUP_REPORT_ANNO_COLS_KEY = "COLUMNS"
-JOBS_SETUP_REPORT_REGIONS_KEY = "REGIONS"
-JOBS_SETUP_REPORT_CALL_INFO_KEY = "CALL_INFO"
-JOBS_SETUP_REPORT_FREQ_RATIOS_KEY = "FREQUENCY_RATIOS"
-JOBS_SETUP_REPORT_FREQ_RATIOS_COL_KEY = "COLUMN"
-JOBS_SETUP_REPORT_FREQ_RATIOS_FREQ_KEY = "FREQUENCY"
+JOBS_SETUP_RPT_LAYOUT_SECTION = "REPORT_LAYOUT"
+JOBS_SETUP_RPT_ANNOTATED_VCF_TABIX = "ANNOTATED_VCF_TABIX"
+JOBS_SETUP_RPT_ANNO_COLS_KEY = "COLUMNS"
+JOBS_SETUP_RPT_REGIONS_KEY = "REGIONS"
+JOBS_SETUP_RPT_FREQ_RATIOS_KEY = "FREQUENCY_RATIOS"
+JOBS_SETUP_RPT_FREQ_RATIOS_COL_KEY = "COLUMN"
+JOBS_SETUP_RPT_FREQ_RATIOS_FREQ_KEY = "FREQUENCY"
+JOBS_SETUP_RPT_SPLIT_CHROM_KEY = "SPLIT_CHROM"
+JOBS_SETUP_RPT_SUMMARY_FAMILIES_KEY = "SUMMARY_FAMILIES"
+JOBS_SETUP_RPT_EXTRA_ANNO_COLS_KEY = "EXTRA_ANNOTATION_COLUMNS"
+JOBS_SETUP_RPT_CALL_DETAIL_KEY = "Calling_detail"
+JOBS_SETUP_RPT_MT_KEY = "Mitochondria"
+JOBS_SETUP_RPT_ROW_EXCLUSION_CRITERIA_KEY = "ROWEXCLUSION_CRITERIA"
+JOBS_SETUP_RPT_EXCLUDE_COMMON = "Common"
+JOBS_SETUP_RPT_EXCLUDE_INTERGENIC = "Intergenic"
+JOBS_SETUP_RPT_EXCLUDE_INTRONIC = "Intronic"
+JOBS_SETUP_RPT_ONLY_SUMMARY_KEY = "ONLY_SUMMARY"
+JOBS_SETUP_RPT_ONLY_FAMILIES_KEY = "ONLY_FAMILIES"
 
 class MemberInfo(pyCMMBase):
     """  To encapsulate family information so that it is readable """
@@ -107,6 +117,7 @@ class CMMDBPipeline(JobManager):
                  ):
         mylogger.getLogger(__name__)
         self.__load_jobs_info(jobs_setup_file)
+        self.__jobs_setup_file = jobs_setup_file
         JobManager.__init__(self,
                             jobs_report_file=self.jobs_report_file)
         self.__parse_sample_infos()
@@ -136,9 +147,9 @@ class CMMDBPipeline(JobManager):
         return self._jobs_info[JOBS_SETUP_VCF_TABIX_FILE_KEY]
 
     @property
-    def vcf_region(self):
-        if JOBS_SETUP_VCF_REGION_KEY in self._jobs_info:
-            return str(self._jobs_info[JOBS_SETUP_VCF_REGION_KEY])
+    def db_region(self):
+        if JOBS_SETUP_DB_REGION_KEY in self._jobs_info:
+            return str(self._jobs_info[JOBS_SETUP_DB_REGION_KEY])
         else:
             return None
 
@@ -193,7 +204,11 @@ class CMMDBPipeline(JobManager):
 
     @property
     def report_layout(self):
-        return self._jobs_info[JOBS_SETUP_REPORT_LAYOUT_SECTION]
+        return self._jobs_info[JOBS_SETUP_RPT_LAYOUT_SECTION]
+
+    @property
+    def jobs_setup_file(self):
+        return self.__jobs_setup_file
 
     def __load_jobs_info(self, jobs_setup_file):
         stream = file(jobs_setup_file, "r")
@@ -210,12 +225,12 @@ class CMMDBPipeline(JobManager):
             self.__family_infos = None
         else:
             self.__samples_list = []
-            self.__family_infos = []
+            self.__family_infos = {}
             for entry in sample_infos:
                 family_info = FamilyInfo(entry)
                 for member in family_info.members:
                     self.__samples_list.append(member.sample_id)
-                self.__family_infos.append(family_info)
+                self.__family_infos[family_info.fam_id] = family_info
 
     def __parse_annovar_configs(self):
         cfg = self._jobs_info[JOBS_SETUP_ANNOVAR_SECTION]
@@ -233,13 +248,13 @@ class CMMDBPipeline(JobManager):
     def __get_cal_mut_stat_params(self,
                                   dataset_name,
                                   out_stat_file,
-                                  vcf_region=None,
+                                  db_region=None,
                                   samples_list=None,
                                   ):
         params = " -k " + dataset_name
         params += " -i " + self.input_vcf_tabix
-        if vcf_region is not None:
-            params += " -r " + vcf_region
+        if db_region is not None:
+            params += " -r " + db_region
         if samples_list is not None:
             if type(samples_list) is list:
                 params += " -c " + ",".join(samples_list)
@@ -254,12 +269,12 @@ class CMMDBPipeline(JobManager):
                                              self.dataset_name + ".stat")
             params = self.__get_cal_mut_stat_params(dataset_name=self.dataset_name,
                                                     out_stat_file=self.out_stat_file,
-                                                    vcf_region=self.vcf_region,
+                                                    db_region=self.db_region,
                                                     samples_list=self.samples_list,
                                                     )
             cmd = CAL_MUTATIONS_STAT_SCRIPT + params
             exec_sh(cmd)
-        elif self.vcf_region is None:
+        elif self.db_region is None:
             self.__out_stat_file = []
             for chrom in ALL_CHROMS:
                 dataset_name = self.dataset_name + "_" + chrom
@@ -267,7 +282,7 @@ class CMMDBPipeline(JobManager):
                                           dataset_name + ".stat")
                 params = self.__get_cal_mut_stat_params(dataset_name=dataset_name,
                                                         out_stat_file=out_stat_file,
-                                                        vcf_region=chrom,
+                                                        db_region=chrom,
                                                         samples_list=self.samples_list,
                                                         )
                 self.__out_stat_file.append(out_stat_file)
@@ -290,7 +305,7 @@ class CMMDBPipeline(JobManager):
                                              self.dataset_name + ".stat")
             params = self.__get_cal_mut_stat_params(dataset_name=self.dataset_name,
                                                     out_stat_file=self.out_stat_file,
-                                                    vcf_region=self.vcf_region,
+                                                    db_region=self.db_region,
                                                     samples_list=self.samples_list,
                                                     )
             job_name = self.dataset_name + "_cal_stat"
@@ -320,7 +335,7 @@ class CMMDBPipeline(JobManager):
             self.submit_job(job_name,
                             self.project_code,
                             "core",
-                            "1",
+                            "2",
                             CMMDB_ALLOC_TIME,
                             slurm_log_file,
                             cfg.table_annovar_cmd,
@@ -339,7 +354,7 @@ class CMMDBPipeline(JobManager):
 def create_jobs_setup_file(dataset_name,
                            project_out_dir,
                            vcf_tabix_file,
-                           vcf_region=None,
+                           db_region=None,
                            sample_infos=None,
                            project_code=None,
                            jobs_report_file=None,
@@ -351,8 +366,16 @@ def create_jobs_setup_file(dataset_name,
                            anno_cols=None,
                            annotated_vcf_tabix=None,
                            report_regions=None,
-                           call_info=False,
                            frequency_ratios=None,
+                           split_chrom=False,
+                           summary_families_sheet=False,
+                           call_detail=False,
+                           anno_mt=False,
+                           exclude_common=False,
+                           exclude_intergenic=False,
+                           exclude_intronic=False,
+                           only_summary=False,
+                           only_families=False,
                            out_jobs_setup_file=None,
                            ):
     mylogger.getLogger(__name__)
@@ -373,8 +396,8 @@ def create_jobs_setup_file(dataset_name,
     job_setup_document[JOBS_SETUP_DATASET_NAME_KEY] = dataset_name
     if project_code is not None:
         job_setup_document[JOBS_SETUP_PROJECT_CODE_KEY] = project_code
-    if vcf_region is not None:
-        job_setup_document[JOBS_SETUP_VCF_REGION_KEY] = vcf_region
+    if db_region is not None:
+        job_setup_document[JOBS_SETUP_DB_REGION_KEY] = db_region
     if (sample_infos is not None) and isfile(sample_infos):
         s_stream = file(sample_infos, "r")
         document = yaml.safe_load(s_stream)
@@ -401,23 +424,43 @@ def create_jobs_setup_file(dataset_name,
     job_setup_document[JOBS_SETUP_ANNOVAR_SECTION] = annovar_config
     report_layout_config = {}
     if anno_cols is None:
-        report_layout_config[JOBS_SETUP_REPORT_ANNO_COLS_KEY] = DFLT_MUTREP_ANNO_COLS
+        report_layout_config[JOBS_SETUP_RPT_ANNO_COLS_KEY] = DFLT_MUTREP_ANNO_COLS
     else:
-        report_layout_config[JOBS_SETUP_REPORT_ANNO_COLS_KEY] = anno_cols.split(",")
+        report_layout_config[JOBS_SETUP_RPT_ANNO_COLS_KEY] = anno_cols.split(",")
     if annotated_vcf_tabix is not None:
-        report_layout_config[JOBS_SETUP_REPORT_ANNOTATED_VCF_TABIX] = annotated_vcf_tabix
+        report_layout_config[JOBS_SETUP_RPT_ANNOTATED_VCF_TABIX] = annotated_vcf_tabix
     if report_regions is not None:
-        report_layout_config[JOBS_SETUP_REPORT_REGIONS_KEY] = report_regions.split(",")
-    report_layout_config[JOBS_SETUP_REPORT_CALL_INFO_KEY] = call_info
+        report_layout_config[JOBS_SETUP_RPT_REGIONS_KEY] = report_regions.split(",")
     if frequency_ratios is None:
         frequency_ratios = DFLT_MUTREP_FREQ_RATIOS
     job_freq_ratios = []
     for frequency_ratio in frequency_ratios.split(","):
         (col, freq) = frequency_ratio.split(":")
-        job_freq_ratios.append({JOBS_SETUP_REPORT_FREQ_RATIOS_COL_KEY: col,
-                                JOBS_SETUP_REPORT_FREQ_RATIOS_FREQ_KEY: freq,
+        job_freq_ratios.append({JOBS_SETUP_RPT_FREQ_RATIOS_COL_KEY: col,
+                                JOBS_SETUP_RPT_FREQ_RATIOS_FREQ_KEY: freq,
                                 })
-    report_layout_config[JOBS_SETUP_REPORT_FREQ_RATIOS_KEY] = job_freq_ratios
-    job_setup_document[JOBS_SETUP_REPORT_LAYOUT_SECTION] = report_layout_config
+    report_layout_config[JOBS_SETUP_RPT_FREQ_RATIOS_KEY] = job_freq_ratios
+    report_layout_config[JOBS_SETUP_RPT_SPLIT_CHROM_KEY] = split_chrom
+    report_layout_config[JOBS_SETUP_RPT_SUMMARY_FAMILIES_KEY] = summary_families_sheet
+    if call_detail or anno_mt:
+        extra_anno_cols = []
+        if call_detail:
+            extra_anno_cols.append(JOBS_SETUP_RPT_CALL_DETAIL_KEY)
+        if anno_mt:
+            extra_anno_cols.append(JOBS_SETUP_RPT_MT_KEY)
+        report_layout_config[JOBS_SETUP_RPT_EXTRA_ANNO_COLS_KEY] = extra_anno_cols
+    if exclude_common or exclude_intergenic or exclude_intronic:
+        exclusion_criteria = []
+        if exclude_common:
+            exclusion_criteria.append(JOBS_SETUP_RPT_EXCLUDE_COMMON)
+        if exclude_intergenic:
+            exclusion_criteria.append(JOBS_SETUP_RPT_EXCLUDE_INTERGENIC)
+        if exclude_intronic:
+            exclusion_criteria.append(JOBS_SETUP_RPT_EXCLUDE_INTRONIC)
+        report_layout_config[JOBS_SETUP_RPT_ROW_EXCLUSION_CRITERIA_KEY] = exclusion_criteria
+    report_layout_config[JOBS_SETUP_RPT_ONLY_SUMMARY_KEY] = only_summary
+    report_layout_config[JOBS_SETUP_RPT_ONLY_FAMILIES_KEY] = only_families
+    job_setup_document[JOBS_SETUP_RPT_LAYOUT_SECTION] = report_layout_config
+
 
     pyaml.dump(job_setup_document, stream)

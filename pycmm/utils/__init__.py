@@ -1,10 +1,22 @@
 import subprocess
+import datetime
 from pycmm.utils import mylogger
 
 def get_file_prefix(file_name, file_ext):
     if file_name.endswith(file_ext):
         return file_name[:-len(file_ext)]
     return file_name
+
+def set_log_file(raw_file):
+    if raw_file is not None:
+        time_stamp = datetime.datetime.now()
+        log_file = log_file_with_time_stamp(raw_file,
+                                            time_stamp,
+                                            )
+        mylogger.set_log_file(log_file)
+        return log_file
+    else:
+        return None
 
 def log_file_with_time_stamp(raw_file, time_stamp):
     log_file = get_file_prefix(raw_file, '.log')

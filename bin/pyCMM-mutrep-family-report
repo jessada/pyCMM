@@ -1,0 +1,41 @@
+from pycmm import settings
+from pycmm.app.mutrep import app_pycmm_family_report
+import argparse
+
+argp = argparse.ArgumentParser(description=settings.MUTREP_FAMILY_REPORT_DESCRIPTION)
+argp.add_argument('-j',
+                  dest='jobs_setup_file',
+                  metavar="JOBS SETUP FILE",
+                  help='a file containing jobs configuration',
+                  required=True,
+                  )
+argp.add_argument('-f',
+                  dest='fam_id',
+                  metavar="FAM ID",
+                  help='family id',
+                  required=True,
+                  )
+argp.add_argument('-r',
+                  dest='report_regions',
+                  metavar="REPORT REGIONS",
+                  help='report regions',
+                  default=None,
+                  )
+argp.add_argument('-o',
+                  dest='out_file',
+                  metavar="FILE",
+                  help='output file',
+                  default=None,
+                  )
+argp.add_argument('-l',
+                  dest='log_file',
+                  metavar='FILE',
+                  help='log file',
+                  default=None)
+args = argp.parse_args()
+app_pycmm_family_report(jobs_setup_file=args.jobs_setup_file,
+                        fam_id=args.fam_id,
+                        report_regions=args.report_regions,
+                        out_file=args.out_file,
+                        log_file=args.log_file,
+                        )
