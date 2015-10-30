@@ -11,6 +11,7 @@ from os.path import join as join_path
 from os.path import isdir
 from os.path import isfile
 from collections import OrderedDict
+from pycmm.settings import PREDICTION_LIST
 from pycmm.settings import DFLT_ANNOVAR_DB_FOLDER
 from pycmm.settings import DFLT_ANNOVAR_DB_NAMES
 from pycmm.settings import DFLT_ANNOVAR_DB_OPS
@@ -415,16 +416,20 @@ class MutRepPipeline(CMMDBPipeline):
         len_anno_cols = len(anno_cols)
         # annotate INFO columns
         for anno_idx in xrange(len_anno_cols):
-            info = vcf_record.INFO[anno_cols[anno_idx]]
+            anno_col_name = anno_cols[anno_idx]
+            info = vcf_record.INFO[anno_col_name]
             if (type(info) is list) and (len(info) == 1):
                 info = info[0]
             elif (type(info) is list) and (len(info) > 1):
                 info = info[allele_idx-1]
+            if anno_col_name in PREDICTION_LIST:
+                info = info.description
             if info is None:
                 info = ""
             if info == [None]:
                 info = ""
             ws.write(row, anno_idx+LAYOUT_VCF_COLS, str(info).decode('utf-8'), cell_fmt)
+        # annotate samples information
         sample_start_idx = LAYOUT_VCF_COLS + len_anno_cols
         for sample_idx in xrange(len(samples_list)):
             call = vcf_record.genotype(samples_list[sample_idx])

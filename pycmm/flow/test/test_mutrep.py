@@ -542,8 +542,12 @@ class TestMutRepPipeline(SafeTester):
                                         "input.vcf.gz")
         rpt_out_file = join_path(self.working_dir,
                                  self.current_func_name + ".xlsx")
+        anno_cols = list(DFLT_TEST_MUTREP_COLS)
+        anno_cols.append("LRT_pred")
+        anno_cols.append("LRT_score")
         jobs_setup_file = self.__create_jobs_setup_file(vcf_tabix_file=vcf_tabix_file,
                                                         annotated_vcf_tabix=annotated_vcf_tabix,
+                                                        anno_cols=anno_cols,
                                                         project_code=None,
                                                         report_regions=None,
                                                         call_detail=False,
@@ -774,8 +778,14 @@ class TestMutRepPipeline(SafeTester):
                                    "input.vcf.gz")
         annotated_vcf_tabix = join_path(self.data_dir,
                                         "input.vcf.gz")
+        anno_cols = list(DFLT_TEST_MUTREP_COLS)
+        anno_cols.append("LRT_score")
+        anno_cols.append("LRT_pred")
+        anno_cols.append("Polyphen2_HDIV_score")
+        anno_cols.append("Polyphen2_HDIV_pred")
         jobs_setup_file = self.__create_jobs_setup_file(vcf_tabix_file=vcf_tabix_file,
                                                         annotated_vcf_tabix=annotated_vcf_tabix,
+                                                        anno_cols=anno_cols,
                                                         project_code=None,
                                                         report_regions=None,
                                                         call_detail=False,
