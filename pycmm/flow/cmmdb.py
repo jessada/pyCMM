@@ -34,8 +34,8 @@ CAL_MUTATIONS_STAT_SCRIPT = "$PYCMM/bash/cal_mutations_stat.sh"
 # *************** jobs metadata section ***************
 JOBS_SETUP_DATASET_NAME_KEY = "DATASET_NAME"
 JOBS_SETUP_PROJECT_CODE_KEY = "PROJECT_CODE"
-JOBS_SETUP_DB_ALLOC_TIME = "DB_ALLOC_TIME"
-JOBS_SETUP_RPT_ALLOC_TIME = "RPT_ALLOC_TIME"
+JOBS_SETUP_DB_ALLOC_TIME_KEY = "DB_ALLOC_TIME"
+JOBS_SETUP_RPT_ALLOC_TIME_KEY = "RPT_ALLOC_TIME"
 JOBS_SETUP_OUTPUT_DIR_KEY = "OUTPUT_DIR"
 JOBS_SETUP_JOBS_REPORT_FILE_KEY = "JOBS_REPORT_FILE"
 JOBS_SETUP_VCF_TABIX_FILE_KEY = "VCF_TABIX_FILE"
@@ -147,7 +147,7 @@ class CMMDBPipeline(JobManager):
 
     @property
     def db_alloc_time(self):
-        return self._jobs_info[JOBS_SETUP_DB_ALLOC_TIME]
+        return self._jobs_info[JOBS_SETUP_DB_ALLOC_TIME_KEY]
 
     @property
     def input_vcf_tabix(self):
@@ -407,10 +407,10 @@ def create_jobs_setup_file(dataset_name,
         job_setup_document[JOBS_SETUP_PROJECT_CODE_KEY] = project_code
     if db_alloc_time is None:
         db_alloc_time = DFLT_CMMDB_ALLOC_TIME
-    job_setup_document[JOBS_SETUP_DB_ALLOC_TIME] = '"' + db_alloc_time + '"'
+    job_setup_document[JOBS_SETUP_DB_ALLOC_TIME_KEY] = '"' + db_alloc_time + '"'
     if rpt_alloc_time is None:
         rpt_alloc_time = DFLT_MUTREP_ALLOC_TIME
-    job_setup_document[JOBS_SETUP_RPT_ALLOC_TIME] = '"' + rpt_alloc_time + '"'
+    job_setup_document[JOBS_SETUP_RPT_ALLOC_TIME_KEY] = '"' + rpt_alloc_time + '"'
     if db_region is not None:
         job_setup_document[JOBS_SETUP_DB_REGION_KEY] = db_region
     if (sample_infos is not None) and isfile(sample_infos):

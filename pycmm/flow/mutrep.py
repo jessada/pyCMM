@@ -24,7 +24,7 @@ from pycmm.utils import mylogger
 from pycmm.proc.taparser import TAVcfReader as VcfReader
 from pycmm.flow.cmmdb import CMMDBPipeline
 from pycmm.flow.cmmdb import ALL_CHROMS
-from pycmm.flow.cmmdb import JOBS_SETUP_RPT_ALLOC_TIME
+from pycmm.flow.cmmdb import JOBS_SETUP_RPT_ALLOC_TIME_KEY
 from pycmm.flow.cmmdb import JOBS_SETUP_RPT_LAYOUT_SECTION
 from pycmm.flow.cmmdb import JOBS_SETUP_RPT_ANNOTATED_VCF_TABIX
 from pycmm.flow.cmmdb import JOBS_SETUP_RPT_ANNO_COLS_KEY
@@ -317,7 +317,7 @@ class MutRepPipeline(CMMDBPipeline):
 
     @property
     def rpt_alloc_time(self):
-        return self._jobs_info[JOBS_SETUP_RPT_ALLOC_TIME]
+        return self._jobs_info[JOBS_SETUP_RPT_ALLOC_TIME_KEY]
 
     @property
     def annotated_vcf_tabix(self):

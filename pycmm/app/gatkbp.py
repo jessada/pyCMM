@@ -33,7 +33,7 @@ def app_pycmm_dnaseq_pipeline(*args, **kwargs):
     mylogger.getLogger(__name__)
     disp.new_section_txt("F I N I S H <" + func_name + ">")
 
-def app_pycmm_create_jobs_setup_file(*args, **kwargs):
+def app_pycmm_gatkbp_create_jobs_setup_file(*args, **kwargs):
     mylogger.getLogger(__name__)
     func_name = sys._getframe().f_code.co_name
 
@@ -46,6 +46,8 @@ def app_pycmm_create_jobs_setup_file(*args, **kwargs):
     required_params['project output directory (-O)'] = kwargs['project_out_dir']
     required_params['samples root directory (-I)'] = kwargs['samples_root_dir']
     optional_params = OrderedDict()
+    if kwargs['gatkbp_alloc_time'] is not None:
+        optional_params['GATK Best Practice allocation time (--gatkbp_alloc_time)'] = kwargs['gatkbp_alloc_time']
     if kwargs['known_indels_file'] is not None:
         known_indels_files = kwargs['known_indels_file']
         for idx in xrange(len(known_indels_files)):
@@ -63,6 +65,7 @@ def app_pycmm_create_jobs_setup_file(*args, **kwargs):
     create_jobs_setup_file(dataset_name=kwargs['dataset_name'],
                            sample_group=kwargs['sample_group'],
                            project_code=kwargs['project_code'],
+                           gatkbp_alloc_time=kwargs['gatkbp_alloc_time'],
                            reference_file=kwargs['reference_file'],
                            project_out_dir=kwargs['project_out_dir'],
                            samples_root_dir=kwargs['samples_root_dir'],
