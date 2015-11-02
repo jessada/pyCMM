@@ -1,7 +1,7 @@
 import argparse
 import sys
 from pycmm import settings
-from pycmm.app.gatkbp import app_pycmm_create_jobs_setup_file
+from pycmm.app.gatkbp import app_pycmm_gatkbp_create_jobs_setup_file
 from collections import OrderedDict
 
 argp = argparse.ArgumentParser(description=settings.DNASEQ_CREATE_JOB_SETUP_FILE_DESCRIPTION)
@@ -22,6 +22,12 @@ argp.add_argument('-p',
                   metavar="PROJECT CODE",
                   help='UPPMAX project code',
                   required=True,
+                  )
+argp.add_argument('--gatkbp_alloc_time',
+                  dest='gatkbp_alloc_time',
+                  metavar="ALLOC_TIME",
+                  help='UPPMAX allocation time for DNA Seq GATK Best Practice workflow',
+                  default=None,
                   )
 argp.add_argument('-R',
                   dest='reference_file',
@@ -75,15 +81,16 @@ argp.add_argument('-o',
                   default=sys.stdout,
                   )
 args = argp.parse_args()
-app_pycmm_create_jobs_setup_file(dataset_name=args.dataset_name,
-                                 sample_group=args.sample_group,
-                                 project_code=args.project_code,
-                                 reference_file=args.reference_file,
-                                 project_out_dir=args.project_out_dir,
-                                 samples_root_dir=args.samples_root_dir,
-                                 known_indels_file=args.known_indels_file,
-                                 dbsnp_file=args.dbsnp_file,
-                                 variants_calling=args.variants_calling,
-                                 targets_interval_list=args.targets_interval_list,
-                                 out_jobs_setup_file=args.out_jobs_setup_file,
-                                 )
+app_pycmm_gatkbp_create_jobs_setup_file(dataset_name=args.dataset_name,
+                                        sample_group=args.sample_group,
+                                        project_code=args.project_code,
+                                        gatkbp_alloc_time=args.gatkbp_alloc_time,
+                                        reference_file=args.reference_file,
+                                        project_out_dir=args.project_out_dir,
+                                        samples_root_dir=args.samples_root_dir,
+                                        known_indels_file=args.known_indels_file,
+                                        dbsnp_file=args.dbsnp_file,
+                                        variants_calling=args.variants_calling,
+                                        targets_interval_list=args.targets_interval_list,
+                                        out_jobs_setup_file=args.out_jobs_setup_file,
+                                        )

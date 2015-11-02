@@ -1367,7 +1367,7 @@ class TestTAVcfRecord(SafeTester):
         in_file = join_path(self.data_dir,
                                'input.vcf.gz')
         vcf_reader = TAVcfReader(filename=in_file)
-        intergenics = reduce(lambda x, y: x+y, 
+        intergenics = reduce(lambda x, y: x+y,
                              map(lambda x: x.is_intergenic[1:], vcf_reader))
         intergenics_count = sum(1 for x in intergenics if x)
         self.assertEqual(intergenics_count,
@@ -1384,7 +1384,7 @@ class TestTAVcfRecord(SafeTester):
         in_file = join_path(self.data_dir,
                                'input.vcf.gz')
         vcf_reader = TAVcfReader(filename=in_file)
-        intergenics = reduce(lambda x, y: x+y, 
+        intergenics = reduce(lambda x, y: x+y,
                              map(lambda x: x.is_intergenic[1:], vcf_reader))
         intergenics_count = sum(1 for x in intergenics if x)
         self.assertEqual(intergenics_count,
@@ -1401,7 +1401,7 @@ class TestTAVcfRecord(SafeTester):
         in_file = join_path(self.data_dir,
                                'input.vcf.gz')
         vcf_reader = TAVcfReader(filename=in_file)
-        intronics = reduce(lambda x, y: x+y, 
+        intronics = reduce(lambda x, y: x+y,
                            map(lambda x: x.is_intronic[1:], vcf_reader))
         intronics_count = sum(1 for x in intronics if x)
         self.assertEqual(intronics_count,

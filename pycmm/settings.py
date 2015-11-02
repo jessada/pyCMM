@@ -18,7 +18,7 @@ ENV_TEST_DIR = "PYTHON_TEST_DIR"
 ## > > > > > > > > > > > > > GATK Best practice (DNA seq) < < < < < < < < < <
 DNASEQ_PIPELINE_DESCRIPTION = "A flow to control a pipeline to process DNA sequencing data"
 DNASEQ_PIPELINE_DFLT_LOG_FILE = "dnaseq_pipeline"
-GATK_ALLOC_TIME = "4-00:00:00"
+DFLT_GATKBP_ALLOC_TIME = "4-00:00:00"
 
 DNASEQ_CREATE_JOB_SETUP_FILE_DESCRIPTION = "An applicationt to generate job setup file for DNASEQ_PIPELINE"
 
@@ -28,7 +28,7 @@ CMMDB_MUTSTAT_DESCRIPTION = "A flow to control a pipeline to process mutation st
 CMMDB_TABLEANNOVAR_DESCRIPTION = "A flow to control a pipeline to run tableannovar"
 CMMDB_MUTATIONREPORTS_DESCRIPTION = "A flow to control a pipeline to run generate mutation reports"
 CMMDB_PIPELINE_DFLT_LOG_FILE = "cmmdb_pipeline"
-CMMDB_ALLOC_TIME = "4-00:00:00"
+DFLT_CMMDB_ALLOC_TIME = "1-00:00:00"
 
 CMMDB_CREATE_JOB_SETUP_FILE_DESCRIPTION = "An applicationt to generate job setup file to process CMM database"
 
@@ -38,7 +38,7 @@ MUTREP_SUMMARY_REPORT_BIN = 'pyCMM-mutrep-summary-report'
 
 MUTREP_PIPELINE_DESCRIPTION = "A flow to control a pipeline to process mutations report"
 MUTREP_PIPELINE_DFLT_LOG_FILE = "mutrep_pipeline"
-MUTREP_ALLOC_TIME = "1-00:00:00"
+DFLT_MUTREP_ALLOC_TIME = "1-00:00:00"
 
 MUTREP_FAMILY_REPORT_DESCRIPTION = "An appliation to generate mutation report for a given family at given regions"
 MUTREP_SUMMARY_REPORT_DESCRIPTION = "An appliation to generate summary report at given regions"
@@ -48,15 +48,25 @@ DFLT_MAF_VAR = "1000g2014oct_all"
 DFLT_MUTREP_FREQ_RATIOS = DFLT_MAF_VAR + ":0.2"
 FUNC_REFGENE_VAR = "Func.refGene"
 
+PREDICTION_LIST = []
 LJB_SIFT_PREDICTION_COL_NAME = "SIFT_pred"
+PREDICTION_LIST.append(LJB_SIFT_PREDICTION_COL_NAME)
 LJB_POLYPHEN2_HDIV_PREDICTION_COL_NAME = "Polyphen2_HDIV_pred"
+PREDICTION_LIST.append(LJB_POLYPHEN2_HDIV_PREDICTION_COL_NAME)
 LJB_POLYPHEN2_HVAR_PREDICTION_COL_NAME = "Polyphen2_HVAR_pred"
+PREDICTION_LIST.append(LJB_POLYPHEN2_HVAR_PREDICTION_COL_NAME)
 LJB_LRT_PREDICTION_COL_NAME = "LRT_pred"
+PREDICTION_LIST.append(LJB_LRT_PREDICTION_COL_NAME)
 LJB_MUTATIONTASTER_PREDICTION_COL_NAME = "MutationTaster_pred"
+PREDICTION_LIST.append(LJB_MUTATIONTASTER_PREDICTION_COL_NAME)
 LJB_MUTATIONASSESSOR_PREDICTION_COL_NAME = "MutationAssessor_pred"
+PREDICTION_LIST.append(LJB_MUTATIONASSESSOR_PREDICTION_COL_NAME)
 LJB_FATHMM_PREDICTION_COL_NAME = "FATHMM_pred"
+PREDICTION_LIST.append(LJB_FATHMM_PREDICTION_COL_NAME)
 LJB_RADIALSVM_PREDICTION_COL_NAME = "RadialSVM_pred"
+PREDICTION_LIST.append(LJB_RADIALSVM_PREDICTION_COL_NAME)
 LJB_LR_PREDICTION_COL_NAME = "LR_pred"
+PREDICTION_LIST.append(LJB_LR_PREDICTION_COL_NAME)
 
 # This list will show all possible annotation columns (based on the dbs
 # annotated by table_annovar.pl), in the INFO fields.

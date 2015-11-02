@@ -11,10 +11,10 @@ from os.path import join as join_path
 from os.path import isdir
 from os.path import isfile
 from collections import OrderedDict
+from pycmm.settings import PREDICTION_LIST
 from pycmm.settings import DFLT_ANNOVAR_DB_FOLDER
 from pycmm.settings import DFLT_ANNOVAR_DB_NAMES
 from pycmm.settings import DFLT_ANNOVAR_DB_OPS
-from pycmm.settings import MUTREP_ALLOC_TIME
 from pycmm.settings import MUTREP_FAMILY_REPORT_BIN
 from pycmm.settings import MUTREP_SUMMARY_REPORT_BIN
 from pycmm.settings import MT_ANNO_COLS
@@ -24,6 +24,7 @@ from pycmm.utils import mylogger
 from pycmm.proc.taparser import TAVcfReader as VcfReader
 from pycmm.flow.cmmdb import CMMDBPipeline
 from pycmm.flow.cmmdb import ALL_CHROMS
+from pycmm.flow.cmmdb import JOBS_SETUP_RPT_ALLOC_TIME_KEY
 from pycmm.flow.cmmdb import JOBS_SETUP_RPT_LAYOUT_SECTION
 from pycmm.flow.cmmdb import JOBS_SETUP_RPT_ANNOTATED_VCF_TABIX
 from pycmm.flow.cmmdb import JOBS_SETUP_RPT_ANNO_COLS_KEY
@@ -315,6 +316,10 @@ class MutRepPipeline(CMMDBPipeline):
         self.__report_layout = ReportLayout(self._jobs_info[JOBS_SETUP_RPT_LAYOUT_SECTION])
 
     @property
+    def rpt_alloc_time(self):
+        return self._jobs_info[JOBS_SETUP_RPT_ALLOC_TIME_KEY]
+
+    @property
     def annotated_vcf_tabix(self):
         if self.report_layout.annotated_vcf_tabix is not None:
             return self.report_layout.annotated_vcf_tabix
@@ -415,16 +420,20 @@ class MutRepPipeline(CMMDBPipeline):
         len_anno_cols = len(anno_cols)
         # annotate INFO columns
         for anno_idx in xrange(len_anno_cols):
-            info = vcf_record.INFO[anno_cols[anno_idx]]
+            anno_col_name = anno_cols[anno_idx]
+            info = vcf_record.INFO[anno_col_name]
             if (type(info) is list) and (len(info) == 1):
                 info = info[0]
             elif (type(info) is list) and (len(info) > 1):
                 info = info[allele_idx-1]
+            if anno_col_name in PREDICTION_LIST:
+                info = info.description
             if info is None:
                 info = ""
             if info == [None]:
                 info = ""
             ws.write(row, anno_idx+LAYOUT_VCF_COLS, str(info).decode('utf-8'), cell_fmt)
+        # annotate samples information
         sample_start_idx = LAYOUT_VCF_COLS + len_anno_cols
         for sample_idx in xrange(len(samples_list)):
             call = vcf_record.genotype(samples_list[sample_idx])
@@ -551,7 +560,7 @@ class MutRepPipeline(CMMDBPipeline):
                                 self.project_code,
                                 "core",
                                 "1",
-                                MUTREP_ALLOC_TIME,
+                                self.rpt_alloc_time,
                                 slurm_log_file,
                                 job_script,
                                 job_params,
@@ -571,7 +580,7 @@ class MutRepPipeline(CMMDBPipeline):
                             self.project_code,
                             "core",
                             "1",
-                            MUTREP_ALLOC_TIME,
+                            self.rpt_alloc_time,
                             slurm_log_file,
                             job_script,
                             job_params,
