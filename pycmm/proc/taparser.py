@@ -182,8 +182,8 @@ class TAVcfReader(VcfReader):
                 pass
 
             # Translate in-silico prediction if possible
-            if self.__pred_tran.recognize(ID):
-                val = self.__pred_tran.describe(ID, val)
+            if ID in self.__pred_tran.predictor_list:
+                val = self.__pred_tran.get_prediction_info(ID, val)
 
             # Check if there are infos of more than one alternate alleles annotated by ANNOVAR
             if (ID in self.annovar_infos) and (ID in retdict) and (type(retdict[ID]) is list):

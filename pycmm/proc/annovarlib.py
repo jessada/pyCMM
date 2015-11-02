@@ -1,4 +1,5 @@
 import sys
+from pycmm.utils import mylogger
 from pycmm.template import pyCMMBase
 from pycmm.settings import LJB_SIFT_PREDICTION_COL_NAME as SIFT_PRED_COL
 from pycmm.settings import LJB_POLYPHEN2_HDIV_PREDICTION_COL_NAME as POLYPHEN2_HDIV_PRED_COL
@@ -72,6 +73,41 @@ class Annovar(pyCMMBase):
         cmd += " -vcfinput"
         return cmd
 
+_DESCRIPTION = "Description"
+_HARMFUL = "Harmful"
+
+
+class PredictionInfo(pyCMMBase):
+    """
+    To encapsulate the effect prediction information
+    """
+
+    def __init__(self,
+                 code,
+                 description,
+                 harmful,
+                 ):
+        self.__code = code
+        self.__description = description
+        self.__harmful = harmful
+
+    @property
+    def code(self):
+        return self.__code
+
+    @property
+    def description(self):
+        if self.__code == ".":
+            return self.__code
+        if self.__description == ".":
+            return "NA(" + self.__code + ")"
+        return self.__description
+
+    @property
+    def harmful(self):
+        return self.__harmful
+
+
 class PredictionTranslator(pyCMMBase):
     """
     A class to translate codes from effect predictors by using informaiton
@@ -82,7 +118,7 @@ class PredictionTranslator(pyCMMBase):
     PolyPhen 2 HDIV (pp2_hdiv)         D: Probably damaging (>=0.957),damaging P: possibly damaging (0.453<=pp2_hdiv<=0.956); B: benign (pp2_hdiv<=0.452)
     PolyPhen 2 HVar (pp2_hvar)         D: Probably damaging (>=0.909), P: possibly damaging (0.447<=pp2_hdiv<=0.909); B: benign (pp2_hdiv<=0.446)
     LRT (lrt)                          D: Deleterious; N: Neutral; U: Unknown
-    MutationTaster (mt)                A" ("disease_causing_automatic"); "D" ("disease_causing"); "N" ("PolyPhenmorphism"); "P" ("polymorphism_automatic")
+    MutationTaster (mt)                A" ("disease_causing_automatic"); "D" ("disease_causing"); "N" ("polymorphism"); "P" ("polymorphism_automatic")
     MutationAssessor (ma)              H: high; M: medium; L: low; N: neutral. H/M means functional and L/N   means non-functional
     FATHMM (fathmm)                    D: Deleterious; T: Tolerated
     MetaSVM (metasvm)                  D: Deleterious; T: Tolerated
@@ -93,28 +129,199 @@ class PredictionTranslator(pyCMMBase):
     """
 
     def __init__(self):
-        self.__expl = self.__init_explanation()
+        self.__set_prediction_info()
+        self.__null_prediction = PredictionInfo(code='.',
+                                                description='.',
+                                                harmful=False,
+                                                )
 
-    def __init_explanation(self):
-        expl = {}
-        expl[SIFT_PRED_COL] = {'D': 'Deleterious', 'T': 'Tolerated'}
-        expl[POLYPHEN2_HDIV_PRED_COL] = {'D': 'Probably damaging', 'P': 'Possibly damaging', 'B': 'Benign'}
-        expl[POLYPHEN2_HVAR_PRED_COL] = {'D': 'Probably damaging', 'P': 'Possibly damaging', 'B': 'Benign'}
-        expl[LRT_PRED_COL] = {'D': 'Deleterious', 'N': 'Neutral', 'U': 'Unknown'}
-        expl[MUTATIONTASTER_PRED_COL] = {'A': 'Disease causing automatic', 'D': 'Disease causing', 'N': 'PolyPhenmorphism', 'P': 'Polymorphism_automatic'}
-        expl[MUTATIONASSESSOR_PRED_COL] = {'H': 'High', 'M': 'Medium', 'L': 'Low', 'N': 'Neutral', 'H/M': 'Functional', 'L/N': 'Non-functional'}
-        expl[FATHMM_PRED_COL] = {'D': 'Deleterious', 'T': 'Tolerated'}
-        expl[RADIALSVM_PRED_COL] = {'D': 'Deleterious', 'T': 'Tolerated'}
-        expl[LR_PRED_COL] = {'D': 'Deleterious', 'T': 'Tolerated'}
-        return expl
+    def __set_prediction_info(self):
+        self.__pred_info = {}
 
-    def recognize(self, col_name):
-        return col_name in self.__expl
+        self.__pred_info[SIFT_PRED_COL] = {}
+        pred_info = PredictionInfo(code='D',
+                                   description='Deleterious',
+                                   harmful=True,
+                                   )
+        self.__pred_info[SIFT_PRED_COL]['D'] = pred_info
+        pred_info = PredictionInfo(code='T',
+                                   description='Tolerated',
+                                   harmful=False,
+                                   )
+        self.__pred_info[SIFT_PRED_COL]['T'] = pred_info
 
-    def describe(self, col_name, code):
+        self.__pred_info[POLYPHEN2_HDIV_PRED_COL] = {}
+        pred_info = PredictionInfo(code='D',
+                                   description='Probably damaging',
+                                   harmful=True,
+                                   )
+        self.__pred_info[POLYPHEN2_HDIV_PRED_COL]['D'] = pred_info
+        pred_info = PredictionInfo(code='P',
+                                   description='Possibly damaging',
+                                   harmful=True,
+                                   )
+        self.__pred_info[POLYPHEN2_HDIV_PRED_COL]['P'] = pred_info
+        pred_info = PredictionInfo(code='B',
+                                   description='Benign',
+                                   harmful=False,
+                                   )
+        self.__pred_info[POLYPHEN2_HDIV_PRED_COL]['B'] = pred_info
+
+        self.__pred_info[POLYPHEN2_HVAR_PRED_COL] = {}
+        pred_info = PredictionInfo(code='D',
+                                   description='Probably damaging',
+                                   harmful=True,
+                                   )
+        self.__pred_info[POLYPHEN2_HVAR_PRED_COL]['D'] = pred_info
+        pred_info = PredictionInfo(code='P',
+                                   description='Possibly damaging',
+                                   harmful=True,
+                                   )
+        self.__pred_info[POLYPHEN2_HVAR_PRED_COL]['P'] = pred_info
+        pred_info = PredictionInfo(code='B',
+                                   description='Benign',
+                                   harmful=False,
+                                   )
+        self.__pred_info[POLYPHEN2_HVAR_PRED_COL]['B'] = pred_info
+
+        self.__pred_info[LRT_PRED_COL] = {}
+        pred_info = PredictionInfo(code='D',
+                                   description='Deleterious',
+                                   harmful=True,
+                                   )
+        self.__pred_info[LRT_PRED_COL]['D'] = pred_info
+        pred_info = PredictionInfo(code='N',
+                                   description='Neutral',
+                                   harmful=False,
+                                   )
+        self.__pred_info[LRT_PRED_COL]['N'] = pred_info
+        pred_info = PredictionInfo(code='U',
+                                   description='Unknown',
+                                   harmful=False,
+                                   )
+        self.__pred_info[LRT_PRED_COL]['U'] = pred_info
+
+        self.__pred_info[MUTATIONTASTER_PRED_COL] = {}
+        pred_info = PredictionInfo(code='A',
+                                   description='Disease causing automatic',
+                                   harmful=True,
+                                   )
+        self.__pred_info[MUTATIONTASTER_PRED_COL]['A'] = pred_info
+        pred_info = PredictionInfo(code='D',
+                                   description='Disease causing',
+                                   harmful=True,
+                                   )
+        self.__pred_info[MUTATIONTASTER_PRED_COL]['D'] = pred_info
+        pred_info = PredictionInfo(code='N',
+                                   description='Polymorphism',
+                                   harmful=False,
+                                   )
+        self.__pred_info[MUTATIONTASTER_PRED_COL]['N'] = pred_info
+        pred_info = PredictionInfo(code='P',
+                                   description='Polymorphism automatic',
+                                   harmful=False,
+                                   )
+        self.__pred_info[MUTATIONTASTER_PRED_COL]['P'] = pred_info
+
+        self.__pred_info[MUTATIONASSESSOR_PRED_COL] = {}
+        pred_info = PredictionInfo(code='H',
+                                   description='High',
+                                   harmful=True,
+                                   )
+        self.__pred_info[MUTATIONASSESSOR_PRED_COL]['H'] = pred_info
+        pred_info = PredictionInfo(code='M',
+                                   description='Medium',
+                                   harmful=True,
+                                   )
+        self.__pred_info[MUTATIONASSESSOR_PRED_COL]['M'] = pred_info
+        pred_info = PredictionInfo(code='L',
+                                   description='Low',
+                                   harmful=False,
+                                   )
+        self.__pred_info[MUTATIONASSESSOR_PRED_COL]['L'] = pred_info
+        pred_info = PredictionInfo(code='N',
+                                   description='Neutral',
+                                   harmful=False,
+                                   )
+        self.__pred_info[MUTATIONASSESSOR_PRED_COL]['N'] = pred_info
+        pred_info = PredictionInfo(code='H/M',
+                                   description='Functional',
+                                   harmful=True,
+                                   )
+        self.__pred_info[MUTATIONASSESSOR_PRED_COL]['H/M'] = pred_info
+        pred_info = PredictionInfo(code='L/N',
+                                   description='Non-functional',
+                                   harmful=False,
+                                   )
+        self.__pred_info[MUTATIONASSESSOR_PRED_COL]['L/N'] = pred_info
+
+        self.__pred_info[FATHMM_PRED_COL] = {}
+        pred_info = PredictionInfo(code='D',
+                                   description='Deleterious',
+                                   harmful=True,
+                                   )
+        self.__pred_info[FATHMM_PRED_COL]['D'] = pred_info
+        pred_info = PredictionInfo(code='T',
+                                   description='Tolerated',
+                                   harmful=False,
+                                   )
+        self.__pred_info[FATHMM_PRED_COL]['T'] = pred_info
+
+        self.__pred_info[RADIALSVM_PRED_COL] = {}
+        pred_info = PredictionInfo(code='D',
+                                   description='Deleterious',
+                                   harmful=True,
+                                   )
+        self.__pred_info[RADIALSVM_PRED_COL]['D'] = pred_info
+        pred_info = PredictionInfo(code='T',
+                                   description='Tolerated',
+                                   harmful=False,
+                                   )
+        self.__pred_info[RADIALSVM_PRED_COL]['T'] = pred_info
+
+        self.__pred_info[LR_PRED_COL] = {}
+        pred_info = PredictionInfo(code='D',
+                                   description='Deleterious',
+                                   harmful=True,
+                                   )
+        self.__pred_info[LR_PRED_COL]['D'] = pred_info
+        pred_info = PredictionInfo(code='T',
+                                   description='Tolerated',
+                                   harmful=False,
+                                   )
+        self.__pred_info[LR_PRED_COL]['T'] = pred_info
+
+    def get_prediction_info(self,
+                            predictor_name,
+                            code,
+                            ):
+        # if no prediction
         if code == ".":
-            return "."
-        if code in self.__expl[col_name]:
-            return self.__expl[col_name][code]
-        else:
-            return "NA"
+            return self.__null_prediction
+        # if predictor is not yet in the system
+        if predictor_name not in self.__pred_info.keys():
+            warning_msg = "!! Unknown predictor '" + predictor_name + "'"
+            mylogger.warning(warning_msg)
+            # create a dummy for the new predictor entity in the system
+            self.__pred_info[predictor_name] = {}
+            pred_info = PredictionInfo(code=code,
+                                       description='.',
+                                       harmful=False,
+                                       )
+            self.__pred_info[predictor_name][code] = pred_info
+        # if prediction code is not yet in the system
+        elif code not in self.__pred_info[predictor_name].keys():
+            warning_msg = "!! Unknown prediction code '" + code + "'"
+            warning_msg += " for predictor '" + predictor_name + "'"
+            mylogger.warning(warning_msg)
+            # create a dummy for the new prediction code entity in the system
+            pred_info = PredictionInfo(code=code,
+                                       description='.',
+                                       harmful=False,
+                                       )
+            self.__pred_info[predictor_name][code] = pred_info
+        return self.__pred_info[predictor_name][code]
+
+    @property
+    def predictor_list(self):
+        return self.__pred_info.keys()
