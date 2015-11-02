@@ -11,6 +11,7 @@ from pycmm.utils import mylogger
 from pycmm.settings import DFLT_ANNOVAR_DB_FOLDER
 from pycmm.settings import DFLT_ANNOVAR_DB_NAMES
 from pycmm.settings import DFLT_ANNOVAR_DB_OPS
+from pycmm.settings import DFLT_CMMDB_ALLOC_TIME
 from pycmm.settings import FAST_PROJECT_CODE
 from pycmm.settings import SLOW_PROJECT_CODE
 from pycmm.flow.cmmdb import CMMDBPipeline
@@ -52,6 +53,7 @@ class TestCMMDBPipeline(SafeTester):
                                  vcf_tabix_file,
                                  dataset_name=None,
                                  project_code=SLOW_PROJECT_CODE,
+                                 db_alloc_time=DFLT_CMMDB_ALLOC_TIME,
                                  db_region="18",
                                  sample_infos=None,
                                  annovar_human_db_dir=DFLT_ANNOVAR_TEST_DB_FOLDER,
@@ -70,6 +72,7 @@ class TestCMMDBPipeline(SafeTester):
                                db_region=db_region,
                                sample_infos=sample_infos,
                                project_code=project_code,
+                               db_alloc_time=db_alloc_time,
                                annovar_human_db_dir=annovar_human_db_dir,
                                annovar_buildver=annovar_buildver,
                                annovar_db_names=annovar_db_names,
@@ -95,6 +98,9 @@ class TestCMMDBPipeline(SafeTester):
         self.assertEqual(pl.project_code,
                          SLOW_PROJECT_CODE,
                          "CMMDBPipeline cannot correctly read meta info 'project code' from jobs setup file")
+        self.assertEqual(pl.db_alloc_time,
+                         DFLT_CMMDB_ALLOC_TIME,
+                         "CMMDBPipeline cannot correctly read meta info 'db allocation time' from jobs setup file")
         self.assertEqual(pl.input_vcf_tabix,
                          dummy_vcf_tabix_file,
                          "CMMDBPipeline cannot correctly read meta info 'input vcf tabix' from jobs setup file")
@@ -143,11 +149,13 @@ class TestCMMDBPipeline(SafeTester):
     def test_load_jobs_info_2(self):
         """ test if modified job configurations are loaded correctly """
 
+        self.individual_debug = True
         self.init_test(self.current_func_name)
         job_name = self.test_function
         dummy_vcf_tabix_file = "/path/to/vcf_tabix_file"
         jobs_setup_file = self.__create_jobs_setup_file(vcf_tabix_file=dummy_vcf_tabix_file,
                                                         project_code=None,
+                                                        db_alloc_time="120:00:00",
                                                         db_region=None,
                                                         sample_infos="Co-441,Co-666",
                                                         )
@@ -156,6 +164,9 @@ class TestCMMDBPipeline(SafeTester):
         self.assertEqual(pl.project_code,
                          None,
                          "CMMDBPipeline cannot correctly read meta info 'project code' from jobs setup file")
+        self.assertEqual(pl.db_alloc_time,
+                         "120:00:00",
+                         "CMMDBPipeline cannot correctly read meta info 'db allocation time' from jobs setup file")
         self.assertEqual(pl.db_region,
                          None,
                          "CMMDBPipeline cannot correctly read meta info 'vcf region' from jobs setup file")
@@ -325,7 +336,8 @@ class TestCMMDBPipeline(SafeTester):
         self.init_test(self.current_func_name)
         vcf_tabix_file = join_path(self.data_dir,
                                    "multi_chrs.vcf.gz")
-        jobs_setup_file = self.__create_jobs_setup_file(dataset_name="test_cal_stat_1",
+        jobs_setup_file = self.__create_jobs_setup_file(db_alloc_time="5:00:00",
+                                                        dataset_name="test_cal_stat_1",
                                                         vcf_tabix_file=vcf_tabix_file,
                                                         project_code=FAST_PROJECT_CODE,
                                                         db_region="X",

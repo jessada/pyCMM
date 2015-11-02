@@ -11,6 +11,8 @@ from os.path import isfile
 from pycmm.settings import DFLT_ANNOVAR_DB_FOLDER
 from pycmm.settings import DFLT_ANNOVAR_DB_NAMES
 from pycmm.settings import DFLT_ANNOVAR_DB_OPS
+from pycmm.settings import DFLT_CMMDB_ALLOC_TIME
+from pycmm.settings import DFLT_MUTREP_ALLOC_TIME
 from pycmm.template import pyCMMBase
 from pycmm.utils import exec_sh
 from pycmm.utils import mylogger
@@ -23,7 +25,6 @@ from pycmm.proc.annovarlib import ANNOVAR_PARAMS_OUT_PREFIX_KEY
 from pycmm.proc.annovarlib import ANNOVAR_PARAMS_DB_NAMES_KEY
 from pycmm.proc.annovarlib import ANNOVAR_PARAMS_DB_OPS_KEY
 from pycmm.proc.annovarlib import ANNOVAR_PARAMS_NASTRING_KEY
-from pycmm.settings import CMMDB_ALLOC_TIME
 from pycmm.settings import DFLT_MUTREP_ANNO_COLS
 from pycmm.settings import DFLT_MUTREP_FREQ_RATIOS
 
@@ -33,6 +34,8 @@ CAL_MUTATIONS_STAT_SCRIPT = "$PYCMM/bash/cal_mutations_stat.sh"
 # *************** jobs metadata section ***************
 JOBS_SETUP_DATASET_NAME_KEY = "DATASET_NAME"
 JOBS_SETUP_PROJECT_CODE_KEY = "PROJECT_CODE"
+JOBS_SETUP_DB_ALLOC_TIME = "DB_ALLOC_TIME"
+JOBS_SETUP_RPT_ALLOC_TIME = "RPT_ALLOC_TIME"
 JOBS_SETUP_OUTPUT_DIR_KEY = "OUTPUT_DIR"
 JOBS_SETUP_JOBS_REPORT_FILE_KEY = "JOBS_REPORT_FILE"
 JOBS_SETUP_VCF_TABIX_FILE_KEY = "VCF_TABIX_FILE"
@@ -141,6 +144,10 @@ class CMMDBPipeline(JobManager):
             return self._jobs_info[JOBS_SETUP_PROJECT_CODE_KEY]
         else:
             return None
+
+    @property
+    def db_alloc_time(self):
+        return self._jobs_info[JOBS_SETUP_DB_ALLOC_TIME]
 
     @property
     def input_vcf_tabix(self):
@@ -295,7 +302,7 @@ class CMMDBPipeline(JobManager):
                                 self.project_code,
                                 "core",
                                 "1",
-                                CMMDB_ALLOC_TIME,
+                                self.db_alloc_time,
                                 slurm_log_file,
                                 CAL_MUTATIONS_STAT_SCRIPT,
                                 params,
@@ -317,7 +324,7 @@ class CMMDBPipeline(JobManager):
                             self.project_code,
                             "core",
                             "1",
-                            CMMDB_ALLOC_TIME,
+                            self.db_alloc_time,
                             slurm_log_file,
                             CAL_MUTATIONS_STAT_SCRIPT,
                             params,
@@ -336,7 +343,7 @@ class CMMDBPipeline(JobManager):
                             self.project_code,
                             "core",
                             "2",
-                            CMMDB_ALLOC_TIME,
+                            self.db_alloc_time,
                             slurm_log_file,
                             cfg.table_annovar_cmd,
                             "",
@@ -357,6 +364,8 @@ def create_jobs_setup_file(dataset_name,
                            db_region=None,
                            sample_infos=None,
                            project_code=None,
+                           db_alloc_time=DFLT_CMMDB_ALLOC_TIME,
+                           rpt_alloc_time=DFLT_MUTREP_ALLOC_TIME,
                            jobs_report_file=None,
                            annovar_human_db_dir=DFLT_ANNOVAR_DB_FOLDER,
                            annovar_buildver="hg19",
@@ -396,6 +405,12 @@ def create_jobs_setup_file(dataset_name,
     job_setup_document[JOBS_SETUP_DATASET_NAME_KEY] = dataset_name
     if project_code is not None:
         job_setup_document[JOBS_SETUP_PROJECT_CODE_KEY] = project_code
+    if db_alloc_time is None:
+        db_alloc_time = DFLT_CMMDB_ALLOC_TIME
+    job_setup_document[JOBS_SETUP_DB_ALLOC_TIME] = '"' + db_alloc_time + '"'
+    if rpt_alloc_time is None:
+        rpt_alloc_time = DFLT_MUTREP_ALLOC_TIME
+    job_setup_document[JOBS_SETUP_RPT_ALLOC_TIME] = '"' + rpt_alloc_time + '"'
     if db_region is not None:
         job_setup_document[JOBS_SETUP_DB_REGION_KEY] = db_region
     if (sample_infos is not None) and isfile(sample_infos):

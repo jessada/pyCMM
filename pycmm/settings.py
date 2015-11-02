@@ -28,7 +28,7 @@ CMMDB_MUTSTAT_DESCRIPTION = "A flow to control a pipeline to process mutation st
 CMMDB_TABLEANNOVAR_DESCRIPTION = "A flow to control a pipeline to run tableannovar"
 CMMDB_MUTATIONREPORTS_DESCRIPTION = "A flow to control a pipeline to run generate mutation reports"
 CMMDB_PIPELINE_DFLT_LOG_FILE = "cmmdb_pipeline"
-CMMDB_ALLOC_TIME = "4-00:00:00"
+DFLT_CMMDB_ALLOC_TIME = "1-00:00:00"
 
 CMMDB_CREATE_JOB_SETUP_FILE_DESCRIPTION = "An applicationt to generate job setup file to process CMM database"
 
@@ -38,7 +38,7 @@ MUTREP_SUMMARY_REPORT_BIN = 'pyCMM-mutrep-summary-report'
 
 MUTREP_PIPELINE_DESCRIPTION = "A flow to control a pipeline to process mutations report"
 MUTREP_PIPELINE_DFLT_LOG_FILE = "mutrep_pipeline"
-MUTREP_ALLOC_TIME = "1-00:00:00"
+DFLT_MUTREP_ALLOC_TIME = "1-00:00:00"
 
 MUTREP_FAMILY_REPORT_DESCRIPTION = "An appliation to generate mutation report for a given family at given regions"
 MUTREP_SUMMARY_REPORT_DESCRIPTION = "An appliation to generate summary report at given regions"

@@ -13,6 +13,7 @@ from pycmm.settings import FAST_PROJECT_CODE
 from pycmm.settings import SLOW_PROJECT_CODE
 from pycmm.settings import DFLT_MUTREP_FREQ_RATIOS
 from pycmm.settings import DFLT_MUTREP_ANNO_COLS
+from pycmm.settings import DFLT_MUTREP_ALLOC_TIME
 from pycmm.flow.mutrep import MutRepPipeline
 from pycmm.flow.cmmdb import create_jobs_setup_file
 
@@ -43,6 +44,7 @@ class TestMutRepPipeline(SafeTester):
                                  vcf_tabix_file,
                                  dataset_name=None,
                                  project_code=SLOW_PROJECT_CODE,
+                                 rpt_alloc_time=DFLT_MUTREP_ALLOC_TIME,
                                  sample_infos=None,
                                  anno_cols=DFLT_TEST_MUTREP_COLS,
                                  annotated_vcf_tabix=None,
@@ -67,6 +69,7 @@ class TestMutRepPipeline(SafeTester):
                                vcf_tabix_file=vcf_tabix_file,
                                sample_infos=sample_infos,
                                project_code=project_code,
+                               rpt_alloc_time=rpt_alloc_time,
                                anno_cols=",".join(anno_cols),
                                annotated_vcf_tabix=annotated_vcf_tabix,
                                report_regions=report_regions,
@@ -94,9 +97,9 @@ class TestMutRepPipeline(SafeTester):
         jobs_setup_file = self.__create_jobs_setup_file(vcf_tabix_file=dummy_vcf_tabix_file,
                                                         )
         pl = MutRepPipeline(jobs_setup_file)
-        self.assertEqual(pl.report_layout.anno_cols[3],
-                         "GeneDetail.refGene",
-                         "MutRepPipeline cannot correctly read report layout info 'layout columns' from jobs setup file")
+        self.assertEqual(pl.rpt_alloc_time,
+                         DFLT_MUTREP_ALLOC_TIME,
+                         "MutRepPipeline cannot correctly read meta info 'report allocation time' from jobs setup file")
         self.assertEqual(pl.report_layout.anno_cols[3],
                          "GeneDetail.refGene",
                          "MutRepPipeline cannot correctly read report layout info 'layout columns' from jobs setup file")
@@ -145,7 +148,8 @@ class TestMutRepPipeline(SafeTester):
         job_name = self.test_function
         dummy_vcf_tabix_file = "/path/to/vcf_tabix_file"
         dummy_annotated_vcf_tabix = "/path/to/annotated_vcf_tabix.vcf.gz"
-        jobs_setup_file = self.__create_jobs_setup_file(vcf_tabix_file=dummy_vcf_tabix_file,
+        jobs_setup_file = self.__create_jobs_setup_file(rpt_alloc_time="2-00:00:00",
+                                                        vcf_tabix_file=dummy_vcf_tabix_file,
                                                         annotated_vcf_tabix=dummy_annotated_vcf_tabix,
                                                         report_regions="6:78161823-78164117,"+DFLT_TEST_REPORT_REGIONS+",22",
                                                         frequency_ratios=None,
@@ -160,6 +164,9 @@ class TestMutRepPipeline(SafeTester):
                                                         only_families=True,
                                                         )
         pl = MutRepPipeline(jobs_setup_file)
+        self.assertEqual(pl.rpt_alloc_time,
+                         "2-00:00:00",
+                         "MutRepPipeline cannot correctly read meta info 'report allocation time' from jobs setup file")
         self.assertEqual(pl.report_layout.report_regions[1].end_pos,
                          "14542551",
                          "MutRepPipeline cannot correctly read report layout info 'report regions' from jobs setup file")
@@ -474,7 +481,8 @@ class TestMutRepPipeline(SafeTester):
                                         "chr6_18.vcf.gz")
         rpt_out_file = join_path(self.working_dir,
                                  self.current_func_name + ".xlsx")
-        jobs_setup_file = self.__create_jobs_setup_file(vcf_tabix_file=vcf_tabix_file,
+        jobs_setup_file = self.__create_jobs_setup_file(rpt_alloc_time="10:00:00",
+                                                        vcf_tabix_file=vcf_tabix_file,
                                                         annotated_vcf_tabix=annotated_vcf_tabix,
                                                         report_regions="6:78171941-78172992,18:28610988-28611790",
                                                         sample_infos="1234:Alb-31:Br-466,6067:Br-432:Al-161:Br-504,6789:Al-65",

@@ -15,7 +15,6 @@ from pycmm.settings import PREDICTION_LIST
 from pycmm.settings import DFLT_ANNOVAR_DB_FOLDER
 from pycmm.settings import DFLT_ANNOVAR_DB_NAMES
 from pycmm.settings import DFLT_ANNOVAR_DB_OPS
-from pycmm.settings import MUTREP_ALLOC_TIME
 from pycmm.settings import MUTREP_FAMILY_REPORT_BIN
 from pycmm.settings import MUTREP_SUMMARY_REPORT_BIN
 from pycmm.settings import MT_ANNO_COLS
@@ -25,6 +24,7 @@ from pycmm.utils import mylogger
 from pycmm.proc.taparser import TAVcfReader as VcfReader
 from pycmm.flow.cmmdb import CMMDBPipeline
 from pycmm.flow.cmmdb import ALL_CHROMS
+from pycmm.flow.cmmdb import JOBS_SETUP_RPT_ALLOC_TIME
 from pycmm.flow.cmmdb import JOBS_SETUP_RPT_LAYOUT_SECTION
 from pycmm.flow.cmmdb import JOBS_SETUP_RPT_ANNOTATED_VCF_TABIX
 from pycmm.flow.cmmdb import JOBS_SETUP_RPT_ANNO_COLS_KEY
@@ -316,6 +316,10 @@ class MutRepPipeline(CMMDBPipeline):
         self.__report_layout = ReportLayout(self._jobs_info[JOBS_SETUP_RPT_LAYOUT_SECTION])
 
     @property
+    def rpt_alloc_time(self):
+        return self._jobs_info[JOBS_SETUP_RPT_ALLOC_TIME]
+
+    @property
     def annotated_vcf_tabix(self):
         if self.report_layout.annotated_vcf_tabix is not None:
             return self.report_layout.annotated_vcf_tabix
@@ -556,7 +560,7 @@ class MutRepPipeline(CMMDBPipeline):
                                 self.project_code,
                                 "core",
                                 "1",
-                                MUTREP_ALLOC_TIME,
+                                self.rpt_alloc_time,
                                 slurm_log_file,
                                 job_script,
                                 job_params,
@@ -576,7 +580,7 @@ class MutRepPipeline(CMMDBPipeline):
                             self.project_code,
                             "core",
                             "1",
-                            MUTREP_ALLOC_TIME,
+                            self.rpt_alloc_time,
                             slurm_log_file,
                             job_script,
                             job_params,
