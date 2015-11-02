@@ -12,7 +12,7 @@ from pycmm.utils import mylogger
 from pycmm.utils.jobman import JobManager
 from pycmm.utils.jobman import JOB_STATUS_COMPLETED
 from pycmm.utils import exec_sh
-from pycmm.settings import GATK_ALLOC_TIME
+from pycmm.settings import DFLT_GATKBP_ALLOC_TIME
 
 BWA_MEM_SCRIPT = "$PYCMM/bash/GATKBP_bwa_mem.sh"
 #CONCAT_FILES_SCRIPT = "$PYCMM/bash/concat_files.sh"
@@ -28,6 +28,7 @@ GENOTYPE_GVCFS_SCRIPT = "$PYCMM/bash/GATKBP_genotype_gvcfs.sh"
 # jobs metadata section
 JOBS_SETUP_DATASET_NAME_KEY = "DATASET_NAME"
 JOBS_SETUP_PROJECT_CODE_KEY = "PROJECT_CODE"
+JOBS_SETUP_GATKBP_ALLOC_TIME_KEY = "GATKBP_ALLOC_TIME"
 JOBS_SETUP_KNOWN_INDELS_KEY = "KNOWN_INDELS"
 JOBS_SETUP_DBSNP_KEY = "DBSNP"
 JOBS_SETUP_REFFERENCE_KEY = "REFERENCE"
@@ -65,7 +66,7 @@ class SampleRecord(pyCMMBase):
                 "platform": self.platform,
                 "library": self.library,
                 "unit": self.unit,
-                "usage limit": self.usage_limit,
+                "usage mail": self.usage_mail,
                 "pre-process sample": self.preprocess_sample,
                 }
 
@@ -229,6 +230,10 @@ class GATKBPPipeline(JobManager):
         return self.__meta_data[JOBS_SETUP_PROJECT_CODE_KEY]
 
     @property
+    def gatkbp_alloc_time(self):
+        return self.__meta_data[JOBS_SETUP_GATKBP_ALLOC_TIME_KEY]
+
+    @property
     def known_indels(self):
         if JOBS_SETUP_KNOWN_INDELS_KEY in self.__meta_data:
             return self.__meta_data[JOBS_SETUP_KNOWN_INDELS_KEY]
@@ -375,7 +380,7 @@ class GATKBPPipeline(JobManager):
                         self.project_code,
                         "core",
                         "1",
-                        GATK_ALLOC_TIME,
+                        self.gatkbp_alloc_time,
                         slurm_log_file,
                         job_script,
                         job_params,
@@ -407,7 +412,7 @@ class GATKBPPipeline(JobManager):
                         self.project_code,
                         "core",
                         "2",
-                        GATK_ALLOC_TIME,
+                        self.gatkbp_alloc_time,
                         slurm_log_file,
                         job_script,
                         job_params,
@@ -441,7 +446,7 @@ class GATKBPPipeline(JobManager):
                         self.project_code,
                         "core",
                         "4",
-                        GATK_ALLOC_TIME,
+                        self.gatkbp_alloc_time,
                         slurm_log_file,
                         job_script,
                         job_params,
@@ -475,7 +480,7 @@ class GATKBPPipeline(JobManager):
                         self.project_code,
                         "core",
                         "2",
-                        GATK_ALLOC_TIME,
+                        self.gatkbp_alloc_time,
                         slurm_log_file,
                         job_script,
                         job_params,
@@ -514,7 +519,7 @@ class GATKBPPipeline(JobManager):
                         self.project_code,
                         "core",
                         "2",
-                        GATK_ALLOC_TIME,
+                        self.gatkbp_alloc_time,
                         slurm_log_file,
                         job_script,
                         job_params,
@@ -552,7 +557,7 @@ class GATKBPPipeline(JobManager):
                         self.project_code,
                         "core",
                         "3",
-                        GATK_ALLOC_TIME,
+                        self.gatkbp_alloc_time,
                         slurm_log_file,
                         job_script,
                         job_params,
@@ -593,7 +598,7 @@ class GATKBPPipeline(JobManager):
                         self.project_code,
                         "core",
                         "2",
-                        GATK_ALLOC_TIME,
+                        self.gatkbp_alloc_time,
                         slurm_log_file,
                         job_script,
                         job_params,
@@ -635,7 +640,7 @@ class GATKBPPipeline(JobManager):
                         self.project_code,
                         "core",
                         "2",
-                        GATK_ALLOC_TIME,
+                        self.gatkbp_alloc_time,
                         slurm_log_file,
                         job_script,
                         job_params,
@@ -676,7 +681,7 @@ class GATKBPPipeline(JobManager):
                         self.project_code,
                         "core",
                         "2",
-                        GATK_ALLOC_TIME,
+                        self.gatkbp_alloc_time,
                         slurm_log_file,
                         job_script,
                         job_params,
@@ -739,6 +744,7 @@ def create_jobs_setup_file(dataset_name,
                            reference_file,
                            project_out_dir,
                            samples_root_dir,
+                           gatkbp_alloc_time=DFLT_GATKBP_ALLOC_TIME,
                            jobs_report_file=None,
                            platform='Illumina',
                            known_indels_file=None,
@@ -760,6 +766,9 @@ def create_jobs_setup_file(dataset_name,
     job_setup_document = {}
     job_setup_document[JOBS_SETUP_DATASET_NAME_KEY] = dataset_name
     job_setup_document[JOBS_SETUP_PROJECT_CODE_KEY] = project_code
+    if gatkbp_alloc_time is None:
+        gatkbp_alloc_time = DFLT_GATKBP_ALLOC_TIME
+    job_setup_document[JOBS_SETUP_GATKBP_ALLOC_TIME_KEY] = '"' + gatkbp_alloc_time + '"'
     if known_indels_file is not None:
         job_setup_document[JOBS_SETUP_KNOWN_INDELS_KEY] = known_indels_file
     if dbsnp_file is not None:

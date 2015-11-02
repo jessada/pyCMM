@@ -77,6 +77,10 @@ def app_pycmm_cmmdb_create_jobs_setup_file(*args, **kwargs):
         optional_params['sample information (-s)'] = kwargs['sample_infos']
     if kwargs['project_code'] is not None:
         optional_params['project code (-p)'] = kwargs['project_code']
+    if kwargs['db_alloc_time'] is not None:
+        optional_params['db allocation time (--db_alloc_time)'] = kwargs['db_alloc_time']
+    if kwargs['rpt_alloc_time'] is not None:
+        optional_params['report allocation time (--rpt_alloc_time)'] = kwargs['rpt_alloc_time']
     optional_params['output jobs setup file (-o)'] = kwargs['out_jobs_setup_file']
     disp.show_config(app_description=settings.CMMDB_PIPELINE_DESCRIPTION,
                      required_params=required_params,
@@ -115,6 +119,8 @@ def app_pycmm_cmmdb_create_jobs_setup_file(*args, **kwargs):
                            db_region=kwargs['db_region'],
                            sample_infos=kwargs['sample_infos'],
                            project_code=kwargs['project_code'],
+                           db_alloc_time=kwargs['db_alloc_time'],
+                           rpt_alloc_time=kwargs['rpt_alloc_time'],
                            anno_cols=kwargs['anno_cols'],
                            annotated_vcf_tabix=kwargs['annotated_vcf_tabix'],
                            report_regions=kwargs['report_regions'],

@@ -10,6 +10,7 @@ from pycmm.template import SafeTester
 from pycmm.utils import mylogger
 from pycmm.settings import FAST_PROJECT_CODE
 from pycmm.settings import SLOW_PROJECT_CODE
+from pycmm.settings import DFLT_GATKBP_ALLOC_TIME
 from pycmm.flow.gatkbp import GATKBPPipeline
 from pycmm.flow.gatkbp import JOBS_SETUP_DATASET_NAME_KEY
 from pycmm.flow.gatkbp import JOBS_SETUP_PROJECT_CODE_KEY
@@ -22,6 +23,12 @@ from pycmm.flow.gatkbp import JOBS_SETUP_JOBS_REPORT_FILE_KEY
 from pycmm.flow.gatkbp import JOBS_SETUP_TARGETS_INTERVAL_LIST_KEY
 from pycmm.flow.gatkbp import JOBS_SETUP_DATASET_USAGE_MAIL_KEY
 from pycmm.flow.gatkbp import create_jobs_setup_file
+
+DFLT_KNOWN_INDELS = []
+DFLT_KNOWN_INDELS.append('1000G_phase1.indels.b37.vcf')
+DFLT_KNOWN_INDELS.append('Mills_and_1000G_gold_standard.indels.b37.vcf')
+DFLT_DBSNP_FILE = 'dbsnp_138.b37.vcf'
+DFLT_REF_FILE = 'ref.fa'
 
 class TestGATKBPPipeline(SafeTester):
 
@@ -39,6 +46,7 @@ class TestGATKBPPipeline(SafeTester):
                                  dataset_name=None,
                                  sample_group='test_group',
                                  project_code=SLOW_PROJECT_CODE,
+                                 gatkbp_alloc_time=DFLT_GATKBP_ALLOC_TIME,
                                  variants_calling="YES",
                                  targets_interval_list=None,
                                  dataset_usage_mail="NO",
@@ -49,17 +57,17 @@ class TestGATKBPPipeline(SafeTester):
         if dataset_name is None:
             dataset_name = self.test_function
         known_indels = []
-        known_indels.append(join_path(self.data_dir,
-                                      '1000G_phase1.indels.b37.vcf'))
-        known_indels.append(join_path(self.data_dir,
-                                      'Mills_and_1000G_gold_standard.indels.b37.vcf'))
+        for item in DFLT_KNOWN_INDELS:
+            known_indels.append(join_path(self.data_dir,
+                                          item))
         dbsnp_file = join_path(self.data_dir,
-                               'dbsnp_138.b37.vcf')
+                               DFLT_DBSNP_FILE)
         reference_file = join_path(self.data_dir,
-                                   'ref.fa')
+                                   DFLT_REF_FILE)
         create_jobs_setup_file(dataset_name=dataset_name,
                                sample_group=sample_group,
                                project_code=project_code,
+                               gatkbp_alloc_time=gatkbp_alloc_time,
                                reference_file=reference_file,
                                project_out_dir=self.working_dir,
                                samples_root_dir=self.data_dir,
@@ -72,87 +80,106 @@ class TestGATKBPPipeline(SafeTester):
                                )
         return jobs_setup_file
 
-    def test_load_jobs_info(self):
-        """ test if meta data and sample info are loaded correctly """
+    def test_load_jobs_info_1(self):
+        """ test if default job configurations are loaded correctly """
 
         self.individual_debug = True
         self.init_test(self.current_func_name)
         job_name = self.test_function
-        jobs_setup_file = join_path(self.data_dir,
-                                    self.test_function+'.txt')
+        jobs_setup_file = self.__create_jobs_setup_file()
         pl = GATKBPPipeline(jobs_setup_file)
+        exp_dataset_name = self.test_function
         self.assertEqual(pl.dataset_name,
-                         "test-dataset",
+                         exp_dataset_name,
                          "GATKBPPipeline cannot correctly read meta info 'dataset name' from jobs setup file")
         self.assertEqual(pl.project_code,
-                         "b1234567",
+                         SLOW_PROJECT_CODE,
                          "GATKBPPipeline cannot correctly read meta info 'project code' from jobs setup file")
+        self.assertEqual(pl.gatkbp_alloc_time,
+                         DFLT_GATKBP_ALLOC_TIME,
+                         "GATKBPPipeline cannot correctly read meta info 'gatk allocation time' from jobs setup file")
         self.assertEqual(pl.known_indels[0],
-                         "/glob/jessada/private/master_data/known_indels_SNPs/1000G_phase1.indels.b37.vcf",
+                         join_path(self.data_dir, DFLT_KNOWN_INDELS[0]),
                          "GATKBPPipeline cannot correctly read meta info 'known indels[0]' from jobs setup file")
         self.assertEqual(pl.known_indels[1],
-                         "/glob/jessada/private/master_data/known_indels_SNPs/Mills_and_1000G_gold_standard.indels.b37.vcf",
+                         join_path(self.data_dir, DFLT_KNOWN_INDELS[1]),
                          "GATKBPPipeline cannot correctly read meta info 'known indels[1]' from jobs setup file")
         self.assertEqual(pl.dbsnp,
-                         "/glob/jessada/private/master_data/known_indels_SNPs/dbsnp.vcf",
+                         join_path(self.data_dir, DFLT_DBSNP_FILE),
                          "GATKBPPipeline cannot correctly read meta info 'dbsnp' from jobs setup file")
         self.assertEqual(pl.reference,
-                         "/glob/jessada/Homo_sapiens.GRCh37.57.dna.concat.fa",
+                         join_path(self.data_dir, DFLT_REF_FILE),
                          "GATKBPPipeline cannot correctly read meta info 'reference' from jobs setup file")
         self.assertEqual(pl.output_dir,
-                         "/glob/jessada/private/projects/",
+                         self.working_dir,
                          "GATKBPPipeline cannot correctly read meta info 'output directory' from jobs setup file")
         self.assertEqual(pl.variants_calling,
                          True,
                          "GATKBPPipeline cannot correctly read meta info 'variants calling' from jobs setup file")
         self.assertEqual(pl.jobs_report_file,
-                         "/glob/jessada/job_rpt.txt",
+                         join_path(pl.output_dir, exp_dataset_name+"_rpt.txt"),
                          "GATKBPPipeline cannot correctly read meta info 'jobs report file' from jobs setup file")
         self.assertEqual(pl.targets_interval_list,
-                         "/glob/jessada/target_interval",
+                         None,
                          "GATKBPPipeline cannot correctly read meta info 'targets.interval_list' from jobs setup file")
         self.assertEqual(pl.usage_mail,
                          False,
                          "GATKBPPipeline cannot correctly read meta info 'usage mail' from jobs setup file")
         self.assertEqual(len(pl.samples),
-                         4,
+                         3,
                          "GATKBPPipeline cannot correctly identify number of sampels from jobs setup file")
-        self.assertEqual(pl.samples['test_sample3'].sample_name,
-                         'test_sample3',
+        test_sample_3_name = 'test_sample_3'
+        self.assertEqual(pl.samples[test_sample_3_name].sample_name,
+                         test_sample_3_name,
                          "GATKBPPipeline cannot correctly read sample information from jobs setup file")
-        self.assertEqual(pl.samples['test_sample3'].library,
+        self.assertEqual(pl.samples[test_sample_3_name].library,
                          'lib1',
                          "GATKBPPipeline cannot correctly read sample information from jobs setup file")
-        self.assertEqual(pl.samples['test_sample3'].unit,
+        self.assertEqual(pl.samples[test_sample_3_name].unit,
                          'unit1',
                          "GATKBPPipeline cannot correctly read sample information from jobs setup file")
-        self.assertEqual(pl.samples['test_sample3'].fastq_pairs[0]['R1'],
-                         '/proj/b2012247/private/axeq_custom/1303AHS-0016/Co-1116_1.fastq.gz',
+        exp_R1_file = join_path(join_path(self.data_dir,
+                                          test_sample_3_name),
+                                test_sample_3_name + '_R1.fastq.gz')
+        self.assertEqual(pl.samples[test_sample_3_name].fastq_pairs[0]['R1'],
+                         exp_R1_file,
                          "GATKBPPipeline cannot correctly read sample information from jobs setup file")
-        self.assertEqual(pl.samples['test_sample_1'].sample_name,
-                         'test_sample_1',
+        test_sample_1_name = 'test_sample_1'
+        self.assertEqual(pl.samples[test_sample_1_name].sample_name,
+                         test_sample_1_name,
                          "GATKBPPipeline cannot correctly read sample information from jobs setup file")
-        self.assertEqual(pl.samples['test_sample_1'].preprocess_sample,
+        self.assertEqual(pl.samples[test_sample_1_name].preprocess_sample,
                          True,
                          "GATKBPPipeline cannot correctly read sample information from jobs setup file")
-        self.assertEqual(pl.samples['test_sample_1'].platform,
+        self.assertEqual(pl.samples[test_sample_1_name].platform,
                          'Illumina',
                          "GATKBPPipeline cannot correctly read sample information from jobs setup file")
-        self.assertEqual(pl.samples['test_sample_1'].fastq_pairs[3]['R2'],
-                         '/proj/b2012247/private/axeq_custom/1303AHS-0016/Co-1747_2.fastq.gz',
+        exp_R2_file = join_path(join_path(self.data_dir,
+                                          test_sample_1_name),
+                                test_sample_1_name + '_R2.fastq.gz')
+        self.assertEqual(pl.samples[test_sample_1_name].fastq_pairs[0]['R2'],
+                         exp_R2_file,
                          "GATKBPPipeline cannot correctly read sample information from jobs setup file")
-        self.assertEqual(pl.samples['test_sample10000'].sample_name,
-                         'test_sample10000',
-                         "GATKBPPipeline cannot correctly read sample information from jobs setup file")
-        self.assertEqual(pl.samples['test_sample10000'].sample_group,
-                         'test_group',
-                         "GATKBPPipeline cannot correctly read sample information from jobs setup file")
-        self.assertEqual(pl.samples['test_sample10000'].usage_mail,
-                         False,
-                         "GATKBPPipeline cannot correctly read sample information from jobs setup file")
-        self.assertEqual(pl.samples['1015_05'].sample_name,
-                         "1015_05",
-                         "GATKBPPipeline cannot correctly read sample information from jobs setup file")
+
+    def test_load_jobs_info_2(self):
+        """ test if modified job configurations are loaded correctly """
+
+        self.individual_debug = True
+        self.init_test(self.current_func_name)
+        job_name = self.test_function
+        targets_interval_list = join_path(self.data_dir,
+                                          "targets.interval_list") 
+        jobs_setup_file = self.__create_jobs_setup_file(gatkbp_alloc_time="20:00:00",
+                                                        targets_interval_list=targets_interval_list,
+                                                        )
+        pl = GATKBPPipeline(jobs_setup_file)
+        exp_dataset_name = self.test_function
+        self.assertEqual(pl.gatkbp_alloc_time,
+                         "20:00:00",
+                         "GATKBPPipeline cannot correctly read meta info 'gatk allocation time' from jobs setup file")
+        self.assertEqual(pl.targets_interval_list,
+                         targets_interval_list,
+                         "GATKBPPipeline cannot correctly read meta info 'targets.interval_list' from jobs setup file")
 
     @unittest.skipUnless(settings.SLURM_TEST, "taking too much UPPMAX cpu-core hours")
     def test_bwa_mem_1(self):
@@ -702,47 +729,6 @@ class TestGATKBPPipeline(SafeTester):
                          " garbage collecting process doesn't work properly")
         self.assertFalse(path_exists(sorted_reads_dest),
                          " garbage collecting process doesn't work properly")
-
-    def tearDown(self):
-        self.remove_working_dir()
-
-class TestFunctions(SafeTester):
-
-    def __init__(self, test_name):
-        SafeTester.__init__(self,
-                            test_name,
-                            dirname(__file__),
-                            test_module_name=__name__,
-                            )
-
-    def setUp(self):
-        mylogger.getLogger(__name__)
-
-#    @unittest.skipUnless(isdir("/proj/b2011117"), "This can only run in UPPMAX")
-    @unittest.skip("hard to test, temporarily skip")
-    def test_create_jobs_setup_file(self):
-        """ test if function create_jobs_setup_file can be really used in production """
-
-        self.individual_debug = True
-        self.init_test(self.current_func_name)
-        samples_root_dir = self.data_dir
-        out_jobs_setup_file = join_path(self.working_dir,
-                                        'jobs_setup_file.txt')
-        exp_jobs_setup_file = join_path(self.data_dir,
-                                        'expected_jobs_setup_file.txt')
-        create_jobs_setup_file(dataset_name=self.test_function,
-                              sample_group='NA',
-                              project_code=SLOW_PROJECT_CODE,
-                              reference_file='/links/to/reference_file',
-                              project_out_dir=self.working_dir,
-                              jobs_report_file='/path/to/job_report_file',
-                              samples_root_dir=samples_root_dir,
-                              out_jobs_setup_file=out_jobs_setup_file,
-                              )
-        mylogger.debug(out_jobs_setup_file)
-        self.assertTrue(filecmp.cmp(out_jobs_setup_file,
-                                    exp_jobs_setup_file),
-                        "create_jobs_setup_file doesn't funciton correctly")
 
     def tearDown(self):
         self.remove_working_dir()
