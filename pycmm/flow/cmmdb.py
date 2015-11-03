@@ -124,7 +124,7 @@ class CMMDBPipeline(JobManager):
         JobManager.__init__(self,
                             jobs_report_file=self.jobs_report_file)
         self.__parse_sample_infos()
-        self.__parse_annovar_configs()
+        self.__annovar_configs = None
         self.__time_stamp = datetime.datetime.now()
         self.__create_directories()
 
@@ -207,6 +207,8 @@ class CMMDBPipeline(JobManager):
 
     @property
     def annovar_config(self):
+        if self.__annovar_configs is None:
+            self.__parse_annovar_configs()
         return self.__annovar_configs
 
     @property
