@@ -91,6 +91,8 @@ def app_pycmm_cmmdb_create_jobs_setup_file(*args, **kwargs):
         layout_params['annotation columns (-a)'] = kwargs['anno_cols']
     else:
         layout_params['annotation columns (-a)'] = "all"
+    if kwargs['anno_excl_tags'] is not None:
+        layout_params['annotation excluded tags (-a)'] = kwargs['anno_excl_tags']
     if kwargs['annotated_vcf_tabix'] is not None:
         layout_params['annotated vcf tablx file (-A)'] = kwargs['annotated_vcf_tabix']
     if kwargs['report_regions'] is not None:
@@ -103,7 +105,6 @@ def app_pycmm_cmmdb_create_jobs_setup_file(*args, **kwargs):
     layout_params['summary_families sheet (--summary_families)'] = kwargs['summary_families_sheet']
     extra_anno_cols = {}
     extra_anno_cols['call detail (--call_detail)'] = kwargs['call_detail']
-    extra_anno_cols['mitochondria (--anno_mt)'] = kwargs['anno_mt']
     layout_params['extra annotation columns'] = extra_anno_cols
     exclusion_out = {}
     exclusion_out['common mutations (--exclude_common)'] = kwargs['exclude_common']
@@ -122,13 +123,13 @@ def app_pycmm_cmmdb_create_jobs_setup_file(*args, **kwargs):
                            db_alloc_time=kwargs['db_alloc_time'],
                            rpt_alloc_time=kwargs['rpt_alloc_time'],
                            anno_cols=kwargs['anno_cols'],
+                           anno_excl_tags=kwargs['anno_excl_tags'],
                            annotated_vcf_tabix=kwargs['annotated_vcf_tabix'],
                            report_regions=kwargs['report_regions'],
                            frequency_ratios=kwargs['frequency_ratios'],
                            split_chrom=kwargs['split_chrom'],
                            summary_families_sheet=kwargs['summary_families_sheet'],
                            call_detail=kwargs['call_detail'],
-                           anno_mt=kwargs['anno_mt'],
                            exclude_common=kwargs['exclude_common'],
                            exclude_intergenic=kwargs['exclude_intergenic'],
                            exclude_intronic=kwargs['exclude_intronic'],

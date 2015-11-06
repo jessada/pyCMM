@@ -11,13 +11,14 @@ from os.path import join as join_path
 from os.path import isdir
 from os.path import isfile
 from collections import OrderedDict
-from pycmm.settings import PREDICTION_LIST
+from pycmm.settings import PREDICTION_COLS
 from pycmm.settings import DFLT_ANNOVAR_DB_FOLDER
 from pycmm.settings import DFLT_ANNOVAR_DB_NAMES
 from pycmm.settings import DFLT_ANNOVAR_DB_OPS
+from pycmm.settings import ALL_MUTREP_ANNO_COLS
 from pycmm.settings import MUTREP_FAMILY_REPORT_BIN
 from pycmm.settings import MUTREP_SUMMARY_REPORT_BIN
-from pycmm.settings import MT_ANNO_COLS
+#from pycmm.settings import MT_ANNO_COLS
 from pycmm.template import pyCMMBase
 from pycmm.utils import exec_sh
 from pycmm.utils import mylogger
@@ -28,6 +29,7 @@ from pycmm.flow.cmmdb import JOBS_SETUP_RPT_ALLOC_TIME_KEY
 from pycmm.flow.cmmdb import JOBS_SETUP_RPT_LAYOUT_SECTION
 from pycmm.flow.cmmdb import JOBS_SETUP_RPT_ANNOTATED_VCF_TABIX
 from pycmm.flow.cmmdb import JOBS_SETUP_RPT_ANNO_COLS_KEY
+from pycmm.flow.cmmdb import JOBS_SETUP_RPT_ANNO_EXCL_TAGS_KEY
 from pycmm.flow.cmmdb import JOBS_SETUP_RPT_REGIONS_KEY
 from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FREQ_RATIOS_KEY
 from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FREQ_RATIOS_COL_KEY
@@ -194,14 +196,27 @@ class ReportLayout(pyCMMBase):
         self.__anno_cols = self.__cal_anno_cols()
 
     def __cal_anno_cols(self):
-        anno_cols = self.__layout_params[JOBS_SETUP_RPT_ANNO_COLS_KEY]
-        if not self.anno_mt:
-            anno_cols = [x for x in anno_cols if x not in MT_ANNO_COLS]
+        anno_cols = []
+        for col_name in self.__layout_params[JOBS_SETUP_RPT_ANNO_COLS_KEY]:
+            excluded = False
+            for excl_tag in self.anno_excl_tags:
+                if excl_tag in ALL_MUTREP_ANNO_COLS[col_name]:
+                    excluded = True
+                    break
+            if not excluded:
+                anno_cols.append(col_name)
         return anno_cols
 
     @property
     def anno_cols(self):
         return self.__anno_cols
+
+    @property
+    def anno_excl_tags(self):
+        if JOBS_SETUP_RPT_ANNO_EXCL_TAGS_KEY in self.__layout_params:
+            return self.__layout_params[JOBS_SETUP_RPT_ANNO_EXCL_TAGS_KEY]
+        else:
+            return []
 
     @property
     def annotated_vcf_tabix(self):
@@ -250,13 +265,6 @@ class ReportLayout(pyCMMBase):
             return False
         else:
             return JOBS_SETUP_RPT_CALL_DETAIL_KEY in self.__layout_params[JOBS_SETUP_RPT_EXTRA_ANNO_COLS_KEY]
-
-    @property
-    def anno_mt(self):
-        if JOBS_SETUP_RPT_EXTRA_ANNO_COLS_KEY not in self.__layout_params:
-            return False
-        else:
-            return JOBS_SETUP_RPT_MT_KEY in self.__layout_params[JOBS_SETUP_RPT_EXTRA_ANNO_COLS_KEY]
 
     @property
     def exclude_common(self):
@@ -426,7 +434,7 @@ class MutRepPipeline(CMMDBPipeline):
                 info = info[0]
             elif (type(info) is list) and (len(info) > 1):
                 info = info[allele_idx-1]
-            if anno_col_name in PREDICTION_LIST:
+            if anno_col_name in PREDICTION_COLS:
                 info = info.description
             if info is None:
                 info = ""

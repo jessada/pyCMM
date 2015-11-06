@@ -25,7 +25,7 @@ from pycmm.proc.annovarlib import ANNOVAR_PARAMS_OUT_PREFIX_KEY
 from pycmm.proc.annovarlib import ANNOVAR_PARAMS_DB_NAMES_KEY
 from pycmm.proc.annovarlib import ANNOVAR_PARAMS_DB_OPS_KEY
 from pycmm.proc.annovarlib import ANNOVAR_PARAMS_NASTRING_KEY
-from pycmm.settings import DFLT_MUTREP_ANNO_COLS
+from pycmm.settings import ALL_MUTREP_ANNO_COLS
 from pycmm.settings import DFLT_MUTREP_FREQ_RATIOS
 
 ALL_CHROMS = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "MT", "X", "Y"]
@@ -60,6 +60,7 @@ JOBS_SETUP_SAMPLE_ID_KEY = "SAMPLE_ID"
 JOBS_SETUP_RPT_LAYOUT_SECTION = "REPORT_LAYOUT"
 JOBS_SETUP_RPT_ANNOTATED_VCF_TABIX = "ANNOTATED_VCF_TABIX"
 JOBS_SETUP_RPT_ANNO_COLS_KEY = "COLUMNS"
+JOBS_SETUP_RPT_ANNO_EXCL_TAGS_KEY = "ANNOTATION_EXCLUSION_TAGS"
 JOBS_SETUP_RPT_REGIONS_KEY = "REGIONS"
 JOBS_SETUP_RPT_FREQ_RATIOS_KEY = "FREQUENCY_RATIOS"
 JOBS_SETUP_RPT_FREQ_RATIOS_COL_KEY = "COLUMN"
@@ -375,13 +376,13 @@ def create_jobs_setup_file(dataset_name,
                            annovar_db_ops=DFLT_ANNOVAR_DB_OPS,
                            annovar_nastring=".",
                            anno_cols=None,
+                           anno_excl_tags=None,
                            annotated_vcf_tabix=None,
                            report_regions=None,
                            frequency_ratios=None,
                            split_chrom=False,
                            summary_families_sheet=False,
                            call_detail=False,
-                           anno_mt=False,
                            exclude_common=False,
                            exclude_intergenic=False,
                            exclude_intronic=False,
@@ -441,9 +442,11 @@ def create_jobs_setup_file(dataset_name,
     job_setup_document[JOBS_SETUP_ANNOVAR_SECTION] = annovar_config
     report_layout_config = {}
     if anno_cols is None:
-        report_layout_config[JOBS_SETUP_RPT_ANNO_COLS_KEY] = DFLT_MUTREP_ANNO_COLS
+        report_layout_config[JOBS_SETUP_RPT_ANNO_COLS_KEY] = ALL_MUTREP_ANNO_COLS
     else:
         report_layout_config[JOBS_SETUP_RPT_ANNO_COLS_KEY] = anno_cols.split(",")
+    if anno_excl_tags is not None:
+        report_layout_config[JOBS_SETUP_RPT_ANNO_EXCL_TAGS_KEY] = anno_excl_tags.split(",")
     if annotated_vcf_tabix is not None:
         report_layout_config[JOBS_SETUP_RPT_ANNOTATED_VCF_TABIX] = annotated_vcf_tabix
     if report_regions is not None:
@@ -459,12 +462,10 @@ def create_jobs_setup_file(dataset_name,
     report_layout_config[JOBS_SETUP_RPT_FREQ_RATIOS_KEY] = job_freq_ratios
     report_layout_config[JOBS_SETUP_RPT_SPLIT_CHROM_KEY] = split_chrom
     report_layout_config[JOBS_SETUP_RPT_SUMMARY_FAMILIES_KEY] = summary_families_sheet
-    if call_detail or anno_mt:
+    if call_detail:
         extra_anno_cols = []
         if call_detail:
             extra_anno_cols.append(JOBS_SETUP_RPT_CALL_DETAIL_KEY)
-        if anno_mt:
-            extra_anno_cols.append(JOBS_SETUP_RPT_MT_KEY)
         report_layout_config[JOBS_SETUP_RPT_EXTRA_ANNO_COLS_KEY] = extra_anno_cols
     if exclude_common or exclude_intergenic or exclude_intronic:
         exclusion_criteria = []

@@ -1,10 +1,23 @@
 import argparse
 import sys
+from argparse import RawTextHelpFormatter
 from pycmm import settings
 from pycmm.app.cmmdb import app_pycmm_cmmdb_create_jobs_setup_file
+from pycmm.settings import AXEQ_CHR3_6_14_18_COLS_TAG
+from pycmm.settings import AXEQ_CHR5_19_COLS_TAG
+from pycmm.settings import AXEQ_CHR9_COLS_TAG
+from pycmm.settings import CRC_101_COLS_TAG
+from pycmm.settings import CRC_CAFAM_COLS_TAG
+from pycmm.settings import CRC_COLON_COLS_TAG
+from pycmm.settings import CRC_RECTAL_COLS_TAG
+from pycmm.settings import CRC_CRC_COLS_TAG
+from pycmm.settings import NK64_COLS_TAG
+from pycmm.settings import MUTSTAT_DETAILS_COLS_TAG
+from pycmm.settings import LJB_SCORE_COLS_TAG
 
-
-argp = argparse.ArgumentParser(description=settings.CMMDB_CREATE_JOB_SETUP_FILE_DESCRIPTION)
+argp = argparse.ArgumentParser(description=settings.CMMDB_CREATE_JOB_SETUP_FILE_DESCRIPTION,
+                               formatter_class=RawTextHelpFormatter,
+                               )
 db_group = argp.add_argument_group('db-generator arguments')
 mutrep_group = argp.add_argument_group('mutation-report arguments')
 argp.add_argument('-d',
@@ -55,16 +68,38 @@ mutrep_group.add_argument('--rpt_alloc_time',
                           help='UPPMAX allocation time for jobs that create reports (i.e. summary mutations report, family mutaiton report)',
                           default=None,
                           )
-mutrep_group.add_argument('-a',
-                          dest='anno_cols',
-                          metavar="ANNOTATED_COLS",
-                          help='columns to be annotated in the result excel sheet (default all)',
-                          default=None,
-                          )
 mutrep_group.add_argument('-A',
                           dest='annotated_vcf_tabix',
                           metavar="ANNOTATED_VCF_TABIX",
                           help='annoated vcf tabix file',
+                          default=None,
+                          )
+mutrep_group.add_argument('-a',
+                          dest='anno_cols',
+                          metavar="ANNOTATED_COLS",
+                          help='intital columns to be annotated in the result excel sheet (default all). Some of these of columns might be later excluded with argument "-E"(exclude columns)',
+                          default=None,
+                          )
+help_txt = 'groups(tags) of columns to be excluded (comma separated). Possible groups to be excluded are as follows:\n'
+help_txt += '\n'
+help_txt += '\t' + AXEQ_CHR3_6_14_18_COLS_TAG + ': columns that are related to mutations statistics generated from dataset Axeq chr3, 6, 14, 18\n'
+help_txt += '\t' + AXEQ_CHR5_19_COLS_TAG + ': columns that are related to dataset Axeq chr5, 19\n'
+help_txt += '\t' + AXEQ_CHR9_COLS_TAG + ': columns that are related to dataset Axeq chr9\n'
+help_txt += '\t' + CRC_101_COLS_TAG + ': columns that are related to mutations statistics generated from all 101 CRC samples\n'
+help_txt += '\t' + CRC_CAFAM_COLS_TAG + ': columns that are related to mutations statistics generated from cancer-family subdataset of CRC dataset\n'
+help_txt += '\t' + CRC_COLON_COLS_TAG + ': columns that are related to mutations statistics generated from colon-cancer subdataset of CRC dataset\n'
+help_txt += '\t' + CRC_RECTAL_COLS_TAG + ': columns that are related to mutations statistics generated from rectal-cancer subdataset of CRC dataset\n'
+help_txt += '\t' + CRC_CRC_COLS_TAG + ': columns that are related to mutations statistics generated from colorectal-cancer subdataset of CRC dataset\n'
+help_txt += '\t' + NK64_COLS_TAG + ': columns that are related to mutations statistics generated from a dataset consisting of PMS2-, early onset- and famliy 24 samples\n'
+help_txt += '\t' + MUTSTAT_DETAILS_COLS_TAG + ': detailed information of mutations statistics\n'
+help_txt += '\t' + LJB_SCORE_COLS_TAG + ': prediction score from LJB\n'
+help_txt += '\n'
+help_txt += 'example: -E ' + AXEQ_CHR9_COLS_TAG + ',' + MUTSTAT_DETAILS_COLS_TAG + '\n'
+help_txt += '\n'
+mutrep_group.add_argument('-E',
+                          dest='anno_excl_tags',
+                          metavar="EXCLUDE_COLS",
+                          help=help_txt,
                           default=None,
                           )
 mutrep_group.add_argument('-R',
@@ -95,12 +130,6 @@ mutrep_group.add_argument('--call_detail',
                           dest='call_detail',
                           action="store_true",
                           help='indicate if other call information beside GT are required',
-                          default=False,
-                          )
-mutrep_group.add_argument('--anno_mt',
-                          dest='anno_mt',
-                          action="store_true",
-                          help='indicate if mitochondria annotation is required',
                           default=False,
                           )
 mutrep_group.add_argument('--exclude_common',
@@ -149,13 +178,13 @@ app_pycmm_cmmdb_create_jobs_setup_file(dataset_name=args.dataset_name,
                                        db_alloc_time=args.db_alloc_time,
                                        rpt_alloc_time=args.rpt_alloc_time,
                                        anno_cols=args.anno_cols,
+                                       anno_excl_tags=args.anno_excl_tags,
                                        annotated_vcf_tabix=args.annotated_vcf_tabix,
                                        report_regions=args.report_regions,
                                        frequency_ratios=args.freq_ratios,
                                        split_chrom=args.split_chrom,
                                        summary_families_sheet=args.summary_families_sheet,
                                        call_detail=args.call_detail,
-                                       anno_mt=args.anno_mt,
                                        exclude_common=args.exclude_common,
                                        exclude_intergenic=args.exclude_intergenic,
                                        exclude_intronic=args.exclude_intronic,
