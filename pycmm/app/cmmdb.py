@@ -92,7 +92,7 @@ def app_pycmm_cmmdb_create_jobs_setup_file(*args, **kwargs):
     else:
         layout_params['annotation columns (-a)'] = "all"
     if kwargs['anno_excl_tags'] is not None:
-        layout_params['annotation excluded tags (-a)'] = kwargs['anno_excl_tags']
+        layout_params['annotation excluded tags (-E)'] = kwargs['anno_excl_tags'].split(",")
     if kwargs['annotated_vcf_tabix'] is not None:
         layout_params['annotated vcf tablx file (-A)'] = kwargs['annotated_vcf_tabix']
     if kwargs['report_regions'] is not None:

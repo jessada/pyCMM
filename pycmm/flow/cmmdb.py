@@ -442,7 +442,7 @@ def create_jobs_setup_file(dataset_name,
     job_setup_document[JOBS_SETUP_ANNOVAR_SECTION] = annovar_config
     report_layout_config = {}
     if anno_cols is None:
-        report_layout_config[JOBS_SETUP_RPT_ANNO_COLS_KEY] = ALL_MUTREP_ANNO_COLS
+        report_layout_config[JOBS_SETUP_RPT_ANNO_COLS_KEY] = ALL_MUTREP_ANNO_COLS.keys()
     else:
         report_layout_config[JOBS_SETUP_RPT_ANNO_COLS_KEY] = anno_cols.split(",")
     if anno_excl_tags is not None:

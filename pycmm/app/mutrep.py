@@ -54,7 +54,6 @@ def __display_report_config(func_name,
     layout_params['summary_families sheet'] = pl.report_layout.summary_families_sheet
     extra_anno_cols ={}
     extra_anno_cols['call detail'] = pl.report_layout.call_detail
-    extra_anno_cols['mitochondria'] = pl.report_layout.anno_mt
     layout_params['extra annotation columns'] = extra_anno_cols
     exclusion_out = {}
     exclusion_out['common mutations'] = pl.report_layout.exclude_common
