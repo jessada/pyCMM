@@ -70,10 +70,11 @@ JOBS_SETUP_RPT_SUMMARY_FAMILIES_KEY = "SUMMARY_FAMILIES"
 JOBS_SETUP_RPT_EXTRA_ANNO_COLS_KEY = "EXTRA_ANNOTATION_COLUMNS"
 JOBS_SETUP_RPT_CALL_DETAIL_KEY = "Calling_detail"
 JOBS_SETUP_RPT_MT_KEY = "Mitochondria"
-JOBS_SETUP_RPT_ROW_EXCLUSION_CRITERIA_KEY = "ROWEXCLUSION_CRITERIA"
-JOBS_SETUP_RPT_EXCLUDE_COMMON = "Common"
-JOBS_SETUP_RPT_EXCLUDE_INTERGENIC = "Intergenic"
-JOBS_SETUP_RPT_EXCLUDE_INTRONIC = "Intronic"
+JOBS_SETUP_RPT_ROW_FILTER_CRITERIA_KEY = "ROW_FILTER_CRITERIA"
+JOBS_SETUP_RPT_FILTER_RARE = "Rare"
+JOBS_SETUP_RPT_FILTER_NON_INTERGENIC = "Non-Intergenic"
+JOBS_SETUP_RPT_FILTER_NON_INTRONIC = "Non-Intronic"
+JOBS_SETUP_RPT_FILTER_HAS_MUTATION = "Has-Mutation"
 JOBS_SETUP_RPT_ONLY_SUMMARY_KEY = "ONLY_SUMMARY"
 JOBS_SETUP_RPT_ONLY_FAMILIES_KEY = "ONLY_FAMILIES"
 
@@ -383,9 +384,11 @@ def create_jobs_setup_file(dataset_name,
                            split_chrom=False,
                            summary_families_sheet=False,
                            call_detail=False,
-                           exclude_common=False,
-                           exclude_intergenic=False,
-                           exclude_intronic=False,
+                           rows_filter=None,
+#                           exclude_common=False,
+#                           exclude_intergenic=False,
+#                           exclude_intronic=False,
+#                           exclude_no_mutation=False,
                            only_summary=False,
                            only_families=False,
                            out_jobs_setup_file=None,
@@ -467,15 +470,18 @@ def create_jobs_setup_file(dataset_name,
         if call_detail:
             extra_anno_cols.append(JOBS_SETUP_RPT_CALL_DETAIL_KEY)
         report_layout_config[JOBS_SETUP_RPT_EXTRA_ANNO_COLS_KEY] = extra_anno_cols
-    if exclude_common or exclude_intergenic or exclude_intronic:
-        exclusion_criteria = []
-        if exclude_common:
-            exclusion_criteria.append(JOBS_SETUP_RPT_EXCLUDE_COMMON)
-        if exclude_intergenic:
-            exclusion_criteria.append(JOBS_SETUP_RPT_EXCLUDE_INTERGENIC)
-        if exclude_intronic:
-            exclusion_criteria.append(JOBS_SETUP_RPT_EXCLUDE_INTRONIC)
-        report_layout_config[JOBS_SETUP_RPT_ROW_EXCLUSION_CRITERIA_KEY] = exclusion_criteria
+    if rows_filter is not None:
+        filter_criterias = []
+        for filter_criteria in rows_filter.split(","):
+            if filter_criteria == JOBS_SETUP_RPT_FILTER_RARE:
+                filter_criterias.append(JOBS_SETUP_RPT_FILTER_RARE)
+            if filter_criteria == JOBS_SETUP_RPT_FILTER_NON_INTERGENIC:
+                filter_criterias.append(JOBS_SETUP_RPT_FILTER_NON_INTERGENIC)
+            if filter_criteria == JOBS_SETUP_RPT_FILTER_NON_INTRONIC:
+                filter_criterias.append(JOBS_SETUP_RPT_FILTER_NON_INTRONIC)
+            if filter_criteria == JOBS_SETUP_RPT_FILTER_HAS_MUTATION:
+                filter_criterias.append(JOBS_SETUP_RPT_FILTER_HAS_MUTATION)
+        report_layout_config[JOBS_SETUP_RPT_ROW_FILTER_CRITERIA_KEY] = filter_criterias
     report_layout_config[JOBS_SETUP_RPT_ONLY_SUMMARY_KEY] = only_summary
     report_layout_config[JOBS_SETUP_RPT_ONLY_FAMILIES_KEY] = only_families
     job_setup_document[JOBS_SETUP_RPT_LAYOUT_SECTION] = report_layout_config

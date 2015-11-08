@@ -842,8 +842,8 @@ class TestTAVcfRecord(SafeTester):
     def setUp(self):
         mylogger.getLogger(__name__)
 
-    def test_shared_1(self):
-        """ test shared mutation can be correctly identify in one sample """
+    def test_is_shared_1(self):
+        """ test shared mutation can be correctly identified in one sample """
 
         self.individual_debug = True
         self.init_test(self.current_func_name)
@@ -944,7 +944,7 @@ class TestTAVcfRecord(SafeTester):
                          False,
                          "shared mutation cannot be correctly determined")
 
-    def test_shared_2(self):
+    def test_is_shared_2(self):
         """ test shared mutation between two samples can be identified """
 
         self.individual_debug = True
@@ -1005,48 +1005,8 @@ class TestTAVcfRecord(SafeTester):
         self.assertEqual(vcf_record.is_shared(samples, 1),
                          False,
                          "shared mutation cannot be correctly determined")
-        vcf_record = vcf_reader.next()
-        self.assertEqual(vcf_record.is_shared(samples, 1),
-                         False,
-                         "shared mutation cannot be correctly determined")
-        vcf_record = vcf_reader.next()
-        self.assertEqual(vcf_record.is_shared(samples, 1),
-                         False,
-                         "shared mutation cannot be correctly determined")
-        vcf_record = vcf_reader.next()
-        self.assertEqual(vcf_record.is_shared(samples, 1),
-                         False,
-                         "shared mutation cannot be correctly determined")
-        vcf_record = vcf_reader.next()
-        self.assertEqual(vcf_record.is_shared(samples, 1),
-                         False,
-                         "shared mutation cannot be correctly determined")
-        vcf_record = vcf_reader.next()
-        self.assertEqual(vcf_record.is_shared(samples, 1),
-                         False,
-                         "shared mutation cannot be correctly determined")
-        vcf_record = vcf_reader.next()
-        self.assertEqual(vcf_record.is_shared(samples, 1),
-                         False,
-                         "shared mutation cannot be correctly determined")
-        vcf_record = vcf_reader.next()
-        self.assertEqual(vcf_record.is_shared(samples, 1),
-                         False,
-                         "shared mutation cannot be correctly determined")
-        vcf_record = vcf_reader.next()
-        self.assertEqual(vcf_record.is_shared(samples, 1),
-                         False,
-                         "shared mutation cannot be correctly determined")
-        vcf_record = vcf_reader.next()
-        self.assertEqual(vcf_record.is_shared(samples, 1),
-                         False,
-                         "shared mutation cannot be correctly determined")
-        vcf_record = vcf_reader.next()
-        self.assertEqual(vcf_record.is_shared(samples, 1),
-                         False,
-                         "shared mutation cannot be correctly determined")
 
-    def test_shared_3(self):
+    def test_is_shared_3(self):
         """ test shared mutation between three samples can be identified """
 
         self.individual_debug = True
@@ -1145,6 +1105,272 @@ class TestTAVcfRecord(SafeTester):
                          "shared mutation cannot be correctly determined")
         vcf_record = vcf_reader.next()
         self.assertEqual(vcf_record.is_shared(samples, 1),
+                         False,
+                         "shared mutation cannot be correctly determined")
+
+    def test_is_mutated_1(self):
+        """ test a mutation can be correctly identified in one sample """
+
+        self.individual_debug = True
+        self.init_test(self.current_func_name)
+        in_file = join_path(self.data_dir,
+                               'input.vcf.gz')
+        samples = ["Al-65"]
+        vcf_reader = TAVcfReader(filename=in_file)
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.is_mutated(samples, 1),
+                         False,
+                         "shared mutation cannot be correctly determined")
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.is_mutated(samples, 1),
+                         False,
+                         "shared mutation cannot be correctly determined")
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.is_mutated(samples, 1),
+                         True,
+                         "shared mutation cannot be correctly determined")
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.is_mutated(samples, 1),
+                         False,
+                         "shared mutation cannot be correctly determined")
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.is_mutated(samples, 1),
+                         True,
+                         "shared mutation cannot be correctly determined")
+        self.assertEqual(vcf_record.is_mutated(samples, 2),
+                         False,
+                         "shared mutation cannot be correctly determined")
+        self.assertEqual(vcf_record.is_mutated(samples, 3),
+                         False,
+                         "shared mutation cannot be correctly determined")
+        self.assertEqual(vcf_record.is_mutated(samples, 4),
+                         False,
+                         "shared mutation cannot be correctly determined")
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.is_mutated(samples, 1),
+                         False,
+                         "shared mutation cannot be correctly determined")
+        self.assertEqual(vcf_record.is_mutated(samples, 2),
+                         False,
+                         "shared mutation cannot be correctly determined")
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.is_mutated(samples, 1),
+                         False,
+                         "shared mutation cannot be correctly determined")
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.is_mutated(samples, 1),
+                         False,
+                         "shared mutation cannot be correctly determined")
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.is_mutated(samples, 1),
+                         False,
+                         "shared mutation cannot be correctly determined")
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.is_mutated(samples, 1),
+                         False,
+                         "shared mutation cannot be correctly determined")
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.is_mutated(samples, 1),
+                         True,
+                         "shared mutation cannot be correctly determined")
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.is_mutated(samples, 1),
+                         False,
+                         "shared mutation cannot be correctly determined")
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.is_mutated(samples, 1),
+                         False,
+                         "shared mutation cannot be correctly determined")
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.is_mutated(samples, 1),
+                         False,
+                         "shared mutation cannot be correctly determined")
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.is_mutated(samples, 1),
+                         False,
+                         "shared mutation cannot be correctly determined")
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.is_mutated(samples, 1),
+                         False,
+                         "shared mutation cannot be correctly determined")
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.is_mutated(samples, 1),
+                         False,
+                         "shared mutation cannot be correctly determined")
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.is_mutated(samples, 1),
+                         False,
+                         "shared mutation cannot be correctly determined")
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.is_mutated(samples, 1),
+                         True,
+                         "shared mutation cannot be correctly determined")
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.is_mutated(samples, 1),
+                         False,
+                         "shared mutation cannot be correctly determined")
+
+    def test_is_mutated_2(self):
+        """ test shared mutation between two samples can be identified """
+
+        self.individual_debug = True
+        self.init_test(self.current_func_name)
+        in_file = join_path(self.data_dir,
+                               'input.vcf.gz')
+        samples = ["Alb-31", "Br-466"]
+        vcf_reader = TAVcfReader(filename=in_file)
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.is_mutated(samples, 1),
+                         False,
+                         "shared mutation cannot be correctly determined")
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.is_mutated(samples, 1),
+                         True,
+                         "shared mutation cannot be correctly determined")
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.is_mutated(samples, 1),
+                         False,
+                         "shared mutation cannot be correctly determined")
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.is_mutated(samples, 1),
+                         True,
+                         "shared mutation cannot be correctly determined")
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.is_mutated(samples, 1),
+                         True,
+                         "shared mutation cannot be correctly determined")
+        self.assertEqual(vcf_record.is_mutated(samples, 2),
+                         False,
+                         "shared mutation cannot be correctly determined")
+        self.assertEqual(vcf_record.is_mutated(samples, 3),
+                         True,
+                         "shared mutation cannot be correctly determined")
+        self.assertEqual(vcf_record.is_mutated(samples, 4),
+                         False,
+                         "shared mutation cannot be correctly determined")
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.is_mutated(samples, 1),
+                         True,
+                         "shared mutation cannot be correctly determined")
+        self.assertEqual(vcf_record.is_mutated(samples, 2),
+                         False,
+                         "shared mutation cannot be correctly determined")
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.is_mutated(samples, 1),
+                         True,
+                         "shared mutation cannot be correctly determined")
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.is_mutated(samples, 1),
+                         True,
+                         "shared mutation cannot be correctly determined")
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.is_mutated(samples, 1),
+                         True,
+                         "shared mutation cannot be correctly determined")
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.is_mutated(samples, 1),
+                         False,
+                         "shared mutation cannot be correctly determined")
+
+    def test_is_mutated_3(self):
+        """ test shared mutation between three samples can be identified """
+
+        self.individual_debug = True
+        self.init_test(self.current_func_name)
+        in_file = join_path(self.data_dir,
+                               'input.vcf.gz')
+        samples = ["Br-432", "Al-161", "Br-504"]
+        vcf_reader = TAVcfReader(filename=in_file)
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.is_mutated(samples, 1),
+                         True,
+                         "shared mutation cannot be correctly determined")
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.is_mutated(samples, 1),
+                         False,
+                         "shared mutation cannot be correctly determined")
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.is_mutated(samples, 1),
+                         True,
+                         "shared mutation cannot be correctly determined")
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.is_mutated(samples, 1),
+                         False,
+                         "shared mutation cannot be correctly determined")
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.is_mutated(samples, 1),
+                         True,
+                         "shared mutation cannot be correctly determined")
+        self.assertEqual(vcf_record.is_mutated(samples, 2),
+                         False,
+                         "shared mutation cannot be correctly determined")
+        self.assertEqual(vcf_record.is_mutated(samples, 3),
+                         True,
+                         "shared mutation cannot be correctly determined")
+        self.assertEqual(vcf_record.is_mutated(samples, 4),
+                         False,
+                         "shared mutation cannot be correctly determined")
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.is_mutated(samples, 1),
+                         False,
+                         "shared mutation cannot be correctly determined")
+        self.assertEqual(vcf_record.is_mutated(samples, 2),
+                         False,
+                         "shared mutation cannot be correctly determined")
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.is_mutated(samples, 1),
+                         False,
+                         "shared mutation cannot be correctly determined")
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.is_mutated(samples, 1),
+                         True,
+                         "shared mutation cannot be correctly determined")
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.is_mutated(samples, 1),
+                         True,
+                         "shared mutation cannot be correctly determined")
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.is_mutated(samples, 1),
+                         True,
+                         "shared mutation cannot be correctly determined")
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.is_mutated(samples, 1),
+                         True,
+                         "shared mutation cannot be correctly determined")
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.is_mutated(samples, 1),
+                         True,
+                         "shared mutation cannot be correctly determined")
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.is_mutated(samples, 1),
+                         True,
+                         "shared mutation cannot be correctly determined")
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.is_mutated(samples, 1),
+                         True,
+                         "shared mutation cannot be correctly determined")
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.is_mutated(samples, 1),
+                         True,
+                         "shared mutation cannot be correctly determined")
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.is_mutated(samples, 1),
+                         True,
+                         "shared mutation cannot be correctly determined")
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.is_mutated(samples, 1),
+                         True,
+                         "shared mutation cannot be correctly determined")
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.is_mutated(samples, 1),
+                         True,
+                         "shared mutation cannot be correctly determined")
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.is_mutated(samples, 1),
+                         True,
+                         "shared mutation cannot be correctly determined")
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.is_mutated(samples, 1),
                          False,
                          "shared mutation cannot be correctly determined")
 
@@ -1252,6 +1478,7 @@ class TestTAVcfRecord(SafeTester):
         self.assertEqual(vcf_record.is_rare(freq_ratios, allele_idx=1),
                          True,
                          "rare mutation cannot be correctly determined")
+
     def test_is_rare_2(self):
         """
         test rare mutation can be identified if there is only one criteria
@@ -1393,7 +1620,7 @@ class TestTAVcfRecord(SafeTester):
 
     def test_is_intronic_1(self):
         """
-        test counting intronic mutations can be identified (10 are intronics)
+        test counting intronic mutations can be identified (96 are intronics)
         """
 
         self.individual_debug = True
@@ -1406,4 +1633,21 @@ class TestTAVcfRecord(SafeTester):
         intronics_count = sum(1 for x in intronics if x)
         self.assertEqual(intronics_count,
                          96,
+                         "intronic mutations cannot be correctly determined")
+
+    def test_is_intronic_2(self):
+        """
+        test counting intronic and ncr_intronic mutations can be identified (17 are intronics)
+        """
+
+        self.individual_debug = True
+        self.init_test(self.current_func_name)
+        in_file = join_path(self.data_dir,
+                               'input.vcf.gz')
+        vcf_reader = TAVcfReader(filename=in_file)
+        intronics = reduce(lambda x, y: x+y,
+                           map(lambda x: x.is_intronic[1:], vcf_reader))
+        intronics_count = sum(1 for x in intronics if x)
+        self.assertEqual(intronics_count,
+                         17,
                          "intronic mutations cannot be correctly determined")

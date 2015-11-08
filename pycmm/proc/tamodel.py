@@ -1,5 +1,6 @@
 from pycmm.settings import DFLT_MAF_VAR
 from pycmm.settings import FUNC_REFGENE_VAR
+from pycmm.utils import mylogger
 from vcf.model import _Record as _VcfRecord
 from vcf.model import _Call as _VcfCall
 
@@ -217,15 +218,34 @@ class _TAVcfRecord(_VcfRecord):
             raw_results = [raw_results]
         results = [CMMGT_DUMMY]
         for entry in raw_results:
-            if entry == val:
+            if val in entry:
                 results.append(True)
             else:
                 results.append(False)
         return results
 
+    def is_mutated(self, samples, allele_idx):
+        """
+        to identify if a genotype mutation is found in any samples given
+          - allele index
+            - 0 -> REF
+            - 1 -> first ALT
+            - and so on
+           - samples, list of samples to be compared if the list is
+             empty, None, it will return True
+        """
+        if samples is None:
+            return False
+        if len(samples) == 0:
+            return False
+        for sample in samples:
+            if self.genotype(sample).mutated[allele_idx]:
+                return True
+        return False
+
     def is_shared(self, samples, allele_idx):
         """
-        to identify if a genotype is shared betwen samples given
+        to identify if a genotype mutation is shared betwen samples given
           - allele index
             - 0 -> REF
             - 1 -> first ALT

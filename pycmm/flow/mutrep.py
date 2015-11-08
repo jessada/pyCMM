@@ -39,10 +39,11 @@ from pycmm.flow.cmmdb import JOBS_SETUP_RPT_SUMMARY_FAMILIES_KEY
 from pycmm.flow.cmmdb import JOBS_SETUP_RPT_EXTRA_ANNO_COLS_KEY
 from pycmm.flow.cmmdb import JOBS_SETUP_RPT_CALL_DETAIL_KEY
 from pycmm.flow.cmmdb import JOBS_SETUP_RPT_MT_KEY
-from pycmm.flow.cmmdb import JOBS_SETUP_RPT_ROW_EXCLUSION_CRITERIA_KEY
-from pycmm.flow.cmmdb import JOBS_SETUP_RPT_EXCLUDE_COMMON
-from pycmm.flow.cmmdb import JOBS_SETUP_RPT_EXCLUDE_INTERGENIC
-from pycmm.flow.cmmdb import JOBS_SETUP_RPT_EXCLUDE_INTRONIC
+from pycmm.flow.cmmdb import JOBS_SETUP_RPT_ROW_FILTER_CRITERIA_KEY
+from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_RARE
+from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_NON_INTERGENIC
+from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_NON_INTRONIC
+from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_HAS_MUTATION
 from pycmm.flow.cmmdb import JOBS_SETUP_RPT_ONLY_SUMMARY_KEY
 from pycmm.flow.cmmdb import JOBS_SETUP_RPT_ONLY_FAMILIES_KEY
 
@@ -267,25 +268,32 @@ class ReportLayout(pyCMMBase):
             return JOBS_SETUP_RPT_CALL_DETAIL_KEY in self.__layout_params[JOBS_SETUP_RPT_EXTRA_ANNO_COLS_KEY]
 
     @property
-    def exclude_common(self):
-        if JOBS_SETUP_RPT_ROW_EXCLUSION_CRITERIA_KEY not in self.__layout_params:
+    def filter_rare(self):
+        if JOBS_SETUP_RPT_ROW_FILTER_CRITERIA_KEY not in self.__layout_params:
             return False
         else:
-            return JOBS_SETUP_RPT_EXCLUDE_COMMON in self.__layout_params[JOBS_SETUP_RPT_ROW_EXCLUSION_CRITERIA_KEY]
+            return JOBS_SETUP_RPT_FILTER_RARE in self.__layout_params[JOBS_SETUP_RPT_ROW_FILTER_CRITERIA_KEY]
 
     @property
-    def exclude_intergenic(self):
-        if JOBS_SETUP_RPT_ROW_EXCLUSION_CRITERIA_KEY not in self.__layout_params:
+    def filter_non_intergenic(self):
+        if JOBS_SETUP_RPT_ROW_FILTER_CRITERIA_KEY not in self.__layout_params:
             return False
         else:
-            return JOBS_SETUP_RPT_EXCLUDE_INTERGENIC in self.__layout_params[JOBS_SETUP_RPT_ROW_EXCLUSION_CRITERIA_KEY]
+            return JOBS_SETUP_RPT_FILTER_NON_INTERGENIC in self.__layout_params[JOBS_SETUP_RPT_ROW_FILTER_CRITERIA_KEY]
 
     @property
-    def exclude_intronic(self):
-        if JOBS_SETUP_RPT_ROW_EXCLUSION_CRITERIA_KEY not in self.__layout_params:
+    def filter_non_intronic(self):
+        if JOBS_SETUP_RPT_ROW_FILTER_CRITERIA_KEY not in self.__layout_params:
             return False
         else:
-            return JOBS_SETUP_RPT_EXCLUDE_INTRONIC in self.__layout_params[JOBS_SETUP_RPT_ROW_EXCLUSION_CRITERIA_KEY]
+            return JOBS_SETUP_RPT_FILTER_NON_INTRONIC in self.__layout_params[JOBS_SETUP_RPT_ROW_FILTER_CRITERIA_KEY]
+
+    @property
+    def filter_has_mutation(self):
+        if JOBS_SETUP_RPT_ROW_FILTER_CRITERIA_KEY not in self.__layout_params:
+            return False
+        else:
+            return JOBS_SETUP_RPT_FILTER_HAS_MUTATION in self.__layout_params[JOBS_SETUP_RPT_ROW_FILTER_CRITERIA_KEY]
 
     @property
     def only_summary(self):
@@ -466,15 +474,18 @@ class MutRepPipeline(CMMDBPipeline):
                 if (check_shared and
                     not vcf_record.is_shared(samples_list, allele_idx)):
                     continue
-                if (self.report_layout.exclude_common and
+                if (self.report_layout.filter_rare and
                     not vcf_record.is_rare(self.report_layout.freq_ratios,
                                            allele_idx=allele_idx)):
                     continue
-                if (self.report_layout.exclude_intergenic and
+                if (self.report_layout.filter_non_intergenic and
                     vcf_record.is_intergenic[allele_idx]):
                     continue
-                if (self.report_layout.exclude_intronic and
+                if (self.report_layout.filter_non_intronic and
                     vcf_record.is_intronic[allele_idx]):
+                    continue
+                if (self.report_layout.filter_has_mutation and
+                    not vcf_record.is_mutated(samples_list, allele_idx)):
                     continue
                 self.__write_content(ws,
                                      row,
