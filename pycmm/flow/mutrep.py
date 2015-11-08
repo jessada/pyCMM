@@ -18,7 +18,6 @@ from pycmm.settings import DFLT_ANNOVAR_DB_OPS
 from pycmm.settings import ALL_MUTREP_ANNO_COLS
 from pycmm.settings import MUTREP_FAMILY_REPORT_BIN
 from pycmm.settings import MUTREP_SUMMARY_REPORT_BIN
-#from pycmm.settings import MT_ANNO_COLS
 from pycmm.template import pyCMMBase
 from pycmm.utils import exec_sh
 from pycmm.utils import mylogger
@@ -485,7 +484,7 @@ class MutRepPipeline(CMMDBPipeline):
                     vcf_record.is_intronic[allele_idx]):
                     continue
                 if (self.report_layout.filter_has_mutation and
-                    not vcf_record.is_mutated(samples_list, allele_idx)):
+                    not vcf_record.has_mutation(samples_list, allele_idx)):
                     continue
                 self.__write_content(ws,
                                      row,

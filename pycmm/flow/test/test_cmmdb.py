@@ -297,7 +297,7 @@ class TestCMMDBPipeline(SafeTester):
                                     exp_result),
                         "cal_mut_stat doesn't function correctly")
 
-#    @unittest.skipUnless(settings.FULL_SYSTEM_TEST, "taking too long time to test")
+    @unittest.skipUnless(settings.FULL_SYSTEM_TEST, "taking too long time to test")
     def test_cal_mut_stat_offline_4(self):
         """ to offline version (w/o slurm) if it can calculate stat of subpopulation """
 

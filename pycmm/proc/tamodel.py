@@ -224,7 +224,7 @@ class _TAVcfRecord(_VcfRecord):
                 results.append(False)
         return results
 
-    def is_mutated(self, samples, allele_idx):
+    def has_mutation(self, samples, allele_idx):
         """
         to identify if a genotype mutation is found in any samples given
           - allele index
