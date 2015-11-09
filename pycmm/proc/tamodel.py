@@ -1,3 +1,4 @@
+import copy
 from pycmm.settings import DFLT_MAF_VAR
 from pycmm.settings import FUNC_REFGENE_VAR
 from pycmm.utils import mylogger
@@ -31,6 +32,7 @@ class _TAVcfCall(_VcfCall):
         self.__cmm_gts = None
         self.__actual_gts = None
         self.__mutated = None
+        self.__shared_mutations = None
 
     def __cal_extra_attributes(self):
         self.__cmm_gts = self.__cal_cmm_gts()
@@ -141,6 +143,14 @@ class _TAVcfCall(_VcfCall):
             self.__cal_extra_attributes()
         return self.__mutated
 
+    @property
+    def shared_mutations(self):
+        return self.__shared_mutations
+
+    @shared_mutations.setter
+    def shared_mutations(self, val):
+        self.__shared_mutations = val
+
 class _TAVcfRecord(_VcfRecord):
     """
     An encapsulated version of vcf._Record from pyVCF package to
@@ -151,7 +161,7 @@ class _TAVcfRecord(_VcfRecord):
     """
 
     def __init__(self, CHROM, POS, ID, REF, ALT, QUAL, FILTER, INFO, FORMAT,
-            sample_indexes, samples=None):
+            sample_indexes, samples=None, family_infos=None):
         _VcfRecord.__init__(self,
                             CHROM,
                             POS,
@@ -168,6 +178,8 @@ class _TAVcfRecord(_VcfRecord):
         self.__afs = self.__cal_afs()
         self.__is_intergenic = self.__compare_infos(FUNC_REFGENE_VAR, 'intergenic')
         self.__is_intronic = self.__compare_infos(FUNC_REFGENE_VAR, 'intronic')
+        self.__family_infos = copy.deepcopy(family_infos)
+        self.__shared_cal = False
 
     @property
     def afs(self):
@@ -202,6 +214,27 @@ class _TAVcfRecord(_VcfRecord):
                 else:
                     afs.append(raw_af)
         return afs
+
+    def __cal_shared(self):
+        """
+        With given family informations, this function will identify shared
+        mutation for each family and for each genotype
+        """
+        if self.__family_infos is None:
+            return
+        for fam_id in self.__family_infos:
+            family_info = self.__family_infos[fam_id]
+            shared_mutations = [CMMGT_DUMMY]
+            for allele_idx in xrange(1, len(self.alleles)):
+                shared_mutation = True
+                for member in family_info.members:
+                    if not self.genotype(member.sample_id).mutated[allele_idx]:
+                        shared_mutation = False
+                        break
+                shared_mutations.append(shared_mutation)
+            for member in family_info.members:
+                self.genotype(member.sample_id).shared_mutations = shared_mutations
+            family_info.shared_mutations = shared_mutations
 
     def __compare_infos(self, var_name, val):
         """
@@ -267,7 +300,7 @@ class _TAVcfRecord(_VcfRecord):
         else:
             return False
 
-    def has_shared(self, samples, allele_idx):
+    def has_shared(self, allele_idx, min_share_count=1):
         """
         to identify if a genotype mutation has been shared in a family within the given samples
           - allele index
@@ -275,17 +308,18 @@ class _TAVcfRecord(_VcfRecord):
             - 1 -> first ALT
             - and so on
            - samples, list of samples to be compared if the list is
-             empty, None, it will return True
-        Note. A family have a shared mutation only if it has more than 2 members and all the members have the mutation
+             empty, None, it will return False
         """
-        if samples is None:
-            return True
-        if len(samples) == 0:
-            return True
-        for sample in samples:
-            if not self.genotype(sample).mutated[allele_idx]:
-                return False
-        return True
+        if not self.__shared_cal:
+            self.__cal_shared()
+            self.__shared_cal = True
+        for fam_id in self.__family_infos:
+            family_info = self.__family_infos[fam_id]
+            if len(family_info.members) < min_share_count:
+                continue
+            if family_info.shared_mutations[allele_idx]:
+                return True
+        return False
 
     def is_rare(self, freq_ratios, allele_idx=1):
         condition, criteria = freq_ratios.items()[0]

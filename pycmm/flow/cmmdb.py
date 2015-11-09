@@ -75,6 +75,7 @@ JOBS_SETUP_RPT_FILTER_RARE = "Rare"
 JOBS_SETUP_RPT_FILTER_NON_INTERGENIC = "Non-Intergenic"
 JOBS_SETUP_RPT_FILTER_NON_INTRONIC = "Non-Intronic"
 JOBS_SETUP_RPT_FILTER_HAS_MUTATION = "Has-Mutation"
+JOBS_SETUP_RPT_FILTER_HAS_SHARED = "Has-Shared"
 JOBS_SETUP_RPT_ONLY_SUMMARY_KEY = "ONLY_SUMMARY"
 JOBS_SETUP_RPT_ONLY_FAMILIES_KEY = "ONLY_FAMILIES"
 
@@ -99,11 +100,15 @@ class FamilyInfo(pyCMMBase):
     def __init__(self, info):
         pyCMMBase.__init__(self)
         self.__info = info
+        self.__shared_mutations = None
 
     def get_raw_repr(self):
-        return {"family id": self.fam_id,
-                "members": self.members,
-                }
+        out_txt = {}
+        out_txt["family id"] = self.fam_id
+        out_txt["members"] = self.members
+        if self.shared_mutations is not None:
+            out_txt["shared mutations"] = self.shared_mutations
+        return out_txt
 
     @property
     def fam_id(self):
@@ -113,6 +118,14 @@ class FamilyInfo(pyCMMBase):
     def members(self):
         return map(lambda x: MemberInfo(x),
                    self.__info[JOBS_SETUP_MEMBERS_LIST_KEY])
+
+    @property
+    def shared_mutations(self):
+        return self.__shared_mutations
+
+    @shared_mutations.setter
+    def shared_mutations(self, val):
+        self.__shared_mutations = val
 
 class CMMDBPipeline(JobManager):
     """ A class to control CMM data(base) workflow """
@@ -153,7 +166,8 @@ class CMMDBPipeline(JobManager):
 
     @property
     def input_vcf_tabix(self):
-        return self._jobs_info[JOBS_SETUP_VCF_TABIX_FILE_KEY]
+        if JOBS_SETUP_VCF_TABIX_FILE_KEY in self._jobs_info:
+            return self._jobs_info[JOBS_SETUP_VCF_TABIX_FILE_KEY]
 
     @property
     def db_region(self):
@@ -169,6 +183,10 @@ class CMMDBPipeline(JobManager):
     @property
     def samples_list(self):
         return self.__samples_list
+
+    @property
+    def samples_list_w_fam_pref(self):
+        return self.__samples_list_w_fam_pref
 
     @property
     def family_infos(self):
@@ -229,18 +247,24 @@ class CMMDBPipeline(JobManager):
         if JOBS_SETUP_SAMPLE_INFOS_KEY not in self._jobs_info:
             self.__samples_list = None
             self.__family_infos = None
+            self.__samples_list_w_fam_pref = None
             return
         sample_infos = self._jobs_info[JOBS_SETUP_SAMPLE_INFOS_KEY]
         if type(sample_infos) is str:
             self.__samples_list = sample_infos.split(",")
             self.__family_infos = None
+            self.__samples_list_w_fam_pref = None
         else:
             self.__samples_list = []
             self.__family_infos = {}
+            self.__samples_list_w_fam_pref = []
             for entry in sample_infos:
                 family_info = FamilyInfo(entry)
                 for member in family_info.members:
-                    self.__samples_list.append(member.sample_id)
+                    sample_id = member.sample_id
+                    sample_id_w_pref = family_info.fam_id + '-' + sample_id
+                    self.__samples_list.append(sample_id)
+                    self.__samples_list_w_fam_pref.append(sample_id_w_pref)
                 self.__family_infos[family_info.fam_id] = family_info
 
     def __parse_annovar_configs(self):
@@ -364,7 +388,7 @@ class CMMDBPipeline(JobManager):
 
 def create_jobs_setup_file(dataset_name,
                            project_out_dir,
-                           vcf_tabix_file,
+                           vcf_tabix_file=None,
                            db_region=None,
                            sample_infos=None,
                            project_code=None,
@@ -385,10 +409,6 @@ def create_jobs_setup_file(dataset_name,
                            summary_families_sheet=False,
                            call_detail=False,
                            rows_filter=None,
-#                           exclude_common=False,
-#                           exclude_intergenic=False,
-#                           exclude_intronic=False,
-#                           exclude_no_mutation=False,
                            only_summary=False,
                            only_families=False,
                            out_jobs_setup_file=None,
@@ -440,7 +460,8 @@ def create_jobs_setup_file(dataset_name,
             families_info.append(family_info)
         job_setup_document[JOBS_SETUP_SAMPLE_INFOS_KEY] = families_info
     job_setup_document[JOBS_SETUP_OUTPUT_DIR_KEY] = project_out_dir
-    job_setup_document[JOBS_SETUP_VCF_TABIX_FILE_KEY] = vcf_tabix_file
+    if vcf_tabix_file is not None:
+        job_setup_document[JOBS_SETUP_VCF_TABIX_FILE_KEY] = vcf_tabix_file
     job_setup_document[JOBS_SETUP_JOBS_REPORT_FILE_KEY] = jobs_report_file
     job_setup_document[JOBS_SETUP_ANNOVAR_SECTION] = annovar_config
     report_layout_config = {}
@@ -481,6 +502,8 @@ def create_jobs_setup_file(dataset_name,
                 filter_criterias.append(JOBS_SETUP_RPT_FILTER_NON_INTRONIC)
             if filter_criteria == JOBS_SETUP_RPT_FILTER_HAS_MUTATION:
                 filter_criterias.append(JOBS_SETUP_RPT_FILTER_HAS_MUTATION)
+            if filter_criteria == JOBS_SETUP_RPT_FILTER_HAS_SHARED:
+                filter_criterias.append(JOBS_SETUP_RPT_FILTER_HAS_SHARED)
         report_layout_config[JOBS_SETUP_RPT_ROW_FILTER_CRITERIA_KEY] = filter_criterias
     report_layout_config[JOBS_SETUP_RPT_ONLY_SUMMARY_KEY] = only_summary
     report_layout_config[JOBS_SETUP_RPT_ONLY_FAMILIES_KEY] = only_families

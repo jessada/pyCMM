@@ -37,6 +37,7 @@ from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_RARE
 from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_NON_INTERGENIC
 from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_NON_INTRONIC
 from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_HAS_MUTATION
+from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_HAS_SHARED
 
 DFLT_TEST_MUTREP_COLS = OrderedDict()
 DFLT_TEST_MUTREP_COLS[FUNC_REFGENE_COL_NAME] = ALL_MUTREP_ANNO_COLS[FUNC_REFGENE_COL_NAME]
@@ -125,7 +126,6 @@ class TestMutRepPipeline(SafeTester):
         jobs_setup_file = self.__create_jobs_setup_file(vcf_tabix_file=dummy_vcf_tabix_file,
                                                         )
         pl = MutRepPipeline(jobs_setup_file)
-        mylogger.debug(len(pl.report_layout.anno_cols))
         self.assertEqual(pl.rpt_alloc_time,
                          DFLT_MUTREP_ALLOC_TIME,
                          "MutRepPipeline cannot correctly read meta info 'report allocation time' from jobs setup file")
@@ -496,7 +496,7 @@ class TestMutRepPipeline(SafeTester):
         pl = MutRepPipeline(jobs_setup_file)
         pl.gen_summary_report(pl.report_layout.report_regions)
 
-#    @unittest.skipUnless(settings.FULL_SYSTEM_TEST, "taking too long time to test")
+    @unittest.skipUnless(settings.FULL_SYSTEM_TEST, "taking too long time to test")
     def test_summary_report_11(self):
         """ test report that show only mutation """
 
@@ -569,6 +569,53 @@ class TestMutRepPipeline(SafeTester):
                                                         )
         pl = MutRepPipeline(jobs_setup_file)
         pl.gen_summary_report(pl.report_layout.report_regions)
+        jobs_setup_file = self.__create_jobs_setup_file(dataset_name=self.test_function,
+                                                        vcf_tabix_file=vcf_tabix_file,
+                                                        annotated_vcf_tabix=annotated_vcf_tabix,
+                                                        project_code=None,
+                                                        sample_infos="24:Co-166:Co-213:Co-648,8:Co-37,275:Co-618,478:Co-1274",
+                                                        anno_cols=DFLT_TEST_MUTREP_COLS,
+                                                        anno_excl_tags=DFLT_TEST_ANNO_EXCL_TAGS,
+                                                        report_regions=None,
+                                                        call_detail=False,
+                                                        summary_families_sheet=True,
+                                                        rows_filter=rows_filter,
+                                                        only_summary=False,
+                                                        only_families=False,
+                                                        )
+        pl = MutRepPipeline(jobs_setup_file)
+        pl.gen_summary_report(pl.report_layout.report_regions)
+
+#    @unittest.skipUnless(settings.FULL_SYSTEM_TEST, "taking too long time to test")
+    def test_summary_report_13(self):
+        """ test report that with onlyrows that have shared mutation within a family """
+
+        self.individual_debug = True
+        self.init_test(self.current_func_name)
+        vcf_tabix_file = join_path(self.data_dir,
+                                   "input.vcf.gz")
+        annotated_vcf_tabix = join_path(self.data_dir,
+                                        "input.vcf.gz")
+        rows_filter = JOBS_SETUP_RPT_FILTER_RARE
+        rows_filter += ',' + JOBS_SETUP_RPT_FILTER_NON_INTERGENIC
+        rows_filter += ',' + JOBS_SETUP_RPT_FILTER_NON_INTRONIC
+        jobs_setup_file = self.__create_jobs_setup_file(dataset_name=self.test_function+'_has_non_shared',
+                                                        vcf_tabix_file=vcf_tabix_file,
+                                                        annotated_vcf_tabix=annotated_vcf_tabix,
+                                                        project_code=None,
+                                                        sample_infos="24:Co-166:Co-213:Co-648,8:Co-37,275:Co-618,478:Co-1274",
+                                                        anno_cols=DFLT_TEST_MUTREP_COLS,
+                                                        anno_excl_tags=DFLT_TEST_ANNO_EXCL_TAGS,
+                                                        report_regions=None,
+                                                        call_detail=False,
+                                                        summary_families_sheet=True,
+                                                        rows_filter=rows_filter,
+                                                        only_summary=False,
+                                                        only_families=False,
+                                                        )
+        pl = MutRepPipeline(jobs_setup_file)
+        pl.gen_summary_report(pl.report_layout.report_regions)
+        rows_filter += ',' + JOBS_SETUP_RPT_FILTER_HAS_SHARED
         jobs_setup_file = self.__create_jobs_setup_file(dataset_name=self.test_function,
                                                         vcf_tabix_file=vcf_tabix_file,
                                                         annotated_vcf_tabix=annotated_vcf_tabix,
@@ -893,7 +940,6 @@ class TestMutRepPipeline(SafeTester):
                                                         )
         pl = MutRepPipeline(jobs_setup_file)
         pl.gen_families_reports()
-        mylogger.debug(len(pl.samples_list))
 
     @unittest.skipUnless(settings.FULL_SYSTEM_TEST, "taking too long time to test")
     def test_families_reports_7(self):
@@ -915,7 +961,6 @@ class TestMutRepPipeline(SafeTester):
                                                         )
         pl = MutRepPipeline(jobs_setup_file)
         pl.gen_families_reports()
-        mylogger.debug(len(pl.samples_list))
 
     @unittest.skipUnless(settings.FULL_SYSTEM_TEST, "taking too long time to test")
     def test_families_reports_8(self):
@@ -943,7 +988,6 @@ class TestMutRepPipeline(SafeTester):
                                                         )
         pl = MutRepPipeline(jobs_setup_file)
         pl.gen_families_reports()
-        mylogger.debug(len(pl.samples_list))
 
     def tearDown(self):
         self.remove_working_dir()
