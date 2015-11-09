@@ -243,15 +243,40 @@ class _TAVcfRecord(_VcfRecord):
                 return True
         return False
 
-    def is_shared(self, samples, allele_idx):
+    def is_shared(self, samples, allele_idx, min_share_count=1):
         """
-        to identify if a genotype mutation is shared betwen samples given
+        to identify if a genotype mutation is shared between samples given
           - allele index
             - 0 -> REF
             - 1 -> first ALT
             - and so on
            - samples, list of samples to be compared if the list is
              empty, None, it will return True
+        """
+        if samples is None:
+            return True
+        if len(samples) == 0:
+            return True
+        share_count = 0
+        for sample in samples:
+            if not self.genotype(sample).mutated[allele_idx]:
+                return False
+            share_count += 1
+        if share_count >= min_share_count:
+            return True
+        else:
+            return False
+
+    def has_shared(self, samples, allele_idx):
+        """
+        to identify if a genotype mutation has been shared in a family within the given samples
+          - allele index
+            - 0 -> REF
+            - 1 -> first ALT
+            - and so on
+           - samples, list of samples to be compared if the list is
+             empty, None, it will return True
+        Note. A family have a shared mutation only if it has more than 2 members and all the members have the mutation
         """
         if samples is None:
             return True
