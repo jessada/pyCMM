@@ -93,6 +93,8 @@ def app_pycmm_cmmdb_create_jobs_setup_file(*args, **kwargs):
         layout_params['annotation columns (-a)'] = "all"
     if kwargs['anno_excl_tags'] is not None:
         layout_params['annotation excluded tags (-E)'] = kwargs['anno_excl_tags'].split(",")
+    if kwargs['rows_filter_action'] is not None:
+        layout_params['rows filtering criteria (--filter_action)'] = kwargs['rows_filter_action'].split(",")
     if kwargs['annotated_vcf_tabix'] is not None:
         layout_params['annotated vcf tablx file (-A)'] = kwargs['annotated_vcf_tabix']
     if kwargs['report_regions'] is not None:
@@ -106,11 +108,6 @@ def app_pycmm_cmmdb_create_jobs_setup_file(*args, **kwargs):
     extra_anno_cols = {}
     extra_anno_cols['call detail (--call_detail)'] = kwargs['call_detail']
     layout_params['extra annotation columns'] = extra_anno_cols
-    exclusion_out = {}
-    exclusion_out['common mutations (--exclude_common)'] = kwargs['exclude_common']
-    exclusion_out['intergenic mutations (--exclude_intergenic)'] = kwargs['exclude_intergenic']
-    exclusion_out['intronic mutations (--exclude_intronic)'] = kwargs['exclude_intronic']
-    layout_params['exclusion'] = exclusion_out
     layout_params['only summary report (--only_summary)'] = kwargs['only_summary']
     layout_params['only families report (--only_families)'] = kwargs['only_families']
     disp.disp_params_set("Report layout parameters", layout_params)
@@ -123,6 +120,7 @@ def app_pycmm_cmmdb_create_jobs_setup_file(*args, **kwargs):
                            db_alloc_time=kwargs['db_alloc_time'],
                            rpt_alloc_time=kwargs['rpt_alloc_time'],
                            anno_cols=kwargs['anno_cols'],
+                           rows_filter_action=kwargs['rows_filter_action'],
                            anno_excl_tags=kwargs['anno_excl_tags'],
                            annotated_vcf_tabix=kwargs['annotated_vcf_tabix'],
                            report_regions=kwargs['report_regions'],
@@ -130,9 +128,6 @@ def app_pycmm_cmmdb_create_jobs_setup_file(*args, **kwargs):
                            split_chrom=kwargs['split_chrom'],
                            summary_families_sheet=kwargs['summary_families_sheet'],
                            call_detail=kwargs['call_detail'],
-                           exclude_common=kwargs['exclude_common'],
-                           exclude_intergenic=kwargs['exclude_intergenic'],
-                           exclude_intronic=kwargs['exclude_intronic'],
                            only_summary=kwargs['only_summary'],
                            only_families=kwargs['only_families'],
                            out_jobs_setup_file=kwargs['out_jobs_setup_file'],

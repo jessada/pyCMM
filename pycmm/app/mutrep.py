@@ -56,9 +56,10 @@ def __display_report_config(func_name,
     extra_anno_cols['call detail'] = pl.report_layout.call_detail
     layout_params['extra annotation columns'] = extra_anno_cols
     exclusion_out = {}
-    exclusion_out['common mutations'] = pl.report_layout.exclude_common
-    exclusion_out['intergenic mutations'] = pl.report_layout.exclude_intergenic
-    exclusion_out['intronic mutations'] = pl.report_layout.exclude_intronic
+    #
+    # need to add the excluion tags info
+    # need to add rows filtering criteria
+    #
     layout_params['exclusion criteria'] = exclusion_out
     exclusion_out['only summary'] = pl.report_layout.only_summary
     exclusion_out['only families'] = pl.report_layout.only_families

@@ -70,7 +70,7 @@ JOBS_SETUP_RPT_SUMMARY_FAMILIES_KEY = "SUMMARY_FAMILIES"
 JOBS_SETUP_RPT_EXTRA_ANNO_COLS_KEY = "EXTRA_ANNOTATION_COLUMNS"
 JOBS_SETUP_RPT_CALL_DETAIL_KEY = "Calling_detail"
 JOBS_SETUP_RPT_MT_KEY = "Mitochondria"
-JOBS_SETUP_RPT_ROW_FILTER_CRITERIA_KEY = "ROW_FILTER_CRITERIA"
+JOBS_SETUP_RPT_ROWS_FILTER_ACTION_CRITERIA_KEY = "ROWS_FILTER_ACTIONS_CRITERIA"
 JOBS_SETUP_RPT_FILTER_RARE = "Rare"
 JOBS_SETUP_RPT_FILTER_NON_INTERGENIC = "Non-Intergenic"
 JOBS_SETUP_RPT_FILTER_NON_INTRONIC = "Non-Intronic"
@@ -402,13 +402,13 @@ def create_jobs_setup_file(dataset_name,
                            annovar_nastring=".",
                            anno_cols=None,
                            anno_excl_tags=None,
+                           rows_filter_action=None,
                            annotated_vcf_tabix=None,
                            report_regions=None,
                            frequency_ratios=None,
                            split_chrom=False,
                            summary_families_sheet=False,
                            call_detail=False,
-                           rows_filter=None,
                            only_summary=False,
                            only_families=False,
                            out_jobs_setup_file=None,
@@ -454,7 +454,7 @@ def create_jobs_setup_file(dataset_name,
             members = []
             for member_infos in family_infos[1:]:
                 member = {}
-                member[JOBS_SETUP_SAMPLE_ID_KEY] = member_infos
+                member[JOBS_SETUP_SAMPLE_ID_KEY] = '"' + member_infos + '"'
                 members.append(member)
             family_info[JOBS_SETUP_MEMBERS_LIST_KEY] = members
             families_info.append(family_info)
@@ -491,9 +491,9 @@ def create_jobs_setup_file(dataset_name,
         if call_detail:
             extra_anno_cols.append(JOBS_SETUP_RPT_CALL_DETAIL_KEY)
         report_layout_config[JOBS_SETUP_RPT_EXTRA_ANNO_COLS_KEY] = extra_anno_cols
-    if rows_filter is not None:
+    if rows_filter_action is not None:
         filter_criterias = []
-        for filter_criteria in rows_filter.split(","):
+        for filter_criteria in rows_filter_action.split(","):
             if filter_criteria == JOBS_SETUP_RPT_FILTER_RARE:
                 filter_criterias.append(JOBS_SETUP_RPT_FILTER_RARE)
             if filter_criteria == JOBS_SETUP_RPT_FILTER_NON_INTERGENIC:
@@ -504,7 +504,7 @@ def create_jobs_setup_file(dataset_name,
                 filter_criterias.append(JOBS_SETUP_RPT_FILTER_HAS_MUTATION)
             if filter_criteria == JOBS_SETUP_RPT_FILTER_HAS_SHARED:
                 filter_criterias.append(JOBS_SETUP_RPT_FILTER_HAS_SHARED)
-        report_layout_config[JOBS_SETUP_RPT_ROW_FILTER_CRITERIA_KEY] = filter_criterias
+        report_layout_config[JOBS_SETUP_RPT_ROWS_FILTER_ACTION_CRITERIA_KEY] = filter_criterias
     report_layout_config[JOBS_SETUP_RPT_ONLY_SUMMARY_KEY] = only_summary
     report_layout_config[JOBS_SETUP_RPT_ONLY_FAMILIES_KEY] = only_families
     job_setup_document[JOBS_SETUP_RPT_LAYOUT_SECTION] = report_layout_config

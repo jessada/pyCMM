@@ -14,6 +14,11 @@ from pycmm.settings import CRC_CRC_COLS_TAG
 from pycmm.settings import NK64_COLS_TAG
 from pycmm.settings import MUTSTAT_DETAILS_COLS_TAG
 from pycmm.settings import LJB_SCORE_COLS_TAG
+from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_RARE
+from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_NON_INTERGENIC
+from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_NON_INTRONIC
+from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_HAS_MUTATION
+from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_HAS_SHARED
 
 argp = argparse.ArgumentParser(description=settings.CMMDB_CREATE_JOB_SETUP_FILE_DESCRIPTION,
                                formatter_class=RawTextHelpFormatter,
@@ -70,7 +75,7 @@ mutrep_group.add_argument('--rpt_alloc_time',
                           )
 mutrep_group.add_argument('-A',
                           dest='annotated_vcf_tabix',
-                          metavar="ANNOTATED_VCF_TABIX",
+                          metavar="FILE",
                           help='annoated vcf tabix file',
                           default=None,
                           )
@@ -99,6 +104,27 @@ help_txt += '\n'
 mutrep_group.add_argument('-E',
                           dest='anno_excl_tags',
                           metavar="EXCLUDE_COLS",
+                          help=help_txt,
+                          default=None,
+                          )
+from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_RARE
+from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_NON_INTERGENIC
+from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_NON_INTRONIC
+from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_HAS_MUTATION
+from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_HAS_SHARED
+help_txt = 'Criteria of rows to be filtered. The list are as follows:\n'
+help_txt += '\n'
+help_txt += '\t' + JOBS_SETUP_RPT_FILTER_RARE + '\n'
+help_txt += '\t' + JOBS_SETUP_RPT_FILTER_NON_INTERGENIC + '\n'
+help_txt += '\t' + JOBS_SETUP_RPT_FILTER_NON_INTRONIC + '\n'
+help_txt += '\t' + JOBS_SETUP_RPT_FILTER_HAS_MUTATION + '\n'
+help_txt += '\t' + JOBS_SETUP_RPT_FILTER_HAS_SHARED + '\n'
+help_txt += '\n'
+help_txt += 'example: --filter_action ' + JOBS_SETUP_RPT_FILTER_RARE + ',' + JOBS_SETUP_RPT_FILTER_HAS_SHARED + '\n'
+help_txt += '\n'
+mutrep_group.add_argument('--fiter_action',
+                          dest='rows_filter_action',
+                          metavar="CRITERIA(S)",
                           help=help_txt,
                           default=None,
                           )
@@ -132,24 +158,6 @@ mutrep_group.add_argument('--call_detail',
                           help='indicate if other call information beside GT are required',
                           default=False,
                           )
-mutrep_group.add_argument('--exclude_common',
-                          dest='exclude_common',
-                          action="store_true",
-                          help='identified if the common mutations shall be excluded',
-                          default=False,
-                          )
-mutrep_group.add_argument('--exclude_intergenic',
-                          dest='exclude_intergenic',
-                          action="store_true",
-                          help='identified if the intergenic mutations shall be excluded',
-                          default=False,
-                          )
-mutrep_group.add_argument('--exclude_intronic',
-                          dest='exclude_intronic',
-                          action="store_true",
-                          help='identified if the intergenic mutations shall be excluded',
-                          default=False,
-                          )
 mutrep_group.add_argument('--only_summary',
                           dest='only_summary',
                           action="store_true",
@@ -178,6 +186,7 @@ app_pycmm_cmmdb_create_jobs_setup_file(dataset_name=args.dataset_name,
                                        db_alloc_time=args.db_alloc_time,
                                        rpt_alloc_time=args.rpt_alloc_time,
                                        anno_cols=args.anno_cols,
+                                       rows_filter_action=args.rows_filter_action, 
                                        anno_excl_tags=args.anno_excl_tags,
                                        annotated_vcf_tabix=args.annotated_vcf_tabix,
                                        report_regions=args.report_regions,
@@ -185,9 +194,6 @@ app_pycmm_cmmdb_create_jobs_setup_file(dataset_name=args.dataset_name,
                                        split_chrom=args.split_chrom,
                                        summary_families_sheet=args.summary_families_sheet,
                                        call_detail=args.call_detail,
-                                       exclude_common=args.exclude_common,
-                                       exclude_intergenic=args.exclude_intergenic,
-                                       exclude_intronic=args.exclude_intronic,
                                        only_summary=args.only_summary,
                                        only_families=args.only_families,
                                        out_jobs_setup_file=args.out_jobs_setup_file,
