@@ -52,17 +52,17 @@ def __display_report_config(func_name,
     layout_params['reports output folder'] = pl.rpts_out_dir
     layout_params['split chromosome'] = pl.report_layout.split_chrom
     layout_params['summary_families sheet'] = pl.report_layout.summary_families_sheet
-    extra_anno_cols ={}
-    extra_anno_cols['call detail'] = pl.report_layout.call_detail
-    layout_params['extra annotation columns'] = extra_anno_cols
-    exclusion_out = {}
+    layout_params['call detail'] = pl.report_layout.call_detail
+    if pl.report_layout.anno_excl_tags:
+        layout_params['columns exclusion tags'] = pl.report_layout.anno_excl_tags
     #
     # need to add the excluion tags info
     # need to add rows filtering criteria
     #
-    layout_params['exclusion criteria'] = exclusion_out
-    exclusion_out['only summary'] = pl.report_layout.only_summary
-    exclusion_out['only families'] = pl.report_layout.only_families
+    report_exclusion_out = {}
+    layout_params['report exclusion'] = report_exclusion_out
+    report_exclusion_out['only summary'] = pl.report_layout.only_summary
+    report_exclusion_out['only families'] = pl.report_layout.only_families
     disp.disp_params_set("Report layout parameters", layout_params)
     disp.new_section_txt(" . . . G E N E R A T I N G   R E P O R T S . . . ")
 

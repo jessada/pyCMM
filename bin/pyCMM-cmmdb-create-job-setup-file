@@ -11,9 +11,12 @@ from pycmm.settings import CRC_CAFAM_COLS_TAG
 from pycmm.settings import CRC_COLON_COLS_TAG
 from pycmm.settings import CRC_RECTAL_COLS_TAG
 from pycmm.settings import CRC_CRC_COLS_TAG
+from pycmm.settings import ILL_BR_COLS_TAG
 from pycmm.settings import NK64_COLS_TAG
 from pycmm.settings import MUTSTAT_DETAILS_COLS_TAG
 from pycmm.settings import LJB_SCORE_COLS_TAG
+from pycmm.settings import EXAC_OTH_COLS_TAG
+from pycmm.settings import UNKNOWN_COLS_TAG
 from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_RARE
 from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_NON_INTERGENIC
 from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_NON_INTRONIC
@@ -95,9 +98,12 @@ help_txt += '\t' + CRC_CAFAM_COLS_TAG + ': columns that are related to mutations
 help_txt += '\t' + CRC_COLON_COLS_TAG + ': columns that are related to mutations statistics generated from colon-cancer subdataset of CRC dataset\n'
 help_txt += '\t' + CRC_RECTAL_COLS_TAG + ': columns that are related to mutations statistics generated from rectal-cancer subdataset of CRC dataset\n'
 help_txt += '\t' + CRC_CRC_COLS_TAG + ': columns that are related to mutations statistics generated from colorectal-cancer subdataset of CRC dataset\n'
+help_txt += '\t' + ILL_BR_COLS_TAG + ': columns that are related to mutations statistics generated from a dataset consisting of 30 breast-cancer samples from Illumina\n'
 help_txt += '\t' + NK64_COLS_TAG + ': columns that are related to mutations statistics generated from a dataset consisting of PMS2-, early onset- and famliy 24 samples\n'
 help_txt += '\t' + MUTSTAT_DETAILS_COLS_TAG + ': detailed information of mutations statistics\n'
 help_txt += '\t' + LJB_SCORE_COLS_TAG + ': prediction score from LJB\n'
+help_txt += '\t' + EXAC_OTH_COLS_TAG + ': other columns from ExAC database beside ExAC_ALL and ExAC_NFE\n'
+help_txt += '\t' + UNKNOWN_COLS_TAG + ": columns that I don't know that they are about\n"
 help_txt += '\n'
 help_txt += 'example: -E ' + AXEQ_CHR9_COLS_TAG + ',' + MUTSTAT_DETAILS_COLS_TAG + '\n'
 help_txt += '\n'
