@@ -28,15 +28,17 @@ class TAVcfReader(VcfReader):
                  compressed=None,
                  prepend_chr=False,
                  strict_whitespace=False,
+                 family_infos=None,
                  ):
         super(TAVcfReader, self).__init__(fsock=fsock,
-                                                    filename=filename,
-                                                    compressed=compressed,
-                                                    prepend_chr=prepend_chr,
-                                                    strict_whitespace=strict_whitespace,
-                                                    )
+                                          filename=filename,
+                                          compressed=compressed,
+                                          prepend_chr=prepend_chr,
+                                          strict_whitespace=strict_whitespace,
+                                          )
         self.__parse_annovar_infos()
         self.__pred_tran = PredictionTranslator()
+        self.__family_infos = family_infos
 
     @property
     def annovar_infos(self):
@@ -104,7 +106,7 @@ class TAVcfReader(VcfReader):
                 fmt = None
 
         record = _TAVcfRecord(chrom, pos, ID, ref, alt, qual, filt,
-                info, fmt, self._sample_indexes)
+                info, fmt, self._sample_indexes, family_infos=self.__family_infos)
 
         if fmt is not None:
             samples = self._parse_samples(row[9:], fmt, record)

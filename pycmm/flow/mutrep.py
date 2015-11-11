@@ -11,23 +11,26 @@ from os.path import join as join_path
 from os.path import isdir
 from os.path import isfile
 from collections import OrderedDict
-from pycmm.settings import PREDICTION_LIST
+from pycmm.settings import PREDICTION_COLS
 from pycmm.settings import DFLT_ANNOVAR_DB_FOLDER
 from pycmm.settings import DFLT_ANNOVAR_DB_NAMES
 from pycmm.settings import DFLT_ANNOVAR_DB_OPS
+from pycmm.settings import ALL_MUTREP_ANNO_COLS
 from pycmm.settings import MUTREP_FAMILY_REPORT_BIN
 from pycmm.settings import MUTREP_SUMMARY_REPORT_BIN
-from pycmm.settings import MT_ANNO_COLS
 from pycmm.template import pyCMMBase
 from pycmm.utils import exec_sh
 from pycmm.utils import mylogger
 from pycmm.proc.taparser import TAVcfReader as VcfReader
+from pycmm.proc.tamodel import CMMGT_HOMOZYGOTE
+from pycmm.proc.tamodel import CMMGT_HETEROZYGOTE
 from pycmm.flow.cmmdb import CMMDBPipeline
 from pycmm.flow.cmmdb import ALL_CHROMS
 from pycmm.flow.cmmdb import JOBS_SETUP_RPT_ALLOC_TIME_KEY
 from pycmm.flow.cmmdb import JOBS_SETUP_RPT_LAYOUT_SECTION
 from pycmm.flow.cmmdb import JOBS_SETUP_RPT_ANNOTATED_VCF_TABIX
 from pycmm.flow.cmmdb import JOBS_SETUP_RPT_ANNO_COLS_KEY
+from pycmm.flow.cmmdb import JOBS_SETUP_RPT_ANNO_EXCL_TAGS_KEY
 from pycmm.flow.cmmdb import JOBS_SETUP_RPT_REGIONS_KEY
 from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FREQ_RATIOS_KEY
 from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FREQ_RATIOS_COL_KEY
@@ -37,10 +40,12 @@ from pycmm.flow.cmmdb import JOBS_SETUP_RPT_SUMMARY_FAMILIES_KEY
 from pycmm.flow.cmmdb import JOBS_SETUP_RPT_EXTRA_ANNO_COLS_KEY
 from pycmm.flow.cmmdb import JOBS_SETUP_RPT_CALL_DETAIL_KEY
 from pycmm.flow.cmmdb import JOBS_SETUP_RPT_MT_KEY
-from pycmm.flow.cmmdb import JOBS_SETUP_RPT_ROW_EXCLUSION_CRITERIA_KEY
-from pycmm.flow.cmmdb import JOBS_SETUP_RPT_EXCLUDE_COMMON
-from pycmm.flow.cmmdb import JOBS_SETUP_RPT_EXCLUDE_INTERGENIC
-from pycmm.flow.cmmdb import JOBS_SETUP_RPT_EXCLUDE_INTRONIC
+from pycmm.flow.cmmdb import JOBS_SETUP_RPT_ROWS_FILTER_ACTIONS_CRITERIA_KEY
+from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_RARE
+from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_NON_INTERGENIC
+from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_NON_INTRONIC
+from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_HAS_MUTATION
+from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_HAS_SHARED
 from pycmm.flow.cmmdb import JOBS_SETUP_RPT_ONLY_SUMMARY_KEY
 from pycmm.flow.cmmdb import JOBS_SETUP_RPT_ONLY_FAMILIES_KEY
 
@@ -84,6 +89,9 @@ COLOR_RGB['LIME'] = '#00FF00'
 COLOR_RGB['MAGENTA'] = '#FF00FF'
 COLOR_RGB['ICEBLUE'] = '#A5F2F3'
 COLOR_RGB['LIGHT_BLUE'] = '#ADD8E6'
+
+CELL_TYPE_HET_SHARED = 'SILVER'
+CELL_TYPE_HOM_SHARED = 'GRAY25'
 
 DFLT_FMT = 'default_format'
 # *********************************
@@ -194,14 +202,27 @@ class ReportLayout(pyCMMBase):
         self.__anno_cols = self.__cal_anno_cols()
 
     def __cal_anno_cols(self):
-        anno_cols = self.__layout_params[JOBS_SETUP_RPT_ANNO_COLS_KEY]
-        if not self.anno_mt:
-            anno_cols = [x for x in anno_cols if x not in MT_ANNO_COLS]
+        anno_cols = []
+        for col_name in self.__layout_params[JOBS_SETUP_RPT_ANNO_COLS_KEY]:
+            excluded = False
+            for excl_tag in self.anno_excl_tags:
+                if excl_tag in ALL_MUTREP_ANNO_COLS[col_name]:
+                    excluded = True
+                    break
+            if not excluded:
+                anno_cols.append(col_name)
         return anno_cols
 
     @property
     def anno_cols(self):
         return self.__anno_cols
+
+    @property
+    def anno_excl_tags(self):
+        if JOBS_SETUP_RPT_ANNO_EXCL_TAGS_KEY in self.__layout_params:
+            return self.__layout_params[JOBS_SETUP_RPT_ANNO_EXCL_TAGS_KEY]
+        else:
+            return []
 
     @property
     def annotated_vcf_tabix(self):
@@ -252,32 +273,39 @@ class ReportLayout(pyCMMBase):
             return JOBS_SETUP_RPT_CALL_DETAIL_KEY in self.__layout_params[JOBS_SETUP_RPT_EXTRA_ANNO_COLS_KEY]
 
     @property
-    def anno_mt(self):
-        if JOBS_SETUP_RPT_EXTRA_ANNO_COLS_KEY not in self.__layout_params:
+    def filter_rare(self):
+        if JOBS_SETUP_RPT_ROWS_FILTER_ACTIONS_CRITERIA_KEY not in self.__layout_params:
             return False
         else:
-            return JOBS_SETUP_RPT_MT_KEY in self.__layout_params[JOBS_SETUP_RPT_EXTRA_ANNO_COLS_KEY]
+            return JOBS_SETUP_RPT_FILTER_RARE in self.__layout_params[JOBS_SETUP_RPT_ROWS_FILTER_ACTIONS_CRITERIA_KEY]
 
     @property
-    def exclude_common(self):
-        if JOBS_SETUP_RPT_ROW_EXCLUSION_CRITERIA_KEY not in self.__layout_params:
+    def filter_non_intergenic(self):
+        if JOBS_SETUP_RPT_ROWS_FILTER_ACTIONS_CRITERIA_KEY not in self.__layout_params:
             return False
         else:
-            return JOBS_SETUP_RPT_EXCLUDE_COMMON in self.__layout_params[JOBS_SETUP_RPT_ROW_EXCLUSION_CRITERIA_KEY]
+            return JOBS_SETUP_RPT_FILTER_NON_INTERGENIC in self.__layout_params[JOBS_SETUP_RPT_ROWS_FILTER_ACTIONS_CRITERIA_KEY]
 
     @property
-    def exclude_intergenic(self):
-        if JOBS_SETUP_RPT_ROW_EXCLUSION_CRITERIA_KEY not in self.__layout_params:
+    def filter_non_intronic(self):
+        if JOBS_SETUP_RPT_ROWS_FILTER_ACTIONS_CRITERIA_KEY not in self.__layout_params:
             return False
         else:
-            return JOBS_SETUP_RPT_EXCLUDE_INTERGENIC in self.__layout_params[JOBS_SETUP_RPT_ROW_EXCLUSION_CRITERIA_KEY]
+            return JOBS_SETUP_RPT_FILTER_NON_INTRONIC in self.__layout_params[JOBS_SETUP_RPT_ROWS_FILTER_ACTIONS_CRITERIA_KEY]
 
     @property
-    def exclude_intronic(self):
-        if JOBS_SETUP_RPT_ROW_EXCLUSION_CRITERIA_KEY not in self.__layout_params:
+    def filter_has_mutation(self):
+        if JOBS_SETUP_RPT_ROWS_FILTER_ACTIONS_CRITERIA_KEY not in self.__layout_params:
             return False
         else:
-            return JOBS_SETUP_RPT_EXCLUDE_INTRONIC in self.__layout_params[JOBS_SETUP_RPT_ROW_EXCLUSION_CRITERIA_KEY]
+            return JOBS_SETUP_RPT_FILTER_HAS_MUTATION in self.__layout_params[JOBS_SETUP_RPT_ROWS_FILTER_ACTIONS_CRITERIA_KEY]
+
+    @property
+    def filter_has_shared(self):
+        if JOBS_SETUP_RPT_ROWS_FILTER_ACTIONS_CRITERIA_KEY not in self.__layout_params:
+            return False
+        else:
+            return JOBS_SETUP_RPT_FILTER_HAS_SHARED in self.__layout_params[JOBS_SETUP_RPT_ROWS_FILTER_ACTIONS_CRITERIA_KEY]
 
     @property
     def only_summary(self):
@@ -411,12 +439,12 @@ class MutRepPipeline(CMMDBPipeline):
                         samples_list,
                         ):
         anno_cols = self.report_layout.anno_cols
-        cell_fmt = self.cell_fmt_mgr.cell_fmts[DFLT_FMT]
+        dflt_cell_fmt = self.cell_fmt_mgr.cell_fmts[DFLT_FMT]
         alt_allele = vcf_record.alleles[allele_idx]
-        ws.write(row, 0, vcf_record.CHROM, cell_fmt)
-        ws.write(row, 1, str(vcf_record.POS), cell_fmt)
-        ws.write(row, 2, vcf_record.REF, cell_fmt)
-        ws.write(row, 3, str(alt_allele), cell_fmt)
+        ws.write(row, 0, vcf_record.CHROM, dflt_cell_fmt)
+        ws.write(row, 1, str(vcf_record.POS), dflt_cell_fmt)
+        ws.write(row, 2, vcf_record.REF, dflt_cell_fmt)
+        ws.write(row, 3, str(alt_allele), dflt_cell_fmt)
         len_anno_cols = len(anno_cols)
         # annotate INFO columns
         for anno_idx in xrange(len_anno_cols):
@@ -426,25 +454,33 @@ class MutRepPipeline(CMMDBPipeline):
                 info = info[0]
             elif (type(info) is list) and (len(info) > 1):
                 info = info[allele_idx-1]
-            if anno_col_name in PREDICTION_LIST:
+            if anno_col_name in PREDICTION_COLS:
                 info = info.description
             if info is None:
                 info = ""
             if info == [None]:
                 info = ""
-            ws.write(row, anno_idx+LAYOUT_VCF_COLS, str(info).decode('utf-8'), cell_fmt)
+            ws.write(row, anno_idx+LAYOUT_VCF_COLS, str(info).decode('utf-8'), dflt_cell_fmt)
         # annotate samples information
         sample_start_idx = LAYOUT_VCF_COLS + len_anno_cols
         for sample_idx in xrange(len(samples_list)):
             call = vcf_record.genotype(samples_list[sample_idx])
             zygo = call.cmm_gts[allele_idx]
+            if type(call.shared_mutations) is not list:
+                zygo_fmt = dflt_cell_fmt
+            elif not call.shared_mutations[allele_idx]:
+                zygo_fmt = dflt_cell_fmt
+            elif call.actual_gts[allele_idx] == CMMGT_HOMOZYGOTE:
+                zygo_fmt = self.cell_fmt_mgr.cell_fmts[CELL_TYPE_HOM_SHARED]
+            else:
+                zygo_fmt = self.cell_fmt_mgr.cell_fmts[CELL_TYPE_HET_SHARED]
             if self.report_layout.call_detail:
                 col_idx = (2*sample_idx) + (sample_start_idx)
-                ws.write(row, col_idx, zygo, cell_fmt)
+                ws.write(row, col_idx, zygo, zygo_fmt)
                 formatted_call = self.__format_call_detail(call, vcf_record.FORMAT.split(":"))
-                ws.write(row, col_idx+1, formatted_call, cell_fmt)
+                ws.write(row, col_idx+1, formatted_call, zygo_fmt)
             else:
-                ws.write(row, sample_idx+sample_start_idx, zygo, cell_fmt)
+                ws.write(row, sample_idx+sample_start_idx, zygo, zygo_fmt)
 
     def __write_contents(self,
                          ws,
@@ -458,15 +494,21 @@ class MutRepPipeline(CMMDBPipeline):
                 if (check_shared and
                     not vcf_record.is_shared(samples_list, allele_idx)):
                     continue
-                if (self.report_layout.exclude_common and
+                if (self.report_layout.filter_rare and
                     not vcf_record.is_rare(self.report_layout.freq_ratios,
                                            allele_idx=allele_idx)):
                     continue
-                if (self.report_layout.exclude_intergenic and
+                if (self.report_layout.filter_non_intergenic and
                     vcf_record.is_intergenic[allele_idx]):
                     continue
-                if (self.report_layout.exclude_intronic and
+                if (self.report_layout.filter_non_intronic and
                     vcf_record.is_intronic[allele_idx]):
+                    continue
+                if (self.report_layout.filter_has_mutation and
+                    not vcf_record.has_mutation(samples_list, allele_idx)):
+                    continue
+                if (self.report_layout.filter_has_shared and
+                    not vcf_record.has_shared(allele_idx)):
                     continue
                 self.__write_content(ws,
                                      row,
@@ -485,10 +527,13 @@ class MutRepPipeline(CMMDBPipeline):
                          sheet_name,
                          report_regions,
                          samples_list=None,
+                         samples_header=None,
                          check_shared=False,
                          ):
         if self.annotated_vcf_tabix.endswith('.vcf.gz'):
-            vcf_reader = VcfReader(filename=self.annotated_vcf_tabix)
+            vcf_reader = VcfReader(filename=self.annotated_vcf_tabix,
+                                   family_infos=self.family_infos,
+                                   )
         else:
             self.thrown(self.annotated_vcf_tabix + ' does not endswith .vcf.gz')
         row = 1
@@ -497,7 +542,10 @@ class MutRepPipeline(CMMDBPipeline):
         else:
             samples = samples_list
         ws = self.__add_sheet(wb, sheet_name)
-        ncol = self.__write_header(ws, samples)
+        if samples_header is not None:
+            ncol = self.__write_header(ws, samples_header)
+        else:
+            ncol = self.__write_header(ws, samples)
         if report_regions is None:
             row = self.__write_contents(ws,
                                         row,
@@ -611,6 +659,7 @@ class MutRepPipeline(CMMDBPipeline):
                                   "summary_families",
                                   report_regions,
                                   samples_list=self.samples_list,
+                                  samples_header=self.samples_list_w_fam_pref,
                                   )
         wb.close()
 

@@ -6,27 +6,64 @@ from os.path import exists as path_exists
 from os.path import join as join_path
 from os.path import dirname
 from os.path import isdir
+from collections import OrderedDict
 from pycmm import settings
 from pycmm.template import SafeTester
 from pycmm.utils import mylogger
 from pycmm.settings import FAST_PROJECT_CODE
 from pycmm.settings import SLOW_PROJECT_CODE
 from pycmm.settings import DFLT_MUTREP_FREQ_RATIOS
-from pycmm.settings import DFLT_MUTREP_ANNO_COLS
+from pycmm.settings import ALL_MUTREP_ANNO_COLS
 from pycmm.settings import DFLT_MUTREP_ALLOC_TIME
+from pycmm.settings import MT_COLS_TAG
+from pycmm.settings import AXEQ_CHR9_COLS_TAG
+from pycmm.settings import CRC_CRC_COLS_TAG
+from pycmm.settings import MUTSTAT_DETAILS_COLS_TAG
+from pycmm.settings import EXAC_OTH_COLS_TAG
+from pycmm.settings import UNKNOWN_COLS_TAG
+from pycmm.settings import FUNC_REFGENE_COL_NAME
+from pycmm.settings import EXONICFUNC_REFGENE_COL_NAME
+from pycmm.settings import GENE_REFGENE_COL_NAME
+from pycmm.settings import GENEDETAIL_REFGENE_COL_NAME
+from pycmm.settings import CYTOBAND_COL_NAME
+from pycmm.settings import KG2014OCT_ALL_COL_NAME
+from pycmm.settings import AXEQ_CHR9_HET_COL_NAME
+from pycmm.settings import AXEQ_CHR3_6_14_18_PF_COL_NAME
+from pycmm.settings import CRC_CAFAM_WT_COL_NAME
+from pycmm.settings import AXEQ_CHR5_19_GF_COL_NAME
+from pycmm.settings import CRC_CRC_PF_COL_NAME
+from pycmm.settings import NK64_COLS_TAG
 from pycmm.flow.mutrep import MutRepPipeline
 from pycmm.flow.cmmdb import create_jobs_setup_file
+from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_RARE
+from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_NON_INTERGENIC
+from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_NON_INTRONIC
+from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_HAS_MUTATION
+from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_HAS_SHARED
 
-DFLT_TEST_MUTREP_COLS = []
-DFLT_TEST_MUTREP_COLS.append("Func.refGene")
-DFLT_TEST_MUTREP_COLS.append("ExonicFunc.refGene")
-DFLT_TEST_MUTREP_COLS.append("Gene.refGene")
-DFLT_TEST_MUTREP_COLS.append("GeneDetail.refGene")
-DFLT_TEST_MUTREP_COLS.append("cytoBand")
-DFLT_TEST_MUTREP_COLS.append("1000g2014oct_all")
+DFLT_TEST_MUTREP_COLS = OrderedDict()
+DFLT_TEST_MUTREP_COLS[FUNC_REFGENE_COL_NAME] = ALL_MUTREP_ANNO_COLS[FUNC_REFGENE_COL_NAME]
+DFLT_TEST_MUTREP_COLS[EXONICFUNC_REFGENE_COL_NAME] = ALL_MUTREP_ANNO_COLS[EXONICFUNC_REFGENE_COL_NAME]
+DFLT_TEST_MUTREP_COLS[GENE_REFGENE_COL_NAME] = ALL_MUTREP_ANNO_COLS[GENE_REFGENE_COL_NAME]
+DFLT_TEST_MUTREP_COLS[GENEDETAIL_REFGENE_COL_NAME] = ALL_MUTREP_ANNO_COLS[GENEDETAIL_REFGENE_COL_NAME]
+DFLT_TEST_MUTREP_COLS[CYTOBAND_COL_NAME] = ALL_MUTREP_ANNO_COLS[CYTOBAND_COL_NAME]
+DFLT_TEST_MUTREP_COLS[KG2014OCT_ALL_COL_NAME] = ALL_MUTREP_ANNO_COLS[KG2014OCT_ALL_COL_NAME]
+DFLT_TEST_MUTREP_COLS[AXEQ_CHR9_HET_COL_NAME] = ALL_MUTREP_ANNO_COLS[AXEQ_CHR9_HET_COL_NAME]
+DFLT_TEST_MUTREP_COLS[AXEQ_CHR3_6_14_18_PF_COL_NAME] = ALL_MUTREP_ANNO_COLS[AXEQ_CHR3_6_14_18_PF_COL_NAME]
+DFLT_TEST_MUTREP_COLS[CRC_CAFAM_WT_COL_NAME] = ALL_MUTREP_ANNO_COLS[CRC_CAFAM_WT_COL_NAME]
+DFLT_TEST_MUTREP_COLS[AXEQ_CHR5_19_GF_COL_NAME] = ALL_MUTREP_ANNO_COLS[AXEQ_CHR5_19_GF_COL_NAME]
+DFLT_TEST_MUTREP_COLS[CRC_CRC_PF_COL_NAME] = ALL_MUTREP_ANNO_COLS[CRC_CRC_PF_COL_NAME]
 
 DFLT_TEST_REPORT_REGIONS = "18:12512255-14542551"
 DFLT_TEST_FREQ_RATIOS = DFLT_MUTREP_FREQ_RATIOS
+
+DFLT_TEST_ANNO_EXCL_TAGS = MT_COLS_TAG
+DFLT_TEST_ANNO_EXCL_TAGS += "," + AXEQ_CHR9_COLS_TAG
+DFLT_TEST_ANNO_EXCL_TAGS += "," + CRC_CRC_COLS_TAG
+DFLT_TEST_ANNO_EXCL_TAGS += "," + NK64_COLS_TAG
+DFLT_TEST_ANNO_EXCL_TAGS += "," + MUTSTAT_DETAILS_COLS_TAG
+DFLT_TEST_ANNO_EXCL_TAGS += "," + EXAC_OTH_COLS_TAG
+DFLT_TEST_ANNO_EXCL_TAGS += "," + UNKNOWN_COLS_TAG
 
 class TestMutRepPipeline(SafeTester):
 
@@ -47,16 +84,14 @@ class TestMutRepPipeline(SafeTester):
                                  rpt_alloc_time=DFLT_MUTREP_ALLOC_TIME,
                                  sample_infos=None,
                                  anno_cols=DFLT_TEST_MUTREP_COLS,
+                                 anno_excl_tags=None,
                                  annotated_vcf_tabix=None,
                                  report_regions=DFLT_TEST_REPORT_REGIONS,
                                  frequency_ratios=DFLT_TEST_FREQ_RATIOS,
                                  split_chrom=False,
                                  summary_families_sheet=False,
                                  call_detail=False,
-                                 anno_mt=False,
-                                 exclude_common=False,
-                                 exclude_intergenic=False,
-                                 exclude_intronic=False,
+                                 rows_filter_actions=None,
                                  only_summary=False,
                                  only_families=False,
                                  ):
@@ -71,16 +106,14 @@ class TestMutRepPipeline(SafeTester):
                                project_code=project_code,
                                rpt_alloc_time=rpt_alloc_time,
                                anno_cols=",".join(anno_cols),
+                               anno_excl_tags=anno_excl_tags,
                                annotated_vcf_tabix=annotated_vcf_tabix,
                                report_regions=report_regions,
                                frequency_ratios=frequency_ratios,
                                split_chrom=split_chrom,
                                summary_families_sheet=summary_families_sheet,
                                call_detail=call_detail,
-                               anno_mt=anno_mt,
-                               exclude_common=exclude_common,
-                               exclude_intergenic=exclude_intergenic,
-                               exclude_intronic=exclude_intronic,
+                               rows_filter_actions=rows_filter_actions,
                                only_summary=only_summary,
                                only_families=only_families,
                                out_jobs_setup_file=jobs_setup_file,
@@ -106,6 +139,15 @@ class TestMutRepPipeline(SafeTester):
         self.assertEqual(pl.report_layout.anno_cols[4],
                          "cytoBand",
                          "MutRepPipeline cannot correctly read report layout info 'layout columns' from jobs setup file")
+        self.assertEqual(pl.report_layout.anno_cols[6],
+                         AXEQ_CHR9_HET_COL_NAME,
+                         "MutRepPipeline cannot correctly read report layout info 'layout columns' from jobs setup file")
+        self.assertEqual(len(pl.report_layout.anno_cols),
+                         11,
+                         "MutRepPipeline cannot correctly read report layout info 'layout columns' from jobs setup file")
+        self.assertEqual(len(pl.report_layout.anno_excl_tags),
+                         0,
+                         "MutRepPipeline cannot correctly read report layout info 'annotation excluded tags' from jobs setup file")
         self.assertEqual(pl.report_layout.report_regions[0].chrom,
                          "18",
                          "MutRepPipeline cannot correctly read report layout info 'report regions' from jobs setup file")
@@ -121,18 +163,18 @@ class TestMutRepPipeline(SafeTester):
         self.assertEqual(pl.report_layout.call_detail,
                          False,
                          "MutRepPipeline cannot correctly read report layout info 'call info' from jobs setup file")
-        self.assertEqual(pl.report_layout.anno_mt,
+        self.assertEqual(pl.report_layout.filter_rare,
                          False,
-                         "MutRepPipeline cannot correctly read report layout info 'annotation mitochondria' from jobs setup file")
-        self.assertEqual(pl.report_layout.exclude_common,
+                         "MutRepPipeline cannot correctly read report layout info 'filter rare' from jobs setup file")
+        self.assertEqual(pl.report_layout.filter_non_intergenic,
                          False,
-                         "MutRepPipeline cannot correctly read report layout info 'exclude common' from jobs setup file")
-        self.assertEqual(pl.report_layout.exclude_intergenic,
+                         "MutRepPipeline cannot correctly read report layout info 'filter non-intergenic' from jobs setup file")
+        self.assertEqual(pl.report_layout.filter_non_intronic,
                          False,
-                         "MutRepPipeline cannot correctly read report layout info 'exclude intergenic' from jobs setup file")
-        self.assertEqual(pl.report_layout.exclude_intronic,
+                         "MutRepPipeline cannot correctly read report layout info 'filter non-intronic' from jobs setup file")
+        self.assertEqual(pl.report_layout.filter_has_mutation,
                          False,
-                         "MutRepPipeline cannot correctly read report layout info 'exclude intronic' from jobs setup file")
+                         "MutRepPipeline cannot correctly read report layout info 'filter has-mutation' from jobs setup file")
         self.assertEqual(pl.report_layout.only_summary,
                          False,
                          "MutRepPipeline cannot correctly read report layout info 'only summary' from jobs setup file")
@@ -148,7 +190,12 @@ class TestMutRepPipeline(SafeTester):
         job_name = self.test_function
         dummy_vcf_tabix_file = "/path/to/vcf_tabix_file"
         dummy_annotated_vcf_tabix = "/path/to/annotated_vcf_tabix.vcf.gz"
+        rows_filter_actions = JOBS_SETUP_RPT_FILTER_RARE
+        rows_filter_actions += ',' + JOBS_SETUP_RPT_FILTER_NON_INTERGENIC
+        rows_filter_actions += ',' + JOBS_SETUP_RPT_FILTER_NON_INTRONIC
+        rows_filter_actions += ',' + JOBS_SETUP_RPT_FILTER_HAS_MUTATION
         jobs_setup_file = self.__create_jobs_setup_file(rpt_alloc_time="2-00:00:00",
+                                                        anno_excl_tags=DFLT_TEST_ANNO_EXCL_TAGS,
                                                         vcf_tabix_file=dummy_vcf_tabix_file,
                                                         annotated_vcf_tabix=dummy_annotated_vcf_tabix,
                                                         report_regions="6:78161823-78164117,"+DFLT_TEST_REPORT_REGIONS+",22",
@@ -156,10 +203,7 @@ class TestMutRepPipeline(SafeTester):
                                                         split_chrom=True,
                                                         summary_families_sheet=True,
                                                         call_detail=True,
-                                                        anno_mt=True,
-                                                        exclude_common=True,
-                                                        exclude_intergenic=True,
-                                                        exclude_intronic=True,
+                                                        rows_filter_actions=rows_filter_actions,
                                                         only_summary=True,
                                                         only_families=True,
                                                         )
@@ -167,6 +211,21 @@ class TestMutRepPipeline(SafeTester):
         self.assertEqual(pl.rpt_alloc_time,
                          "2-00:00:00",
                          "MutRepPipeline cannot correctly read meta info 'report allocation time' from jobs setup file")
+        self.assertEqual(pl.report_layout.anno_cols[3],
+                         "GeneDetail.refGene",
+                         "MutRepPipeline cannot correctly read report layout info 'layout columns' from jobs setup file")
+        self.assertEqual(pl.report_layout.anno_cols[4],
+                         "cytoBand",
+                         "MutRepPipeline cannot correctly read report layout info 'layout columns' from jobs setup file")
+        self.assertEqual(pl.report_layout.anno_cols[7],
+                         AXEQ_CHR5_19_GF_COL_NAME,
+                         "MutRepPipeline cannot correctly read report layout info 'layout columns' from jobs setup file")
+        self.assertEqual(len(pl.report_layout.anno_cols),
+                         8,
+                         "MutRepPipeline cannot correctly read report layout info 'layout columns' from jobs setup file")
+        self.assertEqual(len(pl.report_layout.anno_excl_tags),
+                         7,
+                         "MutRepPipeline cannot correctly read report layout info 'annotation excluded tags' from jobs setup file")
         self.assertEqual(pl.report_layout.report_regions[1].end_pos,
                          "14542551",
                          "MutRepPipeline cannot correctly read report layout info 'report regions' from jobs setup file")
@@ -188,18 +247,18 @@ class TestMutRepPipeline(SafeTester):
         self.assertEqual(pl.report_layout.call_detail,
                          True,
                          "MutRepPipeline cannot correctly read report layout info 'call info' from jobs setup file")
-        self.assertEqual(pl.report_layout.anno_mt,
+        self.assertEqual(pl.report_layout.filter_rare,
                          True,
-                         "MutRepPipeline cannot correctly read report layout info 'annotation mitochondria' from jobs setup file")
-        self.assertEqual(pl.report_layout.exclude_common,
+                         "MutRepPipeline cannot correctly read report layout info 'filter rare' from jobs setup file")
+        self.assertEqual(pl.report_layout.filter_non_intergenic,
                          True,
-                         "MutRepPipeline cannot correctly read report layout info 'exclude common' from jobs setup file")
-        self.assertEqual(pl.report_layout.exclude_intergenic,
+                         "MutRepPipeline cannot correctly read report layout info 'filter non-intergenic' from jobs setup file")
+        self.assertEqual(pl.report_layout.filter_non_intronic,
                          True,
-                         "MutRepPipeline cannot correctly read report layout info 'exclude intergenic' from jobs setup file")
-        self.assertEqual(pl.report_layout.exclude_intronic,
+                         "MutRepPipeline cannot correctly read report layout info 'filter non-intronic' from jobs setup file")
+        self.assertEqual(pl.report_layout.filter_has_mutation,
                          True,
-                         "MutRepPipeline cannot correctly read report layout info 'exclude intronic' from jobs setup file")
+                         "MutRepPipeline cannot correctly read report layout info 'filter has-mutation' from jobs setup file")
         self.assertEqual(pl.report_layout.only_summary,
                          True,
                          "MutRepPipeline cannot correctly read report layout info 'only summary' from jobs setup file")
@@ -359,42 +418,42 @@ class TestMutRepPipeline(SafeTester):
 
     @unittest.skipUnless(settings.FULL_SYSTEM_TEST, "taking too long time to test")
     def test_summary_report_7(self):
-        """ test summary report of 101CRC w/o intergenic region"""
+        """ test summary report of CRC w/o intergenic region"""
 
         self.individual_debug = True
         self.init_test(self.current_func_name)
-        job_name = self.test_function
         vcf_tabix_file = join_path(self.data_dir,
                                    "input.vcf.gz")
         annotated_vcf_tabix = join_path(self.data_dir,
                                         "input.vcf.gz")
+        rows_filter_actions = JOBS_SETUP_RPT_FILTER_NON_INTRONIC
         jobs_setup_file = self.__create_jobs_setup_file(vcf_tabix_file=vcf_tabix_file,
                                                         annotated_vcf_tabix=annotated_vcf_tabix,
                                                         project_code=None,
                                                         report_regions=None,
                                                         call_detail=False,
-                                                        exclude_intergenic=True,
+                                                        rows_filter_actions=rows_filter_actions,
                                                         )
         pl = MutRepPipeline(jobs_setup_file)
         pl.gen_summary_report(pl.report_layout.report_regions)
 
     @unittest.skipUnless(settings.FULL_SYSTEM_TEST, "taking too long time to test")
     def test_summary_report_8(self):
-        """ test summary report of 101CRC w/o intronic region"""
+        """ test summary report of CRC w/o intronic region"""
 
         self.individual_debug = True
         self.init_test(self.current_func_name)
-        job_name = self.test_function
         vcf_tabix_file = join_path(self.data_dir,
                                    "input.vcf.gz")
         annotated_vcf_tabix = join_path(self.data_dir,
                                         "input.vcf.gz")
+        rows_filter_actions = JOBS_SETUP_RPT_FILTER_NON_INTRONIC
         jobs_setup_file = self.__create_jobs_setup_file(vcf_tabix_file=vcf_tabix_file,
                                                         annotated_vcf_tabix=annotated_vcf_tabix,
                                                         project_code=None,
                                                         report_regions=None,
                                                         call_detail=False,
-                                                        exclude_intronic=True,
+                                                        rows_filter_actions=rows_filter_actions,
                                                         )
         pl = MutRepPipeline(jobs_setup_file)
         pl.gen_summary_report(pl.report_layout.report_regions)
@@ -405,18 +464,18 @@ class TestMutRepPipeline(SafeTester):
 
         self.individual_debug = True
         self.init_test(self.current_func_name)
-        job_name = self.test_function
         vcf_tabix_file = join_path(self.data_dir,
                                    "input.vcf.gz")
         annotated_vcf_tabix = join_path(self.data_dir,
                                         "input.vcf.gz")
+        rows_filter_actions = JOBS_SETUP_RPT_FILTER_NON_INTRONIC
         jobs_setup_file = self.__create_jobs_setup_file(vcf_tabix_file=vcf_tabix_file,
                                                         annotated_vcf_tabix=annotated_vcf_tabix,
-                                                        anno_cols=DFLT_MUTREP_ANNO_COLS,
+                                                        anno_cols=ALL_MUTREP_ANNO_COLS,
                                                         project_code=None,
                                                         report_regions=None,
                                                         call_detail=False,
-                                                        exclude_intronic=True,
+                                                        rows_filter_actions=rows_filter_actions,
                                                         )
         pl = MutRepPipeline(jobs_setup_file)
         pl.gen_summary_report(pl.report_layout.report_regions)
@@ -427,19 +486,156 @@ class TestMutRepPipeline(SafeTester):
 
         self.individual_debug = True
         self.init_test(self.current_func_name)
-        job_name = self.test_function
         vcf_tabix_file = join_path(self.data_dir,
                                    "input.vcf.gz")
         annotated_vcf_tabix = join_path(self.data_dir,
                                         "input.vcf.gz")
+        rows_filter_actions = JOBS_SETUP_RPT_FILTER_NON_INTRONIC
         jobs_setup_file = self.__create_jobs_setup_file(vcf_tabix_file=vcf_tabix_file,
                                                         annotated_vcf_tabix=annotated_vcf_tabix,
                                                         project_code=None,
-                                                        anno_cols=DFLT_MUTREP_ANNO_COLS,
-                                                        anno_mt=True,
+                                                        anno_cols=ALL_MUTREP_ANNO_COLS,
+                                                        anno_excl_tags=DFLT_TEST_ANNO_EXCL_TAGS,
                                                         report_regions=None,
                                                         call_detail=False,
-                                                        exclude_intronic=True,
+                                                        rows_filter_actions=rows_filter_actions,
+                                                        )
+        pl = MutRepPipeline(jobs_setup_file)
+        pl.gen_summary_report(pl.report_layout.report_regions)
+
+    @unittest.skipUnless(settings.FULL_SYSTEM_TEST, "taking too long time to test")
+    def test_summary_report_11(self):
+        """ test report that show only mutation """
+
+        self.individual_debug = True
+        self.init_test(self.current_func_name)
+        vcf_tabix_file = join_path(self.data_dir,
+                                   "input.vcf.gz")
+        annotated_vcf_tabix = join_path(self.data_dir,
+                                        "input.vcf.gz")
+        rows_filter_actions = JOBS_SETUP_RPT_FILTER_RARE
+        rows_filter_actions += ',' + JOBS_SETUP_RPT_FILTER_NON_INTERGENIC
+        rows_filter_actions += ',' + JOBS_SETUP_RPT_FILTER_NON_INTRONIC
+        jobs_setup_file = self.__create_jobs_setup_file(dataset_name=self.test_function+'_has_no_mutation',
+                                                        vcf_tabix_file=vcf_tabix_file,
+                                                        annotated_vcf_tabix=annotated_vcf_tabix,
+                                                        project_code=None,
+                                                        sample_infos="24:Co-166:Co-213:Co-648,8:Co-37,275:Co-618,478:Co-1274",
+                                                        anno_cols=DFLT_TEST_MUTREP_COLS,
+                                                        anno_excl_tags=DFLT_TEST_ANNO_EXCL_TAGS,
+                                                        report_regions=None,
+                                                        call_detail=False,
+                                                        summary_families_sheet=True,
+                                                        rows_filter_actions=rows_filter_actions,
+                                                        only_summary=False,
+                                                        only_families=False,
+                                                        )
+        pl = MutRepPipeline(jobs_setup_file)
+        pl.gen_summary_report(pl.report_layout.report_regions)
+        rows_filter_actions += ',' + JOBS_SETUP_RPT_FILTER_HAS_MUTATION
+        jobs_setup_file = self.__create_jobs_setup_file(dataset_name=self.test_function,
+                                                        vcf_tabix_file=vcf_tabix_file,
+                                                        annotated_vcf_tabix=annotated_vcf_tabix,
+                                                        project_code=None,
+                                                        sample_infos="24:Co-166:Co-213:Co-648,8:Co-37,275:Co-618,478:Co-1274",
+                                                        anno_cols=DFLT_TEST_MUTREP_COLS,
+                                                        anno_excl_tags=DFLT_TEST_ANNO_EXCL_TAGS,
+                                                        report_regions=None,
+                                                        call_detail=False,
+                                                        summary_families_sheet=True,
+                                                        rows_filter_actions=rows_filter_actions,
+                                                        only_summary=False,
+                                                        only_families=False,
+                                                        )
+        pl = MutRepPipeline(jobs_setup_file)
+        pl.gen_summary_report(pl.report_layout.report_regions)
+
+    @unittest.skipUnless(settings.FULL_SYSTEM_TEST, "taking too long time to test")
+    def test_summary_report_12(self):
+        """ test filter non-intronic feature """
+
+        self.individual_debug = True
+        self.init_test(self.current_func_name)
+        vcf_tabix_file = join_path(self.data_dir,
+                                   "input.vcf.gz")
+        annotated_vcf_tabix = join_path(self.data_dir,
+                                        "input.vcf.gz")
+        rows_filter_actions = JOBS_SETUP_RPT_FILTER_NON_INTRONIC
+        jobs_setup_file = self.__create_jobs_setup_file(dataset_name=self.test_function+'_with_intronic',
+                                                        vcf_tabix_file=vcf_tabix_file,
+                                                        annotated_vcf_tabix=annotated_vcf_tabix,
+                                                        project_code=None,
+                                                        sample_infos="24:Co-166:Co-213:Co-648,8:Co-37,275:Co-618,478:Co-1274",
+                                                        anno_cols=DFLT_TEST_MUTREP_COLS,
+                                                        anno_excl_tags=DFLT_TEST_ANNO_EXCL_TAGS,
+                                                        report_regions=None,
+                                                        call_detail=False,
+                                                        summary_families_sheet=True,
+                                                        only_summary=False,
+                                                        only_families=False,
+                                                        )
+        pl = MutRepPipeline(jobs_setup_file)
+        pl.gen_summary_report(pl.report_layout.report_regions)
+        jobs_setup_file = self.__create_jobs_setup_file(dataset_name=self.test_function,
+                                                        vcf_tabix_file=vcf_tabix_file,
+                                                        annotated_vcf_tabix=annotated_vcf_tabix,
+                                                        project_code=None,
+                                                        sample_infos="24:Co-166:Co-213:Co-648,8:Co-37,275:Co-618,478:Co-1274",
+                                                        anno_cols=DFLT_TEST_MUTREP_COLS,
+                                                        anno_excl_tags=DFLT_TEST_ANNO_EXCL_TAGS,
+                                                        report_regions=None,
+                                                        call_detail=False,
+                                                        summary_families_sheet=True,
+                                                        rows_filter_actions=rows_filter_actions,
+                                                        only_summary=False,
+                                                        only_families=False,
+                                                        )
+        pl = MutRepPipeline(jobs_setup_file)
+        pl.gen_summary_report(pl.report_layout.report_regions)
+
+    @unittest.skipUnless(settings.FULL_SYSTEM_TEST, "taking too long time to test")
+    def test_summary_report_13(self):
+        """ test report that with onlyrows that have shared mutation within a family """
+
+        self.individual_debug = True
+        self.init_test(self.current_func_name)
+        vcf_tabix_file = join_path(self.data_dir,
+                                   "input.vcf.gz")
+        annotated_vcf_tabix = join_path(self.data_dir,
+                                        "input.vcf.gz")
+        rows_filter_actions = JOBS_SETUP_RPT_FILTER_RARE
+        rows_filter_actions += ',' + JOBS_SETUP_RPT_FILTER_NON_INTERGENIC
+        rows_filter_actions += ',' + JOBS_SETUP_RPT_FILTER_NON_INTRONIC
+        jobs_setup_file = self.__create_jobs_setup_file(dataset_name=self.test_function+'_has_non_shared',
+                                                        vcf_tabix_file=vcf_tabix_file,
+                                                        annotated_vcf_tabix=annotated_vcf_tabix,
+                                                        project_code=None,
+                                                        sample_infos="24:Co-166:Co-213:Co-648,8:Co-37,275:Co-618,478:Co-1274",
+                                                        anno_cols=DFLT_TEST_MUTREP_COLS,
+                                                        anno_excl_tags=DFLT_TEST_ANNO_EXCL_TAGS,
+                                                        report_regions=None,
+                                                        call_detail=False,
+                                                        summary_families_sheet=True,
+                                                        rows_filter_actions=rows_filter_actions,
+                                                        only_summary=False,
+                                                        only_families=False,
+                                                        )
+        pl = MutRepPipeline(jobs_setup_file)
+        pl.gen_summary_report(pl.report_layout.report_regions)
+        rows_filter_actions += ',' + JOBS_SETUP_RPT_FILTER_HAS_SHARED
+        jobs_setup_file = self.__create_jobs_setup_file(dataset_name=self.test_function,
+                                                        vcf_tabix_file=vcf_tabix_file,
+                                                        annotated_vcf_tabix=annotated_vcf_tabix,
+                                                        project_code=None,
+                                                        sample_infos="24:Co-166:Co-213:Co-648,8:Co-37,275:Co-618,478:Co-1274",
+                                                        anno_cols=DFLT_TEST_MUTREP_COLS,
+                                                        anno_excl_tags=DFLT_TEST_ANNO_EXCL_TAGS,
+                                                        report_regions=None,
+                                                        call_detail=False,
+                                                        summary_families_sheet=True,
+                                                        rows_filter_actions=rows_filter_actions,
+                                                        only_summary=False,
+                                                        only_families=False,
                                                         )
         pl = MutRepPipeline(jobs_setup_file)
         pl.gen_summary_report(pl.report_layout.report_regions)
@@ -751,7 +947,6 @@ class TestMutRepPipeline(SafeTester):
                                                         )
         pl = MutRepPipeline(jobs_setup_file)
         pl.gen_families_reports()
-        mylogger.debug(len(pl.samples_list))
 
     @unittest.skipUnless(settings.FULL_SYSTEM_TEST, "taking too long time to test")
     def test_families_reports_7(self):
@@ -773,7 +968,6 @@ class TestMutRepPipeline(SafeTester):
                                                         )
         pl = MutRepPipeline(jobs_setup_file)
         pl.gen_families_reports()
-        mylogger.debug(len(pl.samples_list))
 
     @unittest.skipUnless(settings.FULL_SYSTEM_TEST, "taking too long time to test")
     def test_families_reports_8(self):
@@ -801,7 +995,6 @@ class TestMutRepPipeline(SafeTester):
                                                         )
         pl = MutRepPipeline(jobs_setup_file)
         pl.gen_families_reports()
-        mylogger.debug(len(pl.samples_list))
 
     def tearDown(self):
         self.remove_working_dir()

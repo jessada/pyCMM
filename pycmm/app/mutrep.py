@@ -52,17 +52,20 @@ def __display_report_config(func_name,
     layout_params['reports output folder'] = pl.rpts_out_dir
     layout_params['split chromosome'] = pl.report_layout.split_chrom
     layout_params['summary_families sheet'] = pl.report_layout.summary_families_sheet
-    extra_anno_cols ={}
-    extra_anno_cols['call detail'] = pl.report_layout.call_detail
-    extra_anno_cols['mitochondria'] = pl.report_layout.anno_mt
-    layout_params['extra annotation columns'] = extra_anno_cols
-    exclusion_out = {}
-    exclusion_out['common mutations'] = pl.report_layout.exclude_common
-    exclusion_out['intergenic mutations'] = pl.report_layout.exclude_intergenic
-    exclusion_out['intronic mutations'] = pl.report_layout.exclude_intronic
-    layout_params['exclusion criteria'] = exclusion_out
-    exclusion_out['only summary'] = pl.report_layout.only_summary
-    exclusion_out['only families'] = pl.report_layout.only_families
+    layout_params['call detail'] = pl.report_layout.call_detail
+    if pl.report_layout.anno_excl_tags:
+        layout_params['columns exclusion tags'] = pl.report_layout.anno_excl_tags
+    filter_actions_out = {}
+    filter_actions_out['Rare'] = pl.report_layout.filter_rare
+    filter_actions_out['Non-Intergenic'] = pl.report_layout.filter_non_intergenic
+    filter_actions_out['Non-Intronic'] = pl.report_layout.filter_non_intronic
+    filter_actions_out['Has-mutation'] = pl.report_layout.filter_has_mutation
+    filter_actions_out['Has-shared'] = pl.report_layout.filter_has_shared
+    layout_params['filter actions'] = filter_actions_out
+    report_exclusion_out = {}
+    layout_params['report exclusion'] = report_exclusion_out
+    report_exclusion_out['only summary'] = pl.report_layout.only_summary
+    report_exclusion_out['only families'] = pl.report_layout.only_families
     disp.disp_params_set("Report layout parameters", layout_params)
     disp.new_section_txt(" . . . G E N E R A T I N G   R E P O R T S . . . ")
 
