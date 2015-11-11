@@ -93,8 +93,8 @@ def app_pycmm_cmmdb_create_jobs_setup_file(*args, **kwargs):
         layout_params['annotation columns (-a)'] = "all"
     if kwargs['anno_excl_tags'] is not None:
         layout_params['annotation excluded tags (-E)'] = kwargs['anno_excl_tags'].split(",")
-    if kwargs['rows_filter_action'] is not None:
-        layout_params['rows filtering criteria (--filter_action)'] = kwargs['rows_filter_action'].split(",")
+    if kwargs['rows_filter_actions'] is not None:
+        layout_params['rows filtering criteria (--filter_actions)'] = kwargs['rows_filter_actions'].split(",")
     if kwargs['annotated_vcf_tabix'] is not None:
         layout_params['annotated vcf tablx file (-A)'] = kwargs['annotated_vcf_tabix']
     if kwargs['report_regions'] is not None:
@@ -120,7 +120,7 @@ def app_pycmm_cmmdb_create_jobs_setup_file(*args, **kwargs):
                            db_alloc_time=kwargs['db_alloc_time'],
                            rpt_alloc_time=kwargs['rpt_alloc_time'],
                            anno_cols=kwargs['anno_cols'],
-                           rows_filter_action=kwargs['rows_filter_action'],
+                           rows_filter_actions=kwargs['rows_filter_actions'],
                            anno_excl_tags=kwargs['anno_excl_tags'],
                            annotated_vcf_tabix=kwargs['annotated_vcf_tabix'],
                            report_regions=kwargs['report_regions'],

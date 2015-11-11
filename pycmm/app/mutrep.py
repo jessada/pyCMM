@@ -55,10 +55,13 @@ def __display_report_config(func_name,
     layout_params['call detail'] = pl.report_layout.call_detail
     if pl.report_layout.anno_excl_tags:
         layout_params['columns exclusion tags'] = pl.report_layout.anno_excl_tags
-    #
-    # need to add the excluion tags info
-    # need to add rows filtering criteria
-    #
+    filter_actions_out = {}
+    filter_actions_out['Rare'] = pl.report_layout.filter_rare
+    filter_actions_out['Non-Intergenic'] = pl.report_layout.filter_non_intergenic
+    filter_actions_out['Non-Intronic'] = pl.report_layout.filter_non_intronic
+    filter_actions_out['Has-mutation'] = pl.report_layout.filter_has_mutation
+    filter_actions_out['Has-shared'] = pl.report_layout.filter_has_shared
+    layout_params['filter actions'] = filter_actions_out
     report_exclusion_out = {}
     layout_params['report exclusion'] = report_exclusion_out
     report_exclusion_out['only summary'] = pl.report_layout.only_summary

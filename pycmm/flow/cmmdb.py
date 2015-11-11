@@ -70,7 +70,7 @@ JOBS_SETUP_RPT_SUMMARY_FAMILIES_KEY = "SUMMARY_FAMILIES"
 JOBS_SETUP_RPT_EXTRA_ANNO_COLS_KEY = "EXTRA_ANNOTATION_COLUMNS"
 JOBS_SETUP_RPT_CALL_DETAIL_KEY = "Calling_detail"
 JOBS_SETUP_RPT_MT_KEY = "Mitochondria"
-JOBS_SETUP_RPT_ROWS_FILTER_ACTION_CRITERIA_KEY = "ROWS_FILTER_ACTIONS_CRITERIA"
+JOBS_SETUP_RPT_ROWS_FILTER_ACTIONS_CRITERIA_KEY = "ROWS_FILTER_ACTIONS_CRITERIA"
 JOBS_SETUP_RPT_FILTER_RARE = "Rare"
 JOBS_SETUP_RPT_FILTER_NON_INTERGENIC = "Non-Intergenic"
 JOBS_SETUP_RPT_FILTER_NON_INTRONIC = "Non-Intronic"
@@ -402,7 +402,7 @@ def create_jobs_setup_file(dataset_name,
                            annovar_nastring=".",
                            anno_cols=None,
                            anno_excl_tags=None,
-                           rows_filter_action=None,
+                           rows_filter_actions=None,
                            annotated_vcf_tabix=None,
                            report_regions=None,
                            frequency_ratios=None,
@@ -491,9 +491,9 @@ def create_jobs_setup_file(dataset_name,
         if call_detail:
             extra_anno_cols.append(JOBS_SETUP_RPT_CALL_DETAIL_KEY)
         report_layout_config[JOBS_SETUP_RPT_EXTRA_ANNO_COLS_KEY] = extra_anno_cols
-    if rows_filter_action is not None:
+    if rows_filter_actions is not None:
         filter_criterias = []
-        for filter_criteria in rows_filter_action.split(","):
+        for filter_criteria in rows_filter_actions.split(","):
             if filter_criteria == JOBS_SETUP_RPT_FILTER_RARE:
                 filter_criterias.append(JOBS_SETUP_RPT_FILTER_RARE)
             if filter_criteria == JOBS_SETUP_RPT_FILTER_NON_INTERGENIC:
@@ -504,7 +504,7 @@ def create_jobs_setup_file(dataset_name,
                 filter_criterias.append(JOBS_SETUP_RPT_FILTER_HAS_MUTATION)
             if filter_criteria == JOBS_SETUP_RPT_FILTER_HAS_SHARED:
                 filter_criterias.append(JOBS_SETUP_RPT_FILTER_HAS_SHARED)
-        report_layout_config[JOBS_SETUP_RPT_ROWS_FILTER_ACTION_CRITERIA_KEY] = filter_criterias
+        report_layout_config[JOBS_SETUP_RPT_ROWS_FILTER_ACTIONS_CRITERIA_KEY] = filter_criterias
     report_layout_config[JOBS_SETUP_RPT_ONLY_SUMMARY_KEY] = only_summary
     report_layout_config[JOBS_SETUP_RPT_ONLY_FAMILIES_KEY] = only_families
     job_setup_document[JOBS_SETUP_RPT_LAYOUT_SECTION] = report_layout_config

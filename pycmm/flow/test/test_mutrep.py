@@ -91,7 +91,7 @@ class TestMutRepPipeline(SafeTester):
                                  split_chrom=False,
                                  summary_families_sheet=False,
                                  call_detail=False,
-                                 rows_filter_action=None,
+                                 rows_filter_actions=None,
                                  only_summary=False,
                                  only_families=False,
                                  ):
@@ -113,7 +113,7 @@ class TestMutRepPipeline(SafeTester):
                                split_chrom=split_chrom,
                                summary_families_sheet=summary_families_sheet,
                                call_detail=call_detail,
-                               rows_filter_action=rows_filter_action,
+                               rows_filter_actions=rows_filter_actions,
                                only_summary=only_summary,
                                only_families=only_families,
                                out_jobs_setup_file=jobs_setup_file,
@@ -190,10 +190,10 @@ class TestMutRepPipeline(SafeTester):
         job_name = self.test_function
         dummy_vcf_tabix_file = "/path/to/vcf_tabix_file"
         dummy_annotated_vcf_tabix = "/path/to/annotated_vcf_tabix.vcf.gz"
-        rows_filter_action = JOBS_SETUP_RPT_FILTER_RARE
-        rows_filter_action += ',' + JOBS_SETUP_RPT_FILTER_NON_INTERGENIC
-        rows_filter_action += ',' + JOBS_SETUP_RPT_FILTER_NON_INTRONIC
-        rows_filter_action += ',' + JOBS_SETUP_RPT_FILTER_HAS_MUTATION
+        rows_filter_actions = JOBS_SETUP_RPT_FILTER_RARE
+        rows_filter_actions += ',' + JOBS_SETUP_RPT_FILTER_NON_INTERGENIC
+        rows_filter_actions += ',' + JOBS_SETUP_RPT_FILTER_NON_INTRONIC
+        rows_filter_actions += ',' + JOBS_SETUP_RPT_FILTER_HAS_MUTATION
         jobs_setup_file = self.__create_jobs_setup_file(rpt_alloc_time="2-00:00:00",
                                                         anno_excl_tags=DFLT_TEST_ANNO_EXCL_TAGS,
                                                         vcf_tabix_file=dummy_vcf_tabix_file,
@@ -203,7 +203,7 @@ class TestMutRepPipeline(SafeTester):
                                                         split_chrom=True,
                                                         summary_families_sheet=True,
                                                         call_detail=True,
-                                                        rows_filter_action=rows_filter_action,
+                                                        rows_filter_actions=rows_filter_actions,
                                                         only_summary=True,
                                                         only_families=True,
                                                         )
@@ -426,13 +426,13 @@ class TestMutRepPipeline(SafeTester):
                                    "input.vcf.gz")
         annotated_vcf_tabix = join_path(self.data_dir,
                                         "input.vcf.gz")
-        rows_filter_action = JOBS_SETUP_RPT_FILTER_NON_INTRONIC
+        rows_filter_actions = JOBS_SETUP_RPT_FILTER_NON_INTRONIC
         jobs_setup_file = self.__create_jobs_setup_file(vcf_tabix_file=vcf_tabix_file,
                                                         annotated_vcf_tabix=annotated_vcf_tabix,
                                                         project_code=None,
                                                         report_regions=None,
                                                         call_detail=False,
-                                                        rows_filter_action=rows_filter_action,
+                                                        rows_filter_actions=rows_filter_actions,
                                                         )
         pl = MutRepPipeline(jobs_setup_file)
         pl.gen_summary_report(pl.report_layout.report_regions)
@@ -447,13 +447,13 @@ class TestMutRepPipeline(SafeTester):
                                    "input.vcf.gz")
         annotated_vcf_tabix = join_path(self.data_dir,
                                         "input.vcf.gz")
-        rows_filter_action = JOBS_SETUP_RPT_FILTER_NON_INTRONIC
+        rows_filter_actions = JOBS_SETUP_RPT_FILTER_NON_INTRONIC
         jobs_setup_file = self.__create_jobs_setup_file(vcf_tabix_file=vcf_tabix_file,
                                                         annotated_vcf_tabix=annotated_vcf_tabix,
                                                         project_code=None,
                                                         report_regions=None,
                                                         call_detail=False,
-                                                        rows_filter_action=rows_filter_action,
+                                                        rows_filter_actions=rows_filter_actions,
                                                         )
         pl = MutRepPipeline(jobs_setup_file)
         pl.gen_summary_report(pl.report_layout.report_regions)
@@ -468,19 +468,19 @@ class TestMutRepPipeline(SafeTester):
                                    "input.vcf.gz")
         annotated_vcf_tabix = join_path(self.data_dir,
                                         "input.vcf.gz")
-        rows_filter_action = JOBS_SETUP_RPT_FILTER_NON_INTRONIC
+        rows_filter_actions = JOBS_SETUP_RPT_FILTER_NON_INTRONIC
         jobs_setup_file = self.__create_jobs_setup_file(vcf_tabix_file=vcf_tabix_file,
                                                         annotated_vcf_tabix=annotated_vcf_tabix,
                                                         anno_cols=ALL_MUTREP_ANNO_COLS,
                                                         project_code=None,
                                                         report_regions=None,
                                                         call_detail=False,
-                                                        rows_filter_action=rows_filter_action,
+                                                        rows_filter_actions=rows_filter_actions,
                                                         )
         pl = MutRepPipeline(jobs_setup_file)
         pl.gen_summary_report(pl.report_layout.report_regions)
 
-#    @unittest.skipUnless(settings.FULL_SYSTEM_TEST, "taking too long time to test")
+    @unittest.skipUnless(settings.FULL_SYSTEM_TEST, "taking too long time to test")
     def test_summary_report_10(self):
         """ test mitochrondria annotation """
 
@@ -490,7 +490,7 @@ class TestMutRepPipeline(SafeTester):
                                    "input.vcf.gz")
         annotated_vcf_tabix = join_path(self.data_dir,
                                         "input.vcf.gz")
-        rows_filter_action = JOBS_SETUP_RPT_FILTER_NON_INTRONIC
+        rows_filter_actions = JOBS_SETUP_RPT_FILTER_NON_INTRONIC
         jobs_setup_file = self.__create_jobs_setup_file(vcf_tabix_file=vcf_tabix_file,
                                                         annotated_vcf_tabix=annotated_vcf_tabix,
                                                         project_code=None,
@@ -498,7 +498,7 @@ class TestMutRepPipeline(SafeTester):
                                                         anno_excl_tags=DFLT_TEST_ANNO_EXCL_TAGS,
                                                         report_regions=None,
                                                         call_detail=False,
-                                                        rows_filter_action=rows_filter_action,
+                                                        rows_filter_actions=rows_filter_actions,
                                                         )
         pl = MutRepPipeline(jobs_setup_file)
         pl.gen_summary_report(pl.report_layout.report_regions)
@@ -513,9 +513,9 @@ class TestMutRepPipeline(SafeTester):
                                    "input.vcf.gz")
         annotated_vcf_tabix = join_path(self.data_dir,
                                         "input.vcf.gz")
-        rows_filter_action = JOBS_SETUP_RPT_FILTER_RARE
-        rows_filter_action += ',' + JOBS_SETUP_RPT_FILTER_NON_INTERGENIC
-        rows_filter_action += ',' + JOBS_SETUP_RPT_FILTER_NON_INTRONIC
+        rows_filter_actions = JOBS_SETUP_RPT_FILTER_RARE
+        rows_filter_actions += ',' + JOBS_SETUP_RPT_FILTER_NON_INTERGENIC
+        rows_filter_actions += ',' + JOBS_SETUP_RPT_FILTER_NON_INTRONIC
         jobs_setup_file = self.__create_jobs_setup_file(dataset_name=self.test_function+'_has_no_mutation',
                                                         vcf_tabix_file=vcf_tabix_file,
                                                         annotated_vcf_tabix=annotated_vcf_tabix,
@@ -526,13 +526,13 @@ class TestMutRepPipeline(SafeTester):
                                                         report_regions=None,
                                                         call_detail=False,
                                                         summary_families_sheet=True,
-                                                        rows_filter_action=rows_filter_action,
+                                                        rows_filter_actions=rows_filter_actions,
                                                         only_summary=False,
                                                         only_families=False,
                                                         )
         pl = MutRepPipeline(jobs_setup_file)
         pl.gen_summary_report(pl.report_layout.report_regions)
-        rows_filter_action += ',' + JOBS_SETUP_RPT_FILTER_HAS_MUTATION
+        rows_filter_actions += ',' + JOBS_SETUP_RPT_FILTER_HAS_MUTATION
         jobs_setup_file = self.__create_jobs_setup_file(dataset_name=self.test_function,
                                                         vcf_tabix_file=vcf_tabix_file,
                                                         annotated_vcf_tabix=annotated_vcf_tabix,
@@ -543,7 +543,7 @@ class TestMutRepPipeline(SafeTester):
                                                         report_regions=None,
                                                         call_detail=False,
                                                         summary_families_sheet=True,
-                                                        rows_filter_action=rows_filter_action,
+                                                        rows_filter_actions=rows_filter_actions,
                                                         only_summary=False,
                                                         only_families=False,
                                                         )
@@ -560,7 +560,7 @@ class TestMutRepPipeline(SafeTester):
                                    "input.vcf.gz")
         annotated_vcf_tabix = join_path(self.data_dir,
                                         "input.vcf.gz")
-        rows_filter_action = JOBS_SETUP_RPT_FILTER_NON_INTRONIC
+        rows_filter_actions = JOBS_SETUP_RPT_FILTER_NON_INTRONIC
         jobs_setup_file = self.__create_jobs_setup_file(dataset_name=self.test_function+'_with_intronic',
                                                         vcf_tabix_file=vcf_tabix_file,
                                                         annotated_vcf_tabix=annotated_vcf_tabix,
@@ -586,7 +586,7 @@ class TestMutRepPipeline(SafeTester):
                                                         report_regions=None,
                                                         call_detail=False,
                                                         summary_families_sheet=True,
-                                                        rows_filter_action=rows_filter_action,
+                                                        rows_filter_actions=rows_filter_actions,
                                                         only_summary=False,
                                                         only_families=False,
                                                         )
@@ -603,9 +603,9 @@ class TestMutRepPipeline(SafeTester):
                                    "input.vcf.gz")
         annotated_vcf_tabix = join_path(self.data_dir,
                                         "input.vcf.gz")
-        rows_filter_action = JOBS_SETUP_RPT_FILTER_RARE
-        rows_filter_action += ',' + JOBS_SETUP_RPT_FILTER_NON_INTERGENIC
-        rows_filter_action += ',' + JOBS_SETUP_RPT_FILTER_NON_INTRONIC
+        rows_filter_actions = JOBS_SETUP_RPT_FILTER_RARE
+        rows_filter_actions += ',' + JOBS_SETUP_RPT_FILTER_NON_INTERGENIC
+        rows_filter_actions += ',' + JOBS_SETUP_RPT_FILTER_NON_INTRONIC
         jobs_setup_file = self.__create_jobs_setup_file(dataset_name=self.test_function+'_has_non_shared',
                                                         vcf_tabix_file=vcf_tabix_file,
                                                         annotated_vcf_tabix=annotated_vcf_tabix,
@@ -616,13 +616,13 @@ class TestMutRepPipeline(SafeTester):
                                                         report_regions=None,
                                                         call_detail=False,
                                                         summary_families_sheet=True,
-                                                        rows_filter_action=rows_filter_action,
+                                                        rows_filter_actions=rows_filter_actions,
                                                         only_summary=False,
                                                         only_families=False,
                                                         )
         pl = MutRepPipeline(jobs_setup_file)
         pl.gen_summary_report(pl.report_layout.report_regions)
-        rows_filter_action += ',' + JOBS_SETUP_RPT_FILTER_HAS_SHARED
+        rows_filter_actions += ',' + JOBS_SETUP_RPT_FILTER_HAS_SHARED
         jobs_setup_file = self.__create_jobs_setup_file(dataset_name=self.test_function,
                                                         vcf_tabix_file=vcf_tabix_file,
                                                         annotated_vcf_tabix=annotated_vcf_tabix,
@@ -633,7 +633,7 @@ class TestMutRepPipeline(SafeTester):
                                                         report_regions=None,
                                                         call_detail=False,
                                                         summary_families_sheet=True,
-                                                        rows_filter_action=rows_filter_action,
+                                                        rows_filter_actions=rows_filter_actions,
                                                         only_summary=False,
                                                         only_families=False,
                                                         )

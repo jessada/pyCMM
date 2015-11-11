@@ -126,10 +126,10 @@ help_txt += '\t' + JOBS_SETUP_RPT_FILTER_NON_INTRONIC + '\n'
 help_txt += '\t' + JOBS_SETUP_RPT_FILTER_HAS_MUTATION + '\n'
 help_txt += '\t' + JOBS_SETUP_RPT_FILTER_HAS_SHARED + '\n'
 help_txt += '\n'
-help_txt += 'example: --filter_action ' + JOBS_SETUP_RPT_FILTER_RARE + ',' + JOBS_SETUP_RPT_FILTER_HAS_SHARED + '\n'
+help_txt += 'example: --filter_actions ' + JOBS_SETUP_RPT_FILTER_RARE + ',' + JOBS_SETUP_RPT_FILTER_HAS_SHARED + '\n'
 help_txt += '\n'
-mutrep_group.add_argument('--fiter_action',
-                          dest='rows_filter_action',
+mutrep_group.add_argument('--filter_actions',
+                          dest='rows_filter_actions',
                           metavar="CRITERIA(S)",
                           help=help_txt,
                           default=None,
@@ -192,7 +192,7 @@ app_pycmm_cmmdb_create_jobs_setup_file(dataset_name=args.dataset_name,
                                        db_alloc_time=args.db_alloc_time,
                                        rpt_alloc_time=args.rpt_alloc_time,
                                        anno_cols=args.anno_cols,
-                                       rows_filter_action=args.rows_filter_action, 
+                                       rows_filter_actions=args.rows_filter_actions, 
                                        anno_excl_tags=args.anno_excl_tags,
                                        annotated_vcf_tabix=args.annotated_vcf_tabix,
                                        report_regions=args.report_regions,

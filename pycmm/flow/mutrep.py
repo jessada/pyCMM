@@ -40,7 +40,7 @@ from pycmm.flow.cmmdb import JOBS_SETUP_RPT_SUMMARY_FAMILIES_KEY
 from pycmm.flow.cmmdb import JOBS_SETUP_RPT_EXTRA_ANNO_COLS_KEY
 from pycmm.flow.cmmdb import JOBS_SETUP_RPT_CALL_DETAIL_KEY
 from pycmm.flow.cmmdb import JOBS_SETUP_RPT_MT_KEY
-from pycmm.flow.cmmdb import JOBS_SETUP_RPT_ROWS_FILTER_ACTION_CRITERIA_KEY
+from pycmm.flow.cmmdb import JOBS_SETUP_RPT_ROWS_FILTER_ACTIONS_CRITERIA_KEY
 from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_RARE
 from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_NON_INTERGENIC
 from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_NON_INTRONIC
@@ -274,38 +274,38 @@ class ReportLayout(pyCMMBase):
 
     @property
     def filter_rare(self):
-        if JOBS_SETUP_RPT_ROWS_FILTER_ACTION_CRITERIA_KEY not in self.__layout_params:
+        if JOBS_SETUP_RPT_ROWS_FILTER_ACTIONS_CRITERIA_KEY not in self.__layout_params:
             return False
         else:
-            return JOBS_SETUP_RPT_FILTER_RARE in self.__layout_params[JOBS_SETUP_RPT_ROWS_FILTER_ACTION_CRITERIA_KEY]
+            return JOBS_SETUP_RPT_FILTER_RARE in self.__layout_params[JOBS_SETUP_RPT_ROWS_FILTER_ACTIONS_CRITERIA_KEY]
 
     @property
     def filter_non_intergenic(self):
-        if JOBS_SETUP_RPT_ROWS_FILTER_ACTION_CRITERIA_KEY not in self.__layout_params:
+        if JOBS_SETUP_RPT_ROWS_FILTER_ACTIONS_CRITERIA_KEY not in self.__layout_params:
             return False
         else:
-            return JOBS_SETUP_RPT_FILTER_NON_INTERGENIC in self.__layout_params[JOBS_SETUP_RPT_ROWS_FILTER_ACTION_CRITERIA_KEY]
+            return JOBS_SETUP_RPT_FILTER_NON_INTERGENIC in self.__layout_params[JOBS_SETUP_RPT_ROWS_FILTER_ACTIONS_CRITERIA_KEY]
 
     @property
     def filter_non_intronic(self):
-        if JOBS_SETUP_RPT_ROWS_FILTER_ACTION_CRITERIA_KEY not in self.__layout_params:
+        if JOBS_SETUP_RPT_ROWS_FILTER_ACTIONS_CRITERIA_KEY not in self.__layout_params:
             return False
         else:
-            return JOBS_SETUP_RPT_FILTER_NON_INTRONIC in self.__layout_params[JOBS_SETUP_RPT_ROWS_FILTER_ACTION_CRITERIA_KEY]
+            return JOBS_SETUP_RPT_FILTER_NON_INTRONIC in self.__layout_params[JOBS_SETUP_RPT_ROWS_FILTER_ACTIONS_CRITERIA_KEY]
 
     @property
     def filter_has_mutation(self):
-        if JOBS_SETUP_RPT_ROWS_FILTER_ACTION_CRITERIA_KEY not in self.__layout_params:
+        if JOBS_SETUP_RPT_ROWS_FILTER_ACTIONS_CRITERIA_KEY not in self.__layout_params:
             return False
         else:
-            return JOBS_SETUP_RPT_FILTER_HAS_MUTATION in self.__layout_params[JOBS_SETUP_RPT_ROWS_FILTER_ACTION_CRITERIA_KEY]
+            return JOBS_SETUP_RPT_FILTER_HAS_MUTATION in self.__layout_params[JOBS_SETUP_RPT_ROWS_FILTER_ACTIONS_CRITERIA_KEY]
 
     @property
     def filter_has_shared(self):
-        if JOBS_SETUP_RPT_ROWS_FILTER_ACTION_CRITERIA_KEY not in self.__layout_params:
+        if JOBS_SETUP_RPT_ROWS_FILTER_ACTIONS_CRITERIA_KEY not in self.__layout_params:
             return False
         else:
-            return JOBS_SETUP_RPT_FILTER_HAS_SHARED in self.__layout_params[JOBS_SETUP_RPT_ROWS_FILTER_ACTION_CRITERIA_KEY]
+            return JOBS_SETUP_RPT_FILTER_HAS_SHARED in self.__layout_params[JOBS_SETUP_RPT_ROWS_FILTER_ACTIONS_CRITERIA_KEY]
 
     @property
     def only_summary(self):
