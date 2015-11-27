@@ -44,6 +44,7 @@ from pycmm.flow.cmmdb import JOBS_SETUP_RPT_ROWS_FILTER_ACTIONS_CRITERIA_KEY
 from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_RARE
 from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_NON_INTERGENIC
 from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_NON_INTRONIC
+from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_NON_SYNONYMOUS
 from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_HAS_MUTATION
 from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_HAS_SHARED
 from pycmm.flow.cmmdb import JOBS_SETUP_RPT_ONLY_SUMMARY_KEY
@@ -294,6 +295,13 @@ class ReportLayout(pyCMMBase):
             return JOBS_SETUP_RPT_FILTER_NON_INTRONIC in self.__layout_params[JOBS_SETUP_RPT_ROWS_FILTER_ACTIONS_CRITERIA_KEY]
 
     @property
+    def filter_non_synonymous(self):
+        if JOBS_SETUP_RPT_ROWS_FILTER_ACTIONS_CRITERIA_KEY not in self.__layout_params:
+            return False
+        else:
+            return JOBS_SETUP_RPT_FILTER_NON_SYNONYMOUS in self.__layout_params[JOBS_SETUP_RPT_ROWS_FILTER_ACTIONS_CRITERIA_KEY]
+
+    @property
     def filter_has_mutation(self):
         if JOBS_SETUP_RPT_ROWS_FILTER_ACTIONS_CRITERIA_KEY not in self.__layout_params:
             return False
@@ -503,6 +511,9 @@ class MutRepPipeline(CMMDBPipeline):
                     continue
                 if (self.report_layout.filter_non_intronic and
                     vcf_record.is_intronic[allele_idx]):
+                    continue
+                if (self.report_layout.filter_non_synonymous and
+                    vcf_record.is_synonymous[allele_idx]):
                     continue
                 if (self.report_layout.filter_has_mutation and
                     not vcf_record.has_mutation(samples_list, allele_idx)):

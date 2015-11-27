@@ -20,6 +20,7 @@ from pycmm.settings import UNKNOWN_COLS_TAG
 from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_RARE
 from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_NON_INTERGENIC
 from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_NON_INTRONIC
+from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_NON_SYNONYMOUS
 from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_HAS_MUTATION
 from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_HAS_SHARED
 
@@ -113,16 +114,12 @@ mutrep_group.add_argument('-E',
                           help=help_txt,
                           default=None,
                           )
-from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_RARE
-from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_NON_INTERGENIC
-from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_NON_INTRONIC
-from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_HAS_MUTATION
-from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_HAS_SHARED
 help_txt = 'Criteria of rows to be filtered. The list are as follows:\n'
 help_txt += '\n'
 help_txt += '\t' + JOBS_SETUP_RPT_FILTER_RARE + '\n'
 help_txt += '\t' + JOBS_SETUP_RPT_FILTER_NON_INTERGENIC + '\n'
 help_txt += '\t' + JOBS_SETUP_RPT_FILTER_NON_INTRONIC + '\n'
+help_txt += '\t' + JOBS_SETUP_RPT_FILTER_NON_SYNONYMOUS + '\n'
 help_txt += '\t' + JOBS_SETUP_RPT_FILTER_HAS_MUTATION + '\n'
 help_txt += '\t' + JOBS_SETUP_RPT_FILTER_HAS_SHARED + '\n'
 help_txt += '\n'
@@ -192,7 +189,7 @@ app_pycmm_cmmdb_create_jobs_setup_file(dataset_name=args.dataset_name,
                                        db_alloc_time=args.db_alloc_time,
                                        rpt_alloc_time=args.rpt_alloc_time,
                                        anno_cols=args.anno_cols,
-                                       rows_filter_actions=args.rows_filter_actions, 
+                                       rows_filter_actions=args.rows_filter_actions,
                                        anno_excl_tags=args.anno_excl_tags,
                                        annotated_vcf_tabix=args.annotated_vcf_tabix,
                                        report_regions=args.report_regions,

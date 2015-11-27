@@ -74,6 +74,7 @@ JOBS_SETUP_RPT_ROWS_FILTER_ACTIONS_CRITERIA_KEY = "ROWS_FILTER_ACTIONS_CRITERIA"
 JOBS_SETUP_RPT_FILTER_RARE = "Rare"
 JOBS_SETUP_RPT_FILTER_NON_INTERGENIC = "Non-Intergenic"
 JOBS_SETUP_RPT_FILTER_NON_INTRONIC = "Non-Intronic"
+JOBS_SETUP_RPT_FILTER_NON_SYNONYMOUS = "Non-Synonymous"
 JOBS_SETUP_RPT_FILTER_HAS_MUTATION = "Has-Mutation"
 JOBS_SETUP_RPT_FILTER_HAS_SHARED = "Has-Shared"
 JOBS_SETUP_RPT_ONLY_SUMMARY_KEY = "ONLY_SUMMARY"
@@ -500,6 +501,8 @@ def create_jobs_setup_file(dataset_name,
                 filter_criterias.append(JOBS_SETUP_RPT_FILTER_NON_INTERGENIC)
             if filter_criteria == JOBS_SETUP_RPT_FILTER_NON_INTRONIC:
                 filter_criterias.append(JOBS_SETUP_RPT_FILTER_NON_INTRONIC)
+            if filter_criteria == JOBS_SETUP_RPT_FILTER_NON_SYNONYMOUS:
+                filter_criterias.append(JOBS_SETUP_RPT_FILTER_NON_SYNONYMOUS)
             if filter_criteria == JOBS_SETUP_RPT_FILTER_HAS_MUTATION:
                 filter_criterias.append(JOBS_SETUP_RPT_FILTER_HAS_MUTATION)
             if filter_criteria == JOBS_SETUP_RPT_FILTER_HAS_SHARED:

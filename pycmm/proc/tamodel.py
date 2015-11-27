@@ -3,6 +3,8 @@ from pycmm.settings import DFLT_MAF_VAR
 from pycmm.settings import FUNC_REFGENE_VAR
 from pycmm.settings import EXONICFUNC_REFGENE_VAR
 from pycmm.utils import mylogger
+from pycmm.mylib import check_equal
+from pycmm.mylib import check_in
 from vcf.model import _Record as _VcfRecord
 from vcf.model import _Call as _VcfCall
 
@@ -208,7 +210,8 @@ class _TAVcfRecord(_VcfRecord):
     def is_synonymous(self):
         if self.__is_synonymous is None:
             self.__is_synonymous = self.__compare_infos(EXONICFUNC_REFGENE_VAR,
-                                                        EXONICFUNC_SYNONYMOUS)
+                                                        EXONICFUNC_SYNONYMOUS,
+                                                        compare=check_equal)
         return self.__is_synonymous
 
 
@@ -264,19 +267,21 @@ class _TAVcfRecord(_VcfRecord):
                 self.genotype(member.sample_id).shared_mutations = shared_mutations
             family_info.shared_mutations = shared_mutations
 
-    def __compare_infos(self, var_name, val):
+    def __compare_infos(self, var_name, val, compare=check_in):
         """
         - return list of booleans identified if each INFO[var_name] == val
         - number of entry in the list = 1 + number of alternate alleles
         """
         raw_results = self.__get_info(var_name)
-        if (raw_results == "") or (raw_results is None) or (raw_results == "."):
+        if (raw_results == "") or (raw_results is None):
             return map(lambda x: True, xrange(len(self.alleles)))
+        if raw_results == ".":
+            return map(lambda x: False, xrange(len(self.alleles)))
         if type(raw_results) is not list:
             raw_results = [raw_results]
         results = [CMM_DUMMY]
         for entry in raw_results:
-            if val in entry:
+            if compare(val, entry):
                 results.append(True)
             else:
                 results.append(False)

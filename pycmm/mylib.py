@@ -2,6 +2,12 @@ import sys
 import xlrd
 
 
+def check_equal(var1, var2):
+    return var1 == var2
+
+def check_in(var1, var2):
+    return var1 in var2
+
 def is_number(s):
     try:
         float(s)

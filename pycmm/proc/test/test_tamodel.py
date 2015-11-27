@@ -13,6 +13,7 @@ from pycmm.flow.test.test_mutrep import DFLT_TEST_ANNO_EXCL_TAGS
 from pycmm.flow.cmmdb import create_jobs_setup_file
 from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_NON_INTRONIC
 from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_NON_INTERGENIC
+from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_NON_SYNONYMOUS
 from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_HAS_MUTATION
 
 #DFLT_TEST_MUTREP_COLS = OrderedDict()
@@ -2434,7 +2435,7 @@ class TestTAVcfRecord(SafeTester):
                          "intronic mutations cannot be correctly determined")
 
     def test_is_intronic_3(self):
-        """ test filter non-intronic feature with xls record """
+        """ test filter non-intronic feature with xls records """
 
         self.individual_debug = True
         self.init_test(self.current_func_name)
@@ -2470,3 +2471,47 @@ class TestTAVcfRecord(SafeTester):
         self.assertEqual(count_xls_rows(xls_file),
                          9,
                          "intronic mutations cannot be correctly determined")
+
+    def test_is_synonymous_3(self):
+        """ test filter non-synonymous feature with xls records """
+
+        self.individual_debug = True
+        self.init_test(self.current_func_name)
+        annotated_vcf_tabix = join_path(self.data_dir,
+                                        "input.vcf.gz")
+        dataset_name = self.test_function + '_with_synonymous'
+        rows_filter_actions = JOBS_SETUP_RPT_FILTER_NON_INTRONIC
+        rows_filter_actions += "," + JOBS_SETUP_RPT_FILTER_NON_INTERGENIC
+        jobs_setup_file = self.__create_jobs_setup_file(dataset_name=dataset_name,
+                                                        annotated_vcf_tabix=annotated_vcf_tabix,
+                                                        anno_cols=DFLT_TEST_MUTREP_COLS,
+                                                        anno_excl_tags=DFLT_TEST_ANNO_EXCL_TAGS,
+                                                        rows_filter_actions=rows_filter_actions,
+                                                        )
+        pl = MutRepPipeline(jobs_setup_file)
+        pl.gen_summary_report(pl.report_layout.report_regions)
+        xls_file = join_path(self.working_dir,
+                             "rpts",
+                             dataset_name+"_summary.xlsx")
+        self.assertEqual(count_xls_rows(xls_file),
+                         32,
+                         "synonymous mutations cannot be correctly determined")
+        dataset_name = self.test_function
+        rows_filter_actions += "," + JOBS_SETUP_RPT_FILTER_NON_SYNONYMOUS
+        jobs_setup_file = self.__create_jobs_setup_file(dataset_name=dataset_name,
+                                                        annotated_vcf_tabix=annotated_vcf_tabix,
+                                                        anno_cols=DFLT_TEST_MUTREP_COLS,
+                                                        anno_excl_tags=DFLT_TEST_ANNO_EXCL_TAGS,
+                                                        rows_filter_actions=rows_filter_actions,
+                                                        )
+        pl = MutRepPipeline(jobs_setup_file)
+        pl.gen_summary_report(pl.report_layout.report_regions)
+        xls_file = join_path(self.working_dir,
+                             "rpts",
+                             dataset_name+"_summary.xlsx")
+        self.assertEqual(count_xls_rows(xls_file),
+                         28,
+                         "synonymous mutations cannot be correctly determined")
+
+    def tearDown(self):
+        self.remove_working_dir()
