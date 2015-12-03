@@ -44,6 +44,8 @@ from pycmm.flow.cmmdb import JOBS_SETUP_RPT_ROWS_FILTER_ACTIONS_CRITERIA_KEY
 from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_RARE
 from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_NON_INTERGENIC
 from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_NON_INTRONIC
+from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_NON_UPSTREAM
+from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_NON_DOWNSTREAM
 from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_NON_SYNONYMOUS
 from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_HAS_MUTATION
 from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_HAS_SHARED
@@ -295,6 +297,20 @@ class ReportLayout(pyCMMBase):
             return JOBS_SETUP_RPT_FILTER_NON_INTRONIC in self.__layout_params[JOBS_SETUP_RPT_ROWS_FILTER_ACTIONS_CRITERIA_KEY]
 
     @property
+    def filter_non_upstream(self):
+        if JOBS_SETUP_RPT_ROWS_FILTER_ACTIONS_CRITERIA_KEY not in self.__layout_params:
+            return False
+        else:
+            return JOBS_SETUP_RPT_FILTER_NON_UPSTREAM in self.__layout_params[JOBS_SETUP_RPT_ROWS_FILTER_ACTIONS_CRITERIA_KEY]
+
+    @property
+    def filter_non_downtream(self):
+        if JOBS_SETUP_RPT_ROWS_FILTER_ACTIONS_CRITERIA_KEY not in self.__layout_params:
+            return False
+        else:
+            return JOBS_SETUP_RPT_FILTER_NON_DOWNSTREAM in self.__layout_params[JOBS_SETUP_RPT_ROWS_FILTER_ACTIONS_CRITERIA_KEY]
+
+    @property
     def filter_non_synonymous(self):
         if JOBS_SETUP_RPT_ROWS_FILTER_ACTIONS_CRITERIA_KEY not in self.__layout_params:
             return False
@@ -511,6 +527,12 @@ class MutRepPipeline(CMMDBPipeline):
                     continue
                 if (self.report_layout.filter_non_intronic and
                     vcf_record.is_intronic[allele_idx]):
+                    continue
+                if (self.report_layout.filter_non_upstream and
+                    vcf_record.is_upstream[allele_idx]):
+                    continue
+                if (self.report_layout.filter_non_downtream and
+                    vcf_record.is_downstream[allele_idx]):
                     continue
                 if (self.report_layout.filter_non_synonymous and
                     vcf_record.is_synonymous[allele_idx]):

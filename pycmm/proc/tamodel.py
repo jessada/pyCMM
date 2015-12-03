@@ -16,6 +16,9 @@ CMM_DUMMY = 'dummy'
 
 FUNC_INTERGENIC = 'intergenic'
 FUNC_INTRONIC = 'intronic'
+FUNC_UPSTREAM = 'upstream'
+FUNC_DOWNSTREAM = 'downstream'
+FUNC_UTR = 'UTR'
 EXONICFUNC_SYNONYMOUS = 'synonymous_SNV'
 
 class _TAVcfCall(_VcfCall):
@@ -185,6 +188,8 @@ class _TAVcfRecord(_VcfRecord):
         self.__is_intergenic = None
         self.__is_intronic = None
         self.__is_synonymous = None
+        self.__is_upstream = None
+        self.__is_downstream = None
         self.__family_infos = copy.deepcopy(family_infos)
         self.__shared_cal = False
 
@@ -207,13 +212,26 @@ class _TAVcfRecord(_VcfRecord):
         return self.__is_intronic
 
     @property
+    def is_upstream(self):
+        if self.__is_upstream is None:
+            self.__is_upstream = self.__compare_infos(FUNC_REFGENE_VAR,
+                                                      FUNC_UPSTREAM)
+        return self.__is_upstream
+
+    @property
+    def is_downstream(self):
+        if self.__is_downstream is None:
+            self.__is_downstream = self.__compare_infos(FUNC_REFGENE_VAR,
+                                                      FUNC_DOWNSTREAM)
+        return self.__is_downstream
+
+    @property
     def is_synonymous(self):
         if self.__is_synonymous is None:
             self.__is_synonymous = self.__compare_infos(EXONICFUNC_REFGENE_VAR,
                                                         EXONICFUNC_SYNONYMOUS,
                                                         compare=check_equal)
         return self.__is_synonymous
-
 
     def __get_info(self, var_name):
         """
