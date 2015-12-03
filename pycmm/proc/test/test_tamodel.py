@@ -13,23 +13,11 @@ from pycmm.flow.test.test_mutrep import DFLT_TEST_ANNO_EXCL_TAGS
 from pycmm.flow.cmmdb import create_jobs_setup_file
 from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_NON_INTRONIC
 from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_NON_INTERGENIC
-from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_NON_SYNONYMOUS
 from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_NON_UPSTREAM
 from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_NON_DOWNSTREAM
+from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_NON_UTR
+from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_NON_SYNONYMOUS
 from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_HAS_MUTATION
-
-#DFLT_TEST_MUTREP_COLS = OrderedDict()
-#DFLT_TEST_MUTREP_COLS[FUNC_REFGENE_COL_NAME] = ALL_MUTREP_ANNO_COLS[FUNC_REFGENE_COL_NAME]
-#DFLT_TEST_MUTREP_COLS[EXONICFUNC_REFGENE_COL_NAME] = ALL_MUTREP_ANNO_COLS[EXONICFUNC_REFGENE_COL_NAME]
-#DFLT_TEST_MUTREP_COLS[GENE_REFGENE_COL_NAME] = ALL_MUTREP_ANNO_COLS[GENE_REFGENE_COL_NAME]
-#DFLT_TEST_MUTREP_COLS[GENEDETAIL_REFGENE_COL_NAME] = ALL_MUTREP_ANNO_COLS[GENEDETAIL_REFGENE_COL_NAME]
-#DFLT_TEST_MUTREP_COLS[CYTOBAND_COL_NAME] = ALL_MUTREP_ANNO_COLS[CYTOBAND_COL_NAME]
-#DFLT_TEST_MUTREP_COLS[KG2014OCT_ALL_COL_NAME] = ALL_MUTREP_ANNO_COLS[KG2014OCT_ALL_COL_NAME]
-#DFLT_TEST_MUTREP_COLS[AXEQ_CHR9_HET_COL_NAME] = ALL_MUTREP_ANNO_COLS[AXEQ_CHR9_HET_COL_NAME]
-#DFLT_TEST_MUTREP_COLS[AXEQ_CHR3_6_14_18_PF_COL_NAME] = ALL_MUTREP_ANNO_COLS[AXEQ_CHR3_6_14_18_PF_COL_NAME]
-#DFLT_TEST_MUTREP_COLS[CRC_CAFAM_WT_COL_NAME] = ALL_MUTREP_ANNO_COLS[CRC_CAFAM_WT_COL_NAME]
-#DFLT_TEST_MUTREP_COLS[AXEQ_CHR5_19_GF_COL_NAME] = ALL_MUTREP_ANNO_COLS[AXEQ_CHR5_19_GF_COL_NAME]
-#DFLT_TEST_MUTREP_COLS[CRC_CRC_PF_COL_NAME] = ALL_MUTREP_ANNO_COLS[CRC_CRC_PF_COL_NAME]
 
 
 class TestTAVcfCall(SafeTester):
@@ -2513,7 +2501,7 @@ class TestTAVcfRecord(SafeTester):
                          "upstream mutations cannot be correctly determined")
 
     def test_is_downstream_3(self):
-        """ test filter non-upstream feature with xls records """
+        """ test filter non-downstream feature with xls records """
 
         self.individual_debug = True
         self.init_test(self.current_func_name)
@@ -2549,6 +2537,44 @@ class TestTAVcfRecord(SafeTester):
         self.assertEqual(count_xls_rows(xls_file),
                          31,
                          "downstream mutations cannot be correctly determined")
+
+    def test_is_utr_3(self):
+        """ test filter non-UTR feature with xls records """
+
+        self.individual_debug = True
+        self.init_test(self.current_func_name)
+        annotated_vcf_tabix = join_path(self.data_dir,
+                                        "input.vcf.gz")
+        dataset_name = self.test_function + '_with_utr'
+        jobs_setup_file = self.__create_jobs_setup_file(dataset_name=dataset_name,
+                                                        annotated_vcf_tabix=annotated_vcf_tabix,
+                                                        anno_cols=DFLT_TEST_MUTREP_COLS,
+                                                        anno_excl_tags=DFLT_TEST_ANNO_EXCL_TAGS,
+                                                        )
+        pl = MutRepPipeline(jobs_setup_file)
+        pl.gen_summary_report(pl.report_layout.report_regions)
+        xls_file = join_path(self.working_dir,
+                             "rpts",
+                             dataset_name+"_summary.xlsx")
+        self.assertEqual(count_xls_rows(xls_file),
+                         32,
+                         "UTR mutations cannot be correctly determined")
+        dataset_name = self.test_function
+        rows_filter_actions = JOBS_SETUP_RPT_FILTER_NON_UTR
+        jobs_setup_file = self.__create_jobs_setup_file(dataset_name=dataset_name,
+                                                        annotated_vcf_tabix=annotated_vcf_tabix,
+                                                        anno_cols=DFLT_TEST_MUTREP_COLS,
+                                                        anno_excl_tags=DFLT_TEST_ANNO_EXCL_TAGS,
+                                                        rows_filter_actions=rows_filter_actions,
+                                                        )
+        pl = MutRepPipeline(jobs_setup_file)
+        pl.gen_summary_report(pl.report_layout.report_regions)
+        xls_file = join_path(self.working_dir,
+                             "rpts",
+                             dataset_name+"_summary.xlsx")
+        self.assertEqual(count_xls_rows(xls_file),
+                         20,
+                         "UTR mutations cannot be correctly determined")
 
     def test_is_synonymous_3(self):
         """ test filter non-synonymous feature with xls records """

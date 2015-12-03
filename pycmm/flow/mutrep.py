@@ -46,6 +46,7 @@ from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_NON_INTERGENIC
 from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_NON_INTRONIC
 from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_NON_UPSTREAM
 from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_NON_DOWNSTREAM
+from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_NON_UTR
 from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_NON_SYNONYMOUS
 from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_HAS_MUTATION
 from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_HAS_SHARED
@@ -311,6 +312,13 @@ class ReportLayout(pyCMMBase):
             return JOBS_SETUP_RPT_FILTER_NON_DOWNSTREAM in self.__layout_params[JOBS_SETUP_RPT_ROWS_FILTER_ACTIONS_CRITERIA_KEY]
 
     @property
+    def filter_non_utr(self):
+        if JOBS_SETUP_RPT_ROWS_FILTER_ACTIONS_CRITERIA_KEY not in self.__layout_params:
+            return False
+        else:
+            return JOBS_SETUP_RPT_FILTER_NON_UTR in self.__layout_params[JOBS_SETUP_RPT_ROWS_FILTER_ACTIONS_CRITERIA_KEY]
+
+    @property
     def filter_non_synonymous(self):
         if JOBS_SETUP_RPT_ROWS_FILTER_ACTIONS_CRITERIA_KEY not in self.__layout_params:
             return False
@@ -533,6 +541,9 @@ class MutRepPipeline(CMMDBPipeline):
                     continue
                 if (self.report_layout.filter_non_downtream and
                     vcf_record.is_downstream[allele_idx]):
+                    continue
+                if (self.report_layout.filter_non_utr and
+                    vcf_record.is_utr[allele_idx]):
                     continue
                 if (self.report_layout.filter_non_synonymous and
                     vcf_record.is_synonymous[allele_idx]):

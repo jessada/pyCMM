@@ -190,6 +190,7 @@ class _TAVcfRecord(_VcfRecord):
         self.__is_synonymous = None
         self.__is_upstream = None
         self.__is_downstream = None
+        self.__is_utr = None
         self.__family_infos = copy.deepcopy(family_infos)
         self.__shared_cal = False
 
@@ -224,6 +225,13 @@ class _TAVcfRecord(_VcfRecord):
             self.__is_downstream = self.__compare_infos(FUNC_REFGENE_VAR,
                                                       FUNC_DOWNSTREAM)
         return self.__is_downstream
+
+    @property
+    def is_utr(self):
+        if self.__is_utr is None:
+            self.__is_utr = self.__compare_infos(FUNC_REFGENE_VAR,
+                                                      FUNC_UTR)
+        return self.__is_utr
 
     @property
     def is_synonymous(self):

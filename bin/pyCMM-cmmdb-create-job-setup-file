@@ -22,6 +22,7 @@ from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_NON_INTERGENIC
 from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_NON_INTRONIC
 from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_NON_UPSTREAM
 from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_NON_DOWNSTREAM
+from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_NON_UTR
 from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_NON_SYNONYMOUS
 from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_HAS_MUTATION
 from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_HAS_SHARED
@@ -123,6 +124,7 @@ help_txt += '\t' + JOBS_SETUP_RPT_FILTER_NON_INTERGENIC + '\n'
 help_txt += '\t' + JOBS_SETUP_RPT_FILTER_NON_INTRONIC + '\n'
 help_txt += '\t' + JOBS_SETUP_RPT_FILTER_NON_UPSTREAM + '\n'
 help_txt += '\t' + JOBS_SETUP_RPT_FILTER_NON_DOWNSTREAM + '\n'
+help_txt += '\t' + JOBS_SETUP_RPT_FILTER_NON_UTR + '\n'
 help_txt += '\t' + JOBS_SETUP_RPT_FILTER_NON_SYNONYMOUS + '\n'
 help_txt += '\t' + JOBS_SETUP_RPT_FILTER_HAS_MUTATION + '\n'
 help_txt += '\t' + JOBS_SETUP_RPT_FILTER_HAS_SHARED + '\n'
