@@ -7,6 +7,7 @@ This module is all about constant value
 
 """
 
+DEBUG_MODE = False
 #FULL_SYSTEM_TEST = True
 FULL_SYSTEM_TEST = False
 SLURM_TEST = False

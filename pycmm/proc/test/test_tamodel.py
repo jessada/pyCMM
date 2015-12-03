@@ -2,7 +2,6 @@ import filecmp
 from collections import OrderedDict
 from os.path import join as join_path
 from os.path import dirname
-from pycmm.utils import mylogger
 from pycmm.template import SafeTester
 from pycmm.settings import ALL_MUTREP_ANNO_COLS
 from pycmm.mylib import count_xls_rows
@@ -30,7 +29,7 @@ class TestTAVcfCall(SafeTester):
                             )
 
     def setUp(self):
-        mylogger.getLogger(__name__)
+        pass
 
     def test_parse_cmm_gts(self):
         """ test if zygosity can be correctly determined """
@@ -853,7 +852,7 @@ class TestTAVcfRecord(SafeTester):
                             )
 
     def setUp(self):
-        mylogger.getLogger(__name__)
+        pass
 
     def __create_jobs_setup_file(self,
                                  dataset_name=None,

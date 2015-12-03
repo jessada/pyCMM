@@ -192,7 +192,6 @@ class GATKBPPipeline(JobManager):
     def __init__(self,
                  jobs_setup_file,
                  ):
-        mylogger.getLogger(__name__)
         self.__load_jobs_info(jobs_setup_file)
         JobManager.__init__(self,
                             jobs_report_file=self.jobs_report_file)
@@ -344,13 +343,13 @@ class GATKBPPipeline(JobManager):
             if job_name.endswith("_base_recal") and (job_rec.job_status == JOB_STATUS_COMPLETED):
                 sample_name = job_name.strip("_base_recal")
                 sample_rec = self.__samples[sample_name]
-                mylogger.info("deleting " + sample_rec.raw_aligned_reads_file)
+                self.info("deleting " + sample_rec.raw_aligned_reads_file)
                 self.delete_file(sample_rec.raw_aligned_reads_file)
-                mylogger.info("deleting " + sample_rec.sorted_reads_file)
+                self.info("deleting " + sample_rec.sorted_reads_file)
                 self.delete_file(sample_rec.sorted_reads_file)
-                mylogger.info("deleting " + sample_rec.dedup_reads_file)
+                self.info("deleting " + sample_rec.dedup_reads_file)
                 self.delete_file(sample_rec.dedup_reads_file)
-                mylogger.info("deleting " + sample_rec.realigned_reads_file)
+                self.info("deleting " + sample_rec.realigned_reads_file)
                 self.delete_file(sample_rec.realigned_reads_file)
 
     def monitor_action(self):
@@ -703,7 +702,7 @@ class GATKBPPipeline(JobManager):
         job name of the process.
         """
 
-        mylogger.info("preprocess sample " + sample_name)
+        self.info("preprocess sample " + sample_name)
         job_name_bwa_mem = self.bwa_mem(sample_name)
         job_name_sort_sam = self.sort_sam(sample_name,
                                           prereq=[job_name_bwa_mem])

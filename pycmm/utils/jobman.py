@@ -3,7 +3,6 @@ import sys
 import datetime
 from pycmm.template import pyCMMBase
 from pycmm.utils import exec_sh
-from pycmm.utils import mylogger
 
 JOB_STATUS_PENDING = "PENDING"
 JOB_STATUS_RUNNING = "RUNNING"
@@ -85,7 +84,7 @@ class JobManager(pyCMMBase):
         cmd += " -o " + job_rec.slurm_log_file
         if (job_rec.prereq is not None) and (len(job_rec.prereq) > 0) and (type(job_rec.prereq) is list):
             cmd += " --dependency=afterok"
-            mylogger.debug(job_rec.prereq)
+            self.debug(job_rec.prereq)
             for job_name in job_rec.prereq:
                 job_id = self.get_job_id(job_name)
                 cmd += ":" + job_id
@@ -105,7 +104,7 @@ class JobManager(pyCMMBase):
                    email=False,
                    prereq=None,
                    ):
-        mylogger.getLogger(__name__ + "." + sys._getframe().f_code.co_name)
+        self.getLogger(__name__ + "." + sys._getframe().f_code.co_name)
         job_rec = JobRecord()
         job_rec.job_name = job_name
         job_rec.project_code = project_code
@@ -218,7 +217,7 @@ class JobManager(pyCMMBase):
     def get_job_status(self,
                        job_name,
                        ):
-        mylogger.getLogger(__name__ + "." + sys._getframe().f_code.co_name)
+        self.getLogger(__name__ + "." + sys._getframe().f_code.co_name)
         if job_name.isdigit():
             job_id = job_name
         else:
@@ -250,6 +249,6 @@ class JobManager(pyCMMBase):
         else:
             job_id = self.get_job_id(job_name)
         job_status = self.get_job_status(job_id)
-        mylogger.getLogger(__name__ + "." + sys._getframe().f_code.co_name)
+        self.getLogger(__name__ + "." + sys._getframe().f_code.co_name)
         cmd = "scancel -b " + job_id
         out = self.__exec_sh(cmd)

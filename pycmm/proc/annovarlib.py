@@ -1,5 +1,4 @@
 import sys
-from pycmm.utils import mylogger
 from pycmm.template import pyCMMBase
 from pycmm.settings import LJB_SIFT_PREDICTION_COL_NAME as SIFT_PRED_COL
 from pycmm.settings import LJB_POLYPHEN2_HDIV_PREDICTION_COL_NAME as POLYPHEN2_HDIV_PRED_COL
@@ -301,7 +300,7 @@ class PredictionTranslator(pyCMMBase):
         # if predictor is not yet in the system
         if predictor_name not in self.__pred_info.keys():
             warning_msg = "!! Unknown predictor '" + predictor_name + "'"
-            mylogger.warning(warning_msg)
+            self.warning(warning_msg)
             # create a dummy for the new predictor entity in the system
             self.__pred_info[predictor_name] = {}
             pred_info = PredictionInfo(code=code,
@@ -313,7 +312,7 @@ class PredictionTranslator(pyCMMBase):
         elif code not in self.__pred_info[predictor_name].keys():
             warning_msg = "!! Unknown prediction code '" + code + "'"
             warning_msg += " for predictor '" + predictor_name + "'"
-            mylogger.warning(warning_msg)
+            self.warning(warning_msg)
             # create a dummy for the new prediction code entity in the system
             pred_info = PredictionInfo(code=code,
                                        description='.',

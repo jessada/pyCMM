@@ -2,7 +2,6 @@ import copy
 from pycmm.settings import DFLT_MAF_VAR
 from pycmm.settings import FUNC_REFGENE_VAR
 from pycmm.settings import EXONICFUNC_REFGENE_VAR
-from pycmm.utils import mylogger
 from pycmm.mylib import check_equal
 from pycmm.mylib import check_in
 from vcf.model import _Record as _VcfRecord

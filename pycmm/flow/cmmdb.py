@@ -15,7 +15,6 @@ from pycmm.settings import DFLT_CMMDB_ALLOC_TIME
 from pycmm.settings import DFLT_MUTREP_ALLOC_TIME
 from pycmm.template import pyCMMBase
 from pycmm.utils import exec_sh
-from pycmm.utils import mylogger
 from pycmm.utils.jobman import JobManager
 from pycmm.proc.annovarlib import Annovar
 from pycmm.proc.annovarlib import ANNOVAR_PARAMS_INPUT_FILE_KEY
@@ -137,7 +136,6 @@ class CMMDBPipeline(JobManager):
     def __init__(self,
                  jobs_setup_file,
                  ):
-        mylogger.getLogger(__name__)
         self.__load_jobs_info(jobs_setup_file)
         self.__jobs_setup_file = jobs_setup_file
         JobManager.__init__(self,
@@ -363,7 +361,6 @@ class CMMDBPipeline(JobManager):
                             )
 
     def table_annovar(self):
-        mylogger.getLogger(__name__)
         cfg = self.annovar_config
         if self.project_code is not None:
             job_name = self.dataset_name + "_ta"
@@ -417,7 +414,6 @@ def create_jobs_setup_file(dataset_name,
                            only_families=False,
                            out_jobs_setup_file=None,
                            ):
-    mylogger.getLogger(__name__)
     if jobs_report_file is None:
         jobs_report_file = join_path(project_out_dir,
                                      dataset_name+"_rpt.txt")
