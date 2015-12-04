@@ -61,7 +61,7 @@ class pyCMMBase(object):
             frm = inspect.stack()[1]
             mod = inspect.getmodule(frm[0])
             mylogger.getLogger(mod.__name__)
-            mylogger.debug(info_msg)
+            mylogger.debug(debug_msg)
 
     def info(self, info_msg):
         frm = inspect.stack()[1]
