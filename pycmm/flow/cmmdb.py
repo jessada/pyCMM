@@ -15,7 +15,6 @@ from pycmm.settings import DFLT_CMMDB_ALLOC_TIME
 from pycmm.settings import DFLT_MUTREP_ALLOC_TIME
 from pycmm.template import pyCMMBase
 from pycmm.utils import exec_sh
-from pycmm.utils import mylogger
 from pycmm.utils.jobman import JobManager
 from pycmm.proc.annovarlib import Annovar
 from pycmm.proc.annovarlib import ANNOVAR_PARAMS_INPUT_FILE_KEY
@@ -74,6 +73,10 @@ JOBS_SETUP_RPT_ROWS_FILTER_ACTIONS_CRITERIA_KEY = "ROWS_FILTER_ACTIONS_CRITERIA"
 JOBS_SETUP_RPT_FILTER_RARE = "Rare"
 JOBS_SETUP_RPT_FILTER_NON_INTERGENIC = "Non-Intergenic"
 JOBS_SETUP_RPT_FILTER_NON_INTRONIC = "Non-Intronic"
+JOBS_SETUP_RPT_FILTER_NON_UPSTREAM = "Non-Upstream"
+JOBS_SETUP_RPT_FILTER_NON_DOWNSTREAM = "Non-Downstream"
+JOBS_SETUP_RPT_FILTER_NON_UTR = "Non-UTR"
+JOBS_SETUP_RPT_FILTER_NON_SYNONYMOUS = "Non-Synonymous"
 JOBS_SETUP_RPT_FILTER_HAS_MUTATION = "Has-Mutation"
 JOBS_SETUP_RPT_FILTER_HAS_SHARED = "Has-Shared"
 JOBS_SETUP_RPT_ONLY_SUMMARY_KEY = "ONLY_SUMMARY"
@@ -133,7 +136,6 @@ class CMMDBPipeline(JobManager):
     def __init__(self,
                  jobs_setup_file,
                  ):
-        mylogger.getLogger(__name__)
         self.__load_jobs_info(jobs_setup_file)
         self.__jobs_setup_file = jobs_setup_file
         JobManager.__init__(self,
@@ -359,7 +361,6 @@ class CMMDBPipeline(JobManager):
                             )
 
     def table_annovar(self):
-        mylogger.getLogger(__name__)
         cfg = self.annovar_config
         if self.project_code is not None:
             job_name = self.dataset_name + "_ta"
@@ -413,7 +414,6 @@ def create_jobs_setup_file(dataset_name,
                            only_families=False,
                            out_jobs_setup_file=None,
                            ):
-    mylogger.getLogger(__name__)
     if jobs_report_file is None:
         jobs_report_file = join_path(project_out_dir,
                                      dataset_name+"_rpt.txt")
@@ -500,6 +500,14 @@ def create_jobs_setup_file(dataset_name,
                 filter_criterias.append(JOBS_SETUP_RPT_FILTER_NON_INTERGENIC)
             if filter_criteria == JOBS_SETUP_RPT_FILTER_NON_INTRONIC:
                 filter_criterias.append(JOBS_SETUP_RPT_FILTER_NON_INTRONIC)
+            if filter_criteria == JOBS_SETUP_RPT_FILTER_NON_UPSTREAM:
+                filter_criterias.append(JOBS_SETUP_RPT_FILTER_NON_UPSTREAM)
+            if filter_criteria == JOBS_SETUP_RPT_FILTER_NON_DOWNSTREAM:
+                filter_criterias.append(JOBS_SETUP_RPT_FILTER_NON_DOWNSTREAM)
+            if filter_criteria == JOBS_SETUP_RPT_FILTER_NON_UTR:
+                filter_criterias.append(JOBS_SETUP_RPT_FILTER_NON_UTR)
+            if filter_criteria == JOBS_SETUP_RPT_FILTER_NON_SYNONYMOUS:
+                filter_criterias.append(JOBS_SETUP_RPT_FILTER_NON_SYNONYMOUS)
             if filter_criteria == JOBS_SETUP_RPT_FILTER_HAS_MUTATION:
                 filter_criterias.append(JOBS_SETUP_RPT_FILTER_HAS_MUTATION)
             if filter_criteria == JOBS_SETUP_RPT_FILTER_HAS_SHARED:

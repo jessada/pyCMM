@@ -1,7 +1,9 @@
 import copy
 from pycmm.settings import DFLT_MAF_VAR
 from pycmm.settings import FUNC_REFGENE_VAR
-from pycmm.utils import mylogger
+from pycmm.settings import EXONICFUNC_REFGENE_VAR
+from pycmm.mylib import check_equal
+from pycmm.mylib import check_in
 from vcf.model import _Record as _VcfRecord
 from vcf.model import _Call as _VcfCall
 
@@ -9,8 +11,14 @@ CMMGT_WILDTYPE = 'wt'
 CMMGT_HOMOZYGOTE = 'hom'
 CMMGT_HETEROZYGOTE = 'het'
 CMMGT_OTHER = 'oth'
-CMMGT_DUMMY = 'dummy'
+CMM_DUMMY = 'dummy'
 
+FUNC_INTERGENIC = 'intergenic'
+FUNC_INTRONIC = 'intronic'
+FUNC_UPSTREAM = 'upstream'
+FUNC_DOWNSTREAM = 'downstream'
+FUNC_UTR = 'UTR'
+EXONICFUNC_SYNONYMOUS = 'synonymous_SNV'
 
 class _TAVcfCall(_VcfCall):
     """
@@ -49,7 +57,7 @@ class _TAVcfCall(_VcfCall):
         ** NOTE ** the calculation here based on GT value alone
         """
         raw_GT = self.data.GT
-        cmm_gts = [CMMGT_DUMMY]
+        cmm_gts = [CMM_DUMMY]
         for allele_idx in xrange(1, len(self.site.alleles)):
             if (raw_GT == ".") or (raw_GT == "./."):
                 cmm_gts.append(".")
@@ -114,7 +122,7 @@ class _TAVcfCall(_VcfCall):
             - 1 -> first ALT
             - and so on
         """
-        mutated = [CMMGT_DUMMY]
+        mutated = [CMM_DUMMY]
         for gt_idx in xrange(1, len(self.actual_gts)):
             if self.actual_gts[gt_idx] == CMMGT_HOMOZYGOTE:
                 mutated.append(True)
@@ -176,8 +184,12 @@ class _TAVcfRecord(_VcfRecord):
                             samples=None,
                             )
         self.__afs = self.__cal_afs()
-        self.__is_intergenic = self.__compare_infos(FUNC_REFGENE_VAR, 'intergenic')
-        self.__is_intronic = self.__compare_infos(FUNC_REFGENE_VAR, 'intronic')
+        self.__is_intergenic = None
+        self.__is_intronic = None
+        self.__is_synonymous = None
+        self.__is_upstream = None
+        self.__is_downstream = None
+        self.__is_utr = None
         self.__family_infos = copy.deepcopy(family_infos)
         self.__shared_cal = False
 
@@ -187,16 +199,60 @@ class _TAVcfRecord(_VcfRecord):
 
     @property
     def is_intergenic(self):
+        if self.__is_intergenic is None:
+            self.__is_intergenic = self.__compare_infos(FUNC_REFGENE_VAR,
+                                                        FUNC_INTERGENIC)
         return self.__is_intergenic
 
     @property
     def is_intronic(self):
+        if self.__is_intronic is None:
+            self.__is_intronic = self.__compare_infos(FUNC_REFGENE_VAR,
+                                                      FUNC_INTRONIC)
         return self.__is_intronic
+
+    @property
+    def is_upstream(self):
+        if self.__is_upstream is None:
+            self.__is_upstream = self.__compare_infos(FUNC_REFGENE_VAR,
+                                                      FUNC_UPSTREAM)
+        return self.__is_upstream
+
+    @property
+    def is_downstream(self):
+        if self.__is_downstream is None:
+            self.__is_downstream = self.__compare_infos(FUNC_REFGENE_VAR,
+                                                      FUNC_DOWNSTREAM)
+        return self.__is_downstream
+
+    @property
+    def is_utr(self):
+        if self.__is_utr is None:
+            self.__is_utr = self.__compare_infos(FUNC_REFGENE_VAR,
+                                                      FUNC_UTR)
+        return self.__is_utr
+
+    @property
+    def is_synonymous(self):
+        if self.__is_synonymous is None:
+            self.__is_synonymous = self.__compare_infos(EXONICFUNC_REFGENE_VAR,
+                                                        EXONICFUNC_SYNONYMOUS,
+                                                        compare=check_equal)
+        return self.__is_synonymous
+
+    def __get_info(self, var_name):
+        """
+        - return list of values of table_annovar column "var_name"
+        - number of entry in the list = 1 + number of alternate alleles
+        """
+        if var_name in self.INFO:
+            return self.INFO[var_name]
+        return None
 
     def __cal_afs(self):
         """
-        return list of allele frequencies.
-        Number of entry in the list = 1 + number of alternate alleles
+        - return list of allele frequencies.
+        - number of entry in the list = 1 + number of alternate alleles
         """
         if DFLT_MAF_VAR in self.INFO:
             raw_afs = self.INFO[DFLT_MAF_VAR]
@@ -205,9 +261,9 @@ class _TAVcfRecord(_VcfRecord):
         if (raw_afs == "") or (raw_afs is None) or (raw_afs == "."):
             return map(lambda x: 0, xrange(len(self.alleles)))
         if type(raw_afs) is not list:
-            afs = [CMMGT_DUMMY, raw_afs]
+            afs = [CMM_DUMMY, raw_afs]
         else:
-            afs = [CMMGT_DUMMY]
+            afs = [CMM_DUMMY]
             for raw_af in raw_afs:
                 if raw_af is None:
                     afs.append(0)
@@ -217,14 +273,14 @@ class _TAVcfRecord(_VcfRecord):
 
     def __cal_shared(self):
         """
-        With given family informations, this function will identify shared
+        - with given family informations, this function will identify shared
         mutation for each family and for each genotype
         """
         if self.__family_infos is None:
             return
         for fam_id in self.__family_infos:
             family_info = self.__family_infos[fam_id]
-            shared_mutations = [CMMGT_DUMMY]
+            shared_mutations = [CMM_DUMMY]
             for allele_idx in xrange(1, len(self.alleles)):
                 shared_mutation = True
                 for member in family_info.members:
@@ -236,22 +292,21 @@ class _TAVcfRecord(_VcfRecord):
                 self.genotype(member.sample_id).shared_mutations = shared_mutations
             family_info.shared_mutations = shared_mutations
 
-    def __compare_infos(self, var_name, val):
+    def __compare_infos(self, var_name, val, compare=check_in):
         """
-        return list of booleans identified if each INFO[var_name] == val
-        Number of entry in the list = 1 + number of alternate alleles
+        - return list of booleans identified if each INFO[var_name] == val
+        - number of entry in the list = 1 + number of alternate alleles
         """
-        if var_name in self.INFO:
-            raw_results = self.INFO[var_name]
-        else:
-            raw_results = None
-        if (raw_results == "") or (raw_results is None) or (raw_results == "."):
+        raw_results = self.__get_info(var_name)
+        if (raw_results == "") or (raw_results is None):
             return map(lambda x: True, xrange(len(self.alleles)))
+        if raw_results == ".":
+            return map(lambda x: False, xrange(len(self.alleles)))
         if type(raw_results) is not list:
             raw_results = [raw_results]
-        results = [CMMGT_DUMMY]
+        results = [CMM_DUMMY]
         for entry in raw_results:
-            if val in entry:
+            if compare(val, entry):
                 results.append(True)
             else:
                 results.append(False)

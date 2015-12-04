@@ -98,7 +98,7 @@ def app_pycmm_cmmdb_create_jobs_setup_file(*args, **kwargs):
     if kwargs['annotated_vcf_tabix'] is not None:
         layout_params['annotated vcf tablx file (-A)'] = kwargs['annotated_vcf_tabix']
     if kwargs['report_regions'] is not None:
-        layout_params['report regions (-R)'] = kwargs['report_regions']
+        layout_params['report regions (-R)'] = kwargs['report_regions'].split(",")
     else:
         layout_params['report regions (-R)'] = "all"
     if kwargs['frequency_ratios'] is not None:

@@ -7,7 +7,6 @@ from os.path import dirname
 from os.path import isdir
 from pycmm import settings
 from pycmm.template import SafeTester
-from pycmm.utils import mylogger
 from pycmm.settings import FAST_PROJECT_CODE
 from pycmm.settings import SLOW_PROJECT_CODE
 from pycmm.settings import DFLT_GATKBP_ALLOC_TIME
@@ -40,7 +39,7 @@ class TestGATKBPPipeline(SafeTester):
                             )
 
     def setUp(self):
-        mylogger.getLogger(__name__)
+        pass
 
     def __create_jobs_setup_file(self,
                                  dataset_name=None,
