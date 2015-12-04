@@ -7,7 +7,6 @@ from os.path import dirname
 from os.path import isdir
 from pycmm import settings
 from pycmm.template import SafeTester
-from pycmm.utils import mylogger
 from pycmm.settings import DFLT_ANNOVAR_DB_FOLDER
 from pycmm.settings import DFLT_ANNOVAR_DB_NAMES
 from pycmm.settings import DFLT_ANNOVAR_DB_OPS

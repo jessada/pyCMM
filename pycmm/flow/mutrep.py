@@ -20,7 +20,6 @@ from pycmm.settings import MUTREP_FAMILY_REPORT_BIN
 from pycmm.settings import MUTREP_SUMMARY_REPORT_BIN
 from pycmm.template import pyCMMBase
 from pycmm.utils import exec_sh
-from pycmm.utils import mylogger
 from pycmm.proc.taparser import TAVcfReader as VcfReader
 from pycmm.proc.tamodel import CMMGT_HOMOZYGOTE
 from pycmm.proc.tamodel import CMMGT_HETEROZYGOTE
@@ -44,6 +43,10 @@ from pycmm.flow.cmmdb import JOBS_SETUP_RPT_ROWS_FILTER_ACTIONS_CRITERIA_KEY
 from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_RARE
 from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_NON_INTERGENIC
 from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_NON_INTRONIC
+from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_NON_UPSTREAM
+from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_NON_DOWNSTREAM
+from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_NON_UTR
+from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_NON_SYNONYMOUS
 from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_HAS_MUTATION
 from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_HAS_SHARED
 from pycmm.flow.cmmdb import JOBS_SETUP_RPT_ONLY_SUMMARY_KEY
@@ -294,6 +297,34 @@ class ReportLayout(pyCMMBase):
             return JOBS_SETUP_RPT_FILTER_NON_INTRONIC in self.__layout_params[JOBS_SETUP_RPT_ROWS_FILTER_ACTIONS_CRITERIA_KEY]
 
     @property
+    def filter_non_upstream(self):
+        if JOBS_SETUP_RPT_ROWS_FILTER_ACTIONS_CRITERIA_KEY not in self.__layout_params:
+            return False
+        else:
+            return JOBS_SETUP_RPT_FILTER_NON_UPSTREAM in self.__layout_params[JOBS_SETUP_RPT_ROWS_FILTER_ACTIONS_CRITERIA_KEY]
+
+    @property
+    def filter_non_downtream(self):
+        if JOBS_SETUP_RPT_ROWS_FILTER_ACTIONS_CRITERIA_KEY not in self.__layout_params:
+            return False
+        else:
+            return JOBS_SETUP_RPT_FILTER_NON_DOWNSTREAM in self.__layout_params[JOBS_SETUP_RPT_ROWS_FILTER_ACTIONS_CRITERIA_KEY]
+
+    @property
+    def filter_non_utr(self):
+        if JOBS_SETUP_RPT_ROWS_FILTER_ACTIONS_CRITERIA_KEY not in self.__layout_params:
+            return False
+        else:
+            return JOBS_SETUP_RPT_FILTER_NON_UTR in self.__layout_params[JOBS_SETUP_RPT_ROWS_FILTER_ACTIONS_CRITERIA_KEY]
+
+    @property
+    def filter_non_synonymous(self):
+        if JOBS_SETUP_RPT_ROWS_FILTER_ACTIONS_CRITERIA_KEY not in self.__layout_params:
+            return False
+        else:
+            return JOBS_SETUP_RPT_FILTER_NON_SYNONYMOUS in self.__layout_params[JOBS_SETUP_RPT_ROWS_FILTER_ACTIONS_CRITERIA_KEY]
+
+    @property
     def filter_has_mutation(self):
         if JOBS_SETUP_RPT_ROWS_FILTER_ACTIONS_CRITERIA_KEY not in self.__layout_params:
             return False
@@ -327,12 +358,10 @@ class MutRepPipeline(CMMDBPipeline):
     def __init__(self,
                  jobs_setup_file,
                  ):
-        mylogger.getLogger(__name__)
         CMMDBPipeline.__init__(self,
                                jobs_setup_file=jobs_setup_file
                                )
         self.__parse_report_layout()
-        mylogger.getLogger(__name__)
 
     def get_raw_repr(self):
         return {"dataset name": self.dataset_name,
@@ -504,6 +533,18 @@ class MutRepPipeline(CMMDBPipeline):
                 if (self.report_layout.filter_non_intronic and
                     vcf_record.is_intronic[allele_idx]):
                     continue
+                if (self.report_layout.filter_non_upstream and
+                    vcf_record.is_upstream[allele_idx]):
+                    continue
+                if (self.report_layout.filter_non_downtream and
+                    vcf_record.is_downstream[allele_idx]):
+                    continue
+                if (self.report_layout.filter_non_utr and
+                    vcf_record.is_utr[allele_idx]):
+                    continue
+                if (self.report_layout.filter_non_synonymous and
+                    vcf_record.is_synonymous[allele_idx]):
+                    continue
                 if (self.report_layout.filter_has_mutation and
                     not vcf_record.has_mutation(samples_list, allele_idx)):
                     continue
@@ -518,7 +559,7 @@ class MutRepPipeline(CMMDBPipeline):
                 if row % RECORDS_LOG_INTERVAL == 0:
                     log_msg = str(row)
                     log_msg += " records were written to the sheet"
-                    mylogger.info(log_msg)
+                    self.info(log_msg)
                 row += 1
         return row
 
@@ -572,7 +613,7 @@ class MutRepPipeline(CMMDBPipeline):
         log_msg = "Finish .. "
         log_msg += " total of " + str(row-1)
         log_msg += " records were written to the sheet"
-        mylogger.info(log_msg)
+        self.info(log_msg)
         self.__set_layout(ws, ncol)
         ws.freeze_panes(1, 0)
 
@@ -603,7 +644,7 @@ class MutRepPipeline(CMMDBPipeline):
                 job_params = job_params_prefix
                 job_params += " -r " + region_param
                 job_params += " -o " + out_file
-                mylogger.debug(job_script + job_params)
+                self.debug(job_script + job_params)
                 self.submit_job(job_name,
                                 self.project_code,
                                 "core",
@@ -640,21 +681,21 @@ class MutRepPipeline(CMMDBPipeline):
                            ):
         if out_file is None:
             out_file = self.summary_rpt_file
-        mylogger.info("")
-        mylogger.info(" >>>> generating summary report")
-        mylogger.info(" >>>> report file: " + out_file)
+        self.info("")
+        self.info(" >>>> generating summary report")
+        self.info(" >>>> report file: " + out_file)
         wb = xlsxwriter.Workbook(out_file)
         self.__init_cells_format(wb)
-        mylogger.info("")
-        mylogger.info(" >> add 'summary_all' sheet")
+        self.info("")
+        self.info(" >> add 'summary_all' sheet")
         self.__add_muts_sheet(wb,
                               "summary_all",
                               report_regions,
                               )
         if (self.report_layout.summary_families_sheet and
             self.family_infos is not None):
-            mylogger.info("")
-            mylogger.info(" >> add 'summary_families' sheet")
+            self.info("")
+            self.info(" >> add 'summary_families' sheet")
             self.__add_muts_sheet(wb,
                                   "summary_families",
                                   report_regions,
@@ -693,15 +734,15 @@ class MutRepPipeline(CMMDBPipeline):
         if out_file is None:
             out_file = join_path(self.rpts_out_dir,
                                  self.dataset_name+"_fam"+fam_info.fam_id+".xlsx")
-        mylogger.info("")
-        mylogger.info(" >>>> generating family report for family " + fam_info.fam_id)
-        mylogger.info(" >>>> report file: " + out_file)
+        self.info("")
+        self.info(" >>>> generating family report for family " + fam_info.fam_id)
+        self.info(" >>>> report file: " + out_file)
         samples_list = map(lambda x: x.sample_id, fam_info.members)
         wb = xlsxwriter.Workbook(out_file)
         self.__init_cells_format(wb)
         if len(samples_list) == 1:
-            mylogger.info("")
-            mylogger.info(" >> add '" + samples_list[0] + "' sheet")
+            self.info("")
+            self.info(" >> add '" + samples_list[0] + "' sheet")
             self.__add_muts_sheet(wb,
                                   samples_list[0],
                                   report_regions,
@@ -709,16 +750,16 @@ class MutRepPipeline(CMMDBPipeline):
                                   check_shared=True,
                                   )
         else:
-            mylogger.info("")
-            mylogger.info(" >> add 'shared' sheet")
+            self.info("")
+            self.info(" >> add 'shared' sheet")
             self.__add_muts_sheet(wb,
                                   "shared",
                                   report_regions,
                                   samples_list=samples_list,
                                   check_shared=True)
             for sample_name in samples_list:
-                mylogger.info("")
-                mylogger.info(" >> add '" + sample_name + "' sheet")
+                self.info("")
+                self.info(" >> add '" + sample_name + "' sheet")
                 self.__add_muts_sheet(wb,
                                       sample_name,
                                       report_regions,

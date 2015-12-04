@@ -5,7 +5,6 @@ from os.path import dirname
 from pycmm import settings
 from pycmm.template import SafeTester
 from pycmm.utils import exec_sh
-from pycmm.utils import mylogger
 from pycmm.utils.jobman import JobManager
 from pycmm.utils.jobman import JOB_STATUS_PENDING
 from pycmm.utils.jobman import JOB_STATUS_RUNNING
@@ -32,7 +31,6 @@ class JobManagerHouseKeeping(JobManager):
 
     def monitor_action(self):
         JobManager.monitor_action(self)
-        mylogger.info("hello monitor action")
 
 
 class TestJobManager(SafeTester):
