@@ -1,28 +1,10 @@
-import filecmp
-from collections import OrderedDict
 from os.path import join as join_path
 from os.path import dirname
 from pycmm.template import SafeTester
-from pycmm.settings import ALL_MUTREP_ANNO_COLS
-from pycmm.settings import PRIMARY_MAF_VAR
-from pycmm.settings import ILL_BR_PF_COL_NAME
-from pycmm.settings import EXAC_ALL_COL_NAME
-from pycmm.settings import DEBUG_MODE
-from pycmm.mylib import count_xls_rows
 from pycmm.proc.taparser import TAVcfReader
 from pycmm.flow.mutrep import MutRepPipeline
 from pycmm.flow.test.test_mutrep import DFLT_TEST_MUTREP_COLS
-from pycmm.flow.test.test_mutrep import DFLT_TEST_ANNO_EXCL_TAGS
 from pycmm.flow.cmmdb import create_jobs_setup_file
-from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_RARE
-from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_NON_INTRONIC
-from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_NON_INTERGENIC
-from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_NON_UPSTREAM
-from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_NON_DOWNSTREAM
-from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_NON_UTR
-from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_NON_SYNONYMOUS
-from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_HAS_MUTATION
-from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_HAS_SHARED
 
 
 class TestTAVcfCall(SafeTester):
@@ -36,33 +18,6 @@ class TestTAVcfCall(SafeTester):
 
     def setUp(self):
         pass
-
-    def __create_jobs_setup_file(self,
-                                 dataset_name=None,
-                                 sample_infos=None,
-                                 anno_cols=DFLT_TEST_MUTREP_COLS,
-                                 anno_excl_tags=None,
-                                 annotated_vcf_tabix=None,
-                                 summary_families_sheet=False,
-                                 frequency_ratios=None,
-                                 rows_filter_actions=None,
-                                 ):
-        jobs_setup_file = join_path(self.working_dir,
-                                    self.test_function+'_jobs_setup.txt')
-        if dataset_name is None:
-            dataset_name = self.test_function
-        create_jobs_setup_file(dataset_name=dataset_name,
-                               project_out_dir=self.working_dir,
-                               sample_infos=sample_infos,
-                               anno_cols=",".join(anno_cols),
-                               anno_excl_tags=anno_excl_tags,
-                               annotated_vcf_tabix=annotated_vcf_tabix,
-                               summary_families_sheet=summary_families_sheet,
-                               frequency_ratios=frequency_ratios,
-                               rows_filter_actions=rows_filter_actions,
-                               out_jobs_setup_file=jobs_setup_file,
-                               )
-        return jobs_setup_file
 
     def test_parse_cmm_gts(self):
         """ test if zygosity can be correctly determined """
@@ -768,38 +723,6 @@ class TestTAVcfCall(SafeTester):
                          False,
                          "cmm mutation cannot be correctly determined")
 
-    def test_parse_mutated_xls_3_2(self):
-        """
-        test if shared mutations in an xls sheet with a family with 2 members 
-        can be detected
-        """
-
-        self.individual_debug = True
-        self.init_test(self.current_func_name)
-        annotated_vcf_tabix = join_path(self.data_dir,
-                                        "input.vcf.gz")
-        dataset_name = self.test_function
-        sample_infos = []
-        sample_infos.append("24:Co-166:Co-213")
-        frequency_ratios = PRIMARY_MAF_VAR + ":0.2"
-        frequency_ratios += "," + ILL_BR_PF_COL_NAME + ":0.3"
-        frequency_ratios += "," + EXAC_ALL_COL_NAME + ":0.3"
-        jobs_setup_file = self.__create_jobs_setup_file(dataset_name=dataset_name,
-                                                        annotated_vcf_tabix=annotated_vcf_tabix,
-                                                        anno_cols=DFLT_TEST_MUTREP_COLS,
-                                                        anno_excl_tags=DFLT_TEST_ANNO_EXCL_TAGS,
-                                                        frequency_ratios=frequency_ratios,
-                                                        sample_infos=",".join(sample_infos),
-                                                        )
-        pl = MutRepPipeline(jobs_setup_file)
-        pl.gen_family_report('24', pl.report_layout.report_regions)
-        xls_file = join_path(self.working_dir,
-                             "rpts",
-                             dataset_name+"_fam24.xlsx")
-        self.assertEqual(count_xls_rows(xls_file),
-                         1,
-                         "shared mutations cannot be correctly determined")
-
     def test_parse_mutated_4(self):
         """
         test if mutation can be identified
@@ -929,6 +852,9 @@ class TestTAVcfCall(SafeTester):
         self.assertEqual(call.mutated[4],
                          False,
                          "cmm mutation cannot be correctly determined")
+
+    def tearDown(self):
+        self.remove_working_dir()
 
 class TestTAVcfRecord(SafeTester):
 
@@ -1707,48 +1633,6 @@ class TestTAVcfRecord(SafeTester):
                          False,
                          "shared mutation cannot be correctly determined")
 
-    def test_has_mutation_4(self):
-        """ test report that show only mutation """
-
-        self.individual_debug = True
-        self.init_test(self.current_func_name)
-        annotated_vcf_tabix = join_path(self.data_dir,
-                                        "input.vcf.gz")
-        dataset_name = self.test_function+'_has_no_mutation'
-        jobs_setup_file = self.__create_jobs_setup_file(dataset_name=dataset_name,
-                                                        annotated_vcf_tabix=annotated_vcf_tabix,
-                                                        sample_infos="24:Co-166:Co-213:Co-648,8:Co-37,275:Co-618,478:Co-1274",
-                                                        anno_cols=DFLT_TEST_MUTREP_COLS,
-                                                        anno_excl_tags=DFLT_TEST_ANNO_EXCL_TAGS,
-                                                        summary_families_sheet=True,
-                                                        )
-        pl = MutRepPipeline(jobs_setup_file)
-        pl.gen_summary_report(pl.report_layout.report_regions)
-        xls_file = join_path(self.working_dir,
-                             "rpts",
-                             dataset_name+"_summary.xlsx")
-        self.assertEqual(count_xls_rows(xls_file, sheet_idx=1),
-                         34,
-                         "shared mutation cannot be correctly determined")
-        rows_filter_actions = JOBS_SETUP_RPT_FILTER_HAS_MUTATION
-        dataset_name = self.test_function
-        jobs_setup_file = self.__create_jobs_setup_file(dataset_name=dataset_name,
-                                                        annotated_vcf_tabix=annotated_vcf_tabix,
-                                                        sample_infos="24:Co-166:Co-213:Co-648,8:Co-37,275:Co-618,478:Co-1274",
-                                                        anno_cols=DFLT_TEST_MUTREP_COLS,
-                                                        anno_excl_tags=DFLT_TEST_ANNO_EXCL_TAGS,
-                                                        summary_families_sheet=True,
-                                                        rows_filter_actions=rows_filter_actions,
-                                                        )
-        pl = MutRepPipeline(jobs_setup_file)
-        pl.gen_summary_report(pl.report_layout.report_regions)
-        xls_file = join_path(self.working_dir,
-                             "rpts",
-                             dataset_name+"_summary.xlsx")
-        self.assertEqual(count_xls_rows(xls_file, sheet_idx=1),
-                         13,
-                         "shared mutation cannot be correctly determined")
-
     def test_has_shared_0(self):
         """
         test if a family with shared mutation can be detected
@@ -2201,48 +2085,6 @@ class TestTAVcfRecord(SafeTester):
                          False,
                          "shared mutation cannot be correctly determined")
 
-    def test_has_shared_xls_1(self):
-        """
-        test if shared mutations in an xls sheet with a family with 2 members 
-        can be detected
-        """
-
-        self.individual_debug = True
-        self.init_test(self.current_func_name)
-        annotated_vcf_tabix = join_path(self.data_dir,
-                                        "input.vcf.gz")
-        dataset_name = self.test_function
-        rows_filter_actions = JOBS_SETUP_RPT_FILTER_RARE
-        rows_filter_actions += "," + JOBS_SETUP_RPT_FILTER_NON_INTRONIC
-        rows_filter_actions += "," + JOBS_SETUP_RPT_FILTER_NON_INTERGENIC
-        rows_filter_actions += "," + JOBS_SETUP_RPT_FILTER_NON_UPSTREAM
-        rows_filter_actions += "," + JOBS_SETUP_RPT_FILTER_NON_DOWNSTREAM
-        rows_filter_actions += "," + JOBS_SETUP_RPT_FILTER_NON_UTR
-        rows_filter_actions += "," + JOBS_SETUP_RPT_FILTER_NON_SYNONYMOUS
-        rows_filter_actions += "," + JOBS_SETUP_RPT_FILTER_HAS_MUTATION
-        sample_infos = []
-        sample_infos.append("24:Co-166:Co-213")
-        frequency_ratios = PRIMARY_MAF_VAR + ":0.2"
-        frequency_ratios += "," + ILL_BR_PF_COL_NAME + ":0.3"
-        frequency_ratios += "," + EXAC_ALL_COL_NAME + ":0.3"
-        jobs_setup_file = self.__create_jobs_setup_file(dataset_name=dataset_name,
-                                                        annotated_vcf_tabix=annotated_vcf_tabix,
-                                                        anno_cols=DFLT_TEST_MUTREP_COLS,
-                                                        anno_excl_tags=DFLT_TEST_ANNO_EXCL_TAGS,
-                                                        rows_filter_actions=rows_filter_actions,
-                                                        frequency_ratios=frequency_ratios,
-                                                        sample_infos=",".join(sample_infos),
-                                                        summary_families_sheet=True,
-                                                        )
-        pl = MutRepPipeline(jobs_setup_file)
-        pl.gen_family_report('24', pl.report_layout.report_regions)
-        xls_file = join_path(self.working_dir,
-                             "rpts",
-                             dataset_name+"_fam24.xlsx")
-        self.assertEqual(count_xls_rows(xls_file),
-                         5,
-                         "shared mutations cannot be correctly determined")
-
     def test_is_rare_1(self):
         """
         test rare mutation can be identified if there is only one criteria
@@ -2453,46 +2295,6 @@ class TestTAVcfRecord(SafeTester):
                          True,
                          "rare mutation cannot be correctly determined")
 
-    def test_is_rare_3(self):
-        """ test filter rare feature with xls records """
-
-        self.individual_debug = True
-        self.init_test(self.current_func_name)
-        annotated_vcf_tabix = join_path(self.data_dir,
-                                        "input.vcf.gz")
-        dataset_name = self.test_function + '_with_common'
-        jobs_setup_file = self.__create_jobs_setup_file(dataset_name=dataset_name,
-                                                        anno_cols=ALL_MUTREP_ANNO_COLS,
-                                                        annotated_vcf_tabix=annotated_vcf_tabix,
-                                                        )
-        pl = MutRepPipeline(jobs_setup_file)
-        pl.gen_summary_report(pl.report_layout.report_regions)
-        xls_file = join_path(self.working_dir,
-                             "rpts",
-                             dataset_name+"_summary.xlsx")
-        self.assertEqual(count_xls_rows(xls_file),
-                         88,
-                         "rare mutations cannot be correctly determined")
-        dataset_name = self.test_function
-        frequency_ratios = PRIMARY_MAF_VAR + ":0.2"
-        frequency_ratios += "," + ILL_BR_PF_COL_NAME + ":0.3"
-        frequency_ratios += "," + EXAC_ALL_COL_NAME + ":0.3"
-        rows_filter_actions = JOBS_SETUP_RPT_FILTER_RARE
-        jobs_setup_file = self.__create_jobs_setup_file(dataset_name=dataset_name,
-                                                        annotated_vcf_tabix=annotated_vcf_tabix,
-                                                        anno_cols=ALL_MUTREP_ANNO_COLS,
-                                                        frequency_ratios=frequency_ratios,
-                                                        rows_filter_actions=rows_filter_actions,
-                                                        )
-        pl = MutRepPipeline(jobs_setup_file)
-        pl.gen_summary_report(pl.report_layout.report_regions)
-        xls_file = join_path(self.working_dir,
-                             "rpts",
-                             dataset_name+"_summary.xlsx")
-        self.assertEqual(count_xls_rows(xls_file),
-                         54,
-                         "rare mutations cannot be correctly determined")
-
     def test_is_intergenic_1(self):
         """
         test counting intergenic mutations can be identified (all are intergenics)
@@ -2525,40 +2327,6 @@ class TestTAVcfRecord(SafeTester):
         intergenics_count = sum(1 for x in intergenics if x)
         self.assertEqual(intergenics_count,
                          10,
-                         "intergenic mutations cannot be correctly determined")
-
-    def test_is_intergenic_3(self):
-        """ test filter non-intergenic feature with xls record """
-
-        self.individual_debug = True
-        self.init_test(self.current_func_name)
-        annotated_vcf_tabix = join_path(self.data_dir,
-                                        "input.vcf.gz")
-        dataset_name = self.test_function + '_with_intergenic'
-        jobs_setup_file = self.__create_jobs_setup_file(dataset_name=dataset_name,
-                                                        annotated_vcf_tabix=annotated_vcf_tabix,
-                                                        )
-        pl = MutRepPipeline(jobs_setup_file)
-        pl.gen_summary_report(pl.report_layout.report_regions)
-        xls_file = join_path(self.working_dir,
-                             "rpts",
-                             dataset_name+"_summary.xlsx")
-        self.assertEqual(count_xls_rows(xls_file),
-                         22,
-                         "intergenic mutations cannot be correctly determined")
-        dataset_name = self.test_function
-        rows_filter_actions = JOBS_SETUP_RPT_FILTER_NON_INTERGENIC
-        jobs_setup_file = self.__create_jobs_setup_file(dataset_name=dataset_name,
-                                                        annotated_vcf_tabix=annotated_vcf_tabix,
-                                                        rows_filter_actions=rows_filter_actions,
-                                                        )
-        pl = MutRepPipeline(jobs_setup_file)
-        pl.gen_summary_report(pl.report_layout.report_regions)
-        xls_file = join_path(self.working_dir,
-                             "rpts",
-                             dataset_name+"_summary.xlsx")
-        self.assertEqual(count_xls_rows(xls_file),
-                         11,
                          "intergenic mutations cannot be correctly determined")
 
     def test_is_intronic_1(self):
@@ -2594,196 +2362,6 @@ class TestTAVcfRecord(SafeTester):
         self.assertEqual(intronics_count,
                          17,
                          "intronic mutations cannot be correctly determined")
-
-    def test_is_intronic_3(self):
-        """ test filter non-intronic feature with xls records """
-
-        self.individual_debug = True
-        self.init_test(self.current_func_name)
-        annotated_vcf_tabix = join_path(self.data_dir,
-                                        "input.vcf.gz")
-        dataset_name = self.test_function + '_with_intronic'
-        jobs_setup_file = self.__create_jobs_setup_file(dataset_name=dataset_name,
-                                                        annotated_vcf_tabix=annotated_vcf_tabix,
-                                                        anno_cols=DFLT_TEST_MUTREP_COLS,
-                                                        anno_excl_tags=DFLT_TEST_ANNO_EXCL_TAGS,
-                                                        )
-        pl = MutRepPipeline(jobs_setup_file)
-        pl.gen_summary_report(pl.report_layout.report_regions)
-        xls_file = join_path(self.working_dir,
-                             "rpts",
-                             dataset_name+"_summary.xlsx")
-        self.assertEqual(count_xls_rows(xls_file),
-                         26,
-                         "intronic mutations cannot be correctly determined")
-        dataset_name = self.test_function
-        rows_filter_actions = JOBS_SETUP_RPT_FILTER_NON_INTRONIC
-        jobs_setup_file = self.__create_jobs_setup_file(dataset_name=dataset_name,
-                                                        annotated_vcf_tabix=annotated_vcf_tabix,
-                                                        anno_cols=DFLT_TEST_MUTREP_COLS,
-                                                        anno_excl_tags=DFLT_TEST_ANNO_EXCL_TAGS,
-                                                        rows_filter_actions=rows_filter_actions,
-                                                        )
-        pl = MutRepPipeline(jobs_setup_file)
-        pl.gen_summary_report(pl.report_layout.report_regions)
-        xls_file = join_path(self.working_dir,
-                             "rpts",
-                             dataset_name+"_summary.xlsx")
-        self.assertEqual(count_xls_rows(xls_file),
-                         9,
-                         "intronic mutations cannot be correctly determined")
-
-    def test_is_upstream_3(self):
-        """ test filter non-upstream feature with xls records """
-
-        self.individual_debug = True
-        self.init_test(self.current_func_name)
-        annotated_vcf_tabix = join_path(self.data_dir,
-                                        "input.vcf.gz")
-        dataset_name = self.test_function + '_with_upstream'
-        jobs_setup_file = self.__create_jobs_setup_file(dataset_name=dataset_name,
-                                                        annotated_vcf_tabix=annotated_vcf_tabix,
-                                                        anno_cols=DFLT_TEST_MUTREP_COLS,
-                                                        anno_excl_tags=DFLT_TEST_ANNO_EXCL_TAGS,
-                                                        )
-        pl = MutRepPipeline(jobs_setup_file)
-        pl.gen_summary_report(pl.report_layout.report_regions)
-        xls_file = join_path(self.working_dir,
-                             "rpts",
-                             dataset_name+"_summary.xlsx")
-        self.assertEqual(count_xls_rows(xls_file),
-                         32,
-                         "upstream mutations cannot be correctly determined")
-        dataset_name = self.test_function
-        rows_filter_actions = JOBS_SETUP_RPT_FILTER_NON_UPSTREAM
-        jobs_setup_file = self.__create_jobs_setup_file(dataset_name=dataset_name,
-                                                        annotated_vcf_tabix=annotated_vcf_tabix,
-                                                        anno_cols=DFLT_TEST_MUTREP_COLS,
-                                                        anno_excl_tags=DFLT_TEST_ANNO_EXCL_TAGS,
-                                                        rows_filter_actions=rows_filter_actions,
-                                                        )
-        pl = MutRepPipeline(jobs_setup_file)
-        pl.gen_summary_report(pl.report_layout.report_regions)
-        xls_file = join_path(self.working_dir,
-                             "rpts",
-                             dataset_name+"_summary.xlsx")
-        self.assertEqual(count_xls_rows(xls_file),
-                         28,
-                         "upstream mutations cannot be correctly determined")
-
-    def test_is_downstream_3(self):
-        """ test filter non-downstream feature with xls records """
-
-        self.individual_debug = True
-        self.init_test(self.current_func_name)
-        annotated_vcf_tabix = join_path(self.data_dir,
-                                        "input.vcf.gz")
-        dataset_name = self.test_function + '_with_downstream'
-        jobs_setup_file = self.__create_jobs_setup_file(dataset_name=dataset_name,
-                                                        annotated_vcf_tabix=annotated_vcf_tabix,
-                                                        anno_cols=DFLT_TEST_MUTREP_COLS,
-                                                        anno_excl_tags=DFLT_TEST_ANNO_EXCL_TAGS,
-                                                        )
-        pl = MutRepPipeline(jobs_setup_file)
-        pl.gen_summary_report(pl.report_layout.report_regions)
-        xls_file = join_path(self.working_dir,
-                             "rpts",
-                             dataset_name+"_summary.xlsx")
-        self.assertEqual(count_xls_rows(xls_file),
-                         32,
-                         "downstream mutations cannot be correctly determined")
-        dataset_name = self.test_function
-        rows_filter_actions = JOBS_SETUP_RPT_FILTER_NON_DOWNSTREAM
-        jobs_setup_file = self.__create_jobs_setup_file(dataset_name=dataset_name,
-                                                        annotated_vcf_tabix=annotated_vcf_tabix,
-                                                        anno_cols=DFLT_TEST_MUTREP_COLS,
-                                                        anno_excl_tags=DFLT_TEST_ANNO_EXCL_TAGS,
-                                                        rows_filter_actions=rows_filter_actions,
-                                                        )
-        pl = MutRepPipeline(jobs_setup_file)
-        pl.gen_summary_report(pl.report_layout.report_regions)
-        xls_file = join_path(self.working_dir,
-                             "rpts",
-                             dataset_name+"_summary.xlsx")
-        self.assertEqual(count_xls_rows(xls_file),
-                         31,
-                         "downstream mutations cannot be correctly determined")
-
-    def test_is_utr_3(self):
-        """ test filter non-UTR feature with xls records """
-
-        self.individual_debug = True
-        self.init_test(self.current_func_name)
-        annotated_vcf_tabix = join_path(self.data_dir,
-                                        "input.vcf.gz")
-        dataset_name = self.test_function + '_with_utr'
-        jobs_setup_file = self.__create_jobs_setup_file(dataset_name=dataset_name,
-                                                        annotated_vcf_tabix=annotated_vcf_tabix,
-                                                        anno_cols=DFLT_TEST_MUTREP_COLS,
-                                                        anno_excl_tags=DFLT_TEST_ANNO_EXCL_TAGS,
-                                                        )
-        pl = MutRepPipeline(jobs_setup_file)
-        pl.gen_summary_report(pl.report_layout.report_regions)
-        xls_file = join_path(self.working_dir,
-                             "rpts",
-                             dataset_name+"_summary.xlsx")
-        self.assertEqual(count_xls_rows(xls_file),
-                         32,
-                         "UTR mutations cannot be correctly determined")
-        dataset_name = self.test_function
-        rows_filter_actions = JOBS_SETUP_RPT_FILTER_NON_UTR
-        jobs_setup_file = self.__create_jobs_setup_file(dataset_name=dataset_name,
-                                                        annotated_vcf_tabix=annotated_vcf_tabix,
-                                                        anno_cols=DFLT_TEST_MUTREP_COLS,
-                                                        anno_excl_tags=DFLT_TEST_ANNO_EXCL_TAGS,
-                                                        rows_filter_actions=rows_filter_actions,
-                                                        )
-        pl = MutRepPipeline(jobs_setup_file)
-        pl.gen_summary_report(pl.report_layout.report_regions)
-        xls_file = join_path(self.working_dir,
-                             "rpts",
-                             dataset_name+"_summary.xlsx")
-        self.assertEqual(count_xls_rows(xls_file),
-                         20,
-                         "UTR mutations cannot be correctly determined")
-
-    def test_is_synonymous_3(self):
-        """ test filter non-synonymous feature with xls records """
-
-        self.individual_debug = True
-        self.init_test(self.current_func_name)
-        annotated_vcf_tabix = join_path(self.data_dir,
-                                        "input.vcf.gz")
-        dataset_name = self.test_function + '_with_synonymous'
-        jobs_setup_file = self.__create_jobs_setup_file(dataset_name=dataset_name,
-                                                        annotated_vcf_tabix=annotated_vcf_tabix,
-                                                        anno_cols=DFLT_TEST_MUTREP_COLS,
-                                                        anno_excl_tags=DFLT_TEST_ANNO_EXCL_TAGS,
-                                                        )
-        pl = MutRepPipeline(jobs_setup_file)
-        pl.gen_summary_report(pl.report_layout.report_regions)
-        xls_file = join_path(self.working_dir,
-                             "rpts",
-                             dataset_name+"_summary.xlsx")
-        self.assertEqual(count_xls_rows(xls_file),
-                         32,
-                         "synonymous mutations cannot be correctly determined")
-        dataset_name = self.test_function
-        rows_filter_actions = JOBS_SETUP_RPT_FILTER_NON_SYNONYMOUS
-        jobs_setup_file = self.__create_jobs_setup_file(dataset_name=dataset_name,
-                                                        annotated_vcf_tabix=annotated_vcf_tabix,
-                                                        anno_cols=DFLT_TEST_MUTREP_COLS,
-                                                        anno_excl_tags=DFLT_TEST_ANNO_EXCL_TAGS,
-                                                        rows_filter_actions=rows_filter_actions,
-                                                        )
-        pl = MutRepPipeline(jobs_setup_file)
-        pl.gen_summary_report(pl.report_layout.report_regions)
-        xls_file = join_path(self.working_dir,
-                             "rpts",
-                             dataset_name+"_summary.xlsx")
-        self.assertEqual(count_xls_rows(xls_file),
-                         28,
-                         "synonymous mutations cannot be correctly determined")
 
     def tearDown(self):
         self.remove_working_dir()

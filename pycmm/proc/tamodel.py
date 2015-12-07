@@ -99,7 +99,6 @@ class _TAVcfCall(_VcfCall, pyCMMBase):
         """
         actual_gts = []
         afs = self.site.afss[0]
-#        self.debug(self.site.afss)
         for gt_idx in xrange(len(self.cmm_gts)):
             cmm_gt = self.cmm_gts[gt_idx]
             # Other than the problematic wild type and homozygote,
@@ -108,12 +107,9 @@ class _TAVcfCall(_VcfCall, pyCMMBase):
                 actual_gts.append(cmm_gt)
                 continue
             # if allele frequency less than 0.5 the actual gt remain the same
-#            self.debug("before cal")
-#            self.debug(afs)
             if (afs[gt_idx] == ".") or (float(afs[gt_idx]) < 0.5):
                 actual_gts.append(cmm_gt)
                 continue
-#            self.debug("greater than 0.5")
             # below should be only hom and wild type with allele freq >= 0.5
             if cmm_gt == CMMGT_HOMOZYGOTE:
                 actual_gts.append(CMMGT_WILDTYPE)
