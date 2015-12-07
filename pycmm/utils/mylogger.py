@@ -36,4 +36,4 @@ def debug(msg):
     lg.debug(msg)
 
 def throw(err_msg):
-    lg.error(err_msg)
+    lg.exception(err_msg)

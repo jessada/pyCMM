@@ -6,6 +6,7 @@ from collections import OrderedDict
 from pycmm.proc.annovarlib import PredictionTranslator
 from pycmm.proc.tamodel import _TAVcfRecord
 from pycmm.proc.tamodel import _TAVcfCall
+from pycmm.template import pyCMMBase
 
 try:
     import cparse
@@ -13,7 +14,7 @@ except ImportError:
     cparse = None
 
 
-class TAVcfReader(VcfReader):
+class TAVcfReader(VcfReader, pyCMMBase):
     """
     An encapsulated version of vcf.Reader from pyVCF package to
       - enable _parse_info to recognize INFO annotated by annovar
@@ -29,6 +30,7 @@ class TAVcfReader(VcfReader):
                  prepend_chr=False,
                  strict_whitespace=False,
                  family_infos=None,
+                 freq_ratios=None,
                  ):
         super(TAVcfReader, self).__init__(fsock=fsock,
                                           filename=filename,
@@ -36,9 +38,11 @@ class TAVcfReader(VcfReader):
                                           prepend_chr=prepend_chr,
                                           strict_whitespace=strict_whitespace,
                                           )
+        pyCMMBase.__init__(self)
         self.__parse_annovar_infos()
         self.__pred_tran = PredictionTranslator()
         self.__family_infos = family_infos
+        self.__freq_ratios = freq_ratios
 
     @property
     def annovar_infos(self):
@@ -106,7 +110,11 @@ class TAVcfReader(VcfReader):
                 fmt = None
 
         record = _TAVcfRecord(chrom, pos, ID, ref, alt, qual, filt,
-                info, fmt, self._sample_indexes, family_infos=self.__family_infos)
+                info, fmt,
+                self._sample_indexes,
+                family_infos=self.__family_infos,
+                freq_ratios=self.__freq_ratios,
+                )
 
         if fmt is not None:
             samples = self._parse_samples(row[9:], fmt, record)

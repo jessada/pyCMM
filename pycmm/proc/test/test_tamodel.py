@@ -4,12 +4,16 @@ from os.path import join as join_path
 from os.path import dirname
 from pycmm.template import SafeTester
 from pycmm.settings import ALL_MUTREP_ANNO_COLS
+from pycmm.settings import PRIMARY_MAF_VAR
+from pycmm.settings import ILL_BR_PF_COL_NAME
+from pycmm.settings import EXAC_ALL_COL_NAME
 from pycmm.mylib import count_xls_rows
 from pycmm.proc.taparser import TAVcfReader
 from pycmm.flow.mutrep import MutRepPipeline
 from pycmm.flow.test.test_mutrep import DFLT_TEST_MUTREP_COLS
 from pycmm.flow.test.test_mutrep import DFLT_TEST_ANNO_EXCL_TAGS
 from pycmm.flow.cmmdb import create_jobs_setup_file
+from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_RARE
 from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_NON_INTRONIC
 from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_NON_INTERGENIC
 from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_NON_UPSTREAM
@@ -861,6 +865,7 @@ class TestTAVcfRecord(SafeTester):
                                  anno_excl_tags=None,
                                  annotated_vcf_tabix=None,
                                  summary_families_sheet=False,
+                                 frequency_ratios=None,
                                  rows_filter_actions=None,
                                  ):
         jobs_setup_file = join_path(self.working_dir,
@@ -874,6 +879,7 @@ class TestTAVcfRecord(SafeTester):
                                anno_excl_tags=anno_excl_tags,
                                annotated_vcf_tabix=annotated_vcf_tabix,
                                summary_families_sheet=summary_families_sheet,
+                               frequency_ratios=frequency_ratios,
                                rows_filter_actions=rows_filter_actions,
                                out_jobs_setup_file=jobs_setup_file,
                                )
@@ -2122,97 +2128,97 @@ class TestTAVcfRecord(SafeTester):
         in_file = join_path(self.data_dir,
                                'input.vcf.gz')
         freq_ratios = {'1000g2014oct_all': 0.1}
-        vcf_reader = TAVcfReader(filename=in_file)
+        vcf_reader = TAVcfReader(filename=in_file, freq_ratios=freq_ratios)
         vcf_record = vcf_reader.next()
-        self.assertEqual(vcf_record.is_rare(freq_ratios, allele_idx=1),
+        self.assertEqual(vcf_record.is_rare(allele_idx=1),
                          False,
                          "rare mutation cannot be correctly determined")
         vcf_record = vcf_reader.next()
-        self.assertEqual(vcf_record.is_rare(freq_ratios, allele_idx=1),
+        self.assertEqual(vcf_record.is_rare(allele_idx=1),
                          False,
                          "rare mutation cannot be correctly determined")
         vcf_record = vcf_reader.next()
-        self.assertEqual(vcf_record.is_rare(freq_ratios, allele_idx=1),
+        self.assertEqual(vcf_record.is_rare(allele_idx=1),
                          False,
                          "rare mutation cannot be correctly determined")
         vcf_record = vcf_reader.next()
-        self.assertEqual(vcf_record.is_rare(freq_ratios, allele_idx=1),
+        self.assertEqual(vcf_record.is_rare(allele_idx=1),
                          True,
                          "rare mutation cannot be correctly determined")
         vcf_record = vcf_reader.next()
-        self.assertEqual(vcf_record.is_rare(freq_ratios, allele_idx=1),
+        self.assertEqual(vcf_record.is_rare(allele_idx=1),
                          True,
                          "rare mutation cannot be correctly determined")
-        self.assertEqual(vcf_record.is_rare(freq_ratios, allele_idx=2),
+        self.assertEqual(vcf_record.is_rare(allele_idx=2),
                          True,
                          "rare mutation cannot be correctly determined")
-        self.assertEqual(vcf_record.is_rare(freq_ratios, allele_idx=3),
+        self.assertEqual(vcf_record.is_rare(allele_idx=3),
                          True,
                          "rare mutation cannot be correctly determined")
-        self.assertEqual(vcf_record.is_rare(freq_ratios, allele_idx=4),
-                         True,
-                         "rare mutation cannot be correctly determined")
-        vcf_record = vcf_reader.next()
-        self.assertEqual(vcf_record.is_rare(freq_ratios, allele_idx=1),
-                         True,
-                         "rare mutation cannot be correctly determined")
-        self.assertEqual(vcf_record.is_rare(freq_ratios, allele_idx=2),
+        self.assertEqual(vcf_record.is_rare(allele_idx=4),
                          True,
                          "rare mutation cannot be correctly determined")
         vcf_record = vcf_reader.next()
-        self.assertEqual(vcf_record.is_rare(freq_ratios, allele_idx=1),
+        self.assertEqual(vcf_record.is_rare(allele_idx=1),
+                         True,
+                         "rare mutation cannot be correctly determined")
+        self.assertEqual(vcf_record.is_rare(allele_idx=2),
                          True,
                          "rare mutation cannot be correctly determined")
         vcf_record = vcf_reader.next()
-        self.assertEqual(vcf_record.is_rare(freq_ratios, allele_idx=1),
-                         False,
-                         "rare mutation cannot be correctly determined")
-        vcf_record = vcf_reader.next()
-        self.assertEqual(vcf_record.is_rare(freq_ratios, allele_idx=1),
-                         False,
-                         "rare mutation cannot be correctly determined")
-        vcf_record = vcf_reader.next()
-        self.assertEqual(vcf_record.is_rare(freq_ratios, allele_idx=1),
-                         False,
-                         "rare mutation cannot be correctly determined")
-        vcf_record = vcf_reader.next()
-        self.assertEqual(vcf_record.is_rare(freq_ratios, allele_idx=1),
+        self.assertEqual(vcf_record.is_rare(allele_idx=1),
                          True,
                          "rare mutation cannot be correctly determined")
         vcf_record = vcf_reader.next()
-        self.assertEqual(vcf_record.is_rare(freq_ratios, allele_idx=1),
+        self.assertEqual(vcf_record.is_rare(allele_idx=1),
                          False,
                          "rare mutation cannot be correctly determined")
         vcf_record = vcf_reader.next()
-        self.assertEqual(vcf_record.is_rare(freq_ratios, allele_idx=1),
+        self.assertEqual(vcf_record.is_rare(allele_idx=1),
                          False,
                          "rare mutation cannot be correctly determined")
         vcf_record = vcf_reader.next()
-        self.assertEqual(vcf_record.is_rare(freq_ratios, allele_idx=1),
+        self.assertEqual(vcf_record.is_rare(allele_idx=1),
                          False,
                          "rare mutation cannot be correctly determined")
         vcf_record = vcf_reader.next()
-        self.assertEqual(vcf_record.is_rare(freq_ratios, allele_idx=1),
-                         False,
-                         "rare mutation cannot be correctly determined")
-        vcf_record = vcf_reader.next()
-        self.assertEqual(vcf_record.is_rare(freq_ratios, allele_idx=1),
-                         False,
-                         "rare mutation cannot be correctly determined")
-        vcf_record = vcf_reader.next()
-        self.assertEqual(vcf_record.is_rare(freq_ratios, allele_idx=1),
-                         False,
-                         "rare mutation cannot be correctly determined")
-        vcf_record = vcf_reader.next()
-        self.assertEqual(vcf_record.is_rare(freq_ratios, allele_idx=1),
-                         False,
-                         "rare mutation cannot be correctly determined")
-        vcf_record = vcf_reader.next()
-        self.assertEqual(vcf_record.is_rare(freq_ratios, allele_idx=1),
+        self.assertEqual(vcf_record.is_rare(allele_idx=1),
                          True,
                          "rare mutation cannot be correctly determined")
         vcf_record = vcf_reader.next()
-        self.assertEqual(vcf_record.is_rare(freq_ratios, allele_idx=1),
+        self.assertEqual(vcf_record.is_rare(allele_idx=1),
+                         False,
+                         "rare mutation cannot be correctly determined")
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.is_rare(allele_idx=1),
+                         False,
+                         "rare mutation cannot be correctly determined")
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.is_rare(allele_idx=1),
+                         False,
+                         "rare mutation cannot be correctly determined")
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.is_rare(allele_idx=1),
+                         False,
+                         "rare mutation cannot be correctly determined")
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.is_rare(allele_idx=1),
+                         False,
+                         "rare mutation cannot be correctly determined")
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.is_rare(allele_idx=1),
+                         False,
+                         "rare mutation cannot be correctly determined")
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.is_rare(allele_idx=1),
+                         False,
+                         "rare mutation cannot be correctly determined")
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.is_rare(allele_idx=1),
+                         True,
+                         "rare mutation cannot be correctly determined")
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.is_rare(allele_idx=1),
                          True,
                          "rare mutation cannot be correctly determined")
 
@@ -2227,99 +2233,139 @@ class TestTAVcfRecord(SafeTester):
         in_file = join_path(self.data_dir,
                                'input.vcf.gz')
         freq_ratios = {'1000g2014oct_all': 0.2}
-        vcf_reader = TAVcfReader(filename=in_file)
+        vcf_reader = TAVcfReader(filename=in_file, freq_ratios=freq_ratios)
         vcf_record = vcf_reader.next()
-        self.assertEqual(vcf_record.is_rare(freq_ratios, allele_idx=1),
+        self.assertEqual(vcf_record.is_rare(allele_idx=1),
                          False,
                          "rare mutation cannot be correctly determined")
         vcf_record = vcf_reader.next()
-        self.assertEqual(vcf_record.is_rare(freq_ratios, allele_idx=1),
+        self.assertEqual(vcf_record.is_rare(allele_idx=1),
                          True,
                          "rare mutation cannot be correctly determined")
         vcf_record = vcf_reader.next()
-        self.assertEqual(vcf_record.is_rare(freq_ratios, allele_idx=1),
+        self.assertEqual(vcf_record.is_rare(allele_idx=1),
                          False,
                          "rare mutation cannot be correctly determined")
         vcf_record = vcf_reader.next()
-        self.assertEqual(vcf_record.is_rare(freq_ratios, allele_idx=1),
+        self.assertEqual(vcf_record.is_rare(allele_idx=1),
                          True,
                          "rare mutation cannot be correctly determined")
         vcf_record = vcf_reader.next()
-        self.assertEqual(vcf_record.is_rare(freq_ratios, allele_idx=1),
+        self.assertEqual(vcf_record.is_rare(allele_idx=1),
                          True,
                          "rare mutation cannot be correctly determined")
-        self.assertEqual(vcf_record.is_rare(freq_ratios, allele_idx=2),
+        self.assertEqual(vcf_record.is_rare(allele_idx=2),
                          True,
                          "rare mutation cannot be correctly determined")
-        self.assertEqual(vcf_record.is_rare(freq_ratios, allele_idx=3),
+        self.assertEqual(vcf_record.is_rare(allele_idx=3),
                          True,
                          "rare mutation cannot be correctly determined")
-        self.assertEqual(vcf_record.is_rare(freq_ratios, allele_idx=4),
-                         True,
-                         "rare mutation cannot be correctly determined")
-        vcf_record = vcf_reader.next()
-        self.assertEqual(vcf_record.is_rare(freq_ratios, allele_idx=1),
-                         True,
-                         "rare mutation cannot be correctly determined")
-        self.assertEqual(vcf_record.is_rare(freq_ratios, allele_idx=2),
+        self.assertEqual(vcf_record.is_rare(allele_idx=4),
                          True,
                          "rare mutation cannot be correctly determined")
         vcf_record = vcf_reader.next()
-        self.assertEqual(vcf_record.is_rare(freq_ratios, allele_idx=1),
+        self.assertEqual(vcf_record.is_rare(allele_idx=1),
+                         True,
+                         "rare mutation cannot be correctly determined")
+        self.assertEqual(vcf_record.is_rare(allele_idx=2),
                          True,
                          "rare mutation cannot be correctly determined")
         vcf_record = vcf_reader.next()
-        self.assertEqual(vcf_record.is_rare(freq_ratios, allele_idx=1),
+        self.assertEqual(vcf_record.is_rare(allele_idx=1),
+                         True,
+                         "rare mutation cannot be correctly determined")
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.is_rare(allele_idx=1),
                          False,
                          "rare mutation cannot be correctly determined")
         vcf_record = vcf_reader.next()
-        self.assertEqual(vcf_record.is_rare(freq_ratios, allele_idx=1),
+        self.assertEqual(vcf_record.is_rare(allele_idx=1),
                          True,
                          "rare mutation cannot be correctly determined")
         vcf_record = vcf_reader.next()
-        self.assertEqual(vcf_record.is_rare(freq_ratios, allele_idx=1),
+        self.assertEqual(vcf_record.is_rare(allele_idx=1),
                          False,
                          "rare mutation cannot be correctly determined")
         vcf_record = vcf_reader.next()
-        self.assertEqual(vcf_record.is_rare(freq_ratios, allele_idx=1),
+        self.assertEqual(vcf_record.is_rare(allele_idx=1),
                          True,
                          "rare mutation cannot be correctly determined")
         vcf_record = vcf_reader.next()
-        self.assertEqual(vcf_record.is_rare(freq_ratios, allele_idx=1),
+        self.assertEqual(vcf_record.is_rare(allele_idx=1),
                          False,
                          "rare mutation cannot be correctly determined")
         vcf_record = vcf_reader.next()
-        self.assertEqual(vcf_record.is_rare(freq_ratios, allele_idx=1),
+        self.assertEqual(vcf_record.is_rare(allele_idx=1),
                          False,
                          "rare mutation cannot be correctly determined")
         vcf_record = vcf_reader.next()
-        self.assertEqual(vcf_record.is_rare(freq_ratios, allele_idx=1),
+        self.assertEqual(vcf_record.is_rare(allele_idx=1),
                          False,
                          "rare mutation cannot be correctly determined")
         vcf_record = vcf_reader.next()
-        self.assertEqual(vcf_record.is_rare(freq_ratios, allele_idx=1),
+        self.assertEqual(vcf_record.is_rare(allele_idx=1),
                          False,
                          "rare mutation cannot be correctly determined")
         vcf_record = vcf_reader.next()
-        self.assertEqual(vcf_record.is_rare(freq_ratios, allele_idx=1),
+        self.assertEqual(vcf_record.is_rare(allele_idx=1),
                          False,
                          "rare mutation cannot be correctly determined")
         vcf_record = vcf_reader.next()
-        self.assertEqual(vcf_record.is_rare(freq_ratios, allele_idx=1),
+        self.assertEqual(vcf_record.is_rare(allele_idx=1),
                          False,
                          "rare mutation cannot be correctly determined")
         vcf_record = vcf_reader.next()
-        self.assertEqual(vcf_record.is_rare(freq_ratios, allele_idx=1),
+        self.assertEqual(vcf_record.is_rare(allele_idx=1),
                          False,
                          "rare mutation cannot be correctly determined")
         vcf_record = vcf_reader.next()
-        self.assertEqual(vcf_record.is_rare(freq_ratios, allele_idx=1),
+        self.assertEqual(vcf_record.is_rare(allele_idx=1),
                          True,
                          "rare mutation cannot be correctly determined")
         vcf_record = vcf_reader.next()
-        self.assertEqual(vcf_record.is_rare(freq_ratios, allele_idx=1),
+        self.assertEqual(vcf_record.is_rare(allele_idx=1),
                          True,
                          "rare mutation cannot be correctly determined")
+
+    def test_is_rare_3(self):
+        """ test filter rare feature with xls records """
+
+        self.individual_debug = True
+        self.init_test(self.current_func_name)
+        annotated_vcf_tabix = join_path(self.data_dir,
+                                        "input.vcf.gz")
+        dataset_name = self.test_function + '_with_common'
+        jobs_setup_file = self.__create_jobs_setup_file(dataset_name=dataset_name,
+                                                        anno_cols=ALL_MUTREP_ANNO_COLS,
+                                                        annotated_vcf_tabix=annotated_vcf_tabix,
+                                                        )
+        pl = MutRepPipeline(jobs_setup_file)
+        pl.gen_summary_report(pl.report_layout.report_regions)
+        xls_file = join_path(self.working_dir,
+                             "rpts",
+                             dataset_name+"_summary.xlsx")
+        self.assertEqual(count_xls_rows(xls_file),
+                         88,
+                         "rare mutations cannot be correctly determined")
+        dataset_name = self.test_function
+        frequency_ratios = PRIMARY_MAF_VAR + ":0.2"
+        frequency_ratios += "," + ILL_BR_PF_COL_NAME + ":0.3"
+        frequency_ratios += "," + EXAC_ALL_COL_NAME + ":0.3"
+        rows_filter_actions = JOBS_SETUP_RPT_FILTER_RARE
+        jobs_setup_file = self.__create_jobs_setup_file(dataset_name=dataset_name,
+                                                        annotated_vcf_tabix=annotated_vcf_tabix,
+                                                        anno_cols=ALL_MUTREP_ANNO_COLS,
+                                                        frequency_ratios=frequency_ratios,
+                                                        rows_filter_actions=rows_filter_actions,
+                                                        )
+        pl = MutRepPipeline(jobs_setup_file)
+        pl.gen_summary_report(pl.report_layout.report_regions)
+        xls_file = join_path(self.working_dir,
+                             "rpts",
+                             dataset_name+"_summary.xlsx")
+        self.assertEqual(count_xls_rows(xls_file),
+                         54,
+                         "rare mutations cannot be correctly determined")
 
     def test_is_intergenic_1(self):
         """

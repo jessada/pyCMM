@@ -481,7 +481,7 @@ class TestMutRepPipeline(SafeTester):
         pl = MutRepPipeline(jobs_setup_file)
         pl.gen_summary_reports()
 
-    @unittest.skipUnless(settings.SLURM_TEST, "taking too much UPPMAX cpu-core hours")
+#    @unittest.skipUnless(settings.SLURM_TEST, "taking too much UPPMAX cpu-core hours")
     def test_summary_reports_2(self):
         """ test generating slurm summary reports (3 families) w/o splite_chrom """
 
