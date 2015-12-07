@@ -7,6 +7,7 @@ from pycmm.settings import ALL_MUTREP_ANNO_COLS
 from pycmm.settings import PRIMARY_MAF_VAR
 from pycmm.settings import ILL_BR_PF_COL_NAME
 from pycmm.settings import EXAC_ALL_COL_NAME
+from pycmm.settings import DEBUG_MODE
 from pycmm.mylib import count_xls_rows
 from pycmm.proc.taparser import TAVcfReader
 from pycmm.flow.mutrep import MutRepPipeline
@@ -21,6 +22,7 @@ from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_NON_DOWNSTREAM
 from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_NON_UTR
 from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_NON_SYNONYMOUS
 from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_HAS_MUTATION
+from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_HAS_SHARED
 
 
 class TestTAVcfCall(SafeTester):
@@ -34,6 +36,33 @@ class TestTAVcfCall(SafeTester):
 
     def setUp(self):
         pass
+
+    def __create_jobs_setup_file(self,
+                                 dataset_name=None,
+                                 sample_infos=None,
+                                 anno_cols=DFLT_TEST_MUTREP_COLS,
+                                 anno_excl_tags=None,
+                                 annotated_vcf_tabix=None,
+                                 summary_families_sheet=False,
+                                 frequency_ratios=None,
+                                 rows_filter_actions=None,
+                                 ):
+        jobs_setup_file = join_path(self.working_dir,
+                                    self.test_function+'_jobs_setup.txt')
+        if dataset_name is None:
+            dataset_name = self.test_function
+        create_jobs_setup_file(dataset_name=dataset_name,
+                               project_out_dir=self.working_dir,
+                               sample_infos=sample_infos,
+                               anno_cols=",".join(anno_cols),
+                               anno_excl_tags=anno_excl_tags,
+                               annotated_vcf_tabix=annotated_vcf_tabix,
+                               summary_families_sheet=summary_families_sheet,
+                               frequency_ratios=frequency_ratios,
+                               rows_filter_actions=rows_filter_actions,
+                               out_jobs_setup_file=jobs_setup_file,
+                               )
+        return jobs_setup_file
 
     def test_parse_cmm_gts(self):
         """ test if zygosity can be correctly determined """
@@ -686,10 +715,11 @@ class TestTAVcfCall(SafeTester):
                          True,
                          "cmm mutation cannot be correctly determined")
 
-    def test_parse_mutated_3(self):
+    def test_parse_mutated_3_1(self):
         """
         test if mutation can be identified
         - allele frequency is a floating point scalar more than 0.5
+        - test data
         """
 
         self.individual_debug = True
@@ -715,6 +745,60 @@ class TestTAVcfCall(SafeTester):
         self.assertEqual(call.mutated[1],
                          True,
                          "cmm mutation cannot be correctly determined")
+
+    def test_parse_mutated_3_2(self):
+        """
+        test if mutation can be identified
+        - allele frequency is a floating point scalar more than 0.5
+        - true data
+        """
+
+        self.individual_debug = True
+        self.init_test(self.current_func_name)
+        in_file = join_path(self.data_dir,
+                               'input.vcf.gz')
+        vcf_reader = TAVcfReader(filename=in_file)
+        vcf_record = vcf_reader.next()
+        call = vcf_record.genotype("Co-166")
+        self.assertEqual(call.mutated[1],
+                         False,
+                         "cmm mutation cannot be correctly determined")
+        call = vcf_record.genotype("Co-213")
+        self.assertEqual(call.mutated[1],
+                         False,
+                         "cmm mutation cannot be correctly determined")
+
+    def test_parse_mutated_xls_3_2(self):
+        """
+        test if shared mutations in an xls sheet with a family with 2 members 
+        can be detected
+        """
+
+        self.individual_debug = True
+        self.init_test(self.current_func_name)
+        annotated_vcf_tabix = join_path(self.data_dir,
+                                        "input.vcf.gz")
+        dataset_name = self.test_function
+        sample_infos = []
+        sample_infos.append("24:Co-166:Co-213")
+        frequency_ratios = PRIMARY_MAF_VAR + ":0.2"
+        frequency_ratios += "," + ILL_BR_PF_COL_NAME + ":0.3"
+        frequency_ratios += "," + EXAC_ALL_COL_NAME + ":0.3"
+        jobs_setup_file = self.__create_jobs_setup_file(dataset_name=dataset_name,
+                                                        annotated_vcf_tabix=annotated_vcf_tabix,
+                                                        anno_cols=DFLT_TEST_MUTREP_COLS,
+                                                        anno_excl_tags=DFLT_TEST_ANNO_EXCL_TAGS,
+                                                        frequency_ratios=frequency_ratios,
+                                                        sample_infos=",".join(sample_infos),
+                                                        )
+        pl = MutRepPipeline(jobs_setup_file)
+        pl.gen_family_report('24', pl.report_layout.report_regions)
+        xls_file = join_path(self.working_dir,
+                             "rpts",
+                             dataset_name+"_fam24.xlsx")
+        self.assertEqual(count_xls_rows(xls_file),
+                         1,
+                         "shared mutations cannot be correctly determined")
 
     def test_parse_mutated_4(self):
         """
@@ -1778,6 +1862,119 @@ class TestTAVcfRecord(SafeTester):
                          False,
                          "shared mutation cannot be correctly determined")
 
+    def test_has_shared_1(self):
+        """
+        test if a family with shared mutation can be detected
+        with min_share_count = 1
+        """
+
+        self.individual_debug = True
+        self.init_test(self.current_func_name)
+        sample_infos = []
+        sample_infos.append("fam1:Al-17")
+        sample_infos.append("fam2:Alb-31:Al-23")
+        sample_infos.append("fam3:Al-36:Al-47:Al-65")
+        sample_infos.append("fam4:Al-73:Al-77:Al-92")
+        sample_infos.append("fam5:Br-466")
+        jobs_setup_file = self.__create_jobs_setup_file(sample_infos=",".join(sample_infos),
+                                                        )
+        pl = MutRepPipeline(jobs_setup_file)
+        in_file = join_path(self.data_dir,
+                               'input.vcf.gz')
+        vcf_reader = TAVcfReader(filename=in_file, family_infos=pl.family_infos)
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.has_shared(1, min_share_count=1),
+                         False,
+                         "shared mutation cannot be correctly determined")
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.has_shared(1, min_share_count=1),
+                         True,
+                         "shared mutation cannot be correctly determined")
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.has_shared(1, min_share_count=1),
+                         True,
+                         "shared mutation cannot be correctly determined")
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.has_shared(1, min_share_count=1),
+                         False,
+                         "shared mutation cannot be correctly determined")
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.has_shared(1, min_share_count=1),
+                         True,
+                         "shared mutation cannot be correctly determined")
+        self.assertEqual(vcf_record.has_shared(2, min_share_count=1),
+                         False,
+                         "shared mutation cannot be correctly determined")
+        self.assertEqual(vcf_record.has_shared(3, min_share_count=1),
+                         True,
+                         "shared mutation cannot be correctly determined")
+        self.assertEqual(vcf_record.has_shared(4, min_share_count=1),
+                         True,
+                         "shared mutation cannot be correctly determined")
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.has_shared(1, min_share_count=1),
+                         True,
+                         "shared mutation cannot be correctly determined")
+        self.assertEqual(vcf_record.has_shared(2, min_share_count=1),
+                         False,
+                         "shared mutation cannot be correctly determined")
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.has_shared(1, min_share_count=1),
+                         True,
+                         "shared mutation cannot be correctly determined")
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.has_shared(1, min_share_count=1),
+                         True,
+                         "shared mutation cannot be correctly determined")
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.has_shared(1, min_share_count=1),
+                         True,
+                         "shared mutation cannot be correctly determined")
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.has_shared(1, min_share_count=1),
+                         True,
+                         "shared mutation cannot be correctly determined")
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.has_shared(1, min_share_count=1),
+                         True,
+                         "shared mutation cannot be correctly determined")
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.has_shared(1, min_share_count=1),
+                         True,
+                         "shared mutation cannot be correctly determined")
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.has_shared(1, min_share_count=1),
+                         True,
+                         "shared mutation cannot be correctly determined")
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.has_shared(1, min_share_count=1),
+                         True,
+                         "shared mutation cannot be correctly determined")
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.has_shared(1, min_share_count=1),
+                         True,
+                         "shared mutation cannot be correctly determined")
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.has_shared(1, min_share_count=1),
+                         True,
+                         "shared mutation cannot be correctly determined")
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.has_shared(1, min_share_count=1),
+                         True,
+                         "shared mutation cannot be correctly determined")
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.has_shared(1, min_share_count=1),
+                         True,
+                         "shared mutation cannot be correctly determined")
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.has_shared(1, min_share_count=1),
+                         False,
+                         "shared mutation cannot be correctly determined")
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.has_shared(1, min_share_count=1),
+                         False,
+                         "shared mutation cannot be correctly determined")
+
     def test_has_shared_2(self):
         """
         test if a family with shared mutation can be detected
@@ -2004,118 +2201,47 @@ class TestTAVcfRecord(SafeTester):
                          False,
                          "shared mutation cannot be correctly determined")
 
-    def test_has_shared_1(self):
+    def test_has_shared_xls_1(self):
         """
-        test if a family with shared mutation can be detected
-        with min_share_count = 1
+        test if shared mutations in an xls sheet with a family with 2 members 
+        can be detected
         """
 
         self.individual_debug = True
         self.init_test(self.current_func_name)
+        annotated_vcf_tabix = join_path(self.data_dir,
+                                        "input.vcf.gz")
+        dataset_name = self.test_function
+        rows_filter_actions = JOBS_SETUP_RPT_FILTER_RARE
+        rows_filter_actions += "," + JOBS_SETUP_RPT_FILTER_NON_INTRONIC
+        rows_filter_actions += "," + JOBS_SETUP_RPT_FILTER_NON_INTERGENIC
+        rows_filter_actions += "," + JOBS_SETUP_RPT_FILTER_NON_UPSTREAM
+        rows_filter_actions += "," + JOBS_SETUP_RPT_FILTER_NON_DOWNSTREAM
+        rows_filter_actions += "," + JOBS_SETUP_RPT_FILTER_NON_UTR
+        rows_filter_actions += "," + JOBS_SETUP_RPT_FILTER_NON_SYNONYMOUS
+        rows_filter_actions += "," + JOBS_SETUP_RPT_FILTER_HAS_MUTATION
         sample_infos = []
-        sample_infos.append("fam1:Al-17")
-        sample_infos.append("fam2:Alb-31:Al-23")
-        sample_infos.append("fam3:Al-36:Al-47:Al-65")
-        sample_infos.append("fam4:Al-73:Al-77:Al-92")
-        sample_infos.append("fam5:Br-466")
-        jobs_setup_file = self.__create_jobs_setup_file(sample_infos=",".join(sample_infos),
+        sample_infos.append("24:Co-166:Co-213")
+        frequency_ratios = PRIMARY_MAF_VAR + ":0.2"
+        frequency_ratios += "," + ILL_BR_PF_COL_NAME + ":0.3"
+        frequency_ratios += "," + EXAC_ALL_COL_NAME + ":0.3"
+        jobs_setup_file = self.__create_jobs_setup_file(dataset_name=dataset_name,
+                                                        annotated_vcf_tabix=annotated_vcf_tabix,
+                                                        anno_cols=DFLT_TEST_MUTREP_COLS,
+                                                        anno_excl_tags=DFLT_TEST_ANNO_EXCL_TAGS,
+                                                        rows_filter_actions=rows_filter_actions,
+                                                        frequency_ratios=frequency_ratios,
+                                                        sample_infos=",".join(sample_infos),
+                                                        summary_families_sheet=True,
                                                         )
         pl = MutRepPipeline(jobs_setup_file)
-        in_file = join_path(self.data_dir,
-                               'input.vcf.gz')
-        vcf_reader = TAVcfReader(filename=in_file, family_infos=pl.family_infos)
-        vcf_record = vcf_reader.next()
-        self.assertEqual(vcf_record.has_shared(1, min_share_count=1),
-                         False,
-                         "shared mutation cannot be correctly determined")
-        vcf_record = vcf_reader.next()
-        self.assertEqual(vcf_record.has_shared(1, min_share_count=1),
-                         True,
-                         "shared mutation cannot be correctly determined")
-        vcf_record = vcf_reader.next()
-        self.assertEqual(vcf_record.has_shared(1, min_share_count=1),
-                         True,
-                         "shared mutation cannot be correctly determined")
-        vcf_record = vcf_reader.next()
-        self.assertEqual(vcf_record.has_shared(1, min_share_count=1),
-                         False,
-                         "shared mutation cannot be correctly determined")
-        vcf_record = vcf_reader.next()
-        self.assertEqual(vcf_record.has_shared(1, min_share_count=1),
-                         True,
-                         "shared mutation cannot be correctly determined")
-        self.assertEqual(vcf_record.has_shared(2, min_share_count=1),
-                         False,
-                         "shared mutation cannot be correctly determined")
-        self.assertEqual(vcf_record.has_shared(3, min_share_count=1),
-                         True,
-                         "shared mutation cannot be correctly determined")
-        self.assertEqual(vcf_record.has_shared(4, min_share_count=1),
-                         True,
-                         "shared mutation cannot be correctly determined")
-        vcf_record = vcf_reader.next()
-        self.assertEqual(vcf_record.has_shared(1, min_share_count=1),
-                         True,
-                         "shared mutation cannot be correctly determined")
-        self.assertEqual(vcf_record.has_shared(2, min_share_count=1),
-                         False,
-                         "shared mutation cannot be correctly determined")
-        vcf_record = vcf_reader.next()
-        self.assertEqual(vcf_record.has_shared(1, min_share_count=1),
-                         True,
-                         "shared mutation cannot be correctly determined")
-        vcf_record = vcf_reader.next()
-        self.assertEqual(vcf_record.has_shared(1, min_share_count=1),
-                         True,
-                         "shared mutation cannot be correctly determined")
-        vcf_record = vcf_reader.next()
-        self.assertEqual(vcf_record.has_shared(1, min_share_count=1),
-                         True,
-                         "shared mutation cannot be correctly determined")
-        vcf_record = vcf_reader.next()
-        self.assertEqual(vcf_record.has_shared(1, min_share_count=1),
-                         True,
-                         "shared mutation cannot be correctly determined")
-        vcf_record = vcf_reader.next()
-        self.assertEqual(vcf_record.has_shared(1, min_share_count=1),
-                         True,
-                         "shared mutation cannot be correctly determined")
-        vcf_record = vcf_reader.next()
-        self.assertEqual(vcf_record.has_shared(1, min_share_count=1),
-                         True,
-                         "shared mutation cannot be correctly determined")
-        vcf_record = vcf_reader.next()
-        self.assertEqual(vcf_record.has_shared(1, min_share_count=1),
-                         True,
-                         "shared mutation cannot be correctly determined")
-        vcf_record = vcf_reader.next()
-        self.assertEqual(vcf_record.has_shared(1, min_share_count=1),
-                         True,
-                         "shared mutation cannot be correctly determined")
-        vcf_record = vcf_reader.next()
-        self.assertEqual(vcf_record.has_shared(1, min_share_count=1),
-                         True,
-                         "shared mutation cannot be correctly determined")
-        vcf_record = vcf_reader.next()
-        self.assertEqual(vcf_record.has_shared(1, min_share_count=1),
-                         True,
-                         "shared mutation cannot be correctly determined")
-        vcf_record = vcf_reader.next()
-        self.assertEqual(vcf_record.has_shared(1, min_share_count=1),
-                         True,
-                         "shared mutation cannot be correctly determined")
-        vcf_record = vcf_reader.next()
-        self.assertEqual(vcf_record.has_shared(1, min_share_count=1),
-                         True,
-                         "shared mutation cannot be correctly determined")
-        vcf_record = vcf_reader.next()
-        self.assertEqual(vcf_record.has_shared(1, min_share_count=1),
-                         False,
-                         "shared mutation cannot be correctly determined")
-        vcf_record = vcf_reader.next()
-        self.assertEqual(vcf_record.has_shared(1, min_share_count=1),
-                         False,
-                         "shared mutation cannot be correctly determined")
+        pl.gen_family_report('24', pl.report_layout.report_regions)
+        xls_file = join_path(self.working_dir,
+                             "rpts",
+                             dataset_name+"_fam24.xlsx")
+        self.assertEqual(count_xls_rows(xls_file),
+                         5,
+                         "shared mutations cannot be correctly determined")
 
     def test_is_rare_1(self):
         """

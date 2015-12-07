@@ -245,7 +245,7 @@ class ReportLayout(pyCMMBase):
     @property
     def freq_ratios(self):
         if JOBS_SETUP_RPT_FREQ_RATIOS_KEY in self.__layout_params:
-            freq_ratios = {}
+            freq_ratios = OrderedDict()
             for freq_ratio in self.__layout_params[JOBS_SETUP_RPT_FREQ_RATIOS_KEY]:
                 col = freq_ratio[JOBS_SETUP_RPT_FREQ_RATIOS_COL_KEY]
                 freq = freq_ratio[JOBS_SETUP_RPT_FREQ_RATIOS_FREQ_KEY]
