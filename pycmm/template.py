@@ -76,7 +76,10 @@ class pyCMMBase(object):
         mylogger.warning(warning_msg)
 
     def throw(self, err_msg):
-        raise Exception(THROW_FMT.format(msg=err_msg))
+        frm = inspect.stack()[1]
+        mod = inspect.getmodule(frm[0])
+        mylogger.getLogger(mod.__name__)
+        mylogger.throw(err_msg)
 
     @property
     def current_func_name(self):

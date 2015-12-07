@@ -524,8 +524,7 @@ class MutRepPipeline(CMMDBPipeline):
                     not vcf_record.is_shared(samples_list, allele_idx)):
                     continue
                 if (self.report_layout.filter_rare and
-                    not vcf_record.is_rare(self.report_layout.freq_ratios,
-                                           allele_idx=allele_idx)):
+                    not vcf_record.is_rare(allele_idx=allele_idx)):
                     continue
                 if (self.report_layout.filter_non_intergenic and
                     vcf_record.is_intergenic[allele_idx]):
@@ -574,6 +573,7 @@ class MutRepPipeline(CMMDBPipeline):
         if self.annotated_vcf_tabix.endswith('.vcf.gz'):
             vcf_reader = VcfReader(filename=self.annotated_vcf_tabix,
                                    family_infos=self.family_infos,
+                                   freq_ratios=self.report_layout.freq_ratios,
                                    )
         else:
             self.thrown(self.annotated_vcf_tabix + ' does not endswith .vcf.gz')
