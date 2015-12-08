@@ -9,6 +9,7 @@ from os.path import isdir
 from collections import OrderedDict
 from pycmm import settings
 from pycmm.template import SafeTester
+from pycmm.mylib import count_xls_rows
 from pycmm.settings import FAST_PROJECT_CODE
 from pycmm.settings import SLOW_PROJECT_CODE
 from pycmm.settings import DFLT_MUTREP_FREQ_RATIOS
@@ -32,6 +33,9 @@ from pycmm.settings import CRC_CAFAM_WT_COL_NAME
 from pycmm.settings import AXEQ_CHR5_19_GF_COL_NAME
 from pycmm.settings import CRC_CRC_PF_COL_NAME
 from pycmm.settings import NK64_COLS_TAG
+from pycmm.settings import PRIMARY_MAF_VAR
+from pycmm.settings import ILL_BR_PF_COL_NAME
+from pycmm.settings import EXAC_ALL_COL_NAME
 from pycmm.flow.mutrep import MutRepPipeline
 from pycmm.flow.cmmdb import create_jobs_setup_file
 from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_RARE
@@ -639,6 +643,50 @@ class TestMutRepPipeline(SafeTester):
                                                         )
         pl = MutRepPipeline(jobs_setup_file)
         pl.gen_family_report('6067', pl.report_layout.report_regions)
+
+#    @unittest.skipUnless(settings.FULL_SYSTEM_TEST, "taking too long time to test")
+    def test_family_report_4(self):
+        """
+        test with number of mutations are correct in each tab
+        - shared
+        - member 1
+        - member 2
+        """
+
+        self.individual_debug = True
+        self.init_test(self.current_func_name)
+        job_name = self.test_function
+        vcf_tabix_file = join_path(self.data_dir,
+                                   "input.vcf.gz")
+        annotated_vcf_tabix = join_path(self.data_dir,
+                                        "input.vcf.gz")
+        dataset_name = self.test_function
+        frequency_ratios = PRIMARY_MAF_VAR + ":0.2"
+        frequency_ratios += "," + ILL_BR_PF_COL_NAME + ":0.3"
+        frequency_ratios += "," + EXAC_ALL_COL_NAME + ":0.3"
+        jobs_setup_file = self.__create_jobs_setup_file(dataset_name=dataset_name,
+                                                        vcf_tabix_file=vcf_tabix_file,
+                                                        annotated_vcf_tabix=annotated_vcf_tabix,
+                                                        project_code=None,
+                                                        call_detail="YES",
+                                                        report_regions=None,
+                                                        frequency_ratios=frequency_ratios,
+                                                        sample_infos="24:Co-166:Co-213",
+                                                        )
+        pl = MutRepPipeline(jobs_setup_file)
+        pl.gen_family_report('24', pl.report_layout.report_regions)
+        xls_file = join_path(self.working_dir,
+                             "rpts",
+                             dataset_name+"_fam24.xlsx")
+        self.assertEqual(count_xls_rows(xls_file),
+                         8,
+                         "number of shared mutations in family report cannot be correctly determined")
+        self.assertEqual(count_xls_rows(xls_file, sheet_idx=1),
+                         11,
+                         "number of individual mutations in family report cannot be correctly determined")
+        self.assertEqual(count_xls_rows(xls_file, sheet_idx=2),
+                         13,
+                         "number of individual mutations in family report cannot be correctly determined")
 
     @unittest.skipUnless(settings.FULL_SYSTEM_TEST, "taking too long time to test")
     def test_families_reports_1(self):
