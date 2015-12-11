@@ -28,6 +28,11 @@ class XlsUtils(pyCMMBase):
     def xls_file(self):
         return self.__xls_file
 
+    @property
+    def nsheets(self):
+        wb = open_workbook(self.xls_file)
+        return len(wb.sheet_names())
+    
     def __get_sheet(self, sheet_idx=0):
         wb = open_workbook(self.xls_file)
         return wb.sheet_by_index(sheet_idx)
@@ -39,6 +44,14 @@ class XlsUtils(pyCMMBase):
         for idx, cell_obj in enumerate(header):
             if cell_obj.value == col_name:
                 return idx
+        return -1
+
+    def get_sheet_idx(self, sheet_name):
+        wb = open_workbook(self.xls_file)
+        sheet_names = wb.sheet_names()
+        for sheet_idx in xrange(len(sheet_names)):
+            if str(sheet_names[sheet_idx]) == sheet_name:
+                return sheet_idx
         return -1
     
     def compare_vals(self,

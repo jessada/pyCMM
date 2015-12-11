@@ -290,7 +290,6 @@ class TestMutRepPipeline(SafeTester):
     def test_summary_report_1(self):
         """ test if summary report with default configuration can be correctly generated """
 
-        self.individual_debug = True
         self.init_test(self.current_func_name)
         annotated_vcf_tabix = join_path(self.data_dir,
                                         "chr6_18.vcf.gz")
@@ -314,7 +313,6 @@ class TestMutRepPipeline(SafeTester):
     def test_summary_report_2(self):
         """ test summary with multiple report_regions """
 
-        self.individual_debug = True
         self.init_test(self.current_func_name)
         job_name = self.test_function
         annotated_vcf_tabix = join_path(self.data_dir,
@@ -342,7 +340,6 @@ class TestMutRepPipeline(SafeTester):
         is correctly generated
         """
 
-        self.individual_debug = True
         self.init_test(self.current_func_name)
         annotated_vcf_tabix = join_path(self.data_dir,
                                         "input.vcf.gz")
@@ -370,7 +367,6 @@ class TestMutRepPipeline(SafeTester):
     def test_summary_report_4(self):
         """ test summary with multiple report_regions and many sample infos """
 
-        self.individual_debug = True
         self.init_test(self.current_func_name)
         annotated_vcf_tabix = join_path(self.data_dir,
                                         "chr6_18.vcf.gz")
@@ -406,7 +402,6 @@ class TestMutRepPipeline(SafeTester):
     def test_summary_report_5(self):
         """ test summary report of CRC samples """
 
-        self.individual_debug = True
         self.init_test(self.current_func_name)
         annotated_vcf_tabix = join_path(self.data_dir,
                                         "input.vcf.gz")
@@ -433,7 +428,6 @@ class TestMutRepPipeline(SafeTester):
     def test_summary_report_6(self):
         """ test if unicode character 'ö' is allowed in the report """
 
-        self.individual_debug = True
         self.init_test(self.current_func_name)
         annotated_vcf_tabix = join_path(self.data_dir,
                                         "input.vcf.gz")
@@ -578,18 +572,15 @@ class TestMutRepPipeline(SafeTester):
         pl = MutRepPipeline(jobs_setup_file)
         pl.gen_summary_reports()
 
-    @unittest.skipUnless(settings.FULL_SYSTEM_TEST, "taking too long time to test")
+#    @unittest.skipUnless(settings.FULL_SYSTEM_TEST, "taking too long time to test")
     def test_family_report_1(self):
         """ test with only one family which has only one members """
 
-        self.individual_debug = True
         self.init_test(self.current_func_name)
-        job_name = self.test_function
-        vcf_tabix_file = join_path(self.data_dir,
-                                   "input.vcf.gz")
         annotated_vcf_tabix = join_path(self.data_dir,
                                         "input.vcf.gz")
-        jobs_setup_file = self.__create_jobs_setup_file(vcf_tabix_file=vcf_tabix_file,
+        dataset_name = self.test_function
+        jobs_setup_file = self.__create_jobs_setup_file(dataset_name=dataset_name,
                                                         annotated_vcf_tabix=annotated_vcf_tabix,
                                                         project_code=None,
                                                         call_detail="YES",
@@ -598,19 +589,26 @@ class TestMutRepPipeline(SafeTester):
                                                         )
         pl = MutRepPipeline(jobs_setup_file)
         pl.gen_family_report('6789', pl.report_layout.report_regions)
+        xls_file = join_path(self.working_dir,
+                             "rpts",
+                             dataset_name+"_fam6789.xlsx")
+        xu = XlsUtils(xls_file)
+        self.assertEqual(xu.nsheets,
+                         1,
+                         "invalid number of sheets")
+        self.assertEqual(xu.get_sheet_idx("Al-65"),
+                         0,
+                         "invalid sheet name")
 
-    @unittest.skipUnless(settings.FULL_SYSTEM_TEST, "taking too long time to test")
+#    @unittest.skipUnless(settings.FULL_SYSTEM_TEST, "taking too long time to test")
     def test_family_report_2(self):
         """ test with only one family which has two members """
 
-        self.individual_debug = True
         self.init_test(self.current_func_name)
-        job_name = self.test_function
-        vcf_tabix_file = join_path(self.data_dir,
-                                   "input.vcf.gz")
         annotated_vcf_tabix = join_path(self.data_dir,
                                         "input.vcf.gz")
-        jobs_setup_file = self.__create_jobs_setup_file(vcf_tabix_file=vcf_tabix_file,
+        dataset_name = self.test_function
+        jobs_setup_file = self.__create_jobs_setup_file(dataset_name=dataset_name,
                                                         annotated_vcf_tabix=annotated_vcf_tabix,
                                                         project_code=None,
                                                         call_detail="YES",
@@ -619,19 +617,32 @@ class TestMutRepPipeline(SafeTester):
                                                         )
         pl = MutRepPipeline(jobs_setup_file)
         pl.gen_family_report('1234', pl.report_layout.report_regions)
+        xls_file = join_path(self.working_dir,
+                             "rpts",
+                             dataset_name+"_fam1234.xlsx")
+        xu = XlsUtils(xls_file)
+        self.assertEqual(xu.nsheets,
+                         3,
+                         "invalid number of sheets")
+        self.assertEqual(xu.get_sheet_idx("shared"),
+                         0,
+                         "invalid sheet name")
+        self.assertEqual(xu.get_sheet_idx("Alb-31"),
+                         1,
+                         "invalid sheet name")
+        self.assertEqual(xu.get_sheet_idx("Br-466"),
+                         2,
+                         "invalid sheet name")
 
-    @unittest.skipUnless(settings.FULL_SYSTEM_TEST, "taking too long time to test")
+#    @unittest.skipUnless(settings.FULL_SYSTEM_TEST, "taking too long time to test")
     def test_family_report_3(self):
         """ test with only one family which has three members """
 
-        self.individual_debug = True
         self.init_test(self.current_func_name)
-        job_name = self.test_function
-        vcf_tabix_file = join_path(self.data_dir,
-                                   "input.vcf.gz")
         annotated_vcf_tabix = join_path(self.data_dir,
                                         "input.vcf.gz")
-        jobs_setup_file = self.__create_jobs_setup_file(vcf_tabix_file=vcf_tabix_file,
+        dataset_name = self.test_function
+        jobs_setup_file = self.__create_jobs_setup_file(dataset_name=dataset_name,
                                                         annotated_vcf_tabix=annotated_vcf_tabix,
                                                         project_code=None,
                                                         call_detail="YES",
@@ -640,8 +651,27 @@ class TestMutRepPipeline(SafeTester):
                                                         )
         pl = MutRepPipeline(jobs_setup_file)
         pl.gen_family_report('6067', pl.report_layout.report_regions)
+        xls_file = join_path(self.working_dir,
+                             "rpts",
+                             dataset_name+"_fam6067.xlsx")
+        xu = XlsUtils(xls_file)
+        self.assertEqual(xu.nsheets,
+                         4,
+                         "invalid number of sheets")
+        self.assertEqual(xu.get_sheet_idx("shared"),
+                         0,
+                         "invalid sheet name")
+        self.assertEqual(xu.get_sheet_idx("Br-432"),
+                         1,
+                         "invalid sheet name")
+        self.assertEqual(xu.get_sheet_idx("Al-161"),
+                         2,
+                         "invalid sheet name")
+        self.assertEqual(xu.get_sheet_idx("Br-504"),
+                         3,
+                         "invalid sheet name")
 
-    @unittest.skipUnless(settings.FULL_SYSTEM_TEST, "taking too long time to test")
+#    @unittest.skipUnless(settings.FULL_SYSTEM_TEST, "taking too long time to test")
     def test_family_report_4(self):
         """
         test with number of mutations are correct in each tab
@@ -650,11 +680,7 @@ class TestMutRepPipeline(SafeTester):
         - member 2
         """
 
-        self.individual_debug = True
         self.init_test(self.current_func_name)
-        job_name = self.test_function
-        vcf_tabix_file = join_path(self.data_dir,
-                                   "input.vcf.gz")
         annotated_vcf_tabix = join_path(self.data_dir,
                                         "input.vcf.gz")
         dataset_name = self.test_function
@@ -662,7 +688,6 @@ class TestMutRepPipeline(SafeTester):
         frequency_ratios += "," + ILL_BR_PF_COL_NAME + ":0.3"
         frequency_ratios += "," + EXAC_ALL_COL_NAME + ":0.3"
         jobs_setup_file = self.__create_jobs_setup_file(dataset_name=dataset_name,
-                                                        vcf_tabix_file=vcf_tabix_file,
                                                         annotated_vcf_tabix=annotated_vcf_tabix,
                                                         project_code=None,
                                                         call_detail="YES",
@@ -675,15 +700,16 @@ class TestMutRepPipeline(SafeTester):
         xls_file = join_path(self.working_dir,
                              "rpts",
                              dataset_name+"_fam24.xlsx")
-        self.assertEqual(count_xls_rows(xls_file),
+        xu = XlsUtils(xls_file)
+        self.assertEqual(xu.count_rows(sheet_idx=0),
                          8,
-                         "number of shared mutations in family report cannot be correctly determined")
-        self.assertEqual(count_xls_rows(xls_file, sheet_idx=1),
+                         "incorrect number of mutations")
+        self.assertEqual(xu.count_rows(sheet_idx=1),
                          11,
-                         "number of individual mutations in family report cannot be correctly determined")
-        self.assertEqual(count_xls_rows(xls_file, sheet_idx=2),
+                         "incorrect number of mutations")
+        self.assertEqual(xu.count_rows(sheet_idx=2),
                          13,
-                         "number of individual mutations in family report cannot be correctly determined")
+                         "incorrect number of mutations")
 
     @unittest.skipUnless(settings.FULL_SYSTEM_TEST, "taking too long time to test")
     def test_families_reports_1(self):
