@@ -9,7 +9,7 @@ from os.path import isdir
 from collections import OrderedDict
 from pycmm import settings
 from pycmm.template import SafeTester
-from pycmm.mylib import count_xls_rows
+from pycmm.mylib import XlsUtils
 from pycmm.settings import FAST_PROJECT_CODE
 from pycmm.settings import SLOW_PROJECT_CODE
 from pycmm.settings import DFLT_MUTREP_FREQ_RATIOS
@@ -81,7 +81,7 @@ class TestMutRepPipeline(SafeTester):
         pass
 
     def __create_jobs_setup_file(self,
-                                 vcf_tabix_file,
+                                 vcf_tabix_file=None,
                                  dataset_name=None,
                                  project_code=SLOW_PROJECT_CODE,
                                  rpt_alloc_time=DFLT_MUTREP_ALLOC_TIME,
@@ -275,9 +275,7 @@ class TestMutRepPipeline(SafeTester):
         self.individual_debug = True
         self.init_test(self.current_func_name)
         job_name = self.test_function
-        dummy_vcf_tabix_file = "/path/to/vcf_tabix_file"
-        jobs_setup_file = self.__create_jobs_setup_file(vcf_tabix_file=dummy_vcf_tabix_file,
-                                                        report_regions=None,
+        jobs_setup_file = self.__create_jobs_setup_file(report_regions=None,
                                                         frequency_ratios="ExAC:0.5",
                                                         )
         pl = MutRepPipeline(jobs_setup_file)
@@ -288,71 +286,57 @@ class TestMutRepPipeline(SafeTester):
                          0.5,
                          "MutRepPipeline cannot correctly read report layout info 'frequency ratios' from jobs setup file")
 
-    @unittest.skipUnless(settings.FULL_SYSTEM_TEST, "taking too long time to test")
+#    @unittest.skipUnless(settings.FULL_SYSTEM_TEST, "taking too long time to test")
     def test_summary_report_1(self):
         """ test if summary report with default configuration can be correctly generated """
 
         self.individual_debug = True
         self.init_test(self.current_func_name)
-        job_name = self.test_function
-        vcf_tabix_file = join_path(self.data_dir,
-                                   "chr6_18.vcf.gz")
         annotated_vcf_tabix = join_path(self.data_dir,
                                         "chr6_18.vcf.gz")
-        jobs_setup_file = self.__create_jobs_setup_file(vcf_tabix_file=vcf_tabix_file,
+        dataset_name = self.test_function
+        jobs_setup_file = self.__create_jobs_setup_file(dataset_name=dataset_name,
                                                         project_code=None,
                                                         annotated_vcf_tabix=annotated_vcf_tabix,
                                                         report_regions=None,
                                                         )
         pl = MutRepPipeline(jobs_setup_file)
         pl.gen_summary_report(pl.report_layout.report_regions)
+        xls_file = join_path(self.working_dir,
+                             "rpts",
+                             dataset_name+"_summary.xlsx")
+        xu = XlsUtils(xls_file)
+        self.assertEqual(xu.count_rows(),
+                         18,
+                         "shared mutations cannot be correctly determined")
 
-    @unittest.skipUnless(settings.FULL_SYSTEM_TEST, "taking too long time to test")
+#    @unittest.skipUnless(settings.FULL_SYSTEM_TEST, "taking too long time to test")
     def test_summary_report_2(self):
-        """ test if summary reprot with custom configuration can be correctly generated """
-
-        self.individual_debug = True
-        self.init_test(self.current_func_name)
-        job_name = self.test_function
-        vcf_tabix_file = join_path(self.data_dir,
-                                   "chr18.vcf.gz")
-        annotated_vcf_tabix = join_path(self.data_dir,
-                                        "chr18.vcf.gz")
-        anno_cols=DFLT_TEST_MUTREP_COLS
-        anno_cols.remove("cytoBand")
-        jobs_setup_file = self.__create_jobs_setup_file(vcf_tabix_file=vcf_tabix_file,
-                                                        annotated_vcf_tabix=annotated_vcf_tabix,
-                                                        project_code=None,
-                                                        anno_cols=anno_cols,
-                                                        call_detail="YES",
-                                                        )
-        pl = MutRepPipeline(jobs_setup_file)
-        pl.gen_summary_report(pl.report_layout.report_regions)
-
-    @unittest.skipUnless(settings.FULL_SYSTEM_TEST, "taking too long time to test")
-    def test_summary_report_3(self):
         """ test summary with multiple report_regions """
 
         self.individual_debug = True
         self.init_test(self.current_func_name)
         job_name = self.test_function
-        vcf_tabix_file = join_path(self.data_dir,
-                                   "chr6_18.vcf.gz")
         annotated_vcf_tabix = join_path(self.data_dir,
                                         "chr6_18.vcf.gz")
         rpt_out_file = join_path(self.working_dir,
                                  self.current_func_name + ".xlsx")
-        jobs_setup_file = self.__create_jobs_setup_file(vcf_tabix_file=vcf_tabix_file,
-                                                        annotated_vcf_tabix=annotated_vcf_tabix,
+        dataset_name = self.test_function
+        jobs_setup_file = self.__create_jobs_setup_file(dataset_name=dataset_name,
                                                         project_code=None,
+                                                        annotated_vcf_tabix=annotated_vcf_tabix,
                                                         report_regions="6:78171941-78172992,18:28610988-28611790",
                                                         call_detail="YES",
                                                         )
         pl = MutRepPipeline(jobs_setup_file)
         pl.gen_summary_report(pl.report_layout.report_regions, out_file=rpt_out_file)
+        xu = XlsUtils(rpt_out_file)
+        self.assertEqual(xu.count_rows(),
+                         10,
+                         "shared mutations cannot be correctly determined")
 
-    @unittest.skipUnless(settings.FULL_SYSTEM_TEST, "taking too long time to test")
-    def test_summary_report_4(self):
+#    @unittest.skipUnless(settings.FULL_SYSTEM_TEST, "taking too long time to test")
+    def test_summary_report_3(self):
         """
         test if mutations with more than one alternate alleles in summary
         is correctly generated
@@ -360,12 +344,10 @@ class TestMutRepPipeline(SafeTester):
 
         self.individual_debug = True
         self.init_test(self.current_func_name)
-        job_name = self.test_function
-        vcf_tabix_file = join_path(self.data_dir,
-                                   "input.vcf.gz")
         annotated_vcf_tabix = join_path(self.data_dir,
                                         "input.vcf.gz")
-        jobs_setup_file = self.__create_jobs_setup_file(vcf_tabix_file=vcf_tabix_file,
+        dataset_name = self.test_function
+        jobs_setup_file = self.__create_jobs_setup_file(dataset_name=dataset_name,
                                                         annotated_vcf_tabix=annotated_vcf_tabix,
                                                         project_code=None,
                                                         report_regions="6",
@@ -373,21 +355,29 @@ class TestMutRepPipeline(SafeTester):
                                                         )
         pl = MutRepPipeline(jobs_setup_file)
         pl.gen_summary_report(pl.report_layout.report_regions)
+        xls_file = join_path(self.working_dir,
+                             "rpts",
+                             dataset_name+"_summary.xlsx")
+        xu = XlsUtils(xls_file)
+        self.assertFalse(xu.compare_vals("AXEQ_CHR3_6_14_18_PF",
+                                         5,
+                                         6,
+                                         ),
+                         "information of mutations with more than one alternate alleles are incorrect"
+                         )
 
-    @unittest.skipUnless(settings.FULL_SYSTEM_TEST, "taking too long time to test")
-    def test_summary_report_5(self):
+#    @unittest.skipUnless(settings.FULL_SYSTEM_TEST, "taking too long time to test")
+    def test_summary_report_4(self):
         """ test summary with multiple report_regions and many sample infos """
 
         self.individual_debug = True
         self.init_test(self.current_func_name)
-        job_name = self.test_function
-        vcf_tabix_file = join_path(self.data_dir,
-                                   "chr6_18.vcf.gz")
         annotated_vcf_tabix = join_path(self.data_dir,
                                         "chr6_18.vcf.gz")
         rpt_out_file = join_path(self.working_dir,
                                  self.current_func_name + ".xlsx")
-        jobs_setup_file = self.__create_jobs_setup_file(vcf_tabix_file=vcf_tabix_file,
+        dataset_name = self.test_function
+        jobs_setup_file = self.__create_jobs_setup_file(dataset_name=dataset_name,
                                                         annotated_vcf_tabix=annotated_vcf_tabix,
                                                         project_code=None,
                                                         report_regions="6:78171941-78172992,18:28610988-28611790",
@@ -397,39 +387,31 @@ class TestMutRepPipeline(SafeTester):
                                                         )
         pl = MutRepPipeline(jobs_setup_file)
         pl.gen_summary_report(pl.report_layout.report_regions)
+        xls_file = join_path(self.working_dir,
+                             "rpts",
+                             dataset_name+"_summary.xlsx")
+        xu = XlsUtils(xls_file)
+        self.assertEqual(xu.count_rows(sheet_idx=1),
+                         10, 
+                         "Incorrect number of rows"
+                         )
+        self.assertEqual(xu.count_cols(col_name1="1234-Alb-31",
+                                       col_name2="6789-Al-65",
+                                       sheet_idx=1),
+                         11, 
+                         "Incorrect number of columns"
+                         )
 
-    @unittest.skipUnless(settings.FULL_SYSTEM_TEST, "taking too long time to test")
-    def test_summary_report_6(self):
-        """ test summary report that will exclude common mutation MAF > 0.2  """
-
-        self.individual_debug = True
-        self.init_test(self.current_func_name)
-        job_name = self.test_function
-        vcf_tabix_file = join_path(self.data_dir,
-                                   "input.vcf.gz")
-        annotated_vcf_tabix = join_path(self.data_dir,
-                                        "input.vcf.gz")
-        jobs_setup_file = self.__create_jobs_setup_file(vcf_tabix_file=vcf_tabix_file,
-                                                        annotated_vcf_tabix=annotated_vcf_tabix,
-                                                        project_code=None,
-                                                        report_regions="6",
-                                                        call_detail=False,
-                                                        exclude_common=True,
-                                                        )
-        pl = MutRepPipeline(jobs_setup_file)
-        pl.gen_summary_report(pl.report_layout.report_regions)
-
-    @unittest.skipUnless(settings.FULL_SYSTEM_TEST, "taking too long time to test")
-    def test_summary_report_8(self):
+#    @unittest.skipUnless(settings.FULL_SYSTEM_TEST, "taking too long time to test")
+    def test_summary_report_5(self):
         """ test summary report of CRC samples """
 
         self.individual_debug = True
         self.init_test(self.current_func_name)
-        vcf_tabix_file = join_path(self.data_dir,
-                                   "input.vcf.gz")
         annotated_vcf_tabix = join_path(self.data_dir,
                                         "input.vcf.gz")
-        jobs_setup_file = self.__create_jobs_setup_file(vcf_tabix_file=vcf_tabix_file,
+        dataset_name = self.test_function
+        jobs_setup_file = self.__create_jobs_setup_file(dataset_name=dataset_name,
                                                         annotated_vcf_tabix=annotated_vcf_tabix,
                                                         project_code=None,
                                                         report_regions=None,
@@ -438,19 +420,26 @@ class TestMutRepPipeline(SafeTester):
                                                         )
         pl = MutRepPipeline(jobs_setup_file)
         pl.gen_summary_report(pl.report_layout.report_regions)
+        xls_file = join_path(self.working_dir,
+                             "rpts",
+                             dataset_name+"_summary.xlsx")
+        xu = XlsUtils(xls_file)
+        self.assertEqual(xu.count_rows(),
+                         15, 
+                         "CRC report cannot be generated correctly"
+                         )
 
-    @unittest.skipUnless(settings.FULL_SYSTEM_TEST, "taking too long time to test")
-    def test_summary_report_9(self):
+#    @unittest.skipUnless(settings.FULL_SYSTEM_TEST, "taking too long time to test")
+    def test_summary_report_6(self):
         """ test if unicode character 'ö' is allowed in the report """
 
         self.individual_debug = True
         self.init_test(self.current_func_name)
-        vcf_tabix_file = join_path(self.data_dir,
-                                   "input.vcf.gz")
         annotated_vcf_tabix = join_path(self.data_dir,
                                         "input.vcf.gz")
         rows_filter_actions = JOBS_SETUP_RPT_FILTER_NON_INTRONIC
-        jobs_setup_file = self.__create_jobs_setup_file(vcf_tabix_file=vcf_tabix_file,
+        dataset_name = self.test_function
+        jobs_setup_file = self.__create_jobs_setup_file(dataset_name=dataset_name,
                                                         annotated_vcf_tabix=annotated_vcf_tabix,
                                                         anno_excl_tags=DFLT_TEST_ANNO_EXCL_TAGS,
                                                         project_code=None,
@@ -460,6 +449,14 @@ class TestMutRepPipeline(SafeTester):
                                                         )
         pl = MutRepPipeline(jobs_setup_file)
         pl.gen_summary_report(pl.report_layout.report_regions)
+        xls_file = join_path(self.working_dir,
+                             "rpts",
+                             dataset_name+"_summary.xlsx")
+        xu = XlsUtils(xls_file)
+        self.assertEqual(xu.count_rows(),
+                         2, 
+                         "report with swedish unicode character cannot be generated correctly"
+                         )
 
     @unittest.skipUnless(settings.FULL_SYSTEM_TEST, "taking too long time to test")
     def test_summary_reports_1(self):
@@ -644,7 +641,7 @@ class TestMutRepPipeline(SafeTester):
         pl = MutRepPipeline(jobs_setup_file)
         pl.gen_family_report('6067', pl.report_layout.report_regions)
 
-#    @unittest.skipUnless(settings.FULL_SYSTEM_TEST, "taking too long time to test")
+    @unittest.skipUnless(settings.FULL_SYSTEM_TEST, "taking too long time to test")
     def test_family_report_4(self):
         """
         test with number of mutations are correct in each tab

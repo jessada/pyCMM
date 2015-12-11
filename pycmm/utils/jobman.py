@@ -104,7 +104,6 @@ class JobManager(pyCMMBase):
                    email=False,
                    prereq=None,
                    ):
-#        self.getLogger(__name__ + "." + sys._getframe().f_code.co_name)
         job_rec = JobRecord()
         job_rec.job_name = job_name
         job_rec.project_code = project_code
@@ -217,7 +216,6 @@ class JobManager(pyCMMBase):
     def get_job_status(self,
                        job_name,
                        ):
-#        self.getLogger(__name__ + "." + sys._getframe().f_code.co_name)
         if job_name.isdigit():
             job_id = job_name
         else:
@@ -249,6 +247,5 @@ class JobManager(pyCMMBase):
         else:
             job_id = self.get_job_id(job_name)
         job_status = self.get_job_status(job_id)
-#        self.getLogger(__name__ + "." + sys._getframe().f_code.co_name)
         cmd = "scancel -b " + job_id
         out = self.__exec_sh(cmd)

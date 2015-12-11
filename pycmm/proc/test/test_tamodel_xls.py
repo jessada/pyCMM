@@ -7,7 +7,7 @@ from pycmm.settings import PRIMARY_MAF_VAR
 from pycmm.settings import ILL_BR_PF_COL_NAME
 from pycmm.settings import EXAC_ALL_COL_NAME
 from pycmm.settings import FULL_SYSTEM_TEST
-from pycmm.mylib import count_xls_rows
+from pycmm.mylib import XlsUtils
 from pycmm.flow.mutrep import MutRepPipeline
 from pycmm.flow.test.test_mutrep import DFLT_TEST_MUTREP_COLS
 from pycmm.flow.test.test_mutrep import DFLT_TEST_ANNO_EXCL_TAGS

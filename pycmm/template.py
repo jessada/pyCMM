@@ -56,12 +56,12 @@ class pyCMMBase(object):
         else:
             shutil.copy(src, dst)
 
-    def debug(self, debug_msg):
+    def dbg(self, dbg_msg):
         if DEBUG_MODE:
             frm = inspect.stack()[1]
             mod = inspect.getmodule(frm[0])
             mylogger.getLogger(mod.__name__)
-            mylogger.debug(debug_msg)
+            mylogger.debug(dbg_msg)
 
     def info(self, info_msg):
         frm = inspect.stack()[1]
