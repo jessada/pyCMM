@@ -84,7 +84,7 @@ class JobManager(pyCMMBase):
         cmd += " -o " + job_rec.slurm_log_file
         if (job_rec.prereq is not None) and (len(job_rec.prereq) > 0) and (type(job_rec.prereq) is list):
             cmd += " --dependency=afterok"
-            self.debug(job_rec.prereq)
+            self.dbg(job_rec.prereq)
             for job_name in job_rec.prereq:
                 job_id = self.get_job_id(job_name)
                 cmd += ":" + job_id
