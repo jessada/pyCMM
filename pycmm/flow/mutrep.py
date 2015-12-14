@@ -644,7 +644,7 @@ class MutRepPipeline(CMMDBPipeline):
                 job_params = job_params_prefix
                 job_params += " -r " + region_param
                 job_params += " -o " + out_file
-                self.debug(job_script + job_params)
+                self.dbg(job_script + job_params)
                 self.submit_job(job_name,
                                 self.project_code,
                                 "core",

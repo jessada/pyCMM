@@ -327,7 +327,7 @@ class TestCMMDBPipeline(SafeTester):
                                     exp_result),
                         "cal_mut_stat doesn't function correctly")
 
-    @unittest.skipUnless(settings.SLURM_TEST, "taking too much UPPMAX cpu-core hours")
+    @unittest.skipUnless(settings.SLURM_CMMDB_TEST, "taking too much UPPMAX cpu-core hours")
     def test_cal_mut_stat_slurm_1(self):
         """ test basic slurm version of cal_mut_stat (indicate vcf region)"""
 
@@ -344,7 +344,7 @@ class TestCMMDBPipeline(SafeTester):
         pl = CMMDBPipeline(jobs_setup_file)
         pl.cal_mut_stat()
 
-    @unittest.skipUnless(settings.SLURM_TEST, "taking too much UPPMAX cpu-core hours")
+    @unittest.skipUnless(settings.SLURM_CMMDB_TEST, "taking too much UPPMAX cpu-core hours")
     def test_cal_mut_stat_slurm_2(self):
         """ test a little advance slurm version of cal_mut_stat (all chroms)"""
 
@@ -392,7 +392,7 @@ class TestCMMDBPipeline(SafeTester):
         pl = CMMDBPipeline(jobs_setup_file)
         pl.table_annovar()
 
-    @unittest.skipUnless(settings.SLURM_TEST, "taking too much UPPMAX cpu-core hours")
+    @unittest.skipUnless(settings.SLURM_CMMDB_TEST, "taking too much UPPMAX cpu-core hours")
     def test_table_annovar_slurm(self):
         """ test slurm version of table_annovar """
 
