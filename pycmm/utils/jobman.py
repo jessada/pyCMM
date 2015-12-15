@@ -119,7 +119,7 @@ class JobManager(pyCMMBase):
         out = self.__exec_sh(cmd)
         job_rec.job_id = out.strip().split()[-1]
         self.job_dict[job_name] = job_rec
-        return None
+        return job_rec.job_id
 
     def __write_job_report(self):
         f_rpt = open(self.__job_rpt_file, "w")

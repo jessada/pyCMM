@@ -5,8 +5,9 @@ from os.path import exists as path_exists
 from os.path import join as join_path
 from os.path import dirname
 from os.path import isdir
-from pycmm import settings
 from pycmm.template import SafeTester
+from pycmm.settings import SLURM_CMMDB_TEST
+from pycmm.settings import FULL_SYSTEM_TEST
 from pycmm.settings import DFLT_ANNOVAR_DB_FOLDER
 from pycmm.settings import DFLT_ANNOVAR_DB_NAMES
 from pycmm.settings import DFLT_ANNOVAR_DB_OPS
@@ -148,7 +149,6 @@ class TestCMMDBPipeline(SafeTester):
     def test_load_jobs_info_2(self):
         """ test if modified job configurations are loaded correctly """
 
-        self.individual_debug = True
         self.init_test(self.current_func_name)
         job_name = self.test_function
         dummy_vcf_tabix_file = "/path/to/vcf_tabix_file"
@@ -226,7 +226,6 @@ class TestCMMDBPipeline(SafeTester):
     def test_load_jobs_info_5(self):
         """ test if can load sample infos in family structur format as a file """
 
-        self.individual_debug = True
         self.init_test(self.current_func_name)
         job_name = self.test_function
         dummy_vcf_tabix_file = "/path/to/vcf_tabix_file"
@@ -240,7 +239,7 @@ class TestCMMDBPipeline(SafeTester):
                          ["Alb-31", "Br-466", "Br-432", "Al-161", "Br-504", "Al-65"],
                          "CMMDBPipeline cannot correctly read 'samples list' from jobs setup file")
 
-    @unittest.skipUnless(settings.FULL_SYSTEM_TEST, "taking too long time to test")
+    @unittest.skipUnless(FULL_SYSTEM_TEST, "taking too long time to test")
     def test_cal_mut_stat_offline_1(self):
         """ test basic offline version (w/o slurm) of cal_mut_stat (one chrom)"""
 
@@ -261,7 +260,7 @@ class TestCMMDBPipeline(SafeTester):
                         "cal_mut_stat doesn't function correctly")
 
 
-    @unittest.skipUnless(settings.FULL_SYSTEM_TEST, "taking too long time to test")
+    @unittest.skipUnless(FULL_SYSTEM_TEST, "taking too long time to test")
     def test_cal_mut_stat_offline_2(self):
         """ test a little advance offline version (w/o slurm) of cal_mut_stat (all chroms) """
 
@@ -276,7 +275,7 @@ class TestCMMDBPipeline(SafeTester):
         pl = CMMDBPipeline(jobs_setup_file)
         pl.cal_mut_stat()
 
-    @unittest.skipUnless(settings.FULL_SYSTEM_TEST, "taking too long time to test")
+    @unittest.skipUnless(FULL_SYSTEM_TEST, "taking too long time to test")
     def test_cal_mut_stat_offline_3(self):
         """ to offline version (w/o slurm) if it can handle multi allelic stat correctly """
 
@@ -296,7 +295,7 @@ class TestCMMDBPipeline(SafeTester):
                                     exp_result),
                         "cal_mut_stat doesn't function correctly")
 
-    @unittest.skipUnless(settings.FULL_SYSTEM_TEST, "taking too long time to test")
+    @unittest.skipUnless(FULL_SYSTEM_TEST, "taking too long time to test")
     def test_cal_mut_stat_offline_4(self):
         """ to offline version (w/o slurm) if it can calculate stat of subpopulation """
 
@@ -327,7 +326,7 @@ class TestCMMDBPipeline(SafeTester):
                                     exp_result),
                         "cal_mut_stat doesn't function correctly")
 
-    @unittest.skipUnless(settings.SLURM_CMMDB_TEST, "taking too much UPPMAX cpu-core hours")
+    @unittest.skipUnless(SLURM_CMMDB_TEST, "taking too much UPPMAX cpu-core hours")
     def test_cal_mut_stat_slurm_1(self):
         """ test basic slurm version of cal_mut_stat (indicate vcf region)"""
 
@@ -344,7 +343,7 @@ class TestCMMDBPipeline(SafeTester):
         pl = CMMDBPipeline(jobs_setup_file)
         pl.cal_mut_stat()
 
-    @unittest.skipUnless(settings.SLURM_CMMDB_TEST, "taking too much UPPMAX cpu-core hours")
+    @unittest.skipUnless(SLURM_CMMDB_TEST, "taking too much UPPMAX cpu-core hours")
     def test_cal_mut_stat_slurm_2(self):
         """ test a little advance slurm version of cal_mut_stat (all chroms)"""
 
@@ -360,7 +359,7 @@ class TestCMMDBPipeline(SafeTester):
         pl = CMMDBPipeline(jobs_setup_file)
         pl.cal_mut_stat()
 
-    @unittest.skipUnless(settings.FULL_SYSTEM_TEST, "taking too long time to test")
+    @unittest.skipUnless(FULL_SYSTEM_TEST, "taking too long time to test")
     def test_table_annovar_offline_1(self):
         """ test offline version (w/o slurm) of table_annovar """
 
@@ -373,7 +372,7 @@ class TestCMMDBPipeline(SafeTester):
         pl = CMMDBPipeline(jobs_setup_file)
         pl.table_annovar()
 
-    @unittest.skipUnless(settings.FULL_SYSTEM_TEST, "taking too long time to test")
+    @unittest.skipUnless(FULL_SYSTEM_TEST, "taking too long time to test")
     def test_table_annovar_offline_2(self):
         """ test offline version (w/o slurm) of table_annovar together with custom cal_stat """
 
@@ -392,7 +391,7 @@ class TestCMMDBPipeline(SafeTester):
         pl = CMMDBPipeline(jobs_setup_file)
         pl.table_annovar()
 
-    @unittest.skipUnless(settings.SLURM_CMMDB_TEST, "taking too much UPPMAX cpu-core hours")
+    @unittest.skipUnless(SLURM_CMMDB_TEST, "taking too much UPPMAX cpu-core hours")
     def test_table_annovar_slurm(self):
         """ test slurm version of table_annovar """
 
