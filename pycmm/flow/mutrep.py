@@ -378,10 +378,7 @@ class MutRepPipeline(CMMDBPipeline):
 
     @property
     def annotated_vcf_tabix(self):
-        if self.report_layout.annotated_vcf_tabix is not None:
-            return self.report_layout.annotated_vcf_tabix
-        else:
-            return self.annovar_config.annotated_vcf + ".gz"
+        return self.report_layout.annotated_vcf_tabix
 
     @property
     def report_layout(self):

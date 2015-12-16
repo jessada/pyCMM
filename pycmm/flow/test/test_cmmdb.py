@@ -14,6 +14,7 @@ from pycmm.settings import DFLT_ANNOVAR_DB_OPS
 from pycmm.settings import DFLT_CMMDB_ALLOC_TIME
 from pycmm.settings import FAST_PROJECT_CODE
 from pycmm.settings import SLOW_PROJECT_CODE
+from pycmm.utils import count_lines
 from pycmm.flow.cmmdb import CMMDBPipeline
 from pycmm.flow.cmmdb import create_jobs_setup_file
 from pycmm.flow.cmmdb import JOBS_SETUP_SAMPLE_INFOS_KEY
@@ -127,11 +128,6 @@ class TestCMMDBPipeline(SafeTester):
         self.assertEqual(pl.annovar_config.buildver,
                          "hg19",
                          "CMMDBPipeline cannot corretly read annovar configs 'annovar buildver' from jobs setup file")
-        exp_annovar_out_prefix = join_path(pl.data_out_dir,
-                                           exp_dataset_name)
-        self.assertEqual(pl.annovar_config.out_prefix,
-                         exp_annovar_out_prefix,
-                         "CMMDBPipeline cannot corretly read annovar configs 'annovar out prefix' from jobs setup file")
         self.assertEqual(pl.annovar_config.nastring,
                          ".",
                          "CMMDBPipeline cannot corretly read annovar configs 'annovar nastring' from jobs setup file")
@@ -141,10 +137,6 @@ class TestCMMDBPipeline(SafeTester):
         self.assertEqual(pl.annovar_config.operations,
                          DFLT_ANNOVAR_TEST_DB_OPS,
                          "CMMDBPipeline cannot corretly read annovar configs 'annovar db ops' from jobs setup file")
-        exp_annotated_vcf = exp_annovar_out_prefix + ".hg19_multianno.vcf"
-        self.assertEqual(pl.annovar_config.annotated_vcf,
-                         exp_annotated_vcf,
-                         "CMMDBPipeline cannot corretly determine annovar configs 'annovar annotated vcf' file")
 
     def test_load_jobs_info_2(self):
         """ test if modified job configurations are loaded correctly """
@@ -363,7 +355,6 @@ class TestCMMDBPipeline(SafeTester):
     def test_table_annovar_offline_1(self):
         """ test offline version (w/o slurm) of table_annovar """
 
-        self.individual_debug = True
         self.init_test(self.current_func_name)
         vcf_tabix_file = join_path(self.data_dir,
                                    "input.vcf.gz")
@@ -371,12 +362,16 @@ class TestCMMDBPipeline(SafeTester):
                                                         project_code=None)
         pl = CMMDBPipeline(jobs_setup_file)
         pl.table_annovar()
+        out_annotated_vcf = join_path(self.working_dir,
+                                      self.current_func_name+"_annotated.vcf")
+        self.assertEqual(count_lines(out_annotated_vcf),
+                         151,
+                         "table annovar result is incorrect ")
 
     @unittest.skipUnless(FULL_SYSTEM_TEST, "taking too long time to test")
     def test_table_annovar_offline_2(self):
         """ test offline version (w/o slurm) of table_annovar together with custom cal_stat """
 
-        self.individual_debug = True
         self.init_test(self.current_func_name)
         vcf_tabix_file = join_path(self.data_dir,
                                    "input.vcf.gz")
@@ -390,6 +385,11 @@ class TestCMMDBPipeline(SafeTester):
                                                         project_code=None)
         pl = CMMDBPipeline(jobs_setup_file)
         pl.table_annovar()
+        out_annotated_vcf = join_path(self.working_dir,
+                                      self.current_func_name+"_annotated.vcf")
+        self.assertEqual(count_lines(out_annotated_vcf),
+                         215,
+                         "table annovar result is incorrect ")
 
     @unittest.skipUnless(SLURM_CMMDB_TEST, "taking too much UPPMAX cpu-core hours")
     def test_table_annovar_slurm(self):

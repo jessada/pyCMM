@@ -13,10 +13,12 @@ from pycmm.settings import DFLT_ANNOVAR_DB_NAMES
 from pycmm.settings import DFLT_ANNOVAR_DB_OPS
 from pycmm.settings import DFLT_CMMDB_ALLOC_TIME
 from pycmm.settings import DFLT_MUTREP_ALLOC_TIME
+from pycmm.settings import DUMMY_TABLE_ANNOVAR_BIN
 from pycmm.template import pyCMMBase
 from pycmm.utils import exec_sh
 from pycmm.utils.jobman import JobManager
 from pycmm.proc.annovarlib import Annovar
+from pycmm.proc.annovarlib import AnnovarParams
 from pycmm.proc.annovarlib import ANNOVAR_PARAMS_INPUT_FILE_KEY
 from pycmm.proc.annovarlib import ANNOVAR_PARAMS_DB_FOLDER_KEY
 from pycmm.proc.annovarlib import ANNOVAR_PARAMS_BUILDVER_KEY
@@ -274,7 +276,7 @@ class CMMDBPipeline(JobManager):
         cfg[ANNOVAR_PARAMS_OUT_PREFIX_KEY] = join_path(self.data_out_dir,
                                                        self.dataset_name)
         cfg[ANNOVAR_PARAMS_INPUT_FILE_KEY] = self.input_vcf_tabix
-        self.__annovar_configs = Annovar(cfg)
+        self.__annovar_configs = AnnovarParams(cfg)
 
     def __create_directories(self):
         self.create_dir(self.rpts_out_dir)
@@ -362,6 +364,15 @@ class CMMDBPipeline(JobManager):
 
     def table_annovar(self):
         cfg = self.annovar_config
+        table_annovar_cmd = DUMMY_TABLE_ANNOVAR_BIN
+        table_annovar_cmd += " --dataset_name " + self.dataset_name
+        table_annovar_cmd += " --input_file " + cfg.input_file
+        table_annovar_cmd += " --db_folder " + cfg.db_folder
+        table_annovar_cmd += " --buildver " + cfg.buildver
+        table_annovar_cmd += " --protocols " + cfg.protocols
+        table_annovar_cmd += " --operations " + cfg.operations
+        table_annovar_cmd += " --nastring " + cfg.nastring
+        table_annovar_cmd += " --data_out_folder " + self.output_dir
         if self.project_code is not None:
             job_name = self.dataset_name + "_ta"
             slurm_log_file = join_path(self.slurm_log_dir,
@@ -374,11 +385,11 @@ class CMMDBPipeline(JobManager):
                             "2",
                             self.db_alloc_time,
                             slurm_log_file,
-                            cfg.table_annovar_cmd,
+                            table_annovar_cmd,
                             "",
                             )
         else:
-            exec_sh(cfg.table_annovar_cmd)
+            exec_sh(table_annovar_cmd)
 
     def __garbage_collecting(self):
         pass

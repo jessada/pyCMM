@@ -7,7 +7,7 @@ from pycmm.settings import PRIMARY_MAF_VAR
 from pycmm.settings import ILL_BR_PF_COL_NAME
 from pycmm.settings import EXAC_ALL_COL_NAME
 from pycmm.settings import FULL_SYSTEM_TEST
-from pycmm.mylib import XlsUtils
+from pycmm.utils.xlsutils import XlsUtils
 from pycmm.flow.mutrep import MutRepPipeline
 from pycmm.flow.test.test_mutrep import DFLT_TEST_MUTREP_COLS
 from pycmm.flow.test.test_mutrep import DFLT_TEST_ANNO_EXCL_TAGS
@@ -92,7 +92,8 @@ class TestTAVcfCall(SafeTester):
         xls_file = join_path(self.working_dir,
                              "rpts",
                              dataset_name+"_fam24.xlsx")
-        self.assertEqual(count_xls_rows(xls_file),
+        xu = XlsUtils(xls_file)
+        self.assertEqual(xu.count_rows(),
                          1,
                          "shared mutations cannot be correctly determined")
 
@@ -159,7 +160,8 @@ class TestTAVcfRecord(SafeTester):
         xls_file = join_path(self.working_dir,
                              "rpts",
                              dataset_name+"_summary.xlsx")
-        self.assertEqual(count_xls_rows(xls_file, sheet_idx=1),
+        xu = XlsUtils(xls_file)
+        self.assertEqual(xu.count_rows(sheet_idx=1),
                          34,
                          "shared mutation cannot be correctly determined")
         rows_filter_actions = JOBS_SETUP_RPT_FILTER_HAS_MUTATION
@@ -177,7 +179,8 @@ class TestTAVcfRecord(SafeTester):
         xls_file = join_path(self.working_dir,
                              "rpts",
                              dataset_name+"_summary.xlsx")
-        self.assertEqual(count_xls_rows(xls_file, sheet_idx=1),
+        xu = XlsUtils(xls_file)
+        self.assertEqual(xu.count_rows(sheet_idx=1),
                          13,
                          "shared mutation cannot be correctly determined")
 
@@ -221,7 +224,8 @@ class TestTAVcfRecord(SafeTester):
         xls_file = join_path(self.working_dir,
                              "rpts",
                              dataset_name+"_fam24.xlsx")
-        self.assertEqual(count_xls_rows(xls_file),
+        xu = XlsUtils(xls_file)
+        self.assertEqual(xu.count_rows(),
                          5,
                          "shared mutations cannot be correctly determined")
 
@@ -247,7 +251,8 @@ class TestTAVcfRecord(SafeTester):
         xls_file = join_path(self.working_dir,
                              "rpts",
                              dataset_name+"_summary.xlsx")
-        self.assertEqual(count_xls_rows(xls_file),
+        xu = XlsUtils(xls_file)
+        self.assertEqual(xu.count_rows(),
                          88,
                          "rare mutations cannot be correctly determined")
         dataset_name = self.test_function
@@ -266,7 +271,8 @@ class TestTAVcfRecord(SafeTester):
         xls_file = join_path(self.working_dir,
                              "rpts",
                              dataset_name+"_summary.xlsx")
-        self.assertEqual(count_xls_rows(xls_file),
+        xu = XlsUtils(xls_file)
+        self.assertEqual(xu.count_rows(),
                          54,
                          "rare mutations cannot be correctly determined")
 
@@ -290,7 +296,8 @@ class TestTAVcfRecord(SafeTester):
         xls_file = join_path(self.working_dir,
                              "rpts",
                              dataset_name+"_summary.xlsx")
-        self.assertEqual(count_xls_rows(xls_file),
+        xu = XlsUtils(xls_file)
+        self.assertEqual(xu.count_rows(),
                          22,
                          "intergenic mutations cannot be correctly determined")
         dataset_name = self.test_function
@@ -304,7 +311,8 @@ class TestTAVcfRecord(SafeTester):
         xls_file = join_path(self.working_dir,
                              "rpts",
                              dataset_name+"_summary.xlsx")
-        self.assertEqual(count_xls_rows(xls_file),
+        xu = XlsUtils(xls_file)
+        self.assertEqual(xu.count_rows(),
                          11,
                          "intergenic mutations cannot be correctly determined")
 
@@ -330,7 +338,8 @@ class TestTAVcfRecord(SafeTester):
         xls_file = join_path(self.working_dir,
                              "rpts",
                              dataset_name+"_summary.xlsx")
-        self.assertEqual(count_xls_rows(xls_file),
+        xu = XlsUtils(xls_file)
+        self.assertEqual(xu.count_rows(),
                          26,
                          "intronic mutations cannot be correctly determined")
         dataset_name = self.test_function
@@ -346,7 +355,8 @@ class TestTAVcfRecord(SafeTester):
         xls_file = join_path(self.working_dir,
                              "rpts",
                              dataset_name+"_summary.xlsx")
-        self.assertEqual(count_xls_rows(xls_file),
+        xu = XlsUtils(xls_file)
+        self.assertEqual(xu.count_rows(),
                          9,
                          "intronic mutations cannot be correctly determined")
 
@@ -372,7 +382,8 @@ class TestTAVcfRecord(SafeTester):
         xls_file = join_path(self.working_dir,
                              "rpts",
                              dataset_name+"_summary.xlsx")
-        self.assertEqual(count_xls_rows(xls_file),
+        xu = XlsUtils(xls_file)
+        self.assertEqual(xu.count_rows(),
                          32,
                          "upstream mutations cannot be correctly determined")
         dataset_name = self.test_function
@@ -388,7 +399,8 @@ class TestTAVcfRecord(SafeTester):
         xls_file = join_path(self.working_dir,
                              "rpts",
                              dataset_name+"_summary.xlsx")
-        self.assertEqual(count_xls_rows(xls_file),
+        xu = XlsUtils(xls_file)
+        self.assertEqual(xu.count_rows(),
                          28,
                          "upstream mutations cannot be correctly determined")
 
@@ -414,7 +426,8 @@ class TestTAVcfRecord(SafeTester):
         xls_file = join_path(self.working_dir,
                              "rpts",
                              dataset_name+"_summary.xlsx")
-        self.assertEqual(count_xls_rows(xls_file),
+        xu = XlsUtils(xls_file)
+        self.assertEqual(xu.count_rows(),
                          32,
                          "downstream mutations cannot be correctly determined")
         dataset_name = self.test_function
@@ -430,7 +443,8 @@ class TestTAVcfRecord(SafeTester):
         xls_file = join_path(self.working_dir,
                              "rpts",
                              dataset_name+"_summary.xlsx")
-        self.assertEqual(count_xls_rows(xls_file),
+        xu = XlsUtils(xls_file)
+        self.assertEqual(xu.count_rows(),
                          31,
                          "downstream mutations cannot be correctly determined")
 
@@ -456,7 +470,8 @@ class TestTAVcfRecord(SafeTester):
         xls_file = join_path(self.working_dir,
                              "rpts",
                              dataset_name+"_summary.xlsx")
-        self.assertEqual(count_xls_rows(xls_file),
+        xu = XlsUtils(xls_file)
+        self.assertEqual(xu.count_rows(),
                          32,
                          "UTR mutations cannot be correctly determined")
         dataset_name = self.test_function
@@ -472,7 +487,8 @@ class TestTAVcfRecord(SafeTester):
         xls_file = join_path(self.working_dir,
                              "rpts",
                              dataset_name+"_summary.xlsx")
-        self.assertEqual(count_xls_rows(xls_file),
+        xu = XlsUtils(xls_file)
+        self.assertEqual(xu.count_rows(),
                          20,
                          "UTR mutations cannot be correctly determined")
 
@@ -498,7 +514,8 @@ class TestTAVcfRecord(SafeTester):
         xls_file = join_path(self.working_dir,
                              "rpts",
                              dataset_name+"_summary.xlsx")
-        self.assertEqual(count_xls_rows(xls_file),
+        xu = XlsUtils(xls_file)
+        self.assertEqual(xu.count_rows(),
                          32,
                          "synonymous mutations cannot be correctly determined")
         dataset_name = self.test_function
@@ -514,7 +531,8 @@ class TestTAVcfRecord(SafeTester):
         xls_file = join_path(self.working_dir,
                              "rpts",
                              dataset_name+"_summary.xlsx")
-        self.assertEqual(count_xls_rows(xls_file),
+        xu = XlsUtils(xls_file)
+        self.assertEqual(xu.count_rows(),
                          28,
                          "synonymous mutations cannot be correctly determined")
 

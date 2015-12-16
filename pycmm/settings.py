@@ -11,10 +11,11 @@ DEBUG_MODE = True
 #FULL_SYSTEM_TEST = True
 FULL_SYSTEM_TEST = False
 SLURM_MUTREP_TEST = False
+#SLURM_MUTREP_TEST = True
 SLURM_GATKBP_TEST = False
 SLURM_CMMDB_TEST = False
 SLURM_TEST = False
-SLURM_TEST = True
+#SLURM_TEST = True
 
 FAST_PROJECT_CODE = 'b2012247'
 SLOW_PROJECT_CODE = 'b2011097'
@@ -29,6 +30,8 @@ DFLT_GATKBP_ALLOC_TIME = "4-00:00:00"
 DNASEQ_CREATE_JOB_SETUP_FILE_DESCRIPTION = "An applicationt to generate job setup file for DNASEQ_PIPELINE"
 
 ## ************************************************************************************************ CMM DB ************************************************************************************************
+DUMMY_TABLE_ANNOVAR_BIN = 'pyCMM-dummy-table-annovar'
+
 CMMDB_PIPELINE_DESCRIPTION = "A flow to control a pipeline to process CMM database"
 CMMDB_MUTSTAT_DESCRIPTION = "A flow to control a pipeline to process mutation statistics database"
 CMMDB_TABLEANNOVAR_DESCRIPTION = "A flow to control a pipeline to run tableannovar"

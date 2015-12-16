@@ -6,8 +6,8 @@ from pycmm.template import pyCMMBase
 from pycmm.settings import PRIMARY_MAF_VAR
 from pycmm.settings import FUNC_REFGENE_VAR
 from pycmm.settings import EXONICFUNC_REFGENE_VAR
-from pycmm.mylib import check_equal
-from pycmm.mylib import check_in
+from pycmm.utils import check_equal
+from pycmm.utils import check_in
 
 CMMGT_WILDTYPE = 'wt'
 CMMGT_HOMOZYGOTE = 'hom'

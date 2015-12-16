@@ -45,6 +45,8 @@ def show_config(app_description,
 def disp_params_set(params_name,
                     params,
                     ):
+    if params is None:
+        return
     disp_header(params_name)
     for key in params:
         val = params[key]

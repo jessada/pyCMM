@@ -4,7 +4,7 @@ from os.path import join as join_path
 from os.path import dirname
 from collections import OrderedDict
 from pycmm.template import SafeTester
-from pycmm.mylib import XlsUtils
+from pycmm.utils.xlsutils import XlsUtils
 from pycmm.settings import DFLT_MUTREP_FREQ_RATIOS
 from pycmm.settings import ALL_MUTREP_ANNO_COLS
 from pycmm.settings import MT_COLS_TAG
@@ -134,9 +134,6 @@ class TestMutRepPipeline(SafeTester):
         self.assertEqual(pl.report_layout.report_regions[0].chrom,
                          "18",
                          "MutRepPipeline cannot correctly read report layout info 'report regions' from jobs setup file")
-        self.assertEqual(pl.annotated_vcf_tabix,
-                         pl.annovar_config.annotated_vcf + ".gz",
-                         "MutRepPipeline cannot correctly determine report layout info 'annotated vcf tabix' file")
         self.assertEqual(pl.report_layout.split_chrom,
                          False,
                          "MutRepPipeline cannot correctly read report layout info 'split chrom' from jobs setup file")

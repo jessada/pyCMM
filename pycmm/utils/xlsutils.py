@@ -1,21 +1,7 @@
-import sys
 from xlrd import open_workbook
 from xlrd.sheet import ctype_text 
 from pycmm.template import pyCMMBase
 
-
-def check_equal(var1, var2):
-    return var1 == var2
-
-def check_in(var1, var2):
-    return var1 in var2
-
-def is_number(s):
-    try:
-        float(s)
-        return True
-    except ValueError:
-        return False
 
 class XlsUtils(pyCMMBase):
     """ general pyCMM template for testing """

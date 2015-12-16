@@ -6,11 +6,16 @@ import subprocess
 import inspect
 import fileinput
 import gc
+import tempfile
+import string
+from random import choice
 from os.path import join as join_path
 from os.path import dirname
 from pycmm.utils import mylogger
 from pycmm.settings import ENV_TEST_DIR
 from pycmm.settings import DEBUG_MODE
+
+ENV_TMPDIR = "TMPDIR"
 
 
 class pyCMMBase(object):
@@ -27,6 +32,16 @@ class pyCMMBase(object):
 
     def get_raw_repr(self):
         return "Not yet implemented"
+
+    @property
+    def local_scratch_dir(self):
+        return tempfile.mkdtemp()
+
+    @property
+    def local_tmp_file(self):
+        chars = string.ascii_letters
+        file_name = "tmp" + ''.join([choice(chars) for i in range(6)])
+        return join_path(self.local_scratch_dir, file_name)
 
     def remove_dir(self, dir_name):
         if os.path.exists(dir_name):
