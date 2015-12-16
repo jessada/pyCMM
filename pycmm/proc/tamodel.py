@@ -1,11 +1,13 @@
 import copy
-from pycmm.settings import DFLT_MAF_VAR
-from pycmm.settings import FUNC_REFGENE_VAR
-from pycmm.settings import EXONICFUNC_REFGENE_VAR
-from pycmm.mylib import check_equal
-from pycmm.mylib import check_in
+import sys
 from vcf.model import _Record as _VcfRecord
 from vcf.model import _Call as _VcfCall
+from pycmm.template import pyCMMBase
+from pycmm.settings import PRIMARY_MAF_VAR
+from pycmm.settings import FUNC_REFGENE_VAR
+from pycmm.settings import EXONICFUNC_REFGENE_VAR
+from pycmm.utils import check_equal
+from pycmm.utils import check_in
 
 CMMGT_WILDTYPE = 'wt'
 CMMGT_HOMOZYGOTE = 'hom'
@@ -20,7 +22,7 @@ FUNC_DOWNSTREAM = 'downstream'
 FUNC_UTR = 'UTR'
 EXONICFUNC_SYNONYMOUS = 'synonymous_SNV'
 
-class _TAVcfCall(_VcfCall):
+class _TAVcfCall(_VcfCall, pyCMMBase):
     """
     An encapsulated version of vcf._Call from pyVCF package to
       - add extra genotype translation, "cmm_gts", to handle record
@@ -37,6 +39,7 @@ class _TAVcfCall(_VcfCall):
                           sample=sample,
                           data=data,
                           )
+        pyCMMBase.__init__(self)
         self.__cmm_gts = None
         self.__actual_gts = None
         self.__mutated = None
@@ -95,7 +98,7 @@ class _TAVcfCall(_VcfCall):
         But it'll be a very rare case
         """
         actual_gts = []
-        afs = self.site.afs
+        afs = self.site.afss[0]
         for gt_idx in xrange(len(self.cmm_gts)):
             cmm_gt = self.cmm_gts[gt_idx]
             # Other than the problematic wild type and homozygote,
@@ -104,7 +107,7 @@ class _TAVcfCall(_VcfCall):
                 actual_gts.append(cmm_gt)
                 continue
             # if allele frequency less than 0.5 the actual gt remain the same
-            if afs[gt_idx] < 0.5:
+            if (afs[gt_idx] == ".") or (float(afs[gt_idx]) < 0.5):
                 actual_gts.append(cmm_gt)
                 continue
             # below should be only hom and wild type with allele freq >= 0.5
@@ -159,7 +162,7 @@ class _TAVcfCall(_VcfCall):
     def shared_mutations(self, val):
         self.__shared_mutations = val
 
-class _TAVcfRecord(_VcfRecord):
+class _TAVcfRecord(_VcfRecord, pyCMMBase):
     """
     An encapsulated version of vcf._Record from pyVCF package to
       - determine if mutations are shared between samples
@@ -169,7 +172,11 @@ class _TAVcfRecord(_VcfRecord):
     """
 
     def __init__(self, CHROM, POS, ID, REF, ALT, QUAL, FILTER, INFO, FORMAT,
-            sample_indexes, samples=None, family_infos=None):
+            sample_indexes,
+            samples=None,
+            family_infos=None,
+            freq_ratios=None,
+            ):
         _VcfRecord.__init__(self,
                             CHROM,
                             POS,
@@ -183,7 +190,9 @@ class _TAVcfRecord(_VcfRecord):
                             sample_indexes,
                             samples=None,
                             )
-        self.__afs = self.__cal_afs()
+        pyCMMBase.__init__(self)
+        self.__freq_ratios = freq_ratios
+        self.__afss = self.__cal_afss()
         self.__is_intergenic = None
         self.__is_intronic = None
         self.__is_synonymous = None
@@ -194,8 +203,12 @@ class _TAVcfRecord(_VcfRecord):
         self.__shared_cal = False
 
     @property
-    def afs(self):
-        return self.__afs
+    def freq_ratios(self):
+        return self.__freq_ratios
+
+    @property
+    def afss(self):
+        return self.__afss
 
     @property
     def is_intergenic(self):
@@ -249,27 +262,34 @@ class _TAVcfRecord(_VcfRecord):
             return self.INFO[var_name]
         return None
 
-    def __cal_afs(self):
+    def __cal_afss(self):
         """
         - return list of allele frequencies.
         - number of entry in the list = 1 + number of alternate alleles
         """
-        if DFLT_MAF_VAR in self.INFO:
-            raw_afs = self.INFO[DFLT_MAF_VAR]
+        if self.freq_ratios is None:
+            var_names = [PRIMARY_MAF_VAR]
         else:
-            raw_afs = None
-        if (raw_afs == "") or (raw_afs is None) or (raw_afs == "."):
-            return map(lambda x: 0, xrange(len(self.alleles)))
-        if type(raw_afs) is not list:
-            afs = [CMM_DUMMY, raw_afs]
-        else:
-            afs = [CMM_DUMMY]
-            for raw_af in raw_afs:
-                if raw_af is None:
-                    afs.append(0)
-                else:
-                    afs.append(raw_af)
-        return afs
+            var_names = self.freq_ratios.keys()
+        afss = []
+        for var_name in var_names:
+            if var_name in self.INFO:
+                raw_afs = self.INFO[var_name]
+            else:
+                raw_afs = None
+            if (raw_afs == "") or (raw_afs is None) or (raw_afs == "."):
+                afs = map(lambda x: 0, xrange(len(self.alleles)))
+            elif type(raw_afs) is not list:
+                afs = [CMM_DUMMY, raw_afs]
+            else:
+                afs = [CMM_DUMMY]
+                for raw_af in raw_afs:
+                    if raw_af is None:
+                        afs.append(0)
+                    else:
+                        afs.append(raw_af)
+            afss.append(afs)
+        return afss
 
     def __cal_shared(self):
         """
@@ -376,17 +396,19 @@ class _TAVcfRecord(_VcfRecord):
                 return True
         return False
 
-    def is_rare(self, freq_ratios, allele_idx=1):
-        condition, criteria = freq_ratios.items()[0]
-        criteria = float(criteria)
-        val = self.afs[allele_idx]
-        if (val is None or
-            val == "." or
-            val == ""):
-            return True
-        freq = float(val)
-        if freq < float(criteria):
-            return True
-        if freq > (1-float(criteria)):
-            return True
-        return False
+    def is_rare(self, allele_idx=1):
+        var_names = self.freq_ratios.keys()
+        for var_idx in xrange(len(var_names)):
+            criteria = self.freq_ratios[var_names[var_idx]]
+            val = self.afss[var_idx][allele_idx]
+            if (val is None or
+                val == "." or
+                val == ""):
+                continue
+            freq = float(val)
+            if freq < float(criteria):
+                continue
+            if freq > (1-float(criteria)):
+                continue
+            return False
+        return True

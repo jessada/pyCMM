@@ -84,7 +84,7 @@ class JobManager(pyCMMBase):
         cmd += " -o " + job_rec.slurm_log_file
         if (job_rec.prereq is not None) and (len(job_rec.prereq) > 0) and (type(job_rec.prereq) is list):
             cmd += " --dependency=afterok"
-            self.debug(job_rec.prereq)
+            self.dbg(job_rec.prereq)
             for job_name in job_rec.prereq:
                 job_id = self.get_job_id(job_name)
                 cmd += ":" + job_id
@@ -104,7 +104,6 @@ class JobManager(pyCMMBase):
                    email=False,
                    prereq=None,
                    ):
-        self.getLogger(__name__ + "." + sys._getframe().f_code.co_name)
         job_rec = JobRecord()
         job_rec.job_name = job_name
         job_rec.project_code = project_code
@@ -120,7 +119,7 @@ class JobManager(pyCMMBase):
         out = self.__exec_sh(cmd)
         job_rec.job_id = out.strip().split()[-1]
         self.job_dict[job_name] = job_rec
-        return None
+        return job_rec.job_id
 
     def __write_job_report(self):
         f_rpt = open(self.__job_rpt_file, "w")
@@ -217,7 +216,6 @@ class JobManager(pyCMMBase):
     def get_job_status(self,
                        job_name,
                        ):
-        self.getLogger(__name__ + "." + sys._getframe().f_code.co_name)
         if job_name.isdigit():
             job_id = job_name
         else:
@@ -249,6 +247,5 @@ class JobManager(pyCMMBase):
         else:
             job_id = self.get_job_id(job_name)
         job_status = self.get_job_status(job_id)
-        self.getLogger(__name__ + "." + sys._getframe().f_code.co_name)
         cmd = "scancel -b " + job_id
         out = self.__exec_sh(cmd)

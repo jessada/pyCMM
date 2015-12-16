@@ -55,10 +55,14 @@ def __display_report_config(func_name,
     layout_params['call detail'] = pl.report_layout.call_detail
     if pl.report_layout.anno_excl_tags:
         layout_params['columns exclusion tags'] = pl.report_layout.anno_excl_tags
-    filter_actions_out = {}
+    filter_actions_out = OrderedDict()
     filter_actions_out['Rare'] = pl.report_layout.filter_rare
     filter_actions_out['Non-Intergenic'] = pl.report_layout.filter_non_intergenic
     filter_actions_out['Non-Intronic'] = pl.report_layout.filter_non_intronic
+    filter_actions_out['Non-Upstream'] = pl.report_layout.filter_non_upstream
+    filter_actions_out['Non-Downstream'] = pl.report_layout.filter_non_downtream
+    filter_actions_out['Non-UTR'] = pl.report_layout.filter_non_utr
+    filter_actions_out['Non-Synonymous'] = pl.report_layout.filter_non_synonymous
     filter_actions_out['Has-mutation'] = pl.report_layout.filter_has_mutation
     filter_actions_out['Has-shared'] = pl.report_layout.filter_has_shared
     layout_params['filter actions'] = filter_actions_out

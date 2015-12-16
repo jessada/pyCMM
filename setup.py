@@ -4,6 +4,7 @@ import pkgutil
 import os
 import fnmatch
 from setuptools import setup
+from pycmm.settings import DUMMY_TABLE_ANNOVAR_BIN
 from pycmm.settings import MUTREP_FAMILY_REPORT_BIN
 from pycmm.settings import MUTREP_SUMMARY_REPORT_BIN
 
@@ -59,6 +60,7 @@ setup(
              'bin/pyCMM-cmmdb-cal-mut-stat',
              'bin/pyCMM-cmmdb-table-annovar',
              'bin/pyCMM-cmmdb-create-job-setup-file',
+             'bin/'+DUMMY_TABLE_ANNOVAR_BIN,
              'bin/pyCMM-mutrep-mutation-reports',
              'bin/'+MUTREP_FAMILY_REPORT_BIN,
              'bin/'+MUTREP_SUMMARY_REPORT_BIN,

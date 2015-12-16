@@ -245,7 +245,7 @@ class ReportLayout(pyCMMBase):
     @property
     def freq_ratios(self):
         if JOBS_SETUP_RPT_FREQ_RATIOS_KEY in self.__layout_params:
-            freq_ratios = {}
+            freq_ratios = OrderedDict()
             for freq_ratio in self.__layout_params[JOBS_SETUP_RPT_FREQ_RATIOS_KEY]:
                 col = freq_ratio[JOBS_SETUP_RPT_FREQ_RATIOS_COL_KEY]
                 freq = freq_ratio[JOBS_SETUP_RPT_FREQ_RATIOS_FREQ_KEY]
@@ -378,10 +378,7 @@ class MutRepPipeline(CMMDBPipeline):
 
     @property
     def annotated_vcf_tabix(self):
-        if self.report_layout.annotated_vcf_tabix is not None:
-            return self.report_layout.annotated_vcf_tabix
-        else:
-            return self.annovar_config.annotated_vcf + ".gz"
+        return self.report_layout.annotated_vcf_tabix
 
     @property
     def report_layout(self):
@@ -524,8 +521,7 @@ class MutRepPipeline(CMMDBPipeline):
                     not vcf_record.is_shared(samples_list, allele_idx)):
                     continue
                 if (self.report_layout.filter_rare and
-                    not vcf_record.is_rare(self.report_layout.freq_ratios,
-                                           allele_idx=allele_idx)):
+                    not vcf_record.is_rare(allele_idx=allele_idx)):
                     continue
                 if (self.report_layout.filter_non_intergenic and
                     vcf_record.is_intergenic[allele_idx]):
@@ -574,6 +570,7 @@ class MutRepPipeline(CMMDBPipeline):
         if self.annotated_vcf_tabix.endswith('.vcf.gz'):
             vcf_reader = VcfReader(filename=self.annotated_vcf_tabix,
                                    family_infos=self.family_infos,
+                                   freq_ratios=self.report_layout.freq_ratios,
                                    )
         else:
             self.thrown(self.annotated_vcf_tabix + ' does not endswith .vcf.gz')
@@ -644,7 +641,7 @@ class MutRepPipeline(CMMDBPipeline):
                 job_params = job_params_prefix
                 job_params += " -r " + region_param
                 job_params += " -o " + out_file
-                self.debug(job_script + job_params)
+                self.dbg(job_script + job_params)
                 self.submit_job(job_name,
                                 self.project_code,
                                 "core",

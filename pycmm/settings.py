@@ -7,13 +7,18 @@ This module is all about constant value
 
 """
 
-DEBUG_MODE = False
+DEBUG_MODE = True
 #FULL_SYSTEM_TEST = True
 FULL_SYSTEM_TEST = False
+SLURM_MUTREP_TEST = False
+#SLURM_MUTREP_TEST = True
+SLURM_GATKBP_TEST = False
+SLURM_CMMDB_TEST = False
 SLURM_TEST = False
+#SLURM_TEST = True
 
-FAST_PROJECT_CODE = 'b2011097'
-SLOW_PROJECT_CODE = 'b2011158'
+FAST_PROJECT_CODE = 'b2012247'
+SLOW_PROJECT_CODE = 'b2011097'
 
 ENV_TEST_DIR = "PYTHON_TEST_DIR"
 
@@ -25,6 +30,8 @@ DFLT_GATKBP_ALLOC_TIME = "4-00:00:00"
 DNASEQ_CREATE_JOB_SETUP_FILE_DESCRIPTION = "An applicationt to generate job setup file for DNASEQ_PIPELINE"
 
 ## ************************************************************************************************ CMM DB ************************************************************************************************
+DUMMY_TABLE_ANNOVAR_BIN = 'pyCMM-dummy-table-annovar'
+
 CMMDB_PIPELINE_DESCRIPTION = "A flow to control a pipeline to process CMM database"
 CMMDB_MUTSTAT_DESCRIPTION = "A flow to control a pipeline to process mutation statistics database"
 CMMDB_TABLEANNOVAR_DESCRIPTION = "A flow to control a pipeline to run tableannovar"
@@ -416,8 +423,8 @@ PHYLOP46WAY_PLACENTAL_COL_NAME = "phyloP46way_placental"
 PHYLOP100WAY_VERTEBRATE_COL_NAME = "phyloP100way_vertebrate"
 SIPHY_29WAY_LOGODDS_COL_NAME = "SiPhy_29way_logOdds"
 
-DFLT_MAF_VAR = KG2014OCT_ALL_COL_NAME
-DFLT_MUTREP_FREQ_RATIOS = DFLT_MAF_VAR + ":0.2"
+PRIMARY_MAF_VAR = KG2014OCT_ALL_COL_NAME
+DFLT_MUTREP_FREQ_RATIOS = PRIMARY_MAF_VAR + ":0.2"
 FUNC_REFGENE_VAR = FUNC_REFGENE_COL_NAME
 EXONICFUNC_REFGENE_VAR = EXONICFUNC_REFGENE_COL_NAME
 
