@@ -51,11 +51,9 @@ def app_pycmm_cmmdb_table_annovar(*args, **kwargs):
     ta_params['vcf tabix input file'] = pl.annovar_config.input_file
     ta_params['databases folder'] = pl.annovar_config.db_folder
     ta_params['build version'] = pl.annovar_config.buildver
-    ta_params['output prefix'] = pl.annovar_config.out_prefix
     ta_params['protocols'] = pl.annovar_config.protocols
     ta_params['operations'] = pl.annovar_config.operations
     ta_params['NA string'] = pl.annovar_config.nastring
-    ta_params['annotated vcf file'] = pl.annovar_config.annotated_vcf
     disp.disp_params_set("Table Annovar parameters", ta_params)
     pl.table_annovar()
     mylogger.getLogger(__name__)
