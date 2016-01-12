@@ -66,6 +66,7 @@ JOBS_SETUP_RPT_REGIONS_KEY = "REGIONS"
 JOBS_SETUP_RPT_FREQ_RATIOS_KEY = "FREQUENCY_RATIOS"
 JOBS_SETUP_RPT_FREQ_RATIOS_COL_KEY = "COLUMN"
 JOBS_SETUP_RPT_FREQ_RATIOS_FREQ_KEY = "FREQUENCY"
+JOBS_SETUP_RPT_EXPRESSIONS_KEY = "EXPRESSIONS"
 JOBS_SETUP_RPT_SPLIT_CHROM_KEY = "SPLIT_CHROM"
 JOBS_SETUP_RPT_SUMMARY_FAMILIES_KEY = "SUMMARY_FAMILIES"
 JOBS_SETUP_RPT_EXTRA_ANNO_COLS_KEY = "EXTRA_ANNOTATION_COLUMNS"
@@ -418,6 +419,7 @@ def create_jobs_setup_file(dataset_name,
                            annotated_vcf_tabix=None,
                            report_regions=None,
                            frequency_ratios=None,
+                           expressions=None,
                            split_chrom=False,
                            summary_families_sheet=False,
                            call_detail=False,
@@ -495,6 +497,12 @@ def create_jobs_setup_file(dataset_name,
                                 JOBS_SETUP_RPT_FREQ_RATIOS_FREQ_KEY: freq,
                                 })
     report_layout_config[JOBS_SETUP_RPT_FREQ_RATIOS_KEY] = job_freq_ratios
+    if expressions is not None:
+        exprs = {}
+        for expr in  expressions.split(";"):
+            key, val = expr.split(":")
+            exprs[key] = val
+        report_layout_config[JOBS_SETUP_RPT_EXPRESSIONS_KEY] = exprs
     report_layout_config[JOBS_SETUP_RPT_SPLIT_CHROM_KEY] = split_chrom
     report_layout_config[JOBS_SETUP_RPT_SUMMARY_FAMILIES_KEY] = summary_families_sheet
     if call_detail:

@@ -81,6 +81,7 @@ class TestMutRepPipeline(SafeTester):
                                  annotated_vcf_tabix=None,
                                  report_regions=DFLT_TEST_REPORT_REGIONS,
                                  frequency_ratios=DFLT_TEST_FREQ_RATIOS,
+                                 expressions=None,
                                  split_chrom=False,
                                  summary_families_sheet=False,
                                  call_detail=False,
@@ -100,6 +101,7 @@ class TestMutRepPipeline(SafeTester):
                                annotated_vcf_tabix=annotated_vcf_tabix,
                                report_regions=report_regions,
                                frequency_ratios=frequency_ratios,
+                               expressions=expressions,
                                split_chrom=split_chrom,
                                summary_families_sheet=summary_families_sheet,
                                call_detail=call_detail,
@@ -134,32 +136,25 @@ class TestMutRepPipeline(SafeTester):
         self.assertEqual(pl.report_layout.report_regions[0].chrom,
                          "18",
                          "MutRepPipeline cannot correctly read report layout info 'report regions' from jobs setup file")
-        self.assertEqual(pl.report_layout.split_chrom,
-                         False,
+        self.assertFalse(pl.report_layout.exprs,
+                         "MutRepPipeline cannot correctly read report layout info 'expressions' from jobs setup file")
+        self.assertFalse(pl.report_layout.split_chrom,
                          "MutRepPipeline cannot correctly read report layout info 'split chrom' from jobs setup file")
-        self.assertEqual(pl.report_layout.summary_families_sheet,
-                         False,
+        self.assertFalse(pl.report_layout.summary_families_sheet,
                          "MutRepPipeline cannot correctly read report layout info 'summary families sheet' from jobs setup file")
-        self.assertEqual(pl.report_layout.call_detail,
-                         False,
+        self.assertFalse(pl.report_layout.call_detail,
                          "MutRepPipeline cannot correctly read report layout info 'call info' from jobs setup file")
-        self.assertEqual(pl.report_layout.filter_rare,
-                         False,
+        self.assertFalse(pl.report_layout.filter_rare,
                          "MutRepPipeline cannot correctly read report layout info 'filter rare' from jobs setup file")
-        self.assertEqual(pl.report_layout.filter_non_intergenic,
-                         False,
+        self.assertFalse(pl.report_layout.filter_non_intergenic,
                          "MutRepPipeline cannot correctly read report layout info 'filter non-intergenic' from jobs setup file")
-        self.assertEqual(pl.report_layout.filter_non_intronic,
-                         False,
+        self.assertFalse(pl.report_layout.filter_non_intronic,
                          "MutRepPipeline cannot correctly read report layout info 'filter non-intronic' from jobs setup file")
-        self.assertEqual(pl.report_layout.filter_has_mutation,
-                         False,
+        self.assertFalse(pl.report_layout.filter_has_mutation,
                          "MutRepPipeline cannot correctly read report layout info 'filter has-mutation' from jobs setup file")
-        self.assertEqual(pl.report_layout.only_summary,
-                         False,
+        self.assertFalse(pl.report_layout.only_summary,
                          "MutRepPipeline cannot correctly read report layout info 'only summary' from jobs setup file")
-        self.assertEqual(pl.report_layout.only_families,
-                         False,
+        self.assertFalse(pl.report_layout.only_families,
                          "MutRepPipeline cannot correctly read report layout info 'only families' from jobs setup file")
 
     def test_load_jobs_info_2(self):
@@ -175,6 +170,7 @@ class TestMutRepPipeline(SafeTester):
                                                         annotated_vcf_tabix=dummy_annotated_vcf_tabix,
                                                         report_regions="6:78161823-78164117,"+DFLT_TEST_REPORT_REGIONS+",22",
                                                         frequency_ratios=None,
+                                                        expressions="test1:1>0",
                                                         split_chrom=True,
                                                         summary_families_sheet=True,
                                                         call_detail=True,
@@ -210,40 +206,36 @@ class TestMutRepPipeline(SafeTester):
         self.assertEqual(pl.annotated_vcf_tabix,
                          dummy_annotated_vcf_tabix,
                          "MutRepPipeline cannot correctly determine report layout info 'annotated vcf tabix' file")
-        self.assertEqual(pl.report_layout.split_chrom,
-                         True,
-                         "MutRepPipeline cannot correctly read report layout info 'split chrom' from jobs setup file")
-        self.assertEqual(pl.report_layout.summary_families_sheet,
-                         True,
-                         "MutRepPipeline cannot correctly read report layout info 'summary families sheet' from jobs setup file")
-        self.assertEqual(pl.report_layout.call_detail,
-                         True,
-                         "MutRepPipeline cannot correctly read report layout info 'call info' from jobs setup file")
-        self.assertEqual(pl.report_layout.filter_rare,
-                         True,
-                         "MutRepPipeline cannot correctly read report layout info 'filter rare' from jobs setup file")
-        self.assertEqual(pl.report_layout.filter_non_intergenic,
-                         True,
-                         "MutRepPipeline cannot correctly read report layout info 'filter non-intergenic' from jobs setup file")
-        self.assertEqual(pl.report_layout.filter_non_intronic,
-                         True,
-                         "MutRepPipeline cannot correctly read report layout info 'filter non-intronic' from jobs setup file")
-        self.assertEqual(pl.report_layout.filter_has_mutation,
-                         True,
-                         "MutRepPipeline cannot correctly read report layout info 'filter has-mutation' from jobs setup file")
-        self.assertEqual(pl.report_layout.only_summary,
-                         True,
-                         "MutRepPipeline cannot correctly read report layout info 'only summary' from jobs setup file")
-        self.assertEqual(pl.report_layout.only_families,
-                         True,
-                         "MutRepPipeline cannot correctly read report layout info 'only families' from jobs setup file")
+        self.assertEqual(pl.report_layout.exprs["test1"],
+                         '1>0',
+                         "MutRepPipeline cannot correctly read report layout info 'expressions' from jobs setup file")
+        self.assertTrue(pl.report_layout.split_chrom,
+                        "MutRepPipeline cannot correctly read report layout info 'split chrom' from jobs setup file")
+        self.assertTrue(pl.report_layout.summary_families_sheet,
+                        "MutRepPipeline cannot correctly read report layout info 'summary families sheet' from jobs setup file")
+        self.assertTrue(pl.report_layout.call_detail,
+                        "MutRepPipeline cannot correctly read report layout info 'call info' from jobs setup file")
+        self.assertTrue(pl.report_layout.filter_rare,
+                        "MutRepPipeline cannot correctly read report layout info 'filter rare' from jobs setup file")
+        self.assertTrue(pl.report_layout.filter_non_intergenic,
+                        "MutRepPipeline cannot correctly read report layout info 'filter non-intergenic' from jobs setup file")
+        self.assertTrue(pl.report_layout.filter_non_intronic,
+                        "MutRepPipeline cannot correctly read report layout info 'filter non-intronic' from jobs setup file")
+        self.assertTrue(pl.report_layout.filter_has_mutation,
+                        "MutRepPipeline cannot correctly read report layout info 'filter has-mutation' from jobs setup file")
+        self.assertTrue(pl.report_layout.only_summary,
+                        "MutRepPipeline cannot correctly read report layout info 'only summary' from jobs setup file")
+        self.assertTrue(pl.report_layout.only_families,
+                        "MutRepPipeline cannot correctly read report layout info 'only families' from jobs setup file")
 
     def test_load_jobs_info_3(self):
         """ test if non-default (None) layout configurations are loaded correctly """
 
+        self.individual_debug = True
         self.init_test(self.current_func_name)
         jobs_setup_file = self.__create_jobs_setup_file(report_regions=None,
                                                         frequency_ratios="ExAC:0.5",
+                                                        expressions='expr_with_key:"abc" < 4;expr_wo:jkl>5',
                                                         )
         pl = MutRepPipeline(jobs_setup_file)
         self.assertEqual(pl.report_layout.report_regions,
@@ -252,6 +244,12 @@ class TestMutRepPipeline(SafeTester):
         self.assertEqual(pl.report_layout.freq_ratios["ExAC"],
                          0.5,
                          "MutRepPipeline cannot correctly read report layout info 'frequency ratios' from jobs setup file")
+        self.assertEqual(pl.report_layout.exprs["expr_with_key"],
+                         '"abc" < 4',
+                         "MutRepPipeline cannot correctly read report layout info 'expressions' from jobs setup file")
+        self.assertEqual(pl.report_layout.exprs["expr_wo"],
+                         'jkl>5',
+                         "MutRepPipeline cannot correctly read report layout info 'expressions' from jobs setup file")
 
     @unittest.skipUnless(FULL_SYSTEM_TEST, "taking too long time to test")
     def test_summary_report_1(self):

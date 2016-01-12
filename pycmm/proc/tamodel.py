@@ -1,5 +1,6 @@
 import copy
 import sys
+import re
 from vcf.model import _Record as _VcfRecord
 from vcf.model import _Call as _VcfCall
 from pycmm.template import pyCMMBase
@@ -176,6 +177,7 @@ class _TAVcfRecord(_VcfRecord, pyCMMBase):
             samples=None,
             family_infos=None,
             freq_ratios=None,
+            expressions=None,
             ):
         _VcfRecord.__init__(self,
                             CHROM,
@@ -192,6 +194,13 @@ class _TAVcfRecord(_VcfRecord, pyCMMBase):
                             )
         pyCMMBase.__init__(self)
         self.__freq_ratios = freq_ratios
+        if expressions is not None:
+            self.__exprs = {}
+            for expr in expressions.split(";"):
+                key, val = expr.split(":")
+                self.__exprs[key.strip()] = val
+        else:
+            self.__exprs = None
         self.__afss = self.__cal_afss()
         self.__is_intergenic = None
         self.__is_intronic = None
@@ -412,3 +421,14 @@ class _TAVcfRecord(_VcfRecord, pyCMMBase):
                 continue
             return False
         return True
+
+    def __info_repl(self, match_obj):
+        repl_txt = "self.INFO["
+        repl_txt += match_obj.group(0)
+        repl_txt += "]"
+        return repl_txt
+    
+    def vcf_eval(self, expr_name):
+        return eval(re.sub(r'(\".+?\")',
+                           self.__info_repl,
+                           self.__exprs[expr_name]))

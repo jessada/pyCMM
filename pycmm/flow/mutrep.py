@@ -34,6 +34,7 @@ from pycmm.flow.cmmdb import JOBS_SETUP_RPT_REGIONS_KEY
 from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FREQ_RATIOS_KEY
 from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FREQ_RATIOS_COL_KEY
 from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FREQ_RATIOS_FREQ_KEY
+from pycmm.flow.cmmdb import JOBS_SETUP_RPT_EXPRESSIONS_KEY
 from pycmm.flow.cmmdb import JOBS_SETUP_RPT_SPLIT_CHROM_KEY
 from pycmm.flow.cmmdb import JOBS_SETUP_RPT_SUMMARY_FAMILIES_KEY
 from pycmm.flow.cmmdb import JOBS_SETUP_RPT_EXTRA_ANNO_COLS_KEY
@@ -202,6 +203,7 @@ class ReportLayout(pyCMMBase):
                  layout_params,
                  ):
         self.__layout_params = layout_params
+        self.__freq_ratios = None
         self.__anno_cols = self.__cal_anno_cols()
 
     def __cal_anno_cols(self):
@@ -244,15 +246,25 @@ class ReportLayout(pyCMMBase):
 
     @property
     def freq_ratios(self):
-        if JOBS_SETUP_RPT_FREQ_RATIOS_KEY in self.__layout_params:
+        if ((self.__freq_ratios is None) and
+            (JOBS_SETUP_RPT_FREQ_RATIOS_KEY in self.__layout_params)
+            ):
             freq_ratios = OrderedDict()
             for freq_ratio in self.__layout_params[JOBS_SETUP_RPT_FREQ_RATIOS_KEY]:
                 col = freq_ratio[JOBS_SETUP_RPT_FREQ_RATIOS_COL_KEY]
                 freq = freq_ratio[JOBS_SETUP_RPT_FREQ_RATIOS_FREQ_KEY]
                 freq_ratios[col] = freq
-            return freq_ratios
+            self.__freq_ratios = freq_ratios
+        elif self.__freq_ratios is None:
+            self.__freq_ratios = []
+        return self.__freq_ratios
+
+    @property
+    def exprs(self):
+        if JOBS_SETUP_RPT_EXPRESSIONS_KEY in self.__layout_params:
+            return self.__layout_params[JOBS_SETUP_RPT_EXPRESSIONS_KEY]
         else:
-            return None
+            return []
 
     @property
     def split_chrom(self):

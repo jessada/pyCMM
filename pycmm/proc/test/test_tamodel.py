@@ -2363,5 +2363,51 @@ class TestTAVcfRecord(SafeTester):
                          17,
                          "intronic mutations cannot be correctly determined")
 
+    def test_vcf_eval_1(self):
+        """
+        test general evaluation of vcf_eval
+        """
+
+        self.individual_debug = True
+        self.init_test(self.current_func_name)
+        in_file = join_path(self.data_dir,
+                               'input.vcf.gz')
+        test_expr1 = 'expr1: ("P-value_8" != \'.\') and (float("P-value_8") < 0.02)'
+        vcf_reader = TAVcfReader(filename=in_file, expressions=test_expr1)
+        vcf_record = vcf_reader.next()
+        self.assertTrue(vcf_record.vcf_eval('expr1'),
+                        "cannot perform vcf expression evaluation correctly")
+        vcf_record = vcf_reader.next()
+        self.assertFalse(vcf_record.vcf_eval('expr1'),
+                        "cannot perform vcf expression evaluation correctly")
+        vcf_record = vcf_reader.next()
+        self.assertFalse(vcf_record.vcf_eval('expr1'),
+                        "cannot perform vcf expression evaluation correctly")
+        test_expr2_3_4 = 'expr2: ("P-value_8" != \'.\') and (float("P-value_8") < 0.05)'
+        test_expr2_3_4 += '; expr3: ("P-value_8" != \'.\') and (float("P-value_8") < 1e-019)'
+        test_expr2_3_4 += '; expr4: ("P-value_8" != \'.\') and (float("P-value_8") < 1e-020)'
+        vcf_reader = TAVcfReader(filename=in_file, expressions=test_expr2_3_4)
+        vcf_record = vcf_reader.next()
+        self.assertTrue(vcf_record.vcf_eval('expr2'),
+                        "cannot perform vcf expression evaluation correctly")
+        self.assertTrue(vcf_record.vcf_eval('expr3'),
+                        "cannot perform vcf expression evaluation correctly")
+        self.assertFalse(vcf_record.vcf_eval('expr4'),
+                        "cannot perform vcf expression evaluation correctly")
+        vcf_record = vcf_reader.next()
+        self.assertTrue(vcf_record.vcf_eval('expr2'),
+                        "cannot perform vcf expression evaluation correctly")
+        self.assertFalse(vcf_record.vcf_eval('expr3'),
+                        "cannot perform vcf expression evaluation correctly")
+        self.assertFalse(vcf_record.vcf_eval('expr4'),
+                        "cannot perform vcf expression evaluation correctly")
+        vcf_record = vcf_reader.next()
+        self.assertFalse(vcf_record.vcf_eval('expr2'),
+                        "cannot perform vcf expression evaluation correctly")
+        self.assertFalse(vcf_record.vcf_eval('expr3'),
+                        "cannot perform vcf expression evaluation correctly")
+        self.assertFalse(vcf_record.vcf_eval('expr4'),
+                        "cannot perform vcf expression evaluation correctly")
+
     def tearDown(self):
         self.remove_working_dir()
