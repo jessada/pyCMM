@@ -116,7 +116,9 @@ class TestMutRepPipeline(SafeTester):
         """ test if layout configurations are loaded correctly """
 
         self.init_test(self.current_func_name)
-        jobs_setup_file = self.__create_jobs_setup_file()
+        annotated_vcf_tabix = join_path(self.data_dir,
+                                        "input.vcf.gz")
+        jobs_setup_file = self.__create_jobs_setup_file(annotated_vcf_tabix=annotated_vcf_tabix)
         pl = MutRepPipeline(jobs_setup_file)
         self.assertEqual(pl.report_layout.anno_cols[3],
                          "GeneDetail.refGene",
@@ -161,7 +163,8 @@ class TestMutRepPipeline(SafeTester):
         """ test if non-default layout configurations are loaded correctly """
 
         self.init_test(self.current_func_name)
-        dummy_annotated_vcf_tabix = "/path/to/annotated_vcf_tabix.vcf.gz"
+        dummy_annotated_vcf_tabix = join_path(self.data_dir,
+                                              "input.vcf.gz")
         rows_filter_actions = JOBS_SETUP_RPT_FILTER_RARE
         rows_filter_actions += ',' + JOBS_SETUP_RPT_FILTER_NON_INTERGENIC
         rows_filter_actions += ',' + JOBS_SETUP_RPT_FILTER_NON_INTRONIC
@@ -528,6 +531,36 @@ class TestMutRepPipeline(SafeTester):
                                                         call_detail="YES",
                                                         report_regions=None,
                                                         frequency_ratios=frequency_ratios,
+                                                        sample_infos="24:Co-166:Co-213",
+                                                        )
+        pl = MutRepPipeline(jobs_setup_file)
+        pl.gen_family_report('24', pl.report_layout.report_regions)
+        xls_file = join_path(self.working_dir,
+                             "rpts",
+                             dataset_name+"_fam24.xlsx")
+        xu = XlsUtils(xls_file)
+        self.assertEqual(xu.count_rows(sheet_idx=0),
+                         8,
+                         "incorrect number of mutations")
+        self.assertEqual(xu.count_rows(sheet_idx=1),
+                         11,
+                         "incorrect number of mutations")
+        self.assertEqual(xu.count_rows(sheet_idx=2),
+                         13,
+                         "incorrect number of mutations")
+
+    @unittest.skipUnless(FULL_SYSTEM_TEST, "taking too long time to test")
+    def test_family_report_5(self):
+        """ test if report can be run with missing columns """
+
+        self.init_test(self.current_func_name)
+        annotated_vcf_tabix = join_path(self.data_dir,
+                                        "input.vcf.gz")
+        dataset_name = self.test_function
+        jobs_setup_file = self.__create_jobs_setup_file(dataset_name=dataset_name,
+                                                        annotated_vcf_tabix=annotated_vcf_tabix,
+                                                        report_regions=None,
+                                                        anno_cols=ALL_MUTREP_ANNO_COLS,
                                                         sample_infos="24:Co-166:Co-213",
                                                         )
         pl = MutRepPipeline(jobs_setup_file)

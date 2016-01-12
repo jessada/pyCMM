@@ -204,22 +204,36 @@ class ReportLayout(pyCMMBase):
                  ):
         self.__layout_params = layout_params
         self.__freq_ratios = None
-        self.__anno_cols = self.__cal_anno_cols()
+        self.__anno_cols = None
 
     def __cal_anno_cols(self):
+        # open the annotated vcf tabix file for checking
+        # if the expected output columns are exist
+        vcf_reader = VcfReader(filename=self.annotated_vcf_tabix)
+        vcf_record = vcf_reader.next()
+        # generate columns list
         anno_cols = []
         for col_name in self.__layout_params[JOBS_SETUP_RPT_ANNO_COLS_KEY]:
+            # excluce columns based on configuration
             excluded = False
             for excl_tag in self.anno_excl_tags:
                 if excl_tag in ALL_MUTREP_ANNO_COLS[col_name]:
                     excluded = True
                     break
-            if not excluded:
-                anno_cols.append(col_name)
+            if excluded:
+                continue
+            # exclude columns that are not actually in the annotated tabix file
+            if col_name not in vcf_record.INFO.keys():
+                self.warning("Columns " + col_name + " is missing")
+                continue
+            # here are the columns that can be shown without errors
+            anno_cols.append(col_name)
         return anno_cols
 
     @property
     def anno_cols(self):
+        if self.__anno_cols is None:
+            self.__anno_cols = self.__cal_anno_cols()
         return self.__anno_cols
 
     @property
