@@ -18,7 +18,7 @@ class XlsUtils(pyCMMBase):
     def nsheets(self):
         wb = open_workbook(self.xls_file)
         return len(wb.sheet_names())
-    
+
     def __get_sheet(self, sheet_idx=0):
         wb = open_workbook(self.xls_file)
         return wb.sheet_by_index(sheet_idx)
@@ -39,7 +39,7 @@ class XlsUtils(pyCMMBase):
             if str(sheet_names[sheet_idx]) == sheet_name:
                 return sheet_idx
         return -1
-    
+
     def compare_vals(self,
                      col_name,
                      row_idx1,
@@ -50,11 +50,11 @@ class XlsUtils(pyCMMBase):
         val1 = ws.cell(row_idx1, col_idx).value
         val2 = ws.cell(row_idx2, col_idx).value
         return val1 == val2
-    
+
     def count_rows(self, sheet_idx=0):
         ws = self.__get_sheet(sheet_idx=sheet_idx)
         return ws.nrows
-    
+
     def count_cols(self, col_name1=None, col_name2=None, sheet_idx=0):
         ws = self.__get_sheet(sheet_idx=sheet_idx)
         if col_name1 is not None:

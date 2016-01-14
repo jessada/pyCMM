@@ -11,6 +11,7 @@ from os.path import join as join_path
 from os.path import isdir
 from os.path import isfile
 from collections import OrderedDict
+from collections import defaultdict
 from pycmm.settings import PREDICTION_COLS
 from pycmm.settings import DFLT_ANNOVAR_DB_FOLDER
 from pycmm.settings import DFLT_ANNOVAR_DB_NAMES
@@ -35,6 +36,11 @@ from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FREQ_RATIOS_KEY
 from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FREQ_RATIOS_COL_KEY
 from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FREQ_RATIOS_FREQ_KEY
 from pycmm.flow.cmmdb import JOBS_SETUP_RPT_EXPRESSIONS_KEY
+from pycmm.flow.cmmdb import JOBS_SETUP_RPT_EXPRESSIONS_NAME_KEY
+from pycmm.flow.cmmdb import JOBS_SETUP_RPT_EXPRESSIONS_PATTERN_KEY
+from pycmm.flow.cmmdb import JOBS_SETUP_RPT_EXPRESSIONS_USAGES_KEY
+from pycmm.flow.cmmdb import JOBS_SETUP_RPT_EXPRESSIONS_ACTION_KEY
+from pycmm.flow.cmmdb import JOBS_SETUP_RPT_EXPRESSIONS_INFO_KEY
 from pycmm.flow.cmmdb import JOBS_SETUP_RPT_SPLIT_CHROM_KEY
 from pycmm.flow.cmmdb import JOBS_SETUP_RPT_SUMMARY_FAMILIES_KEY
 from pycmm.flow.cmmdb import JOBS_SETUP_RPT_EXTRA_ANNO_COLS_KEY
@@ -52,6 +58,10 @@ from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_HAS_MUTATION
 from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_HAS_SHARED
 from pycmm.flow.cmmdb import JOBS_SETUP_RPT_ONLY_SUMMARY_KEY
 from pycmm.flow.cmmdb import JOBS_SETUP_RPT_ONLY_FAMILIES_KEY
+
+ACTION_DELETE_ROW = "del_row"
+ACTION_COLOR_ROW = "color_row"
+ACTION_COLOR_COL = "color_col"
 
 # *** color definition sections ***
 COLOR_RGB = OrderedDict()
@@ -196,6 +206,120 @@ class ReportRegion(pyCMMBase):
             self.__start_pos = None
             self.__end_pos = None
 
+class ActionDelRow(pyCMMBase):
+    """ A structure to parse action to delete a row from a mutation report sheet """
+
+    def __init__(self,
+                 pattern,
+                 ):
+        self.__pattern = pattern
+
+    def get_raw_repr(self):
+        return {"pattern": self.pattern}
+
+    @property
+    def pattern(self):
+        return self.__pattern
+
+class ActionColorRow(pyCMMBase):
+    """ A structure to parse action to color a row in a mutation report sheet """
+
+    def __init__(self,
+                 pattern,
+                 info,
+                 ):
+        self.__pattern = pattern
+        self.__info = info
+
+    def get_raw_repr(self):
+        return {"pattern": self.pattern,
+                "info": self.info}
+
+    @property
+    def pattern(self):
+        return self.__pattern
+
+    @property
+    def info(self):
+        return self.__info
+
+class ActionColorCol(pyCMMBase):
+    """ A structure to parse action to color a column in a row in a mutation report sheet """
+
+    def __init__(self,
+                 pattern,
+                 info,
+                 ):
+        self.__pattern = pattern
+        self.__info = info
+
+    def get_raw_repr(self):
+        return {"pattern": self.pattern,
+                "info": self.info}
+
+    @property
+    def pattern(self):
+        return self.__pattern
+
+    @property
+    def info(self):
+        return self.__info
+
+class VcfExpressions(pyCMMBase):
+    """
+    An user-friendly structure encapsulating
+    VCF expression configuration
+    """
+
+    def __init__(self,
+                 expressions,
+                 ):
+        self.__expressions = expressions
+        self.__patterns = None
+        self.__actions = None
+
+    @property
+    def name(self):
+        return self.__expression[JOBS_SETUP_RPT_EXPRESSIONS_NAME_KEY]
+
+    @property
+    def patterns(self):
+        if self.__patterns is None:
+            self.__patterns = {}
+            for expr in self.__expressions:
+                name = expr[JOBS_SETUP_RPT_EXPRESSIONS_NAME_KEY]
+                pattern = expr[JOBS_SETUP_RPT_EXPRESSIONS_PATTERN_KEY]
+                self.__patterns[name] = pattern
+        return self.__patterns
+
+    @property
+    def actions(self):
+        if self.__actions is None:
+            # all kind of possible actions are parsed here
+            # possible actions are
+            #   - delete row
+            #   - color a column at the row
+            #   - color a row
+            # each action is structured as a list
+            # each item in the list consist of at least a pattern
+            # -> if the evaluation of the pattern is True the do the action
+            # and the item can also have an info field
+            self.__actions = defaultdict(list)
+            for expr in self.__expressions:
+                if expr[JOBS_SETUP_RPT_EXPRESSIONS_USAGES_KEY] is not None:
+                    pattern = expr[JOBS_SETUP_RPT_EXPRESSIONS_PATTERN_KEY]
+                    for usage in expr[JOBS_SETUP_RPT_EXPRESSIONS_USAGES_KEY]:
+                        action = usage[JOBS_SETUP_RPT_EXPRESSIONS_ACTION_KEY]
+                        if JOBS_SETUP_RPT_EXPRESSIONS_INFO_KEY in usage:
+                            info = usage[JOBS_SETUP_RPT_EXPRESSIONS_INFO_KEY]
+                        if action == ACTION_DELETE_ROW:
+                            self.__actions[ACTION_DELETE_ROW].append(ActionDelRow(pattern))
+                        if action == ACTION_COLOR_ROW:
+                            self.__actions[ACTION_COLOR_ROW].append(ActionColorRow(pattern, info=info))
+                        if action == ACTION_COLOR_COL:
+                            self.__actions[ACTION_COLOR_COL].append(ActionColorCol(pattern, info=info))
+        return self.__actions
+
 class ReportLayout(pyCMMBase):
     """ A structure to parse and keep mutation report layout """
 
@@ -205,6 +329,7 @@ class ReportLayout(pyCMMBase):
         self.__layout_params = layout_params
         self.__freq_ratios = None
         self.__anno_cols = None
+        self.__exprs = self.__parse_exprs()
 
     def __cal_anno_cols(self):
         # open the annotated vcf tabix file for checking
@@ -275,10 +400,13 @@ class ReportLayout(pyCMMBase):
 
     @property
     def exprs(self):
+        return self.__exprs
+
+    def __parse_exprs(self):
         if JOBS_SETUP_RPT_EXPRESSIONS_KEY in self.__layout_params:
-            return self.__layout_params[JOBS_SETUP_RPT_EXPRESSIONS_KEY]
+            return VcfExpressions(self.__layout_params[JOBS_SETUP_RPT_EXPRESSIONS_KEY])
         else:
-            return []
+            return None
 
     @property
     def split_chrom(self):

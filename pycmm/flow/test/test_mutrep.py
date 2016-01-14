@@ -36,6 +36,9 @@ from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_NON_INTERGENIC
 from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_NON_INTRONIC
 from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_HAS_MUTATION
 from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_HAS_SHARED
+from pycmm.flow.mutrep import ACTION_DELETE_ROW
+from pycmm.flow.mutrep import ACTION_COLOR_ROW
+from pycmm.flow.mutrep import ACTION_COLOR_COL
 
 DFLT_TEST_MUTREP_COLS = OrderedDict()
 DFLT_TEST_MUTREP_COLS[FUNC_REFGENE_COL_NAME] = ALL_MUTREP_ANNO_COLS[FUNC_REFGENE_COL_NAME]
@@ -81,7 +84,8 @@ class TestMutRepPipeline(SafeTester):
                                  annotated_vcf_tabix=None,
                                  report_regions=DFLT_TEST_REPORT_REGIONS,
                                  frequency_ratios=DFLT_TEST_FREQ_RATIOS,
-                                 expressions=None,
+                                 expression_patterns=None,
+                                 expression_usages=None,
                                  split_chrom=False,
                                  summary_families_sheet=False,
                                  call_detail=False,
@@ -101,7 +105,8 @@ class TestMutRepPipeline(SafeTester):
                                annotated_vcf_tabix=annotated_vcf_tabix,
                                report_regions=report_regions,
                                frequency_ratios=frequency_ratios,
-                               expressions=expressions,
+                               expression_patterns=expression_patterns,
+                               expression_usages=expression_usages,
                                split_chrom=split_chrom,
                                summary_families_sheet=summary_families_sheet,
                                call_detail=call_detail,
@@ -162,6 +167,7 @@ class TestMutRepPipeline(SafeTester):
     def test_load_jobs_info_2(self):
         """ test if non-default layout configurations are loaded correctly """
 
+        self.individual_debug = True
         self.init_test(self.current_func_name)
         dummy_annotated_vcf_tabix = join_path(self.data_dir,
                                               "input.vcf.gz")
@@ -173,7 +179,8 @@ class TestMutRepPipeline(SafeTester):
                                                         annotated_vcf_tabix=dummy_annotated_vcf_tabix,
                                                         report_regions="6:78161823-78164117,"+DFLT_TEST_REPORT_REGIONS+",22",
                                                         frequency_ratios=None,
-                                                        expressions="test1:1>0",
+                                                        expression_patterns="test1:1>0",
+                                                        expression_usages="test1:del_row;test1:color_col:cytoBand:yellow",
                                                         split_chrom=True,
                                                         summary_families_sheet=True,
                                                         call_detail=True,
@@ -209,9 +216,18 @@ class TestMutRepPipeline(SafeTester):
         self.assertEqual(pl.annotated_vcf_tabix,
                          dummy_annotated_vcf_tabix,
                          "MutRepPipeline cannot correctly determine report layout info 'annotated vcf tabix' file")
-        self.assertEqual(pl.report_layout.exprs["test1"],
+        self.assertEqual(pl.report_layout.exprs.patterns["test1"],
                          '1>0',
-                         "MutRepPipeline cannot correctly read report layout info 'expressions' from jobs setup file")
+                         "MutRepPipeline cannot correctly read report layout info 'expression patterns' from jobs setup file")
+        self.assertEqual(pl.report_layout.exprs.actions[ACTION_DELETE_ROW][0].pattern,
+                         '1>0',
+                         "MutRepPipeline cannot correctly read report layout info 'expression actions' from jobs setup file")
+        self.assertEqual(pl.report_layout.exprs.actions[ACTION_COLOR_COL][0].pattern,
+                         '1>0',
+                         "MutRepPipeline cannot correctly read report layout info 'expression actions' from jobs setup file")
+        self.assertEqual(pl.report_layout.exprs.actions[ACTION_COLOR_COL][0].info,
+                         'cytoBand:yellow',
+                         "MutRepPipeline cannot correctly read report layout info 'expression actions' from jobs setup file")
         self.assertTrue(pl.report_layout.split_chrom,
                         "MutRepPipeline cannot correctly read report layout info 'split chrom' from jobs setup file")
         self.assertTrue(pl.report_layout.summary_families_sheet,
@@ -238,7 +254,8 @@ class TestMutRepPipeline(SafeTester):
         self.init_test(self.current_func_name)
         jobs_setup_file = self.__create_jobs_setup_file(report_regions=None,
                                                         frequency_ratios="ExAC:0.5",
-                                                        expressions='expr_with_key:"abc" < 4;expr_wo:jkl>5',
+                                                        expression_patterns='expr_with_key:"abc" < 4;expr_wo:jkl>5; expr78 : 2>3',
+                                                        expression_usages="expr_with_key:del_row;expr_wo:color_col:F_U_8:red;expr_wo:color_row:green;expr78:color_row:orange",
                                                         )
         pl = MutRepPipeline(jobs_setup_file)
         self.assertEqual(pl.report_layout.report_regions,
@@ -247,12 +264,33 @@ class TestMutRepPipeline(SafeTester):
         self.assertEqual(pl.report_layout.freq_ratios["ExAC"],
                          0.5,
                          "MutRepPipeline cannot correctly read report layout info 'frequency ratios' from jobs setup file")
-        self.assertEqual(pl.report_layout.exprs["expr_with_key"],
+        self.assertEqual(pl.report_layout.exprs.patterns["expr_with_key"],
                          '"abc" < 4',
                          "MutRepPipeline cannot correctly read report layout info 'expressions' from jobs setup file")
-        self.assertEqual(pl.report_layout.exprs["expr_wo"],
+        self.assertEqual(pl.report_layout.exprs.patterns["expr_wo"],
                          'jkl>5',
                          "MutRepPipeline cannot correctly read report layout info 'expressions' from jobs setup file")
+        self.assertEqual(pl.report_layout.exprs.actions[ACTION_DELETE_ROW][0].pattern,
+                         '"abc" < 4',
+                         "MutRepPipeline cannot correctly read report layout info 'expression actions' from jobs setup file")
+        self.assertEqual(pl.report_layout.exprs.actions[ACTION_COLOR_COL][0].pattern,
+                         'jkl>5',
+                         "MutRepPipeline cannot correctly read report layout info 'expression actions' from jobs setup file")
+        self.assertEqual(pl.report_layout.exprs.actions[ACTION_COLOR_COL][0].info,
+                         'F_U_8:red',
+                         "MutRepPipeline cannot correctly read report layout info 'expression actions' from jobs setup file")
+        self.assertEqual(pl.report_layout.exprs.actions[ACTION_COLOR_ROW][0].pattern,
+                         'jkl>5',
+                         "MutRepPipeline cannot correctly read report layout info 'expression actions' from jobs setup file")
+        self.assertEqual(pl.report_layout.exprs.actions[ACTION_COLOR_ROW][0].info,
+                         'green',
+                         "MutRepPipeline cannot correctly read report layout info 'expression actions' from jobs setup file")
+        self.assertEqual(pl.report_layout.exprs.actions[ACTION_COLOR_ROW][1].pattern,
+                         '2>3',
+                         "MutRepPipeline cannot correctly read report layout info 'expression actions' from jobs setup file")
+        self.assertEqual(pl.report_layout.exprs.actions[ACTION_COLOR_ROW][1].info,
+                         'orange',
+                         "MutRepPipeline cannot correctly read report layout info 'expression actions' from jobs setup file")
 
     @unittest.skipUnless(FULL_SYSTEM_TEST, "taking too long time to test")
     def test_summary_report_1(self):
@@ -340,7 +378,7 @@ class TestMutRepPipeline(SafeTester):
         dataset_name = self.test_function
         jobs_setup_file = self.__create_jobs_setup_file(dataset_name=dataset_name,
                                                         annotated_vcf_tabix=annotated_vcf_tabix,
-                                                        report_regions="6:78171941-78172992,18:28610988-28611790",
+                                                        report_regions="6:78171940-78172992,18:28610987-28611790",
                                                         sample_infos="1234:Alb-31:Br-466,6067:Br-432:Al-161:Br-504,6789:Al-65",
                                                         summary_families_sheet=True,
                                                         call_detail="YES",
@@ -352,13 +390,13 @@ class TestMutRepPipeline(SafeTester):
                              dataset_name+"_summary.xlsx")
         xu = XlsUtils(xls_file)
         self.assertEqual(xu.count_rows(sheet_idx=1),
-                         10, 
+                         10,
                          "Incorrect number of rows"
                          )
         self.assertEqual(xu.count_cols(col_name1="1234-Alb-31",
                                        col_name2="6789-Al-65",
                                        sheet_idx=1),
-                         11, 
+                         11,
                          "Incorrect number of columns"
                          )
 
@@ -383,7 +421,7 @@ class TestMutRepPipeline(SafeTester):
                              dataset_name+"_summary.xlsx")
         xu = XlsUtils(xls_file)
         self.assertEqual(xu.count_rows(),
-                         15, 
+                         15,
                          "CRC report cannot be generated correctly"
                          )
 
@@ -410,7 +448,7 @@ class TestMutRepPipeline(SafeTester):
                              dataset_name+"_summary.xlsx")
         xu = XlsUtils(xls_file)
         self.assertEqual(xu.count_rows(),
-                         2, 
+                         2,
                          "report with swedish unicode character cannot be generated correctly"
                          )
 
