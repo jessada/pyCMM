@@ -820,6 +820,36 @@ class TestMutRepPipeline(SafeTester):
                          1,
                          "invalid number of sheets")
 
+    @unittest.skipUnless(FULL_SYSTEM_TEST, "taking too long time to test")
+    def test_expression_action_del_row_1(self):
+        """
+        test if expreesion patterns and expression actions can be used
+        for deleting rows with a given pattern
+        """
+
+        self.init_test(self.current_func_name)
+        annotated_vcf_tabix = join_path(self.data_dir,
+                                        "input.vcf.gz")
+        rpt_out_file = join_path(self.working_dir,
+                                 self.current_func_name + ".xlsx")
+        dataset_name = self.test_function
+        jobs_setup_file = self.__create_jobs_setup_file(dataset_name=dataset_name,
+                                                        annotated_vcf_tabix=annotated_vcf_tabix,
+                                                        report_regions="6:78171940-78172992,18:28610987-28611790",
+                                                        expression_patterns='exp_ns_snv:"ExonicFunc.refGene" == \'synonymous_SNV\'',
+                                                        expression_usages="exp_ns_snv:del_row",
+                                                        call_detail="YES",
+                                                        )
+        pl = MutRepPipeline(jobs_setup_file)
+        pl.gen_summary_report(pl.report_layout.report_regions)
+        xls_file = join_path(self.working_dir,
+                             "rpts",
+                             dataset_name+"_summary.xlsx")
+        xu = XlsUtils(xls_file)
+        self.assertEqual(xu.count_rows(sheet_idx=0),
+                         8,
+                         "Incorrect number of rows"
+                         )
 
     def tearDown(self):
         self.remove_working_dir()

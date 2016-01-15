@@ -701,6 +701,16 @@ class MutRepPipeline(CMMDBPipeline):
                 if (self.report_layout.filter_has_shared and
                     not vcf_record.has_shared(allele_idx)):
                     continue
+                delete_row = False
+                for key in self.report_layout.exprs.actions:
+                    if key == ACTION_DELETE_ROW:
+                        del_row_actions = self.report_layout.exprs.actions[key]
+                        for dra in del_row_actions:
+                            if vcf_record.vcf_eval(dra.pattern):
+                                delete_row = True
+                                break
+                if delete_row:
+                    continue
                 self.__write_content(ws,
                                      row,
                                      vcf_record,

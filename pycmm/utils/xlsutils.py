@@ -56,6 +56,11 @@ class XlsUtils(pyCMMBase):
         return ws.nrows
 
     def count_cols(self, col_name1=None, col_name2=None, sheet_idx=0):
+        """
+        given param 'col_name1' and 'col_name2', the function will number of
+        columns from col_name1 to col_name2.
+        Otherwise, it will count all the columns
+        """
         ws = self.__get_sheet(sheet_idx=sheet_idx)
         if col_name1 is not None:
             col_idx1 = self.__get_col_idx(col_name1, ws=ws)

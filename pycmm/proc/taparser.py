@@ -31,7 +31,6 @@ class TAVcfReader(VcfReader, pyCMMBase):
                  strict_whitespace=False,
                  family_infos=None,
                  freq_ratios=None,
-                 expressions=None,
                  ):
         super(TAVcfReader, self).__init__(fsock=fsock,
                                           filename=filename,
@@ -44,7 +43,6 @@ class TAVcfReader(VcfReader, pyCMMBase):
         self.__pred_tran = PredictionTranslator()
         self.__family_infos = family_infos
         self.__freq_ratios = freq_ratios
-        self.__exprs = expressions
 
     @property
     def annovar_infos(self):
@@ -116,7 +114,6 @@ class TAVcfReader(VcfReader, pyCMMBase):
                 self._sample_indexes,
                 family_infos=self.__family_infos,
                 freq_ratios=self.__freq_ratios,
-                expressions=self.__exprs,
                 )
 
         if fmt is not None:
