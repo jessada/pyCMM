@@ -216,7 +216,7 @@ class TestCMMDBPipeline(SafeTester):
                          "CMMDBPipeline cannot correctly read 'samples list' from jobs setup file")
 
     def test_load_jobs_info_5(self):
-        """ test if can load sample infos in family structur format as a file """
+        """ test if can load sample infos in family structured format as a file """
 
         self.init_test(self.current_func_name)
         job_name = self.test_function

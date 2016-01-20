@@ -104,8 +104,10 @@ COLOR_RGB['MAGENTA'] = '#FF00FF'
 COLOR_RGB['ICEBLUE'] = '#A5F2F3'
 COLOR_RGB['LIGHT_BLUE'] = '#ADD8E6'
 
-CELL_TYPE_HET_SHARED = 'SILVER'
-CELL_TYPE_HOM_SHARED = 'GRAY25'
+DFLT_COLOR_HET_SHARED = 'SILVER'
+DFLT_COLOR_HOM_SHARED = 'GRAY25'
+CELL_TYPE_HET_SHARED = 'HET_SHARED'
+CELL_TYPE_HOM_SHARED = 'HOM_SHARED'
 
 DFLT_FMT = 'default_format'
 # *********************************
@@ -330,6 +332,7 @@ class ReportLayout(pyCMMBase):
         self.__freq_ratios = None
         self.__anno_cols = None
         self.__exprs = self.__parse_exprs()
+        self.__init_cell_colors()
 
     def __cal_anno_cols(self):
         # open the annotated vcf tabix file for checking
@@ -354,6 +357,19 @@ class ReportLayout(pyCMMBase):
             # here are the columns that can be shown without errors
             anno_cols.append(col_name)
         return anno_cols
+
+    def __init_cell_colors(self):
+        self.__cell_colors = {}
+        self.__cell_colors[CELL_TYPE_HET_SHARED] = DFLT_COLOR_HET_SHARED
+        self.__cell_colors[CELL_TYPE_HOM_SHARED] = DFLT_COLOR_HOM_SHARED
+
+    @property
+    def cell_color_het_shared(self):
+        return self.__cell_colors[CELL_TYPE_HET_SHARED]
+
+    @property
+    def cell_color_hom_shared(self):
+        return self.__cell_colors[CELL_TYPE_HOM_SHARED]
 
     @property
     def anno_cols(self):
@@ -651,9 +667,11 @@ class MutRepPipeline(CMMDBPipeline):
             elif not call.shared_mutations[allele_idx]:
                 zygo_fmt = dflt_cell_fmt
             elif call.actual_gts[allele_idx] == CMMGT_HOMOZYGOTE:
-                zygo_fmt = self.cell_fmt_mgr.cell_fmts[CELL_TYPE_HOM_SHARED]
+                hom_shared_color = self.report_layout.cell_color_hom_shared
+                zygo_fmt = self.cell_fmt_mgr.cell_fmts[hom_shared_color]
             else:
-                zygo_fmt = self.cell_fmt_mgr.cell_fmts[CELL_TYPE_HET_SHARED]
+                het_shared_color = self.report_layout.cell_color_het_shared
+                zygo_fmt = self.cell_fmt_mgr.cell_fmts[het_shared_color]
             if self.report_layout.call_detail:
                 col_idx = (2*sample_idx) + (sample_start_idx)
                 ws.write(row, col_idx, zygo, zygo_fmt)
@@ -702,13 +720,16 @@ class MutRepPipeline(CMMDBPipeline):
                     not vcf_record.has_shared(allele_idx)):
                     continue
                 delete_row = False
-                for key in self.report_layout.exprs.actions:
-                    if key == ACTION_DELETE_ROW:
-                        del_row_actions = self.report_layout.exprs.actions[key]
-                        for dra in del_row_actions:
-                            if vcf_record.vcf_eval(dra.pattern):
-                                delete_row = True
-                                break
+                if self.report_layout.exprs is not None:
+                    self.dbg(self.report_layout.exprs)
+                    self.dbg(self.report_layout.exprs.actions)
+                    for key in self.report_layout.exprs.actions:
+                        if key == ACTION_DELETE_ROW:
+                            del_row_actions = self.report_layout.exprs.actions[key]
+                            for dra in del_row_actions:
+                                if vcf_record.vcf_eval(dra.pattern):
+                                    delete_row = True
+                                    break
                 if delete_row:
                     continue
                 self.__write_content(ws,

@@ -64,6 +64,8 @@ DFLT_TEST_ANNO_EXCL_TAGS += "," + MUTSTAT_DETAILS_COLS_TAG
 DFLT_TEST_ANNO_EXCL_TAGS += "," + EXAC_OTH_COLS_TAG
 DFLT_TEST_ANNO_EXCL_TAGS += "," + UNKNOWN_COLS_TAG
 
+MUTREP_TEST = False
+
 class TestMutRepPipeline(SafeTester):
 
     def __init__(self, test_name):
@@ -292,7 +294,7 @@ class TestMutRepPipeline(SafeTester):
                          'orange',
                          "MutRepPipeline cannot correctly read report layout info 'expression actions' from jobs setup file")
 
-    @unittest.skipUnless(FULL_SYSTEM_TEST, "taking too long time to test")
+    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST, "taking too long time to test")
     def test_summary_report_1(self):
         """ test if summary report with default configuration can be correctly generated """
 
@@ -314,10 +316,11 @@ class TestMutRepPipeline(SafeTester):
                          18,
                          "shared mutations cannot be correctly determined")
 
-    @unittest.skipUnless(FULL_SYSTEM_TEST, "taking too long time to test")
+    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST, "taking too long time to test")
     def test_summary_report_2(self):
         """ test summary with multiple report_regions """
 
+        self.individual_debug = True
         self.init_test(self.current_func_name)
         job_name = self.test_function
         annotated_vcf_tabix = join_path(self.data_dir,
@@ -327,7 +330,7 @@ class TestMutRepPipeline(SafeTester):
         dataset_name = self.test_function
         jobs_setup_file = self.__create_jobs_setup_file(dataset_name=dataset_name,
                                                         annotated_vcf_tabix=annotated_vcf_tabix,
-                                                        report_regions="6:78171941-78172992,18:28610988-28611790",
+                                                        report_regions="6:78171940-78172992,18:28610987-28611790",
                                                         call_detail="YES",
                                                         )
         pl = MutRepPipeline(jobs_setup_file)
@@ -337,7 +340,7 @@ class TestMutRepPipeline(SafeTester):
                          10,
                          "shared mutations cannot be correctly determined")
 
-    @unittest.skipUnless(FULL_SYSTEM_TEST, "taking too long time to test")
+    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST, "taking too long time to test")
     def test_summary_report_3(self):
         """
         test if mutations with more than one alternate alleles in summary
@@ -366,15 +369,13 @@ class TestMutRepPipeline(SafeTester):
                          "information of mutations with more than one alternate alleles are incorrect"
                          )
 
-    @unittest.skipUnless(FULL_SYSTEM_TEST, "taking too long time to test")
+    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST, "taking too long time to test")
     def test_summary_report_4(self):
         """ test summary with multiple report_regions and many sample infos """
 
         self.init_test(self.current_func_name)
         annotated_vcf_tabix = join_path(self.data_dir,
                                         "chr6_18.vcf.gz")
-        rpt_out_file = join_path(self.working_dir,
-                                 self.current_func_name + ".xlsx")
         dataset_name = self.test_function
         jobs_setup_file = self.__create_jobs_setup_file(dataset_name=dataset_name,
                                                         annotated_vcf_tabix=annotated_vcf_tabix,
@@ -399,8 +400,12 @@ class TestMutRepPipeline(SafeTester):
                          11,
                          "Incorrect number of columns"
                          )
+        self.assertEqual(xu.nsheets,
+                         2,
+                         "Incorrect number of sheets"
+                         )
 
-    @unittest.skipUnless(FULL_SYSTEM_TEST, "taking too long time to test")
+    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST, "taking too long time to test")
     def test_summary_report_5(self):
         """ test summary report of CRC samples """
 
@@ -425,7 +430,7 @@ class TestMutRepPipeline(SafeTester):
                          "CRC report cannot be generated correctly"
                          )
 
-    @unittest.skipUnless(FULL_SYSTEM_TEST, "taking too long time to test")
+    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST, "taking too long time to test")
     def test_summary_report_6(self):
         """ test if unicode character 'ö' is allowed in the report """
 
@@ -452,7 +457,7 @@ class TestMutRepPipeline(SafeTester):
                          "report with swedish unicode character cannot be generated correctly"
                          )
 
-    @unittest.skipUnless(FULL_SYSTEM_TEST, "taking too long time to test")
+    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST, "taking too long time to test")
     def test_family_report_1(self):
         """ test with only one family which has only one members """
 
@@ -479,7 +484,7 @@ class TestMutRepPipeline(SafeTester):
                          0,
                          "invalid sheet name")
 
-    @unittest.skipUnless(FULL_SYSTEM_TEST, "taking too long time to test")
+    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST, "taking too long time to test")
     def test_family_report_2(self):
         """ test with only one family which has two members """
 
@@ -512,7 +517,7 @@ class TestMutRepPipeline(SafeTester):
                          2,
                          "invalid sheet name")
 
-    @unittest.skipUnless(FULL_SYSTEM_TEST, "taking too long time to test")
+    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST, "taking too long time to test")
     def test_family_report_3(self):
         """ test with only one family which has three members """
 
@@ -548,7 +553,7 @@ class TestMutRepPipeline(SafeTester):
                          3,
                          "invalid sheet name")
 
-    @unittest.skipUnless(FULL_SYSTEM_TEST, "taking too long time to test")
+    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST, "taking too long time to test")
     def test_family_report_4(self):
         """
         test with number of mutations are correct in each tab
@@ -587,7 +592,7 @@ class TestMutRepPipeline(SafeTester):
                          13,
                          "incorrect number of mutations")
 
-    @unittest.skipUnless(FULL_SYSTEM_TEST, "taking too long time to test")
+    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST, "taking too long time to test")
     def test_family_report_5(self):
         """ test if report can be run with missing columns """
 
@@ -617,7 +622,7 @@ class TestMutRepPipeline(SafeTester):
                          13,
                          "incorrect number of mutations")
 
-    @unittest.skipUnless(FULL_SYSTEM_TEST, "taking too long time to test")
+    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST, "taking too long time to test")
     def test_families_reports_1(self):
         """ test generating offline families reports (1 family)"""
 
@@ -653,7 +658,7 @@ class TestMutRepPipeline(SafeTester):
                          7,
                          "incorrect number of mutations")
 
-    @unittest.skipUnless(FULL_SYSTEM_TEST, "taking too long time to test")
+    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST, "taking too long time to test")
     def test_families_reports_2(self):
         """ test generating offline families reports (3 families)"""
 
@@ -691,7 +696,7 @@ class TestMutRepPipeline(SafeTester):
                          1,
                          "invalid number of sheets")
 
-    @unittest.skipUnless(FULL_SYSTEM_TEST, "taking too long time to test")
+    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST, "taking too long time to test")
     def test_families_reports_3(self):
         """ test generating 101 CRC families reports """
 
@@ -736,7 +741,7 @@ class TestMutRepPipeline(SafeTester):
                          4,
                          "invalid number of sheets")
 
-    @unittest.skipUnless(FULL_SYSTEM_TEST, "taking too long time to test")
+    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST, "taking too long time to test")
     def test_families_reports_4(self):
         """ test generating NK64 fam24 families reports """
 
@@ -769,7 +774,7 @@ class TestMutRepPipeline(SafeTester):
                          3,
                          "incorrect number of mutations")
 
-    @unittest.skipUnless(FULL_SYSTEM_TEST, "taking too long time to test")
+    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST, "taking too long time to test")
     def test_families_reports_5(self):
         """ test generating NK64 PMS2 families reports """
 
@@ -820,7 +825,7 @@ class TestMutRepPipeline(SafeTester):
                          1,
                          "invalid number of sheets")
 
-    @unittest.skipUnless(FULL_SYSTEM_TEST, "taking too long time to test")
+    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST, "taking too long time to test")
     def test_expression_action_del_row_1(self):
         """
         test if expreesion patterns and expression actions can be used
@@ -830,8 +835,6 @@ class TestMutRepPipeline(SafeTester):
         self.init_test(self.current_func_name)
         annotated_vcf_tabix = join_path(self.data_dir,
                                         "input.vcf.gz")
-        rpt_out_file = join_path(self.working_dir,
-                                 self.current_func_name + ".xlsx")
         dataset_name = self.test_function
         jobs_setup_file = self.__create_jobs_setup_file(dataset_name=dataset_name,
                                                         annotated_vcf_tabix=annotated_vcf_tabix,
@@ -849,6 +852,39 @@ class TestMutRepPipeline(SafeTester):
         self.assertEqual(xu.count_rows(sheet_idx=0),
                          8,
                          "Incorrect number of rows"
+                         )
+
+    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST, "taking too long time to test")
+    def test_color_shared_mutations_1(self):
+        """
+        test if shared mutation can be colored correctly
+        """
+
+        self.individual_debug = True
+        self.init_test(self.current_func_name)
+        annotated_vcf_tabix = join_path(self.data_dir,
+                                        "input.vcf.gz")
+        dataset_name = self.test_function
+        jobs_setup_file = self.__create_jobs_setup_file(dataset_name=dataset_name,
+                                                        annotated_vcf_tabix=annotated_vcf_tabix,
+                                                        report_regions="9:99700709-99702632",
+                                                        sample_infos="8:Co-35:Co-37,13:Co-95,275:Co-1262:Co-618,296:Co-793:Co-876",
+                                                        summary_families_sheet=True,
+                                                        )
+        pl = MutRepPipeline(jobs_setup_file)
+        pl.gen_summary_report(pl.report_layout.report_regions)
+        xls_file = join_path(self.working_dir,
+                             "rpts",
+                             dataset_name+"_summary.xlsx")
+        xu = XlsUtils(xls_file)
+        col_idx = xu.get_col_idx(col_name="275-Co-1262", sheet_idx=1)
+        self.assertEqual(xu.get_cell_rgb(5, col_idx, sheet_idx=1),
+                         "FFC0C0C0",
+                         "Incorrect color"
+                         )
+        self.assertEqual(xu.get_cell_value(5, col_idx, sheet_idx=1),
+                         "het",
+                         "Incorrect cell value"
                          )
 
     def tearDown(self):

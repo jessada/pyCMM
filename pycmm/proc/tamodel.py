@@ -157,6 +157,8 @@ class _TAVcfCall(_VcfCall, pyCMMBase):
 
     @property
     def shared_mutations(self):
+        if self.__shared_mutations is None:
+            self.site.cal_shared()
         return self.__shared_mutations
 
     @shared_mutations.setter
@@ -292,7 +294,7 @@ class _TAVcfRecord(_VcfRecord, pyCMMBase):
             afss.append(afs)
         return afss
 
-    def __cal_shared(self):
+    def cal_shared(self):
         """
         - with given family informations, this function will identify shared
         mutation for each family and for each genotype
@@ -387,7 +389,7 @@ class _TAVcfRecord(_VcfRecord, pyCMMBase):
              empty, None, it will return False
         """
         if not self.__shared_cal:
-            self.__cal_shared()
+            self.cal_shared()
             self.__shared_cal = True
         for fam_id in self.__family_infos:
             family_info = self.__family_infos[fam_id]
