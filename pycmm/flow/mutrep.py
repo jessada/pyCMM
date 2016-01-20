@@ -235,14 +235,14 @@ class ActionColorRow(pyCMMBase):
 
     def get_raw_repr(self):
         return {"pattern": self.pattern,
-                "info": self.info}
+                "color": self.color}
 
     @property
     def pattern(self):
         return self.__pattern
 
     @property
-    def info(self):
+    def color(self):
         return self.__info
 
 class ActionColorCol(pyCMMBase):
@@ -264,8 +264,12 @@ class ActionColorCol(pyCMMBase):
         return self.__pattern
 
     @property
-    def info(self):
-        return self.__info
+    def col_name(self):
+        return self.__info.split(":")[0]
+
+    @property
+    def color(self):
+        return self.__info.split(":")[1]
 
 class VcfExpressions(pyCMMBase):
     """
@@ -308,7 +312,7 @@ class VcfExpressions(pyCMMBase):
             # and the item can also have an info field
             self.__actions = defaultdict(list)
             for expr in self.__expressions:
-                if expr[JOBS_SETUP_RPT_EXPRESSIONS_USAGES_KEY] is not None:
+                if JOBS_SETUP_RPT_EXPRESSIONS_USAGES_KEY in expr:
                     pattern = expr[JOBS_SETUP_RPT_EXPRESSIONS_PATTERN_KEY]
                     for usage in expr[JOBS_SETUP_RPT_EXPRESSIONS_USAGES_KEY]:
                         action = usage[JOBS_SETUP_RPT_EXPRESSIONS_ACTION_KEY]
@@ -635,7 +639,17 @@ class MutRepPipeline(CMMDBPipeline):
                         samples_list,
                         ):
         anno_cols = self.report_layout.anno_cols
-        dflt_cell_fmt = self.cell_fmt_mgr.cell_fmts[DFLT_FMT]
+        row_color = None
+        if self.report_layout.exprs is not None:
+            color_row_actions = self.report_layout.exprs.actions[ACTION_COLOR_ROW]
+            for cra in color_row_actions:
+                if vcf_record.vcf_eval(cra.pattern):
+                    row_color = cra.color
+                    break
+        if row_color is not None:
+            dflt_cell_fmt = self.cell_fmt_mgr.cell_fmts[row_color]
+        else:
+            dflt_cell_fmt = self.cell_fmt_mgr.cell_fmts[DFLT_FMT]
         alt_allele = vcf_record.alleles[allele_idx]
         ws.write(row, 0, vcf_record.CHROM, dflt_cell_fmt)
         ws.write(row, 1, str(vcf_record.POS), dflt_cell_fmt)
@@ -643,6 +657,12 @@ class MutRepPipeline(CMMDBPipeline):
         ws.write(row, 3, str(alt_allele), dflt_cell_fmt)
         len_anno_cols = len(anno_cols)
         # annotate INFO columns
+        if self.report_layout.exprs is not None:
+            color_col_names = map(lambda x: x.col_name,
+                                  self.report_layout.exprs.actions[ACTION_COLOR_COL])
+        else:
+            color_col_names = []
+        self.dbg(color_col_names)
         for anno_idx in xrange(len_anno_cols):
             anno_col_name = anno_cols[anno_idx]
             info = vcf_record.INFO[anno_col_name]
@@ -656,7 +676,16 @@ class MutRepPipeline(CMMDBPipeline):
                 info = ""
             if info == [None]:
                 info = ""
-            ws.write(row, anno_idx+LAYOUT_VCF_COLS, str(info).decode('utf-8'), dflt_cell_fmt)
+            info_cell_fmt = dflt_cell_fmt
+            if anno_col_name in color_col_names:
+                color_col_actions = self.report_layout.exprs.actions[ACTION_COLOR_COL]
+                for cca in color_col_actions:
+                    if ((anno_col_name == cca.col_name) and
+                        vcf_record.vcf_eval(cca.pattern)
+                        ):
+                        info_cell_fmt = self.cell_fmt_mgr.cell_fmts[cca.color]
+                        break
+            ws.write(row, anno_idx+LAYOUT_VCF_COLS, str(info).decode('utf-8'), info_cell_fmt)
         # annotate samples information
         sample_start_idx = LAYOUT_VCF_COLS + len_anno_cols
         for sample_idx in xrange(len(samples_list)):
@@ -721,15 +750,11 @@ class MutRepPipeline(CMMDBPipeline):
                     continue
                 delete_row = False
                 if self.report_layout.exprs is not None:
-                    self.dbg(self.report_layout.exprs)
-                    self.dbg(self.report_layout.exprs.actions)
-                    for key in self.report_layout.exprs.actions:
-                        if key == ACTION_DELETE_ROW:
-                            del_row_actions = self.report_layout.exprs.actions[key]
-                            for dra in del_row_actions:
-                                if vcf_record.vcf_eval(dra.pattern):
-                                    delete_row = True
-                                    break
+                    del_row_actions = self.report_layout.exprs.actions[ACTION_DELETE_ROW]
+                    for dra in del_row_actions:
+                        if vcf_record.vcf_eval(dra.pattern):
+                            delete_row = True
+                            break
                 if delete_row:
                     continue
                 self.__write_content(ws,

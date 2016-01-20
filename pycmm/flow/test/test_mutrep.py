@@ -227,8 +227,11 @@ class TestMutRepPipeline(SafeTester):
         self.assertEqual(pl.report_layout.exprs.actions[ACTION_COLOR_COL][0].pattern,
                          '1>0',
                          "MutRepPipeline cannot correctly read report layout info 'expression actions' from jobs setup file")
-        self.assertEqual(pl.report_layout.exprs.actions[ACTION_COLOR_COL][0].info,
-                         'cytoBand:yellow',
+        self.assertEqual(pl.report_layout.exprs.actions[ACTION_COLOR_COL][0].col_name,
+                         'cytoBand',
+                         "MutRepPipeline cannot correctly read report layout info 'expression actions' from jobs setup file")
+        self.assertEqual(pl.report_layout.exprs.actions[ACTION_COLOR_COL][0].color,
+                         'yellow',
                          "MutRepPipeline cannot correctly read report layout info 'expression actions' from jobs setup file")
         self.assertTrue(pl.report_layout.split_chrom,
                         "MutRepPipeline cannot correctly read report layout info 'split chrom' from jobs setup file")
@@ -278,19 +281,22 @@ class TestMutRepPipeline(SafeTester):
         self.assertEqual(pl.report_layout.exprs.actions[ACTION_COLOR_COL][0].pattern,
                          'jkl>5',
                          "MutRepPipeline cannot correctly read report layout info 'expression actions' from jobs setup file")
-        self.assertEqual(pl.report_layout.exprs.actions[ACTION_COLOR_COL][0].info,
-                         'F_U_8:red',
+        self.assertEqual(pl.report_layout.exprs.actions[ACTION_COLOR_COL][0].col_name,
+                         'F_U_8',
+                         "MutRepPipeline cannot correctly read report layout info 'expression actions' from jobs setup file")
+        self.assertEqual(pl.report_layout.exprs.actions[ACTION_COLOR_COL][0].color,
+                         'red',
                          "MutRepPipeline cannot correctly read report layout info 'expression actions' from jobs setup file")
         self.assertEqual(pl.report_layout.exprs.actions[ACTION_COLOR_ROW][0].pattern,
                          'jkl>5',
                          "MutRepPipeline cannot correctly read report layout info 'expression actions' from jobs setup file")
-        self.assertEqual(pl.report_layout.exprs.actions[ACTION_COLOR_ROW][0].info,
+        self.assertEqual(pl.report_layout.exprs.actions[ACTION_COLOR_ROW][0].color,
                          'green',
                          "MutRepPipeline cannot correctly read report layout info 'expression actions' from jobs setup file")
         self.assertEqual(pl.report_layout.exprs.actions[ACTION_COLOR_ROW][1].pattern,
                          '2>3',
                          "MutRepPipeline cannot correctly read report layout info 'expression actions' from jobs setup file")
-        self.assertEqual(pl.report_layout.exprs.actions[ACTION_COLOR_ROW][1].info,
+        self.assertEqual(pl.report_layout.exprs.actions[ACTION_COLOR_ROW][1].color,
                          'orange',
                          "MutRepPipeline cannot correctly read report layout info 'expression actions' from jobs setup file")
 
@@ -855,12 +861,105 @@ class TestMutRepPipeline(SafeTester):
                          )
 
     @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST, "taking too long time to test")
+    def test_expression_action_color_row_1(self):
+        """
+        test if expreesion patterns and expression actions can be used
+        for coloring rows with a given pattern
+        """
+
+        self.init_test(self.current_func_name)
+        annotated_vcf_tabix = join_path(self.data_dir,
+                                        "input.vcf.gz")
+        dataset_name = self.test_function
+        jobs_setup_file = self.__create_jobs_setup_file(dataset_name=dataset_name,
+                                                        annotated_vcf_tabix=annotated_vcf_tabix,
+                                                        report_regions="6:78171940-78172992,18:28610987-28611790",
+                                                        expression_patterns='exp_splicing:"Func.refGene" == \'splicing\'',
+                                                        expression_usages="exp_splicing:color_row:ROSY_BROWN",
+                                                        call_detail="YES",
+                                                        )
+        pl = MutRepPipeline(jobs_setup_file)
+        pl.gen_summary_report(pl.report_layout.report_regions)
+        xls_file = join_path(self.working_dir,
+                             "rpts",
+                             dataset_name+"_summary.xlsx")
+        xu = XlsUtils(xls_file)
+        col_idx = xu.get_col_idx(col_name="Func.refGene", sheet_idx=0)
+        self.assertEqual(xu.get_cell_value(8, col_idx, sheet_idx=0),
+                         "splicing",
+                         "Incorrect cell value"
+                         )
+        self.assertEqual(xu.get_cell_rgb(8, 2, sheet_idx=0),
+                         "FFBC8F8F",
+                         "Incorrect color"
+                         )
+        self.assertEqual(xu.get_cell_rgb(8, col_idx, sheet_idx=0),
+                         "FFBC8F8F",
+                         "Incorrect color"
+                         )
+        self.assertNotEqual(xu.get_cell_rgb(7, col_idx, sheet_idx=0),
+                            "FFBC8F8F",
+                            "Incorrect color"
+                            )
+
+    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST, "taking too long time to test")
+    def test_expression_action_color_col_1(self):
+        """
+        test if expreesion patterns and expression actions can be used
+        for coloring rows with a given pattern
+        """
+
+        self.init_test(self.current_func_name)
+        annotated_vcf_tabix = join_path(self.data_dir,
+                                        "input.vcf.gz")
+        dataset_name = self.test_function
+        jobs_setup_file = self.__create_jobs_setup_file(dataset_name=dataset_name,
+                                                        annotated_vcf_tabix=annotated_vcf_tabix,
+                                                        report_regions="6:78171940-78172992,18:28610987-28611790",
+                                                        expression_patterns='exp_exonic:"Func.refGene" == \'exonic\';exp_ns_snv:"ExonicFunc.refGene" == \'nonsynonymous_SNV\'',
+                                                        expression_usages="exp_exonic:color_row:ROSY_BROWN;exp_ns_snv:color_col:cytoBand:TEAL;exp_exonic:color_col:Gene.refGene:YELLOW",
+                                                        call_detail="YES",
+                                                        )
+        pl = MutRepPipeline(jobs_setup_file)
+        pl.gen_summary_report(pl.report_layout.report_regions)
+        xls_file = join_path(self.working_dir,
+                             "rpts",
+                             dataset_name+"_summary.xlsx")
+        xu = XlsUtils(xls_file)
+        col_idx = xu.get_col_idx(col_name="Func.refGene", sheet_idx=0)
+        self.assertEqual(xu.get_cell_value(4, col_idx, sheet_idx=0),
+                         "exonic",
+                         "Incorrect cell value"
+                         )
+        self.assertEqual(xu.get_cell_rgb(5, 14, sheet_idx=0),
+                         "FFBC8F8F",
+                         "Incorrect color"
+                         )
+        self.assertEqual(xu.get_cell_rgb(5, col_idx, sheet_idx=0),
+                         "FFBC8F8F",
+                         "Incorrect color"
+                         )
+        self.assertNotEqual(xu.get_cell_rgb(2, col_idx, sheet_idx=0),
+                            "FFBC8F8F",
+                            "Incorrect color"
+                            )
+        col_idx = xu.get_col_idx(col_name="cytoBand", sheet_idx=0)
+        self.assertEqual(xu.get_cell_rgb(4, col_idx, sheet_idx=0),
+                         "FF008080",
+                         "Incorrect color"
+                         )
+        col_idx = xu.get_col_idx(col_name="Gene.refGene", sheet_idx=0)
+        self.assertEqual(xu.get_cell_rgb(4, col_idx, sheet_idx=0),
+                         "FFFFFF00",
+                         "Incorrect color"
+                         )
+
+    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST, "taking too long time to test")
     def test_color_shared_mutations_1(self):
         """
         test if shared mutation can be colored correctly
         """
 
-        self.individual_debug = True
         self.init_test(self.current_func_name)
         annotated_vcf_tabix = join_path(self.data_dir,
                                         "input.vcf.gz")
@@ -878,13 +977,13 @@ class TestMutRepPipeline(SafeTester):
                              dataset_name+"_summary.xlsx")
         xu = XlsUtils(xls_file)
         col_idx = xu.get_col_idx(col_name="275-Co-1262", sheet_idx=1)
-        self.assertEqual(xu.get_cell_rgb(5, col_idx, sheet_idx=1),
-                         "FFC0C0C0",
-                         "Incorrect color"
-                         )
         self.assertEqual(xu.get_cell_value(5, col_idx, sheet_idx=1),
                          "het",
                          "Incorrect cell value"
+                         )
+        self.assertEqual(xu.get_cell_rgb(5, col_idx, sheet_idx=1),
+                         "FFC0C0C0",
+                         "Incorrect color"
                          )
 
     def tearDown(self):
