@@ -1,6 +1,5 @@
 from os.path import join as join_path
 from os.path import dirname
-from pycmm.utils import mylogger
 from pycmm.template import SafeTester
 from pycmm.proc.taparser import TAVcfReader
 
@@ -15,7 +14,7 @@ class TestTAVcfReader(SafeTester):
                             )
 
     def setUp(self):
-        mylogger.getLogger(__name__)
+        pass
 
     def test_annovar_info_1(self):
         """ to check if all the variables annotated by ANNOVAR are correctly listed"""

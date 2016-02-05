@@ -1,6 +1,7 @@
 from pycmm.utils import mylogger
 import pkg_resources
 import sys
+from collections import OrderedDict
 
 param_display_fmt = "  {name:<50}{value}"
 
@@ -44,6 +45,8 @@ def show_config(app_description,
 def disp_params_set(params_name,
                     params,
                     ):
+    if params is None:
+        return
     disp_header(params_name)
     for key in params:
         val = params[key]
@@ -51,7 +54,7 @@ def disp_params_set(params_name,
             disp_subheader(key)
             for entry_idx in xrange(len(val)):
                 disp_subparam("#"+str(entry_idx+1), val[entry_idx])
-        elif type(val) is dict:
+        elif (type(val) is dict) or (type(val) is OrderedDict):
             disp_subheader(key)
             for sub_key in val:
                 disp_subparam(sub_key, val[sub_key])

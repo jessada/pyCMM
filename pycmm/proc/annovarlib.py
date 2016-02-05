@@ -1,5 +1,6 @@
 import sys
-from pycmm.utils import mylogger
+from os.path import join as join_path
+from collections import OrderedDict
 from pycmm.template import pyCMMBase
 from pycmm.settings import LJB_SIFT_PREDICTION_COL_NAME as SIFT_PRED_COL
 from pycmm.settings import LJB_POLYPHEN2_HDIV_PREDICTION_COL_NAME as POLYPHEN2_HDIV_PRED_COL
@@ -10,6 +11,8 @@ from pycmm.settings import LJB_MUTATIONASSESSOR_PREDICTION_COL_NAME as MUTATIONA
 from pycmm.settings import LJB_FATHMM_PREDICTION_COL_NAME as FATHMM_PRED_COL
 from pycmm.settings import LJB_RADIALSVM_PREDICTION_COL_NAME as RADIALSVM_PRED_COL
 from pycmm.settings import LJB_LR_PREDICTION_COL_NAME as LR_PRED_COL
+from pycmm.utils import exec_sh
+from pycmm.utils import get_path
 
 ANNOVAR_PARAMS_INPUT_FILE_KEY = "input_file"
 ANNOVAR_PARAMS_DB_FOLDER_KEY = "db_folder"
@@ -19,45 +22,118 @@ ANNOVAR_PARAMS_DB_NAMES_KEY = "db_names"
 ANNOVAR_PARAMS_DB_OPS_KEY = "db_ops"
 ANNOVAR_PARAMS_NASTRING_KEY = "nastring"
 
+_DESCRIPTION = "Description"
+_HARMFUL = "Harmful"
+
+class AnnovarParams(pyCMMBase):
+    """ A structure to parse and keep sample information """
+
+    def __init__(self,
+                 params,
+                 ):
+        self.__params = params
+
+    @property
+    def input_file(self):
+        return self.__params[ANNOVAR_PARAMS_INPUT_FILE_KEY]
+
+    @property
+    def db_folder(self):
+        return self.__params[ANNOVAR_PARAMS_DB_FOLDER_KEY]
+
+    @property
+    def buildver(self):
+        return self.__params[ANNOVAR_PARAMS_BUILDVER_KEY]
+
+    @property
+    def protocols(self):
+        return self.__params[ANNOVAR_PARAMS_DB_NAMES_KEY]
+
+    @property
+    def operations(self):
+        return self.__params[ANNOVAR_PARAMS_DB_OPS_KEY]
+
+    @property
+    def nastring(self):
+        return self.__params[ANNOVAR_PARAMS_NASTRING_KEY]
+
 class Annovar(pyCMMBase):
     """ A structure to parse and keep sample information """
 
     def __init__(self,
-                 annovar_params,
+                 dataset_name,
+                 input_file,
+                 db_folder,
+                 buildver,
+                 protocols,
+                 operations,
+                 nastring,
+                 data_out_folder,
                  ):
-        self.__annovar_params = annovar_params
+        self.__dataset_name = dataset_name
+        self.__input_file = input_file
+        self.__db_folder = db_folder
+        self.__buildver = buildver
+        self.__protocols = protocols
+        self.__operations = operations
+        self.__nastring = nastring
+        self.__data_out_folder = data_out_folder
+        self.__tmp_annovar_prefix = self.local_tmp_file
+
+    def get_raw_repr(self):
+        raw_repr = OrderedDict()
+        raw_repr["dataset name"] = self.dataset_name
+        raw_repr["input file"] = self.input_file
+        raw_repr["db folder"] = self.db_folder
+        raw_repr["build ver"] = self.buildver
+        raw_repr["protocols"] = self.protocols
+        raw_repr["operations"] = self.operations
+        raw_repr["NA string"] = self.nastring
+        raw_repr["data out folder"] = self.data_out_folder
+        raw_repr["tmp annovar prefix"] = self.tmp_annovar_prefix
+        raw_repr["annotated vcf output file"] = self.out_annotated_vcf
+        return raw_repr
+
+    @property
+    def dataset_name(self):
+        return self.__dataset_name
 
     @property
     def input_file(self):
-        return self.__annovar_params[ANNOVAR_PARAMS_INPUT_FILE_KEY]
+        return self.__input_file
 
     @property
     def db_folder(self):
-        return self.__annovar_params[ANNOVAR_PARAMS_DB_FOLDER_KEY]
+        return self.__db_folder
 
     @property
     def buildver(self):
-        return self.__annovar_params[ANNOVAR_PARAMS_BUILDVER_KEY]
-
-    @property
-    def out_prefix(self):
-        return self.__annovar_params[ANNOVAR_PARAMS_OUT_PREFIX_KEY]
+        return self.__buildver
 
     @property
     def protocols(self):
-        return self.__annovar_params[ANNOVAR_PARAMS_DB_NAMES_KEY]
+        return self.__protocols
 
     @property
     def operations(self):
-        return self.__annovar_params[ANNOVAR_PARAMS_DB_OPS_KEY]
+        return self.__operations
 
     @property
     def nastring(self):
-        return self.__annovar_params[ANNOVAR_PARAMS_NASTRING_KEY]
+        return self.__nastring
 
     @property
-    def annotated_vcf(self):
-        return self.out_prefix + "." + self.buildver + "_multianno.vcf"
+    def data_out_folder(self):
+        return self.__data_out_folder
+
+    @property
+    def tmp_annovar_prefix(self):
+        return self.__tmp_annovar_prefix
+
+    @property
+    def out_annotated_vcf(self):
+        file_name = self.dataset_name + "_annotated.vcf"
+        return join_path(self.data_out_folder, file_name)
 
     @property
     def table_annovar_cmd(self):
@@ -65,7 +141,7 @@ class Annovar(pyCMMBase):
         cmd += " " + self.input_file
         cmd += " " + self.db_folder
         cmd += " -buildver " + self.buildver
-        cmd += " -out " + self.out_prefix
+        cmd += " -out " + self.tmp_annovar_prefix
         cmd += " -remove"
         cmd += " -protocol " + self.protocols
         cmd += " -operation " + self.operations
@@ -73,8 +149,19 @@ class Annovar(pyCMMBase):
         cmd += " -vcfinput"
         return cmd
 
-_DESCRIPTION = "Description"
-_HARMFUL = "Harmful"
+    def __gen_annotated_vcf(self):
+        return exec_sh(self.table_annovar_cmd)
+
+    def run_table_annovar(self):
+        # run table_annovar.pl, the result is in local tmp folder
+        self.__gen_annotated_vcf()
+        # copy results into the expected output file
+        annotated_file = self.tmp_annovar_prefix + ".hg19_multianno.vcf" 
+        self.copy_file(annotated_file, self.out_annotated_vcf)
+        # delete tmp file
+        self.remove_dir(get_path(annotated_file))
+        self.info(" > > > D O N E < < < ")
+        self.info("The result is at "+self.out_annotated_vcf)
 
 
 class PredictionInfo(pyCMMBase):
@@ -301,7 +388,7 @@ class PredictionTranslator(pyCMMBase):
         # if predictor is not yet in the system
         if predictor_name not in self.__pred_info.keys():
             warning_msg = "!! Unknown predictor '" + predictor_name + "'"
-            mylogger.warning(warning_msg)
+            self.warning(warning_msg)
             # create a dummy for the new predictor entity in the system
             self.__pred_info[predictor_name] = {}
             pred_info = PredictionInfo(code=code,
@@ -313,7 +400,7 @@ class PredictionTranslator(pyCMMBase):
         elif code not in self.__pred_info[predictor_name].keys():
             warning_msg = "!! Unknown prediction code '" + code + "'"
             warning_msg += " for predictor '" + predictor_name + "'"
-            mylogger.warning(warning_msg)
+            self.warning(warning_msg)
             # create a dummy for the new prediction code entity in the system
             pred_info = PredictionInfo(code=code,
                                        description='.',

@@ -7,7 +7,6 @@ from os.path import dirname
 from os.path import isdir
 from pycmm import settings
 from pycmm.template import SafeTester
-from pycmm.utils import mylogger
 from pycmm.settings import FAST_PROJECT_CODE
 from pycmm.settings import SLOW_PROJECT_CODE
 from pycmm.settings import DFLT_GATKBP_ALLOC_TIME
@@ -40,7 +39,7 @@ class TestGATKBPPipeline(SafeTester):
                             )
 
     def setUp(self):
-        mylogger.getLogger(__name__)
+        pass
 
     def __create_jobs_setup_file(self,
                                  dataset_name=None,
@@ -181,7 +180,7 @@ class TestGATKBPPipeline(SafeTester):
                          targets_interval_list,
                          "GATKBPPipeline cannot correctly read meta info 'targets.interval_list' from jobs setup file")
 
-    @unittest.skipUnless(settings.SLURM_TEST, "taking too much UPPMAX cpu-core hours")
+    @unittest.skipUnless(settings.SLURM_GATKBP_TEST, "taking too much UPPMAX cpu-core hours")
     def test_bwa_mem_1(self):
         """ test basic bwa mem, a normal pair of fastq files """
 
@@ -192,7 +191,7 @@ class TestGATKBPPipeline(SafeTester):
         pl = GATKBPPipeline(jobs_setup_file)
         pl.bwa_mem(sample_name)
 
-    @unittest.skipUnless(settings.SLURM_TEST, "taking too much UPPMAX cpu-core hours")
+    @unittest.skipUnless(settings.SLURM_GATKBP_TEST, "taking too much UPPMAX cpu-core hours")
     def test_bwa_mem_4(self):
         """ test bwa mem with concatenate gz files """
 
@@ -205,7 +204,7 @@ class TestGATKBPPipeline(SafeTester):
         pl = GATKBPPipeline(jobs_setup_file)
         pl.bwa_mem(sample_name)
 
-    @unittest.skipUnless(settings.SLURM_TEST, "taking too much UPPMAX cpu-core hours")
+    @unittest.skipUnless(settings.SLURM_GATKBP_TEST, "taking too much UPPMAX cpu-core hours")
     def test_bwa_mem_5(self):
         """ test bwa mem with problematics Ill-Br """
 
@@ -219,7 +218,7 @@ class TestGATKBPPipeline(SafeTester):
         pl = GATKBPPipeline(jobs_setup_file)
         pl.bwa_mem(sample_name)
 
-    @unittest.skipUnless(settings.SLURM_TEST, "taking too much UPPMAX cpu-core hours")
+    @unittest.skipUnless(settings.SLURM_GATKBP_TEST, "taking too much UPPMAX cpu-core hours")
     def test_sort_sam_1(self):
         """ test basic sort sam, a sam file from one pair of fastq files """
 
@@ -232,7 +231,7 @@ class TestGATKBPPipeline(SafeTester):
                              sample_name+"_concatted_reads.sam")
         pl.sort_sam(sample_name, sam_file=sam_file)
 
-    @unittest.skipUnless(settings.SLURM_TEST, "taking too much UPPMAX cpu-core hours")
+    @unittest.skipUnless(settings.SLURM_GATKBP_TEST, "taking too much UPPMAX cpu-core hours")
     def test_sort_sam_2(self):
         """ test a little advanced sort sam, 6 pairs of fastq files """
 
@@ -245,7 +244,7 @@ class TestGATKBPPipeline(SafeTester):
                              sample_name+"_concatted_reads.sam")
         pl.sort_sam(sample_name, sam_file=sam_file)
 
-    @unittest.skipUnless(settings.SLURM_TEST, "taking too much UPPMAX cpu-core hours")
+    @unittest.skipUnless(settings.SLURM_GATKBP_TEST, "taking too much UPPMAX cpu-core hours")
     def test_sort_sam_3(self):
         """ test a little more advanced sort sam, 6 abnormal pairs of fastq files """
 
@@ -258,7 +257,7 @@ class TestGATKBPPipeline(SafeTester):
                              sample_name+"_concatted_reads.sam")
         pl.sort_sam(sample_name, sam_file=sam_file)
 
-    @unittest.skipUnless(settings.SLURM_TEST, "taking too much UPPMAX cpu-core hours")
+    @unittest.skipUnless(settings.SLURM_GATKBP_TEST, "taking too much UPPMAX cpu-core hours")
     def test_sort_sam_4(self):
         """ test sort sam with concatenate gz files """
 
@@ -271,7 +270,7 @@ class TestGATKBPPipeline(SafeTester):
                              sample_name+"_concatted_reads.sam")
         pl.sort_sam(sample_name, sam_file=sam_file)
 
-    @unittest.skipUnless(settings.SLURM_TEST, "taking too much UPPMAX cpu-core hours")
+    @unittest.skipUnless(settings.SLURM_GATKBP_TEST, "taking too much UPPMAX cpu-core hours")
     def test_mark_dup(self):
         """ test mark duplicate """
 
@@ -290,7 +289,7 @@ class TestGATKBPPipeline(SafeTester):
         pl = GATKBPPipeline(jobs_setup_file)
         pl.mark_dup(sample_name, bam_file=bam_file)
 
-    @unittest.skipUnless(settings.SLURM_TEST, "taking too much UPPMAX cpu-core hours")
+    @unittest.skipUnless(settings.SLURM_GATKBP_TEST, "taking too much UPPMAX cpu-core hours")
     def test_create_intervals_1(self):
         """ test standard creating indels target intervals """
 
@@ -303,7 +302,7 @@ class TestGATKBPPipeline(SafeTester):
                              sample_name+"_dedup_reads.bam")
         pl.create_intervals(sample_name, bam_file=bam_file)
 
-    @unittest.skipUnless(settings.SLURM_TEST, "taking too much UPPMAX cpu-core hours")
+    @unittest.skipUnless(settings.SLURM_GATKBP_TEST, "taking too much UPPMAX cpu-core hours")
     def test_create_intervals_2(self):
         """ test creating indels target intervals with bam file that has extremely high score"""
 
@@ -316,7 +315,7 @@ class TestGATKBPPipeline(SafeTester):
                              sample_name+"_dedup_reads.bam")
         pl.create_intervals(sample_name, bam_file=bam_file)
 
-    @unittest.skipUnless(settings.SLURM_TEST, "taking too much UPPMAX cpu-core hours")
+    @unittest.skipUnless(settings.SLURM_GATKBP_TEST, "taking too much UPPMAX cpu-core hours")
     def test_indels_realign_1(self):
         """ test standard indel realignment """
 
@@ -334,7 +333,7 @@ class TestGATKBPPipeline(SafeTester):
                           indels_target_intervals_file=indels_target_intervals_file,
                           )
 
-    @unittest.skipUnless(settings.SLURM_TEST, "taking too much UPPMAX cpu-core hours")
+    @unittest.skipUnless(settings.SLURM_GATKBP_TEST, "taking too much UPPMAX cpu-core hours")
     def test_indels_realign_2(self):
         """ test indel realignment with high quality score"""
 
@@ -352,7 +351,7 @@ class TestGATKBPPipeline(SafeTester):
                           indels_target_intervals_file=indels_target_intervals_file,
                           )
 
-    @unittest.skipUnless(settings.SLURM_TEST, "taking too much UPPMAX cpu-core hours")
+    @unittest.skipUnless(settings.SLURM_GATKBP_TEST, "taking too much UPPMAX cpu-core hours")
     def test_base_recal_1(self):
         """ test standard base recalibration """
 
@@ -365,7 +364,7 @@ class TestGATKBPPipeline(SafeTester):
                              sample_name+"_realigned_reads.bam")
         pl.base_recal(sample_name, bam_file=bam_file)
 
-    @unittest.skipUnless(settings.SLURM_TEST, "taking too much UPPMAX cpu-core hours")
+    @unittest.skipUnless(settings.SLURM_GATKBP_TEST, "taking too much UPPMAX cpu-core hours")
     def test_base_recal_2(self):
         """ test base recalibration with high quality score """
 
@@ -378,7 +377,7 @@ class TestGATKBPPipeline(SafeTester):
                              sample_name+"_realigned_reads.bam")
         pl.base_recal(sample_name, bam_file=bam_file)
 
-    @unittest.skipUnless(settings.SLURM_TEST, "taking too much UPPMAX cpu-core hours")
+    @unittest.skipUnless(settings.SLURM_GATKBP_TEST, "taking too much UPPMAX cpu-core hours")
     def test_haplotype_caller_1(self):
         """ test haplotype caller with small data size """
 
@@ -402,7 +401,7 @@ class TestGATKBPPipeline(SafeTester):
                    bam_file=dedup_reads_file,
                    )
 
-    @unittest.skipUnless(settings.SLURM_TEST, "taking too much UPPMAX cpu-core hours")
+    @unittest.skipUnless(settings.SLURM_GATKBP_TEST, "taking too much UPPMAX cpu-core hours")
     def test_haplotype_caller_2(self):
         """ test haplotype caller with big data size """
 
@@ -424,7 +423,7 @@ class TestGATKBPPipeline(SafeTester):
                    bam_file=dedup_reads_file,
                    )
 
-    @unittest.skipUnless(settings.SLURM_TEST, "taking too much UPPMAX cpu-core hours")
+    @unittest.skipUnless(settings.SLURM_GATKBP_TEST, "taking too much UPPMAX cpu-core hours")
     def test_combine_gvcfs_1(self):
         """ test combine small gvcfs """
 
@@ -485,7 +484,7 @@ class TestGATKBPPipeline(SafeTester):
                            self.working_dir,
                            )
 
-    @unittest.skipUnless(settings.SLURM_TEST, "taking too much UPPMAX cpu-core hours")
+    @unittest.skipUnless(settings.SLURM_GATKBP_TEST, "taking too much UPPMAX cpu-core hours")
     def test_genotype_gvcfs(self):
         """ test genotype gvcfs """
 
@@ -504,7 +503,7 @@ class TestGATKBPPipeline(SafeTester):
         pl = GATKBPPipeline(jobs_setup_file)
         pl.genotype_gvcfs(gvcf_list=gvcf_list)
 
-    @unittest.skipUnless(settings.SLURM_TEST, "taking too much UPPMAX cpu-core hours")
+    @unittest.skipUnless(settings.SLURM_GATKBP_TEST, "taking too much UPPMAX cpu-core hours")
     def test_preprocess_sample_1(self):
         """ test sample pre-processing workflow (targeted sequencing) """
 
@@ -521,7 +520,7 @@ class TestGATKBPPipeline(SafeTester):
         pl = GATKBPPipeline(jobs_setup_file)
         pl.preprocess_sample(sample_name)
 
-    @unittest.skipUnless(settings.SLURM_TEST, "taking too much UPPMAX cpu-core hours")
+    @unittest.skipUnless(settings.SLURM_GATKBP_TEST, "taking too much UPPMAX cpu-core hours")
     def test_preprocess_sample_2(self):
         """ test sample pre-processing workflow (whole exome) """
 
@@ -543,7 +542,7 @@ class TestGATKBPPipeline(SafeTester):
         pl = GATKBPPipeline(jobs_setup_file)
         pl.preprocess_sample(sample_name)
 
-    @unittest.skipUnless(settings.SLURM_TEST, "taking too much UPPMAX cpu-core hours")
+    @unittest.skipUnless(settings.SLURM_GATKBP_TEST, "taking too much UPPMAX cpu-core hours")
     def test_preprocess_sample_4(self):
         """ test sample pre-processing workflow (Illumina WES) """
 
@@ -560,7 +559,7 @@ class TestGATKBPPipeline(SafeTester):
         pl = GATKBPPipeline(jobs_setup_file)
         pl.preprocess_sample(sample_name)
 
-    @unittest.skipUnless(settings.SLURM_TEST, "taking too much UPPMAX cpu-core hours")
+    @unittest.skipUnless(settings.SLURM_GATKBP_TEST, "taking too much UPPMAX cpu-core hours")
     def test_preprocess_sample_5(self):
         """ test sample pre-processing workflow (one of problematic sample from Illimina WES) """
 
@@ -575,7 +574,7 @@ class TestGATKBPPipeline(SafeTester):
         pl = GATKBPPipeline(jobs_setup_file)
         pl.preprocess_sample(sample_name)
 
-    @unittest.skipUnless(settings.SLURM_TEST, "taking too much UPPMAX cpu-core hours")
+    @unittest.skipUnless(settings.SLURM_GATKBP_TEST, "taking too much UPPMAX cpu-core hours")
     def test_preprocess_sample_Br_652(self):
         """ test sample pre-processing workflow (one of problematic sample from Illimina WES) """
 
@@ -590,7 +589,7 @@ class TestGATKBPPipeline(SafeTester):
         pl = GATKBPPipeline(jobs_setup_file)
         pl.preprocess_sample(sample_name)
 
-    @unittest.skipUnless(settings.SLURM_TEST, "taking too much UPPMAX cpu-core hours")
+    @unittest.skipUnless(settings.SLURM_GATKBP_TEST, "taking too much UPPMAX cpu-core hours")
     def test_preprocess_sample_Br_724(self):
         """ test sample pre-processing workflow (one of problematic sample from Illimina WES) """
 
@@ -605,7 +604,7 @@ class TestGATKBPPipeline(SafeTester):
         pl = GATKBPPipeline(jobs_setup_file)
         pl.preprocess_sample(sample_name)
 
-    @unittest.skipUnless(settings.SLURM_TEST, "taking too much UPPMAX cpu-core hours")
+    @unittest.skipUnless(settings.SLURM_GATKBP_TEST, "taking too much UPPMAX cpu-core hours")
     def test_preprocess_sample_Br_732(self):
         """ test sample pre-processing workflow (one of problematic sample from Illimina WES) """
 
@@ -620,7 +619,7 @@ class TestGATKBPPipeline(SafeTester):
         pl = GATKBPPipeline(jobs_setup_file)
         pl.preprocess_sample(sample_name)
 
-    @unittest.skipUnless(settings.SLURM_TEST, "taking too much UPPMAX cpu-core hours")
+    @unittest.skipUnless(settings.SLURM_GATKBP_TEST, "taking too much UPPMAX cpu-core hours")
     def test_preprocess_dataset_1(self):
         """ test preprocess target sequencing dataset """
 
@@ -632,7 +631,7 @@ class TestGATKBPPipeline(SafeTester):
         pl = GATKBPPipeline(jobs_setup_file)
         pl.preprocess_dataset()
 
-    @unittest.skipUnless(settings.SLURM_TEST, "taking too much UPPMAX cpu-core hours")
+    @unittest.skipUnless(settings.SLURM_GATKBP_TEST, "taking too much UPPMAX cpu-core hours")
     def test_preprocess_dataset_2(self):
         """
         test dataset pre-processing in the case that only one out of three
@@ -685,7 +684,7 @@ class TestGATKBPPipeline(SafeTester):
             self.copy_file(raw_idx_source, raw_idx_dest)
         pl.preprocess_dataset()
 
-    @unittest.skipUnless(settings.SLURM_TEST, "taking too much UPPMAX cpu-core hours")
+    @unittest.skipUnless(settings.SLURM_GATKBP_TEST, "taking too much UPPMAX cpu-core hours")
     def test_preprocess_dataset_3(self):
         """ test preprocess WES dataset """
 
@@ -697,7 +696,7 @@ class TestGATKBPPipeline(SafeTester):
         pl = GATKBPPipeline(jobs_setup_file)
         pl.preprocess_dataset()
 
-    @unittest.skipUnless(settings.SLURM_TEST, "taking too much UPPMAX cpu-core hours")
+    @unittest.skipUnless(settings.SLURM_GATKBP_TEST, "taking too much UPPMAX cpu-core hours")
     def test_garbage_collecting(self):
         """ test if the workflow can correctly collecting garbage """
 

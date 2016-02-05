@@ -1,10 +1,13 @@
 import filecmp
+import unittest
 from os.path import join as join_path
 from os.path import dirname
-from pycmm.utils import mylogger
+from os.path import basename
+from pycmm.settings import FULL_SYSTEM_TEST
 from pycmm.template import SafeTester
-#from pycmm.proc.tavcf import TableAnnovarVcfReader
+from pycmm.utils import count_lines
 from pycmm.flow.mutrep import MutRepPipeline
+from pycmm.proc.annovarlib import Annovar
 from pycmm.proc.annovarlib import PredictionTranslator
 from pycmm.proc.annovarlib import SIFT_PRED_COL
 from pycmm.proc.annovarlib import POLYPHEN2_HDIV_PRED_COL
@@ -15,7 +18,79 @@ from pycmm.proc.annovarlib import MUTATIONASSESSOR_PRED_COL
 from pycmm.proc.annovarlib import FATHMM_PRED_COL
 from pycmm.proc.annovarlib import RADIALSVM_PRED_COL
 from pycmm.proc.annovarlib import LR_PRED_COL
+from pycmm.flow.test.test_cmmdb import DFLT_ANNOVAR_TEST_DB_FOLDER
+from pycmm.flow.test.test_cmmdb import DFLT_ANNOVAR_TEST_DB_NAMES
+from pycmm.flow.test.test_cmmdb import DFLT_ANNOVAR_TEST_DB_OPS
 
+
+class TestAnnovar(SafeTester):
+
+    def __init__(self, test_name):
+        SafeTester.__init__(self,
+                            test_name,
+                            dirname(__file__),
+                            test_module_name=__name__,
+                            )
+
+    def setUp(self):
+        pass
+
+    @unittest.skipUnless(FULL_SYSTEM_TEST, "taking too long time to test")
+    def test_table_annovar_offline_1(self):
+        """ test offline version (w/o slurm) of table_annovar """
+
+        self.init_test(self.current_func_name)
+        dataset_name = self.current_func_name
+        input_file = join_path(self.data_dir,
+                               "input.vcf.gz")
+        data_out_folder = self.working_dir
+        av = Annovar(dataset_name=dataset_name,
+                     input_file=input_file,
+                     db_folder=DFLT_ANNOVAR_TEST_DB_FOLDER,
+                     buildver="hg19",
+                     protocols=DFLT_ANNOVAR_TEST_DB_NAMES,
+                     operations=DFLT_ANNOVAR_TEST_DB_OPS,
+                     nastring=".",
+                     data_out_folder=data_out_folder,
+                     )
+        av.run_table_annovar()
+        self.assertEqual(count_lines(av.out_annotated_vcf),
+                         151,
+                         "table annovar result is incorrect ")
+        exp_annotated_vcf = dataset_name + "_annotated.vcf"
+        self.assertEqual(basename(av.out_annotated_vcf),
+                         exp_annotated_vcf,
+                         "invalid expected output annatated vcf file name")
+
+    def tearDown(self):
+        self.remove_working_dir()
+
+    @unittest.skipUnless(FULL_SYSTEM_TEST, "taking too long time to test")
+    def test_table_annovar_offline_2(self):
+        """ test offline version (w/o slurm) of table_annovar together with custom cal_stat """
+
+        self.init_test(self.current_func_name)
+        dataset_name = self.current_func_name
+        input_file = join_path(self.data_dir,
+                               "input.vcf.gz")
+        annovar_db_names = DFLT_ANNOVAR_TEST_DB_NAMES
+        annovar_db_names += ",test_pyCMM"
+        annovar_db_ops = DFLT_ANNOVAR_TEST_DB_OPS
+        annovar_db_ops += ",f"
+        data_out_folder = self.working_dir
+        av = Annovar(dataset_name=dataset_name,
+                     input_file=input_file,
+                     db_folder=DFLT_ANNOVAR_TEST_DB_FOLDER,
+                     buildver="hg19",
+                     protocols=annovar_db_names,
+                     operations=annovar_db_ops,
+                     nastring=".",
+                     data_out_folder=data_out_folder,
+                     )
+        av.run_table_annovar()
+        self.assertEqual(count_lines(av.out_annotated_vcf),
+                         158,
+                         "table annoar result is incorrect ")
 
 class TestPredictionTranslator(SafeTester):
 
@@ -27,7 +102,7 @@ class TestPredictionTranslator(SafeTester):
                             )
 
     def setUp(self):
-        mylogger.getLogger(__name__)
+        pass
 
     def test_description_1(self):
         """ to test if normal description of effect predictor can be shown correctly """
@@ -233,75 +308,6 @@ class TestPredictionTranslator(SafeTester):
         self.assertEqual(pred.get_prediction_info(LR_PRED_COL, ".").harmful,
                          False,
                          "PredictionTranslator cannot work correctly if there is no prediction code")
-#    def test_annovar_info_2(self):
-#        """ to check if the property work correctly if no info annotated by ANNOVAR """
-#
-#        self.individual_debug = True
-#        self.init_test(self.current_func_name)
-#        in_file = join_path(self.data_dir,
-#                               'input.vcf.gz')
-#        vcf_reader = TableAnnovarVcfReader(filename=in_file)
-#        self.assertEqual(len(vcf_reader.annovar_infos),
-#                         0,
-#                         "TableAnnovarVcfReader cannot locate ANNOVAR info")
-#
-#    def test_parse_info_1(self):
-#        """
-#        to ensure that comma-separated string annotated by ANNOVAR
-#        shall be parsed as string
-#        """
-#
-#        self.individual_debug = True
-#        self.init_test(self.current_func_name)
-#        in_file = join_path(self.data_dir,
-#                               'input.vcf.gz')
-#        vcf_reader = TableAnnovarVcfReader(filename=in_file)
-#        vcf_reader.next()
-#        vcf_reader.next()
-#        vcf_reader.next()
-#        vcf_record = vcf_reader.next()
-#        self.assertEqual(vcf_record.INFO['Gene.refGene'],
-#                         "ZNF264,AURKC",
-#                         "TableAnnovarVcfReader cannot correctly parse comma-separated info annotated by ANNOVAR")
-#
-#    def test_parse_info_2(self):
-#        """ all the hex character shall be converted back to normal character """
-#
-#        self.individual_debug = True
-#        self.init_test(self.current_func_name)
-#        in_file = join_path(self.data_dir,
-#                               'input.vcf.gz')
-#        vcf_reader = TableAnnovarVcfReader(filename=in_file)
-#        vcf_reader.next()
-#        vcf_reader.next()
-#        vcf_record = vcf_reader.next()
-#        self.assertEqual(vcf_record.INFO['GeneDetail.refGene'],
-#                         "dist=6394;dist=1769",
-#                         "TableAnnovarVcfReader cannot correctly parse hex-encoded info annotated by ANNOVAR")
-#
-#    def test_parse_info_3(self):
-#        """
-#        if there are more than one alternate alleles,
-#        shall be parsed as string
-#        """
-#
-#        self.individual_debug = True
-#        self.init_test(self.current_func_name)
-#        in_file = join_path(self.data_dir,
-#                               'input.vcf.gz')
-#        vcf_reader = TableAnnovarVcfReader(filename=in_file)
-#        vcf_reader.next()
-#        vcf_reader.next()
-#        vcf_reader.next()
-#        vcf_record = vcf_reader.next()
-#        self.assertEqual(vcf_record.INFO['AXEQ_BR_AF'],
-#                         "0.1170",
-#                         "TableAnnovarVcfReader cannot identify value for info entries annotated by ANNOVAR")
-#        vcf_record = vcf_reader.next()
-#        self.assertEqual(vcf_record.INFO['AXEQ_BR_AF'],
-#                         ['0.3068', '0.1818', '0.2614', '0.0341'],
-#                         "TableAnnovarVcfReader cannot identify value for info entries annotated by ANNOVAR")
-#        vcf_record = vcf_reader.next()
-#        self.assertEqual(vcf_record.INFO['AXEQ_BR_AF'],
-#                         ['0.2692', '0.2308'],
-#                         "TableAnnovarVcfReader cannot identify value for info entries annotated by ANNOVAR")
+
+    def tearDown(self):
+        self.remove_working_dir()

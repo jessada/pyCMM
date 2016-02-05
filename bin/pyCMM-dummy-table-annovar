@@ -1,0 +1,63 @@
+from pycmm.settings import CMMDB_TABLEANNOVAR_DESCRIPTION
+from pycmm.app.proc import app_pycmm_dummy_table_annovar
+import argparse
+
+argp = argparse.ArgumentParser(description=CMMDB_TABLEANNOVAR_DESCRIPTION)
+argp.add_argument('--dataset_name',
+                  dest='dataset_name',
+                  metavar="NAME",
+                  help="dataset name will be used as one part of the output file name",
+                  required=True,
+                  )
+argp.add_argument('--input_file',
+                  dest='input_file',
+                  metavar="FILE",
+                  help="input vcf tabix file to be annotated",
+                  required=True,
+                  )
+argp.add_argument('--db_folder',
+                  dest='db_folder',
+                  metavar="DIR",
+                  help="directory that have ANNOVAR database",
+                  required=True,
+                  )
+argp.add_argument('--buildver',
+                  dest='buildver',
+                  metavar="VERSION",
+                  help="reference build version",
+                  default="hg19",
+                  )
+argp.add_argument('--protocols',
+                  dest='protocols',
+                  metavar="NAMES",
+                  help="database names to be annotated",
+                  required=True,
+                  )
+argp.add_argument('--operations',
+                  dest='operations',
+                  metavar="OPS",
+                  help="how to use the protocols",
+                  required=True,
+                  )
+argp.add_argument('--nastring',
+                  dest='nastring',
+                  metavar="STRING",
+                  help="string to be replaced when the data are not available",
+                  default=".",
+                  )
+argp.add_argument('--data_out_folder',
+                  dest='data_out_folder',
+                  metavar="DIR",
+                  help="directory in which the annotated vcf out will be stored ",
+                  required=True,
+                  )
+args = argp.parse_args()
+app_pycmm_dummy_table_annovar(dataset_name=args.dataset_name,
+                              input_file=args.input_file,
+                              db_folder=args.db_folder,
+                              buildver=args.buildver,
+                              protocols=args.protocols,
+                              operations=args.operations,
+                              nastring=args.nastring,
+                              data_out_folder=args.data_out_folder,
+                              )

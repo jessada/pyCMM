@@ -6,10 +6,16 @@ import subprocess
 import inspect
 import fileinput
 import gc
+import tempfile
+import string
+from random import choice
 from os.path import join as join_path
 from os.path import dirname
 from pycmm.utils import mylogger
 from pycmm.settings import ENV_TEST_DIR
+from pycmm.settings import DEBUG_MODE
+
+ENV_TMPDIR = "TMPDIR"
 
 
 class pyCMMBase(object):
@@ -26,6 +32,16 @@ class pyCMMBase(object):
 
     def get_raw_repr(self):
         return "Not yet implemented"
+
+    @property
+    def local_scratch_dir(self):
+        return tempfile.mkdtemp()
+
+    @property
+    def local_tmp_file(self):
+        chars = string.ascii_letters
+        file_name = "tmp" + ''.join([choice(chars) for i in range(6)])
+        return join_path(self.local_scratch_dir, file_name)
 
     def remove_dir(self, dir_name):
         if os.path.exists(dir_name):
@@ -55,22 +71,30 @@ class pyCMMBase(object):
         else:
             shutil.copy(src, dst)
 
-    def dbg(self, debug_msg):
+    def dbg(self, dbg_msg):
         if DEBUG_MODE:
-            to_stderr(DEBUG_FMT.format(log=log(debug_msg,
-                                               self.__class__.__name__,
-                                               )))
+            frm = inspect.stack()[1]
+            mod = inspect.getmodule(frm[0])
+            mylogger.getLogger(mod.__name__)
+            mylogger.debug(dbg_msg)
 
     def info(self, info_msg):
-        to_stderr(INFO_FMT.format(log=log(info_msg,
-                                          self.__class__.__name__,
-                                          )))
+        frm = inspect.stack()[1]
+        mod = inspect.getmodule(frm[0])
+        mylogger.getLogger(mod.__name__)
+        mylogger.info(info_msg)
 
-    def warn(self, warning_msg):
-        to_stderr(WARNING_FMT.format(msg=warning_msg))
+    def warning(self, warning_msg):
+        frm = inspect.stack()[1]
+        mod = inspect.getmodule(frm[0])
+        mylogger.getLogger(mod.__name__)
+        mylogger.warning(warning_msg)
 
     def throw(self, err_msg):
-        raise Exception(THROW_FMT.format(msg=err_msg))
+        frm = inspect.stack()[1]
+        mod = inspect.getmodule(frm[0])
+        mylogger.getLogger(mod.__name__)
+        mylogger.throw(err_msg)
 
     @property
     def current_func_name(self):
