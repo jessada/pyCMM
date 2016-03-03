@@ -234,6 +234,27 @@ class JobManager(pyCMMBase):
             raise Exception(job_name + " status cannot be found")
         return out.strip().split()[5]
 
+    def get_job_node(self,
+                     job_name,
+                     ):
+        if job_name.isdigit():
+            job_id = job_name
+        else:
+            job_id = self.get_job_id(job_name)
+        cmd = "squeue -j"
+        cmd += " " + job_id
+        cmd += " | grep " + job_id
+        cmd += " | head -1"
+        out = ""
+        icount = 0
+        while (len(out) == 0) and (icount < 100):
+            time.sleep(1)
+            icount += 1
+            out = self.__exec_sh(cmd)
+        if len(out) == 0 :
+            raise Exception(job_name + " status cannot be found")
+        return out.strip().split()[7]
+
     def get_job_id(self,
                    job_name,
                    ):
