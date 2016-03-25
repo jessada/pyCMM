@@ -73,9 +73,6 @@ setup(
 #    package_data={'': ['data/CBV/*.cbv']
 #                  },
     data_files=all_data_files,
-#    data_files=[('data/family0008_chr18/', ['data/family0008_chr18/*.csv',
-#                                            ]),
-#                ],
     url='http://pypi.python.org/pypi/pyCMM/',
     license='LICENSE.txt',
     description='Python packages for my sequencing data analysis at Center of Molecular Medicine, Karolinska Institute, Stockholm, Sweden',

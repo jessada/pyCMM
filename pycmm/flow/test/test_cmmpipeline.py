@@ -9,12 +9,10 @@ from pycmm.flow import create_jobs_setup_file
 
 class TestCMMPipeline(SafeTester):
 
-    def __init__(self, test_name):
-        SafeTester.__init__(self,
-                            test_name,
-                            dirname(__file__),
-                            test_module_name=__name__,
-                            )
+    def __init__(self, methodName):
+        super(TestCMMPipeline, self).__init__(methodName=methodName,
+                                              test_module_name=__name__,
+                                              )
 
     def setUp(self):
         pass

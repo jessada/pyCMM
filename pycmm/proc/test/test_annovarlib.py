@@ -25,12 +25,10 @@ from pycmm.flow.test.test_cmmdb import DFLT_ANNOVAR_TEST_DB_OPS
 
 class TestAnnovar(SafeTester):
 
-    def __init__(self, test_name):
-        SafeTester.__init__(self,
-                            test_name,
-                            dirname(__file__),
-                            test_module_name=__name__,
-                            )
+    def __init__(self, methodName):
+        super(TestAnnovar, self).__init__(methodName=methodName,
+                                          test_module_name=__name__,
+                                          )
 
     def setUp(self):
         pass
@@ -94,12 +92,10 @@ class TestAnnovar(SafeTester):
 
 class TestPredictionTranslator(SafeTester):
 
-    def __init__(self, test_name):
-        SafeTester.__init__(self,
-                            test_name,
-                            dirname(__file__),
-                            test_module_name=__name__,
-                            )
+    def __init__(self, methodName):
+        super(TestPredictionTranslator, self).__init__(methodName=methodName,
+                                                       test_module_name=__name__,
+                                                       )
 
     def setUp(self):
         pass

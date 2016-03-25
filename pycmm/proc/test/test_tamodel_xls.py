@@ -23,14 +23,12 @@ from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_HAS_MUTATION
 from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_HAS_SHARED
 
 
-class TestTAVcfCall(SafeTester):
+class TestTAVcfCallXls(SafeTester):
 
-    def __init__(self, test_name):
-        SafeTester.__init__(self,
-                            test_name,
-                            dirname(__file__),
-                            test_module_name=__name__,
-                            )
+    def __init__(self, methodName):
+        super(TestTAVcfCallXls, self).__init__(methodName=methodName,
+                                               test_module_name=__name__,
+                                               )
 
     def setUp(self):
         pass
@@ -97,14 +95,12 @@ class TestTAVcfCall(SafeTester):
                          1,
                          "shared mutations cannot be correctly determined")
 
-class TestTAVcfRecord(SafeTester):
+class TestTAVcfRecordXls(SafeTester):
 
-    def __init__(self, test_name):
-        SafeTester.__init__(self,
-                            test_name,
-                            dirname(__file__),
-                            test_module_name=__name__,
-                            )
+    def __init__(self, methodName):
+        super(TestTAVcfRecordXls, self).__init__(methodName=methodName,
+                                                 test_module_name=__name__,
+                                                 )
 
     def setUp(self):
         pass

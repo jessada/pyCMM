@@ -9,12 +9,10 @@ from pycmm.flow.cmmdb import create_jobs_setup_file
 
 class TestTAVcfCall(SafeTester):
 
-    def __init__(self, test_name):
-        SafeTester.__init__(self,
-                            test_name,
-                            dirname(__file__),
-                            test_module_name=__name__,
-                            )
+    def __init__(self, methodName):
+        super(TestTAVcfCall, self).__init__(methodName=methodName,
+                                            test_module_name=__name__,
+                                            )
 
     def setUp(self):
         pass
@@ -858,12 +856,10 @@ class TestTAVcfCall(SafeTester):
 
 class TestTAVcfRecord(SafeTester):
 
-    def __init__(self, test_name):
-        SafeTester.__init__(self,
-                            test_name,
-                            dirname(__file__),
-                            test_module_name=__name__,
-                            )
+    def __init__(self, methodName):
+        super(TestTAVcfRecord, self).__init__(methodName=methodName,
+                                              test_module_name=__name__,
+                                              )
 
     def setUp(self):
         pass
