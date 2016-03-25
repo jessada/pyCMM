@@ -37,10 +37,14 @@ def exec_sh(cmd):
                          stdout=subprocess.PIPE,
                          stderr=subprocess.PIPE,
                          )
-    error = p.wait()
-    if error:
-        mylogger.throw("Error found during execute command '%s' with error code %d" % (cmd, error))
-    return p, error
+    stdout_data, stderr_data = p.communicate()
+    return_code = p.returncode
+    print stdout_data
+    if return_code:
+        mylogger.throw("Error found during execute command '%s' with error code: %d, %s" % (cmd, return_code, stderr_data))
+    elif stderr_data:
+        print stderr_data
+    return p, stdout_data
 
 def concat_files(in_files,
                  out_file):

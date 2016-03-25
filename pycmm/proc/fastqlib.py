@@ -1,29 +1,33 @@
-import sys
-from os.path import join as join_path
-from collections import OrderedDict
-from pycmm.template import pyCMMBase
-from pycmm.settings import LJB_SIFT_PREDICTION_COL_NAME as SIFT_PRED_COL
-from pycmm.settings import LJB_POLYPHEN2_HDIV_PREDICTION_COL_NAME as POLYPHEN2_HDIV_PRED_COL
-from pycmm.settings import LJB_POLYPHEN2_HVAR_PREDICTION_COL_NAME as POLYPHEN2_HVAR_PRED_COL
-from pycmm.settings import LJB_LRT_PREDICTION_COL_NAME as LRT_PRED_COL
-from pycmm.settings import LJB_MUTATIONTASTER_PREDICTION_COL_NAME as MUTATIONTASTER_PRED_COL
-from pycmm.settings import LJB_MUTATIONASSESSOR_PREDICTION_COL_NAME as MUTATIONASSESSOR_PRED_COL
-from pycmm.settings import LJB_FATHMM_PREDICTION_COL_NAME as FATHMM_PRED_COL
-from pycmm.settings import LJB_RADIALSVM_PREDICTION_COL_NAME as RADIALSVM_PRED_COL
-from pycmm.settings import LJB_LR_PREDICTION_COL_NAME as LR_PRED_COL
-from pycmm.utils import exec_sh
-from pycmm.utils import get_path
+ENCODING_SOLEXA = "Solexa"
+ENCODING_ILLUMINA_1_3 = "Illumina-1.3"
+ENCODING_ILLUMINA_1_5 = "Illumina-1.5"
+ENCODING_ILLUMINA_1_8 = "Illumina-1.8"
 
-ANNOVAR_PARAMS_INPUT_FILE_KEY = "input_file"
-ANNOVAR_PARAMS_DB_FOLDER_KEY = "db_folder"
-ANNOVAR_PARAMS_BUILDVER_KEY = "buildver"
-ANNOVAR_PARAMS_OUT_PREFIX_KEY = "out_prefix"
-ANNOVAR_PARAMS_DB_NAMES_KEY = "db_names"
-ANNOVAR_PARAMS_DB_OPS_KEY = "db_ops"
-ANNOVAR_PARAMS_NASTRING_KEY = "nastring"
+RANGES = {
+#    'Sanger': (33, 93),
+    ENCODING_SOLEXA: (59, 104),
+    ENCODING_ILLUMINA_1_3: (64, 104),
+    ENCODING_ILLUMINA_1_5: (67, 105),
+    ENCODING_ILLUMINA_1_8: (33, 74),
+}
 
-_DESCRIPTION = "Description"
-_HARMFUL = "Harmful"
+def get_qual_range(qual_str):
+    """
+    >>> get_qual_range("DLXYXXRXWYYTPMLUUQWTXTRSXSWMDMTRNDNSMJFJFFRMV")
+    (68, 89)
+    """
+
+    vals = [ord(c) for c in qual_str]
+    return min(vals), max(vals)
+
+def get_encodings_in_range(rmin, rmax, ranges=RANGES):
+    valid_encodings = []
+    for encoding, (emin, emax) in ranges.items():
+        if rmin >= emin and rmax <= emax:
+            valid_encodings.append(encoding)
+    return valid_encodings
+
+
 
 class AnnovarParams(pyCMMBase):
     """ A structure to parse and keep sample information """
@@ -78,7 +82,7 @@ class Annovar(pyCMMBase):
         self.__operations = operations
         self.__nastring = nastring
         self.__data_out_folder = data_out_folder
-        self.__tmp_annovar_prefix = self.new_local_tmp_file()
+        self.__tmp_annovar_prefix = self.local_tmp_file
 
     def get_raw_repr(self):
         raw_repr = OrderedDict()

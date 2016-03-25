@@ -1,11 +1,13 @@
 import sys
 from collections import OrderedDict
-from pycmm import settings
 from pycmm.utils import mylogger
 from pycmm.utils import disp
 from pycmm.utils import set_log_file
 from pycmm.flow.cmmdb import CMMDBPipeline
 from pycmm.flow.cmmdb import create_jobs_setup_file
+from pycmm.settings import CMMDB_MUTSTAT_DESCRIPTION
+from pycmm.settings import CMMDB_TABLEANNOVAR_DESCRIPTION
+from pycmm.settings import CMMDB_CREATE_JOB_SETUP_FILE_DESCRIPTION
 
 
 def app_pycmm_cmmdb_cal_mut_stat(*args, **kwargs):
@@ -20,7 +22,7 @@ def app_pycmm_cmmdb_cal_mut_stat(*args, **kwargs):
     if log_file is not None:
         optional_params = OrderedDict()
         optional_params['log file (-l)'] = log_file
-    disp.show_config(app_description=settings.CMMDB_MUTSTAT_DESCRIPTION,
+    disp.show_config(app_description=CMMDB_MUTSTAT_DESCRIPTION,
                      required_params=required_params,
                      optional_params=optional_params,
                      )
@@ -41,7 +43,7 @@ def app_pycmm_cmmdb_table_annovar(*args, **kwargs):
     if log_file is not None:
         optional_params = OrderedDict()
         optional_params['log file (-l)'] = log_file
-    disp.show_config(app_description=settings.CMMDB_TABLEANNOVAR_DESCRIPTION,
+    disp.show_config(app_description=CMMDB_TABLEANNOVAR_DESCRIPTION,
                      required_params=required_params,
                      optional_params=optional_params,
                      )
@@ -80,7 +82,7 @@ def app_pycmm_cmmdb_create_jobs_setup_file(*args, **kwargs):
     if kwargs['rpt_alloc_time'] is not None:
         optional_params['report allocation time (--rpt_alloc_time)'] = kwargs['rpt_alloc_time']
     optional_params['output jobs setup file (-o)'] = kwargs['out_jobs_setup_file']
-    disp.show_config(app_description=settings.CMMDB_PIPELINE_DESCRIPTION,
+    disp.show_config(app_description=CMMDB_CREATE_JOB_SETUP_FILE_DESCRIPTION,
                      required_params=required_params,
                      optional_params=optional_params,
                      )

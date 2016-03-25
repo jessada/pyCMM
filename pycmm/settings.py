@@ -22,6 +22,10 @@ SLOW_PROJECT_CODE = 'b2011097'
 
 ENV_TEST_DIR = "PYTHON_TEST_DIR"
 
+## *********************************************************************************** General pipeline configuration  ************************************************************************************
+DFLT_FLOW_ALLOC_TIME = "4-00:00:00"
+DFLT_RPT_ALLOC_TIME = "1-00:00:00"
+
 ## ************************************************************************************* GATK Best practice (DNA seq) *************************************************************************************
 DNASEQ_PIPELINE_DESCRIPTION = "A flow to control a pipeline to process DNA sequencing data"
 DNASEQ_PIPELINE_DFLT_LOG_FILE = "dnaseq_pipeline"
@@ -52,6 +56,23 @@ DFLT_MUTREP_ALLOC_TIME = "1-00:00:00"
 MUTREP_FAMILY_REPORT_DESCRIPTION = "An appliation to generate mutation report for a given family at given regions"
 MUTREP_SUMMARY_REPORT_DESCRIPTION = "An appliation to generate summary report at given regions"
 MUTREP_CREATE_JOB_SETUP_FILE_DESCRIPTION = "An application to generate job setup file to process mutations report"
+
+## *********************************************************************************************** PLINK *************************************************************************************************
+#MUTREP_FAMILY_REPORT_BIN = 'pyCMM-mutrep-family-report'
+PLINK_HAP_ASSOCS_SLURM_BIN = 'pyCMM-plink-hap-assocs-slurm'
+
+PLINK_HAP_ASSOCS_DESCRIPTION = "A flow to control a PLINK haplotype association study"
+PLINK_HAP_ASSOCS_SLURM_DESCRIPTION = "A flow to control a PLINK haplotype association study in SLURM (UPPMAX)"
+#PLINK_PIPELINE_DESCRIPTION = "A flow to control a PLINK pipeline"
+PLINK_PIPELINE_DFLT_LOG_FILE = "plink_pipeline"
+
+DFLT_PLINK_ALLOC_TIME = "1-00:00:00"
+DFLT_PLINK_CUTOFF_PVALUE = "0.05"
+DFLT_PLINK_HAP_WINDOW_SIZES = "1"
+
+#MUTREP_FAMILY_REPORT_DESCRIPTION = "An appliation to generate mutation report for a given family at given regions"
+#MUTREP_SUMMARY_REPORT_DESCRIPTION = "An appliation to generate summary report at given regions"
+PLINK_CREATE_JOB_SETUP_FILE_DESCRIPTION = "An application to generate job setup file to run PLINK and generate report"
 
 ## > > > > > > > > > > > > > > > > > > > > > > > > > > Annovar DB configurations < < < < < < < < < < < < < < < < < < < < < < < < < <
 DFLT_ANNOVAR_DB_FOLDER = "/glob/jessada/tools/annovar/humandb"

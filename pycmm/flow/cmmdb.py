@@ -19,6 +19,7 @@ from pycmm.template import pyCMMBase
 from pycmm.utils import exec_sh
 from pycmm.utils import mylogger
 from pycmm.utils.jobman import JobManager
+from pycmm.utils.dnalib import ALL_CHROMS
 from pycmm.proc.annovarlib import Annovar
 from pycmm.proc.annovarlib import AnnovarParams
 from pycmm.proc.annovarlib import ANNOVAR_PARAMS_INPUT_FILE_KEY
@@ -31,7 +32,6 @@ from pycmm.proc.annovarlib import ANNOVAR_PARAMS_NASTRING_KEY
 from pycmm.settings import ALL_MUTREP_ANNO_COLS
 from pycmm.settings import DFLT_MUTREP_FREQ_RATIOS
 
-ALL_CHROMS = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "MT", "X", "Y"]
 CAL_MUTATIONS_STAT_SCRIPT = "$PYCMM/bash/cal_mutations_stat.sh"
 
 # *************** jobs metadata section ***************
@@ -439,7 +439,7 @@ def create_jobs_setup_file(dataset_name,
         jobs_report_file = join_path(project_out_dir,
                                      dataset_name+"_rpt.txt")
     if out_jobs_setup_file is None:
-        out_jobs_setup_file = join_path(samples_root_dir,
+        out_jobs_setup_file = join_path(project_out_dir,
                                         dataset_name+"_job_setup.txt")
     annovar_config = {}
     annovar_config[JOBS_SETUP_ANNOVAR_DB_FOLDER_KEY] = annovar_human_db_dir
