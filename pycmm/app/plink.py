@@ -130,6 +130,7 @@ def app_pycmm_plink_create_jobs_setup_file(*args, **kwargs):
     optional_params = OrderedDict()
     if kwargs['input_dna_regions'] is not None:
         optional_params['input dna regions (-R)'] = kwargs['input_dna_regions'].split(",")
+    required_params['phenotype file (--pheno)'] = kwargs['phenotype_file']
     if kwargs['project_code'] is not None:
         optional_params['project code (-p)'] = kwargs['project_code']
     optional_params['flow allocation time (--flow_alloc_time)'] = kwargs['flow_alloc_time']
@@ -143,6 +144,7 @@ def app_pycmm_plink_create_jobs_setup_file(*args, **kwargs):
     create_jobs_setup_file(project_name=kwargs['project_name'],
                            project_out_dir=kwargs['project_out_dir'],
                            input_file_prefix=kwargs['input_file_prefix'],
+                           phenotype_file=kwargs['phenotype_file'],
                            input_binary=kwargs['input_binary'],
                            input_dna_regions=kwargs['input_dna_regions'],
                            cutoff_pvalue=kwargs['cutoff_pvalue'],

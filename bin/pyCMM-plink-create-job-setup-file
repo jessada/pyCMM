@@ -13,7 +13,7 @@ argp = argparse.ArgumentParser(description=PLINK_CREATE_JOB_SETUP_FILE_DESCRIPTI
                                formatter_class=RawTextHelpFormatter,
                                )
 required_group = argp.add_argument_group('required arguments')
-hap_assoc_group = argp.add_argument_group('haplotype-association-study arguments')
+plink_group = argp.add_argument_group('plink arguments')
 required_group.add_argument('-d',
                             dest='project_name',
                             metavar="project_name",
@@ -32,49 +32,55 @@ argp.add_argument('-p',
                   help='UPPMAX project code',
                   default=None,
                   )
-hap_assoc_group.add_argument('--file',
-                             dest='input_file_prefix',
-                             metavar="{FILE ROOT}",
-                             help='Specify .ped and .map files',
-                             default=None,
-                             )
-hap_assoc_group.add_argument('--bfile',
-                             dest='input_bfile_prefix',
-                             metavar="{FILE ROOT}",
-                             help='Specify .bed, .fam and .map',
-                             default=None,
-                             )
-hap_assoc_group.add_argument('-R',
-                             dest='input_dna_regions',
-                             metavar="REGIONS",
-                             help='dna regions (default: ALL)',
-                             default=None,
-                             )
+plink_group.add_argument('--file',
+                         dest='input_file_prefix',
+                         metavar="{FILE ROOT}",
+                         help='Specify .ped and .map files',
+                         default=None,
+                         )
+plink_group.add_argument('--bfile',
+                         dest='input_bfile_prefix',
+                         metavar="{FILE ROOT}",
+                         help='Specify .bed, .fam and .map',
+                         default=None,
+                         )
+plink_group.add_argument('--pheno',
+                         dest='phenotype_file',
+                         metavar="{FILE}",
+                         help='Specify cluster file',
+                         required=True,
+                         )
+plink_group.add_argument('-R',
+                         dest='input_dna_regions',
+                         metavar="REGIONS",
+                         help='dna regions (default: ALL)',
+                         default=None,
+                         )
 help = 'Cut-off p-value (default: {dflt_val})'.format(dflt_val=DFLT_PLINK_CUTOFF_PVALUE)
-hap_assoc_group.add_argument('-c',
-                             dest='cutoff_pvalue',
-                             metavar="FLOAT",
-                             help=help,
-                             default=DFLT_PLINK_CUTOFF_PVALUE,
-                             )
+plink_group.add_argument('-c',
+                         dest='cutoff_pvalue',
+                         metavar="FLOAT",
+                         help=help,
+                         default=DFLT_PLINK_CUTOFF_PVALUE,
+                         )
 help = 'Phase sliding window (default: {dflt_val})'.format(dflt_val=DFLT_PLINK_HAP_WINDOW_SIZES)
-hap_assoc_group.add_argument('--hap-window',
-                             dest='hap_window_sizes',
-                             metavar="{N}",
-                             help=help,
-                             default=DFLT_PLINK_HAP_WINDOW_SIZES,
-                             )
+plink_group.add_argument('--hap-window',
+                         dest='hap_window_sizes',
+                         metavar="{N}",
+                         help=help,
+                         default=DFLT_PLINK_HAP_WINDOW_SIZES,
+                         )
 help = 'UPPMAX allocation time (default: {dflt_val})'.format(dflt_val=DFLT_FLOW_ALLOC_TIME)
-hap_assoc_group.add_argument('--flow_alloc_time',
-                              dest='flow_alloc_time',
-                              metavar="ALLOC_TIME",
-                              help=help,
-                              default=DFLT_FLOW_ALLOC_TIME,
-                              )
+plink_group.add_argument('--flow_alloc_time',
+                         dest='flow_alloc_time',
+                         metavar="ALLOC_TIME",
+                         help=help,
+                         default=DFLT_FLOW_ALLOC_TIME,
+                         )
 argp.add_argument('-o',
                   dest='out_jobs_setup_file',
                   metavar="JOBS_SETUP_FILE",
-                  help='a file containing jobs configuration',
+                  help='output file containing jobs configuration',
                   default=sys.stdout,
                   )
 args = argp.parse_args()
@@ -91,6 +97,7 @@ app_pycmm_plink_create_jobs_setup_file(project_name=args.project_name,
                                        input_file_prefix=input_file_prefix,
                                        input_binary=input_binary,
                                        input_dna_regions=args.input_dna_regions,
+                                       phenotype_file=args.phenotype_file,
                                        cutoff_pvalue=args.cutoff_pvalue,
                                        hap_window_sizes=args.hap_window_sizes,
                                        project_code=args.project_code,

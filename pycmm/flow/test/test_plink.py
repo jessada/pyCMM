@@ -5,7 +5,9 @@ from os.path import dirname
 from pycmm.settings import FULL_SYSTEM_TEST
 from pycmm.template import SafeTester
 from pycmm.utils.dnalib import ALL_CHROMS
-from pycmm.utils.plinkutils import HapAssocUtils
+from pycmm.proc.plinklib import HapAssocUtils
+from pycmm.proc.plinklib import LMissReader
+from pycmm.proc.plinklib import MapReader
 from pycmm.flow.plink import PlinkPipeline
 from pycmm.flow.plink import create_jobs_setup_file
 from pycmm.flow.plink import DFLT_CUTOFF_PVALUE
@@ -29,6 +31,7 @@ class TestPlinkPipeline(SafeTester):
                                  input_file_prefix=None,
                                  input_binary=None,
                                  input_dna_regions=None,
+                                 phenotype_file=None,
                                  cutoff_pvalue=None,
                                  hap_window_sizes=None,
                                  project_code=None,
@@ -44,9 +47,13 @@ class TestPlinkPipeline(SafeTester):
                                           "input")
         if input_binary is None:
             input_binary = True
+        if phenotype_file is None:
+            phenotype_file = join_path(self.data_dir,
+                                       "phenotype.txt")
         create_jobs_setup_file(project_name=project_name,
                                project_out_dir=project_out_dir,
                                input_file_prefix=input_file_prefix,
+                               phenotype_file=phenotype_file,
                                input_binary=input_binary,
                                input_dna_regions=input_dna_regions,
                                cutoff_pvalue=cutoff_pvalue,
@@ -93,6 +100,11 @@ class TestPlinkPipeline(SafeTester):
         self.assertEqual(pl.plink_params.input_dna_regions[24].chrom,
                          "Y",
                          "PlinkPipeline cannot correctly identify 'dna regions' from jobs setup file")
+        exp_phenotype_file = join_path(self.data_dir,
+                                       "phenotype.txt")
+        self.assertEqual(pl.plink_params.phenotype_file,
+                         exp_phenotype_file,
+                         "PlinkPipeline cannot correctly identify 'phenotype file' from jobs setup file")
         self.assertEqual(pl.plink_params.cutoff_pvalue,
                          DFLT_CUTOFF_PVALUE,
                          "PlinkPipeline cannot correctly identify 'cutoff p-value' from jobs setup file")
@@ -194,13 +206,11 @@ class TestPlinkPipeline(SafeTester):
         - with all other default features
         """
 
-        self.individual_debug = True
         self.init_test(self.current_func_name)
         jobs_setup_file = self.__create_jobs_setup_file(input_dna_regions="9:100911000-100946000",
                                                         )
         pl = PlinkPipeline(jobs_setup_file)
         hap_assoc_out = pl.run_hap_assocs_offline()
-        self.dbg(hap_assoc_out)
         hat = HapAssocUtils(hap_assoc_out[0][0])
         self.assertEqual(hat.nlines,
                          20,
@@ -241,6 +251,75 @@ class TestPlinkPipeline(SafeTester):
         self.assertEqual(hat.ncols,
                          8,
                          "PlinkPipeline cannot correctly perform 'haplotype association study'")
+
+    @unittest.skipUnless(FULL_SYSTEM_TEST or PLINK_TEST, "taking too long time to test")
+    def test_extract_snps_stat_1(self):
+        """ test extracting SNPs missing genotyping information """
+
+        self.individual_debug = True
+        self.init_test(self.current_func_name)
+        jobs_setup_file = self.__create_jobs_setup_file(input_dna_regions="9:100911000-100946000",
+                                                        )
+        pl = PlinkPipeline(jobs_setup_file)
+        snps_stat_out = pl.extract_snps_stat(pl.plink_params.input_dna_regions[0])
+        lmiss_reader = LMissReader(file_name=snps_stat_out)
+        lmiss_rec = lmiss_reader.next()
+        self.assertEqual(lmiss_rec.clst,
+                         "CLST",
+                         "function extract_snps_stat doesn't work correctly")
+        lmiss_rec = lmiss_reader.next()
+        self.assertEqual(lmiss_rec.snp,
+                         "rs2795491",
+                         "function extract_snps_stat doesn't work correctly")
+        lmiss_rec = lmiss_reader.next()
+        lmiss_rec = lmiss_reader.next()
+        lmiss_rec = lmiss_reader.next()
+        self.assertEqual(lmiss_rec.n_geno,
+                         "200",
+                         "function extract_snps_stat doesn't work correctly")
+        lmiss_rec = lmiss_reader.next()
+        self.assertEqual(lmiss_rec.clst,
+                         "2",
+                         "function extract_snps_stat doesn't work correctly")
+        lmiss_rec = lmiss_reader.next()
+        lmiss_rec = lmiss_reader.next()
+        lmiss_rec = lmiss_reader.next()
+        lmiss_rec = lmiss_reader.next()
+        self.assertEqual(lmiss_rec.f_miss,
+                         0.005,
+                         "function extract_snps_stat doesn't work correctly")
+
+    @unittest.skipUnless(FULL_SYSTEM_TEST or PLINK_TEST, "taking too long time to test")
+    def test_extract_snps_pos_1(self):
+        """ test extracting genotyping position """
+
+        self.individual_debug = True
+        self.init_test(self.current_func_name)
+        jobs_setup_file = self.__create_jobs_setup_file(input_dna_regions="9:100911000-100946000",
+                                                        )
+        pl = PlinkPipeline(jobs_setup_file)
+        snps_pos_out = pl.extract_snps_pos(pl.plink_params.input_dna_regions[0])
+        map_reader = MapReader(file_name=snps_pos_out)
+        map_rec = map_reader.next()
+        self.assertEqual(map_rec.snp,
+                         "rs2795491",
+                         "function extract_snps_pos doesn't work correctly")
+        map_rec = map_reader.next()
+        map_rec = map_reader.next()
+        self.assertEqual(map_rec.chrom,
+                         "9",
+                         "function extract_snps_pos doesn't work correctly")
+        map_rec = map_reader.next()
+        self.assertEqual(map_rec.dist,
+                         102.26,
+                         "function extract_snps_pos doesn't work correctly")
+        map_rec = map_reader.next()
+        map_rec = map_reader.next()
+        map_rec = map_reader.next()
+        map_rec = map_reader.next()
+        self.assertEqual(map_rec.pos,
+                         "100930947",
+                         "function extract_snps_pos doesn't work correctly")
 
     def tearDown(self):
         self.remove_working_dir()

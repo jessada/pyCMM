@@ -20,6 +20,7 @@ JOBS_SETUP_PLINK_PARAMS_SECTION = "PLINK_PARAMS"
 JOBS_SETUP_INPUT_FILE_PREFIX_KEY = "INPUT_FILE_PREFIX"
 JOBS_SETUP_INPUT_BINARY_KEY = "INPUT_BINARY"
 JOBS_SETUP_INPUT_DNA_REGIONS_KEY = "INPUT_DNA_REGIONS"
+JOBS_SETUP_PHENOTYPE_FILE_KEY = "PHENOTYPE_FILE"
 JOBS_SETUP_CUTOFF_PVALUE_KEY = "CUTOFF_PVALUE"
 JOBS_SETUP_HAP_WINDOW_SIZES_KEY = "HAP_WINDOW_SIZES"
 
@@ -54,6 +55,10 @@ class PlinkParams(pyCMMBase):
         return map(lambda x: DNARegion(x), input_dna_regions)
 
     @property
+    def phenotype_file(self):
+        return self.__params[JOBS_SETUP_PHENOTYPE_FILE_KEY]
+
+    @property
     def cutoff_pvalue(self):
         if JOBS_SETUP_CUTOFF_PVALUE_KEY in self.__params:
             return str(self.__params[JOBS_SETUP_CUTOFF_PVALUE_KEY])
@@ -64,12 +69,6 @@ class PlinkParams(pyCMMBase):
         if JOBS_SETUP_HAP_WINDOW_SIZES_KEY in self.__params:
             return self.__params[JOBS_SETUP_HAP_WINDOW_SIZES_KEY]
         return DFLT_HAP_WINDOW_SIZES
-
-    @property
-    def phenotype_file(self):
-        # not yet implement because there is no need to use it at a moment
-        # so no test
-        pass
 
 class PlinkPipeline(CMMPipeline):
     """ A class to control PLINK execution pipeline """
@@ -144,8 +143,7 @@ class PlinkPipeline(CMMPipeline):
                 out_params += " --hap-window " + str(window_size)
                 yield out_params, out_session_key
 
-    def monitor_init(self):
-        CMMPipeline.monitor_init(self)
+    def __submit_hap_assoc_jobs(self):
         for params, session_key in self.get_plink_hap_assoc_paramss():
             job_name = session_key
             slurm_log_file = join_path(self.slurm_log_dir,
@@ -160,6 +158,10 @@ class PlinkPipeline(CMMPipeline):
                             job_script,
                             params,
                             )
+
+    def monitor_init(self):
+        CMMPipeline.monitor_init(self)
+        self.__submit_hap_assoc_jobs()
 
 ## *************************************************************** keep this part of code until I'm certain that there is no way to specify nodelist *************************************************************** 
 #    def copy_plink_file_to_scratch(self, suffix):
@@ -221,6 +223,59 @@ class PlinkPipeline(CMMPipeline):
                         job_params,
                         )
 
+    def extract_snps_stat(self, input_dna_region, input_file_prefix=None):
+        params = " --noweb"
+        if self.plink_params.input_binary:
+            params += " --bfile "
+        else:
+            params += " --file "
+        if input_file_prefix is not None:
+            params += input_file_prefix
+        else:
+            params += self.plink_params.input_file_prefix
+        params += " --missing"
+        if self.plink_params.phenotype_file is not None:
+            params += " --within " + self.plink_params.phenotype_file
+        params += " --chr " + input_dna_region.chrom
+        session_key = self.project_name
+        session_key += "_chr" + input_dna_region.chrom
+        if input_dna_region.start_pos is not None:
+            session_key += "_" + input_dna_region.start_pos
+            params += " --from-bp " + input_dna_region.start_pos
+            params += " --to-bp " + input_dna_region.end_pos
+        out_file_prefix = join_path(self.plink_out_dir,
+                                    session_key)
+        params += " --out " + out_file_prefix
+        cmd = PLINK_DUMMY_SCRIPT + params
+        exec_sh(cmd)
+        return out_file_prefix + ".lmiss"
+
+    def extract_snps_pos(self, input_dna_region, input_file_prefix=None):
+        params = " --noweb"
+        if self.plink_params.input_binary:
+            params += " --bfile "
+        else:
+            params += " --file "
+        if input_file_prefix is not None:
+            params += input_file_prefix
+        else:
+            params += self.plink_params.input_file_prefix
+        params += " --recode"
+        params += " --tab"
+        params += " --chr " + input_dna_region.chrom
+        session_key = self.project_name
+        session_key += "_chr" + input_dna_region.chrom
+        if input_dna_region.start_pos is not None:
+            session_key += "_" + input_dna_region.start_pos
+            params += " --from-bp " + input_dna_region.start_pos
+            params += " --to-bp " + input_dna_region.end_pos
+        out_file_prefix = join_path(self.plink_out_dir,
+                                    session_key)
+        params += " --out " + out_file_prefix
+        cmd = PLINK_DUMMY_SCRIPT + params
+        exec_sh(cmd)
+        return out_file_prefix + ".map"
+
     def run_hap_assocs_offline(self):
         for params, session_key in self.get_plink_hap_assoc_paramss():
             cmd = PLINK_DUMMY_SCRIPT + params
@@ -237,6 +292,7 @@ class PlinkPipeline(CMMPipeline):
 def create_jobs_setup_file(project_name,
                            project_out_dir,
                            input_file_prefix,
+                           phenotype_file,
                            input_binary=True,
                            input_dna_regions=None,
                            cutoff_pvalue=None,
@@ -260,6 +316,7 @@ def create_jobs_setup_file(project_name,
     plink_params[JOBS_SETUP_INPUT_BINARY_KEY] = input_binary
     if input_dna_regions is not None:
         plink_params[JOBS_SETUP_INPUT_DNA_REGIONS_KEY] = input_dna_regions.split(",")
+    plink_params[JOBS_SETUP_PHENOTYPE_FILE_KEY] = phenotype_file
     if cutoff_pvalue is not None:
         plink_params[JOBS_SETUP_CUTOFF_PVALUE_KEY] = cutoff_pvalue
     if hap_window_sizes is not None:
