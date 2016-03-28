@@ -7,17 +7,6 @@ from pycmm.settings import FULL_SYSTEM_TEST
 from pycmm.template import SafeTester
 from pycmm.utils import count_lines
 from pycmm.flow.mutrep import MutRepPipeline
-from pycmm.proc.annovarlib import Annovar
-from pycmm.proc.annovarlib import PredictionTranslator
-from pycmm.proc.annovarlib import SIFT_PRED_COL
-from pycmm.proc.annovarlib import POLYPHEN2_HDIV_PRED_COL
-from pycmm.proc.annovarlib import POLYPHEN2_HVAR_PRED_COL
-from pycmm.proc.annovarlib import LRT_PRED_COL
-from pycmm.proc.annovarlib import MUTATIONTASTER_PRED_COL
-from pycmm.proc.annovarlib import MUTATIONASSESSOR_PRED_COL
-from pycmm.proc.annovarlib import FATHMM_PRED_COL
-from pycmm.proc.annovarlib import RADIALSVM_PRED_COL
-from pycmm.proc.annovarlib import LR_PRED_COL
 from pycmm.flow.test.test_cmmdb import DFLT_ANNOVAR_TEST_DB_FOLDER
 from pycmm.flow.test.test_cmmdb import DFLT_ANNOVAR_TEST_DB_NAMES
 from pycmm.flow.test.test_cmmdb import DFLT_ANNOVAR_TEST_DB_OPS

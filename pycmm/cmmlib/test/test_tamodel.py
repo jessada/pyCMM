@@ -1,7 +1,7 @@
 from os.path import join as join_path
 from os.path import dirname
 from pycmm.template import SafeTester
-from pycmm.proc.taparser import TAVcfReader
+from pycmm.cmmlib.taparser import TAVcfReader
 from pycmm.flow.mutrep import MutRepPipeline
 from pycmm.flow.test.test_mutrep import DFLT_TEST_MUTREP_COLS
 from pycmm.flow.cmmdb import create_jobs_setup_file

@@ -2,8 +2,8 @@
 import xlsxwriter
 from os.path import join as join_path
 from pycmm.flow import CMMPipeline
-from pycmm.proc.plinklib import SnpInfoReader
-from pycmm.proc.plinklib import HapAssocReader
+from pycmm.cmmlib.plinklib import SnpInfoReader
+from pycmm.cmmlib.plinklib import HapAssocReader
 
 HAPLO_INFO_SIZE = 5
 SNP_INFO_SIZE = 5

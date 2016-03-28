@@ -21,13 +21,13 @@ from pycmm.flow.cmmdb import JOBS_SETUP_SAMPLE_INFOS_KEY
 from pycmm.flow.cmmdb import JOBS_SETUP_FAMILY_ID_KEY
 from pycmm.flow.cmmdb import JOBS_SETUP_MEMBERS_LIST_KEY
 from pycmm.flow.cmmdb import JOBS_SETUP_SAMPLE_ID_KEY
-from pycmm.proc.annovarlib import ANNOVAR_PARAMS_INPUT_FILE_KEY
-from pycmm.proc.annovarlib import ANNOVAR_PARAMS_DB_FOLDER_KEY
-from pycmm.proc.annovarlib import ANNOVAR_PARAMS_BUILDVER_KEY
-from pycmm.proc.annovarlib import ANNOVAR_PARAMS_OUT_PREFIX_KEY
-from pycmm.proc.annovarlib import ANNOVAR_PARAMS_DB_NAMES_KEY
-from pycmm.proc.annovarlib import ANNOVAR_PARAMS_DB_OPS_KEY
-from pycmm.proc.annovarlib import ANNOVAR_PARAMS_NASTRING_KEY
+from pycmm.cmmlib.annovarlib import ANNOVAR_PARAMS_INPUT_FILE_KEY
+from pycmm.cmmlib.annovarlib import ANNOVAR_PARAMS_DB_FOLDER_KEY
+from pycmm.cmmlib.annovarlib import ANNOVAR_PARAMS_BUILDVER_KEY
+from pycmm.cmmlib.annovarlib import ANNOVAR_PARAMS_OUT_PREFIX_KEY
+from pycmm.cmmlib.annovarlib import ANNOVAR_PARAMS_DB_NAMES_KEY
+from pycmm.cmmlib.annovarlib import ANNOVAR_PARAMS_DB_OPS_KEY
+from pycmm.cmmlib.annovarlib import ANNOVAR_PARAMS_NASTRING_KEY
 
 DFLT_ANNOVAR_TEST_DB_FOLDER = DFLT_ANNOVAR_DB_FOLDER
 DFLT_ANNOVAR_TEST_DB_NAMES = "refGene"

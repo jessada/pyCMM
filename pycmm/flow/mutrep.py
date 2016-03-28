@@ -22,9 +22,9 @@ from pycmm.settings import MUTREP_SUMMARY_REPORT_BIN
 from pycmm.template import pyCMMBase
 from pycmm.utils import exec_sh
 from pycmm.utils.dnalib import ALL_CHROMS
-from pycmm.proc.taparser import TAVcfReader as VcfReader
-from pycmm.proc.tamodel import CMMGT_HOMOZYGOTE
-from pycmm.proc.tamodel import CMMGT_HETEROZYGOTE
+from pycmm.cmmlib.taparser import TAVcfReader as VcfReader
+from pycmm.cmmlib.tamodel import CMMGT_HOMOZYGOTE
+from pycmm.cmmlib.tamodel import CMMGT_HETEROZYGOTE
 from pycmm.flow.cmmdb import CMMDBPipeline
 from pycmm.flow.cmmdb import JOBS_SETUP_RPT_ALLOC_TIME_KEY
 from pycmm.flow.cmmdb import JOBS_SETUP_RPT_LAYOUT_SECTION

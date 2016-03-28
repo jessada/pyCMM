@@ -2,7 +2,7 @@
 from os.path import join as join_path
 from os.path import dirname
 from pycmm.template import SafeTester
-from pycmm.proc.taparser import TAVcfReader
+from pycmm.cmmlib.taparser import TAVcfReader
 
 
 class TestTAVcfReader(SafeTester):

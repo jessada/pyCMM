@@ -54,7 +54,7 @@ setup(
     packages=['pycmm',
               'pycmm.app',
               'pycmm.utils',
-              'pycmm.proc',
+              'pycmm.lib',
               'pycmm.flow',
               ],
     scripts=['bin/pyCMM-dnaseq-pipeline',

@@ -20,15 +20,15 @@ from pycmm.utils import exec_sh
 from pycmm.utils import mylogger
 from pycmm.utils.jobman import JobManager
 from pycmm.utils.dnalib import ALL_CHROMS
-from pycmm.proc.annovarlib import Annovar
-from pycmm.proc.annovarlib import AnnovarParams
-from pycmm.proc.annovarlib import ANNOVAR_PARAMS_INPUT_FILE_KEY
-from pycmm.proc.annovarlib import ANNOVAR_PARAMS_DB_FOLDER_KEY
-from pycmm.proc.annovarlib import ANNOVAR_PARAMS_BUILDVER_KEY
-from pycmm.proc.annovarlib import ANNOVAR_PARAMS_OUT_PREFIX_KEY
-from pycmm.proc.annovarlib import ANNOVAR_PARAMS_DB_NAMES_KEY
-from pycmm.proc.annovarlib import ANNOVAR_PARAMS_DB_OPS_KEY
-from pycmm.proc.annovarlib import ANNOVAR_PARAMS_NASTRING_KEY
+from pycmm.cmmlib.annovarlib import Annovar
+from pycmm.cmmlib.annovarlib import AnnovarParams
+from pycmm.cmmlib.annovarlib import ANNOVAR_PARAMS_INPUT_FILE_KEY
+from pycmm.cmmlib.annovarlib import ANNOVAR_PARAMS_DB_FOLDER_KEY
+from pycmm.cmmlib.annovarlib import ANNOVAR_PARAMS_BUILDVER_KEY
+from pycmm.cmmlib.annovarlib import ANNOVAR_PARAMS_OUT_PREFIX_KEY
+from pycmm.cmmlib.annovarlib import ANNOVAR_PARAMS_DB_NAMES_KEY
+from pycmm.cmmlib.annovarlib import ANNOVAR_PARAMS_DB_OPS_KEY
+from pycmm.cmmlib.annovarlib import ANNOVAR_PARAMS_NASTRING_KEY
 from pycmm.settings import ALL_MUTREP_ANNO_COLS
 from pycmm.settings import DFLT_MUTREP_FREQ_RATIOS
 

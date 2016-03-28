@@ -1,10 +1,10 @@
 import unittest
 from os.path import join as join_path
 from pycmm.template import SafeTester
-from pycmm.proc.plinklib import HapAssocReader
-from pycmm.proc.plinklib import merge_hap_assocs
-from pycmm.proc.plinklib import merge_lmiss_map
-from pycmm.proc.plinklib import SnpInfoReader
+from pycmm.cmmlib.plinklib import HapAssocReader
+from pycmm.cmmlib.plinklib import merge_hap_assocs
+from pycmm.cmmlib.plinklib import merge_lmiss_map
+from pycmm.cmmlib.plinklib import SnpInfoReader
 from pycmm.utils import is_number
 
 

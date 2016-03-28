@@ -5,9 +5,9 @@ from os.path import dirname
 from pycmm.settings import FULL_SYSTEM_TEST
 from pycmm.template import SafeTester
 from pycmm.utils.dnalib import ALL_CHROMS
-from pycmm.proc.plinklib import HapAssocUtils
-from pycmm.proc.plinklib import LMissReader
-from pycmm.proc.plinklib import MapReader
+from pycmm.cmmlib.plinklib import HapAssocUtils
+from pycmm.cmmlib.plinklib import LMissReader
+from pycmm.cmmlib.plinklib import MapReader
 from pycmm.flow.plink import PlinkPipeline
 from pycmm.flow.plink import create_jobs_setup_file
 from pycmm.flow.plink import DFLT_CUTOFF_PVALUE
