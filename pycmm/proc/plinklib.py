@@ -1,9 +1,10 @@
 #import sys
 #from os.path import join as join_path
 from collections import OrderedDict
-from collections import defaultdict
+#from collections import defaultdict
 from pycmm.template import pyCMMBase
 from pycmm.utils import is_number
+from pycmm.utils import DefaultOrderedDict
 #from pycmm.utils import exec_sh
 #from pycmm.utils import get_path
 
@@ -438,6 +439,7 @@ class SnpInfo(pyCMMBase):
             self.__f_miss_u = None
             self.__chrom = None
             self.__pos = None
+        self.__snp_idx = None
         super(SnpInfo, self).__init__(**kwargs)
 
     def get_raw_repr(self):
@@ -447,6 +449,7 @@ class SnpInfo(pyCMMBase):
         raw_repr["f_miss_u"] = self.f_miss_u
         raw_repr["chrom"] = self.chrom
         raw_repr["pos"] = self.pos
+        raw_repr["snp_idx"] = self.snp_idx
         return raw_repr
 
     @property
@@ -489,6 +492,14 @@ class SnpInfo(pyCMMBase):
     def pos(self, value):
         self.__pos = value
 
+    @property
+    def snp_idx(self):
+        return self.__snp_idx
+
+    @snp_idx.setter
+    def snp_idx(self, value):
+        self.__snp_idx = value
+
 class SnpInfoReader(Reader):
     """ To read and parse snp information """
 
@@ -500,7 +511,7 @@ class SnpInfoReader(Reader):
 
 def merge_lmiss_map(lmiss_file, map_file, out_file):
     # read snp info
-    snp_info = defaultdict(SnpInfo)
+    snp_info = DefaultOrderedDict(SnpInfo)
     lmiss_reader = LMissReader(file_name=lmiss_file)
     for lmiss_rec in lmiss_reader:
         snp = lmiss_rec.snp

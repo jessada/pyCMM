@@ -18,14 +18,15 @@ class CMMPipeline(JobManager):
 
     def __init__(self,
                  jobs_setup_file,
+                 **kwargs
                  ):
         self.__load_jobs_info(jobs_setup_file)
         self.__project_out_dir = None
-        JobManager.__init__(self,
-                            jobs_report_file=self.jobs_report_file)
         self.__slurm_log_dir = None
         self.__data_out_dir = None
         self.__rpts_out_dir = None
+        kwargs['jobs_report_file'] = self.jobs_report_file
+        super(CMMPipeline, self).__init__(**kwargs)
 
     def get_raw_repr(self):
         return {"project name": self.project_name,
@@ -100,14 +101,14 @@ class CMMPipeline(JobManager):
             return self._jobs_info[JOBS_SETUP_RPT_ALLOC_TIME_KEY]
         return None
 
-    def monitor_init(self):
-        JobManager.monitor_init(self)
+    def monitor_init(self, **kwargs):
+        super(CMMPipeline, self).monitor_init(**kwargs)
 
-    def monitor_action(self):
-        JobManager.monitor_action(self)
+    def monitor_action(self, **kwargs):
+        super(CMMPipeline, self).monitor_action(**kwargs)
 
-    def monitor_finalize(self):
-        JobManager.monitor_finalize(self)
+    def monitor_finalize(self, **kwargs):
+        super(CMMPipeline, self).monitor_finalize(**kwargs)
 
 def init_jobs_setup_file(project_name,
                          project_out_dir,

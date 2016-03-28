@@ -72,11 +72,33 @@ from pycmm.flow.plink import create_jobs_setup_file
 #    disp.disp_params_set("Report layout parameters", layout_params)
 #    disp.new_section_txt(" . . . G E N E R A T I N G   R E P O R T S . . . ")
 
+def app_pycmm_plink_hap_assocs_report(*args, **kwargs):
+    mylogger.getLogger(__name__)
+
+    func_name = sys._getframe().f_code.co_name
+    pl = PlinkPipeline(jobs_setup_file=kwargs['jobs_setup_file'])
+    mylogger.getLogger(__name__)
+#    __display_report_config(func_name, kwargs, pl)
+#    raw_report_regions = kwargs['report_regions']
+#    out_file = kwargs['out_file']
+#    if raw_report_regions is None:
+#        report_regions = None
+#    else:
+#        report_regions = map(lambda x: ReportRegion(x), raw_report_regions.split(","))
+#    pl.gen_family_report(fam_id, report_regions, out_file=out_file)
+    if pl.project_code is not None:
+        pl.run_hap_assocs_slurm(jobs_setup_file=kwargs['jobs_setup_file'],
+                                log_file=kwargs['log_file'])
+    else:
+        pl.run_hap_assocs_offline()
+    mylogger.getLogger(__name__)
+    disp.new_section_txt("F I N I S H <" + func_name + ">")
+
 def app_pycmm_plink_hap_assocs_slurm(*args, **kwargs):
     mylogger.getLogger(__name__)
 
     func_name = sys._getframe().f_code.co_name
-    pl = PlinkPipeline(kwargs['jobs_setup_file'])
+    pl = PlinkPipeline(jobs_setup_file=kwargs['jobs_setup_file'])
     mylogger.getLogger(__name__)
 #    __display_report_config(func_name, kwargs, pl)
 #    raw_report_regions = kwargs['report_regions']
@@ -95,7 +117,7 @@ def app_pycmm_plink_hap_assocs(*args, **kwargs):
     mylogger.getLogger(__name__)
 
     func_name = sys._getframe().f_code.co_name
-    pl = PlinkPipeline(kwargs['jobs_setup_file'])
+    pl = PlinkPipeline(jobs_setup_file=kwargs['jobs_setup_file'])
     mylogger.getLogger(__name__)
 #    __display_report_config(func_name, kwargs, pl)
 #    raw_report_regions = kwargs['report_regions']

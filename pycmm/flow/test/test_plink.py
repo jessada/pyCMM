@@ -67,7 +67,7 @@ class TestPlinkPipeline(SafeTester):
 
         self.init_test(self.current_func_name)
         jobs_setup_file = self.__create_jobs_setup_file()
-        pl = PlinkPipeline(jobs_setup_file)
+        pl = PlinkPipeline(jobs_setup_file=jobs_setup_file)
         self.assertEqual(pl.project_out_dir,
                          self.working_dir,
                          "PlinkPipeline cannot correctly identify 'output dir' from jobs setup file")
@@ -123,7 +123,7 @@ class TestPlinkPipeline(SafeTester):
                                                         cutoff_pvalue="0.001",
                                                         hap_window_sizes="3",
                                                         )
-        pl = PlinkPipeline(jobs_setup_file)
+        pl = PlinkPipeline(jobs_setup_file=jobs_setup_file)
         self.assertEqual(pl.project_code,
                          "b2011097",
                          "PlinkPipeline cannot correctly identify 'project code' from jobs setup file")
@@ -160,7 +160,7 @@ class TestPlinkPipeline(SafeTester):
         jobs_setup_file = self.__create_jobs_setup_file(hap_window_sizes="3,5,10,25",
                                                         input_dna_regions=input_dna_regions,
                                                         )
-        pl = PlinkPipeline(jobs_setup_file)
+        pl = PlinkPipeline(jobs_setup_file=jobs_setup_file)
         self.assertEqual(pl.plink_params.input_dna_regions[0].chrom,
                          "5",
                          "PlinkPipeline cannot correctly identify 'dna regions chromosome' from jobs setup file")
@@ -209,7 +209,7 @@ class TestPlinkPipeline(SafeTester):
         self.init_test(self.current_func_name)
         jobs_setup_file = self.__create_jobs_setup_file(input_dna_regions="9:100911000-100946000",
                                                         )
-        pl = PlinkPipeline(jobs_setup_file)
+        pl = PlinkPipeline(jobs_setup_file=jobs_setup_file)
         hap_assoc_out = pl.run_hap_assocs_offline()
         hat = HapAssocUtils(hap_assoc_out[0][0])
         self.assertEqual(hat.nlines,
@@ -235,7 +235,7 @@ class TestPlinkPipeline(SafeTester):
         jobs_setup_file = self.__create_jobs_setup_file(input_dna_regions="9:100911000-100946000",
                                                         hap_window_sizes="1,3",
                                                         )
-        pl = PlinkPipeline(jobs_setup_file)
+        pl = PlinkPipeline(jobs_setup_file=jobs_setup_file)
         hap_assoc_out = pl.run_hap_assocs_offline()
         hat = HapAssocUtils(hap_assoc_out[0][0])
         self.assertEqual(hat.nlines,
@@ -260,7 +260,7 @@ class TestPlinkPipeline(SafeTester):
         self.init_test(self.current_func_name)
         jobs_setup_file = self.__create_jobs_setup_file(input_dna_regions="9:100911000-100946000",
                                                         )
-        pl = PlinkPipeline(jobs_setup_file)
+        pl = PlinkPipeline(jobs_setup_file=jobs_setup_file)
         snps_stat_out = pl.extract_snps_stat(pl.plink_params.input_dna_regions[0])
         lmiss_reader = LMissReader(file_name=snps_stat_out)
         lmiss_rec = lmiss_reader.next()
@@ -297,7 +297,7 @@ class TestPlinkPipeline(SafeTester):
         self.init_test(self.current_func_name)
         jobs_setup_file = self.__create_jobs_setup_file(input_dna_regions="9:100911000-100946000",
                                                         )
-        pl = PlinkPipeline(jobs_setup_file)
+        pl = PlinkPipeline(jobs_setup_file=jobs_setup_file)
         snps_pos_out = pl.extract_snps_pos(pl.plink_params.input_dna_regions[0])
         map_reader = MapReader(file_name=snps_pos_out)
         map_rec = map_reader.next()

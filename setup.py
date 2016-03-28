@@ -8,6 +8,7 @@ from pycmm.settings import DUMMY_TABLE_ANNOVAR_BIN
 from pycmm.settings import MUTREP_FAMILY_REPORT_BIN
 from pycmm.settings import MUTREP_SUMMARY_REPORT_BIN
 from pycmm.settings import PLINK_HAP_ASSOCS_SLURM_BIN
+from pycmm.settings import PLINK_HAP_ASSOCS_REPORT_BIN
 
 def opj(*args):
     path = os.path.join(*args)
@@ -68,6 +69,7 @@ setup(
              'bin/pyCMM-plink-create-job-setup-file',
              'bin/pyCMM-plink-hap-assocs',
              'bin/'+PLINK_HAP_ASSOCS_SLURM_BIN,
+             'bin/'+PLINK_HAP_ASSOCS_REPORT_BIN,
              ],
     package=['pyCMM'],
 #    package_data={'': ['data/CBV/*.cbv']

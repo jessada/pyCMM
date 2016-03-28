@@ -10,7 +10,6 @@ from pycmm.flow import CMMPipeline
 from pycmm.flow import init_jobs_setup_file
 
 PLINK_DUMMY_SCRIPT = "$PYCMM/bash/plink_dummy.sh"
-HAP_ASSOC_DUMMY_SCRIPT = "$PYCMM/bash/hap_assoc_dummy.sh"
 
 DFLT_CUTOFF_PVALUE = "0.05"
 DFLT_HAP_WINDOW_SIZES = "1"
@@ -27,9 +26,9 @@ JOBS_SETUP_HAP_WINDOW_SIZES_KEY = "HAP_WINDOW_SIZES"
 class PlinkParams(pyCMMBase):
     """  To handle and parse PLINK parameters  """
 
-    def __init__(self, params):
-        pyCMMBase.__init__(self)
+    def __init__(self, params, **kwargs):
         self.__params = params
+        super(PlinkParams, self).__init__(**kwargs)
 
     def get_raw_repr(self):
         return {"input file prefix": self.input_file_prefix,
@@ -71,16 +70,13 @@ class PlinkParams(pyCMMBase):
         return DFLT_HAP_WINDOW_SIZES
 
 class PlinkPipeline(CMMPipeline):
-    """ A class to control PLINK execution pipeline """
+    """ To control PLINK execution pipeline """
 
-    def __init__(self,
-                 jobs_setup_file,
-                 ):
-        CMMPipeline.__init__(self,
-                             jobs_setup_file=jobs_setup_file)
+    def __init__(self, **kwargs):
         self.__plink_params = None
         self.__scratch_file_prefix = None
         self.__hap_assocs_out = None
+        super(PlinkPipeline, self).__init__(**kwargs)
 
     @property
     def plink_params(self):
@@ -159,8 +155,8 @@ class PlinkPipeline(CMMPipeline):
                             params,
                             )
 
-    def monitor_init(self):
-        CMMPipeline.monitor_init(self)
+    def monitor_init(self, **kwargs):
+        super(PlinkPipeline, self).monitor_init(**kwargs)
         self.__submit_hap_assoc_jobs()
 
 ## *************************************************************** keep this part of code until I'm certain that there is no way to specify nodelist *************************************************************** 
@@ -285,8 +281,8 @@ class PlinkPipeline(CMMPipeline):
     def __garbage_collecting(self):
         pass
 
-    def monitor_action(self):
-        CMMPipeline.monitor_action(self)
+    def monitor_action(self, **kwargs):
+        super(PlinkPipeline, self).monitor_action(**kwargs)
         self.__garbage_collecting()
 
 def create_jobs_setup_file(project_name,

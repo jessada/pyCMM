@@ -316,6 +316,14 @@ class TestPlinkLib(SafeTester):
                          0,
                          "merge_lmiss_map doesn't work correctly")
         snp_info_rec = snp_info_reader.next()
+        self.assertEqual(snp_info_rec.f_miss_a,
+                         0.02,
+                         "merge_lmiss_map doesn't work correctly")
+        self.assertEqual(snp_info_rec.pos,
+                         "100930253",
+                         "merge_lmiss_map doesn't work correctly")
+        snp_info_rec = snp_info_reader.next()
+        snp_info_rec = snp_info_reader.next()
         self.assertEqual(snp_info_rec.f_miss_u,
                          0.005,
                          "merge_lmiss_map doesn't work correctly")

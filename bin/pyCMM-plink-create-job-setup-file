@@ -1,8 +1,6 @@
 import argparse
 import sys
 from argparse import RawTextHelpFormatter
-from pycmm import settings
-from pycmm.utils import mylogger
 from pycmm.app.plink import app_pycmm_plink_create_jobs_setup_file
 from pycmm.settings import PLINK_CREATE_JOB_SETUP_FILE_DESCRIPTION
 from pycmm.settings import DFLT_FLOW_ALLOC_TIME

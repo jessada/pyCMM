@@ -14,7 +14,7 @@ JOB_STATUS_FAILED = "FAILED"
 class JobRecord(pyCMMBase):
     """ to keep UPPMAX SLURM job information """
 
-    def __init__(self):
+    def __init__(self, **kwargs):
         self.job_name = None
         self.project_code = None
         self.partition_type = None
@@ -28,6 +28,7 @@ class JobRecord(pyCMMBase):
         self.email = None
         self.prereq = None
         self.nodelist = None
+        super(JobRecord, self).__init__(**kwargs)
     
     def get_raw_repr(self):
         return {"job name": self.job_name,
@@ -50,6 +51,7 @@ class JobManager(pyCMMBase):
 
     def __init__(self,
                  jobs_report_file=None,
+                 **kwargs
                  ):
         self.job_dict = {}
         self.__job_rpt_fmt = "{job_id}"
@@ -66,6 +68,7 @@ class JobManager(pyCMMBase):
         self.__job_id = None
         self.__job_name = None
         self.__job_nodelist = None
+        super(JobManager, self).__init__(**kwargs)
 
     @property
     def local_scratch_dir(self):
@@ -99,17 +102,8 @@ class JobManager(pyCMMBase):
                          self.get_tmp_file_name())
 
     def get_raw_repr(self):
-        return {"NA1": "NA1",
-                "NA2": "NA2",
-                }
+        return None
 
-#    def __exec_sh(self, cmd):
-#        p, stdout_data = exec_sh(cmd)
-##        out, err_msg = p.communicate()
-##        if err_code:
-##            raise Exception("[exit " + str(err_code) + "]: " + err_msg)
-#        return stdout_data
-#
     def __get_sbatch_cmd(self, job_rec):
         cmd = "sbatch"
         cmd += " -A " + job_rec.project_code
