@@ -8,6 +8,8 @@ from pycmm.utils.dnalib import ALL_CHROMS
 from pycmm.utils.dnalib import DNARegion
 from pycmm.flow import CMMPipeline
 from pycmm.flow import init_jobs_setup_file
+from pycmm.cmmlib.plinklib import merge_hap_assocs
+from pycmm.cmmlib.plinklib import merge_lmiss_map
 
 PLINK_DUMMY_SCRIPT = "$PYCMM/bash/plink_dummy.sh"
 
@@ -22,6 +24,25 @@ JOBS_SETUP_INPUT_DNA_REGIONS_KEY = "INPUT_DNA_REGIONS"
 JOBS_SETUP_PHENOTYPE_FILE_KEY = "PHENOTYPE_FILE"
 JOBS_SETUP_CUTOFF_PVALUE_KEY = "CUTOFF_PVALUE"
 JOBS_SETUP_HAP_WINDOW_SIZES_KEY = "HAP_WINDOW_SIZES"
+JOBS_SETUP_HAP_ASSOC_FILTER_CRITERIA_KEY = "FILTERING_CRITERIA"
+JOBS_SETUP_HAP_ASSOC_FILTER_PVALUE005 = "PVALUE005"
+JOBS_SETUP_HAP_ASSOC_FILTER_DISEASE_SNP = "DISEASE_SNP"
+
+
+class FilterCriteria(pyCMMBase):
+    """  To handle and parse PLINK parameters  """
+
+    def __init__(self, criterias, **kwargs):
+        self.__criterias = criterias
+        super(FilterCriteria, self).__init__(**kwargs)
+
+    @property
+    def filter_pvalue005(self):
+        return JOBS_SETUP_HAP_ASSOC_FILTER_PVALUE005 in self.__criterias
+
+    @property
+    def filter_disease_snp(self):
+        return JOBS_SETUP_HAP_ASSOC_FILTER_DISEASE_SNP in self.__criterias
 
 class PlinkParams(pyCMMBase):
     """  To handle and parse PLINK parameters  """
@@ -68,6 +89,11 @@ class PlinkParams(pyCMMBase):
         if JOBS_SETUP_HAP_WINDOW_SIZES_KEY in self.__params:
             return self.__params[JOBS_SETUP_HAP_WINDOW_SIZES_KEY]
         return DFLT_HAP_WINDOW_SIZES
+
+    @property
+    def filter_criteria(self):
+        if JOBS_SETUP_HAP_ASSOC_FILTER_CRITERIA_KEY in self.__params:
+            return FilterCriteria(self.__params[JOBS_SETUP_HAP_ASSOC_FILTER_CRITERIA_KEY])
 
 class PlinkPipeline(CMMPipeline):
     """ To control PLINK execution pipeline """
@@ -272,7 +298,30 @@ class PlinkPipeline(CMMPipeline):
         exec_sh(cmd)
         return out_file_prefix + ".map"
 
+    def merge_hap_assocs(self,
+                         hap_assoc_files,
+                         out_file,
+                         locus_prefixs=None,
+                         ):
+        merge_hap_assocs(hap_assoc_files,
+                         out_file,
+                         locus_prefixs,
+                         filter_criteria=self.plink_params.filter_criteria,
+                         )
+        self.info(" >>>> merged file: " + out_file)
+
     def run_hap_assocs_offline(self):
+        for input_dna_region in self.plink_params.input_dna_regions:
+            lmiss_file = self.extract_snps_stat(input_dna_region)
+            map_file = self.extract_snps_pos(input_dna_region)
+            out_file = join_path(self.plink_out_dir,
+                                 self.project_name)
+            out_file += "_chr" + input_dna_region.chrom
+            if input_dna_region.start_pos is not None:
+                out_file += "_" + input_dna_region.start_pos
+            out_file += ".snp.info"
+            merge_lmiss_map(lmiss_file, map_file, out_file)
+            self.info(" >>>> snp info file: " + out_file)
         for params, session_key in self.get_plink_hap_assoc_paramss():
             cmd = PLINK_DUMMY_SCRIPT + params
             exec_sh(cmd)
@@ -296,6 +345,7 @@ def create_jobs_setup_file(project_name,
                            project_code=None,
                            flow_alloc_time=None,
                            rpt_alloc_time=None,
+                           filter_criteria=None,
                            jobs_report_file=None,
                            out_jobs_setup_file=None,
                            ):
@@ -317,6 +367,14 @@ def create_jobs_setup_file(project_name,
         plink_params[JOBS_SETUP_CUTOFF_PVALUE_KEY] = cutoff_pvalue
     if hap_window_sizes is not None:
         plink_params[JOBS_SETUP_HAP_WINDOW_SIZES_KEY] = hap_window_sizes.split(",")
+    if filter_criteria is not None:
+        criteria_list = []
+        for criteria in filter_criteria.split(","):
+            if criteria == JOBS_SETUP_HAP_ASSOC_FILTER_PVALUE005:
+                criteria_list.append(JOBS_SETUP_HAP_ASSOC_FILTER_PVALUE005)
+            if criteria == JOBS_SETUP_HAP_ASSOC_FILTER_DISEASE_SNP:
+                criteria_list.append(JOBS_SETUP_HAP_ASSOC_FILTER_DISEASE_SNP)
+        plink_params[JOBS_SETUP_HAP_ASSOC_FILTER_CRITERIA_KEY] = criteria_list
     job_setup_document[JOBS_SETUP_PLINK_PARAMS_SECTION] = plink_params
 
     pyaml.dump(job_setup_document, stream)

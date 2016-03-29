@@ -6,12 +6,15 @@ from pycmm.settings import FULL_SYSTEM_TEST
 from pycmm.template import SafeTester
 from pycmm.utils.dnalib import ALL_CHROMS
 from pycmm.cmmlib.plinklib import HapAssocUtils
+from pycmm.cmmlib.plinklib import HapAssocReader
 from pycmm.cmmlib.plinklib import LMissReader
 from pycmm.cmmlib.plinklib import MapReader
 from pycmm.flow.plink import PlinkPipeline
 from pycmm.flow.plink import create_jobs_setup_file
 from pycmm.flow.plink import DFLT_CUTOFF_PVALUE
 from pycmm.flow.plink import DFLT_HAP_WINDOW_SIZES
+from pycmm.flow.plink import JOBS_SETUP_HAP_ASSOC_FILTER_PVALUE005
+from pycmm.flow.plink import JOBS_SETUP_HAP_ASSOC_FILTER_DISEASE_SNP
 
 PLINK_TEST = True
 
@@ -34,6 +37,7 @@ class TestPlinkPipeline(SafeTester):
                                  phenotype_file=None,
                                  cutoff_pvalue=None,
                                  hap_window_sizes=None,
+                                 filter_criteria=None,
                                  project_code=None,
                                  ):
         jobs_setup_file = join_path(self.working_dir,
@@ -58,6 +62,7 @@ class TestPlinkPipeline(SafeTester):
                                input_dna_regions=input_dna_regions,
                                cutoff_pvalue=cutoff_pvalue,
                                hap_window_sizes=hap_window_sizes,
+                               filter_criteria=filter_criteria,
                                project_code=project_code,
                                )
         return jobs_setup_file
@@ -111,17 +116,23 @@ class TestPlinkPipeline(SafeTester):
         self.assertEqual(pl.plink_params.hap_window_sizes,
                          DFLT_HAP_WINDOW_SIZES,
                          "PlinkPipeline cannot correctly identify 'haplotype window size' from jobs setup file")
+        self.assertEqual(pl.plink_params.filter_criteria,
+                         None,
+                         "PlinkPipeline cannot correctly identify 'filter criteria' from jobs setup file")
         
     def test_load_jobs_info_2(self):
         """ test if non-default PLINK pipeline configurations are loaded correctly """
 
         self.init_test(self.current_func_name)
+        filter_criteria = JOBS_SETUP_HAP_ASSOC_FILTER_PVALUE005
+        filter_criteria += "," + JOBS_SETUP_HAP_ASSOC_FILTER_DISEASE_SNP
         jobs_setup_file = self.__create_jobs_setup_file(project_code="b2011097",
                                                         input_file_prefix="/tmp/file",
                                                         input_binary=False,
                                                         input_dna_regions="14:3456-7890",
                                                         cutoff_pvalue="0.001",
                                                         hap_window_sizes="3",
+                                                        filter_criteria=filter_criteria,
                                                         )
         pl = PlinkPipeline(jobs_setup_file=jobs_setup_file)
         self.assertEqual(pl.project_code,
@@ -149,6 +160,12 @@ class TestPlinkPipeline(SafeTester):
         self.assertEqual(pl.plink_params.hap_window_sizes,
                          [3],
                          "PlinkPipeline cannot correctly identify 'haplotype window size' from jobs setup file")
+        self.assertEqual(pl.plink_params.filter_criteria.filter_pvalue005,
+                         True,
+                         "PlinkPipeline cannot correctly identify 'filter pvalue 0.05' from jobs setup file")
+        self.assertEqual(pl.plink_params.filter_criteria.filter_disease_snp,
+                         True,
+                         "PlinkPipeline cannot correctly identify 'filter disease snp' from jobs setup file")
         
     def test_load_jobs_info_3(self):
         """ test if special PLINK pipeline configurations are loaded correctly """
@@ -253,10 +270,108 @@ class TestPlinkPipeline(SafeTester):
                          "PlinkPipeline cannot correctly perform 'haplotype association study'")
 
     @unittest.skipUnless(FULL_SYSTEM_TEST or PLINK_TEST, "taking too long time to test")
+    def test_merge_hap_assocs_1(self):
+        """ test basic merging assoc.hap files """
+
+        self.init_test(self.current_func_name)
+        jobs_setup_file = self.__create_jobs_setup_file()
+        pl = PlinkPipeline(jobs_setup_file=jobs_setup_file)
+        input_files = []
+        input_files.append(join_path(self.data_dir,
+                                     "input1.assoc.hap"))
+        input_files.append(join_path(self.data_dir,
+                                     "input2.assoc.hap"))
+        locus_prefixs = ["W1", "W3"]
+        out_file = join_path(self.working_dir,
+                             "merged_hap_assoc.assoc.hap"
+                             )
+        pl.merge_hap_assocs(input_files, out_file, locus_prefixs=locus_prefixs)
+        hap_assoc_reader = HapAssocReader(file_name=out_file)
+        self.assertEqual(len(list(hap_assoc_reader)),
+                         58,
+                         "merge_hap_assoc doesn't work correctly")
+        hap_assoc_reader = HapAssocReader(file_name=out_file)
+        hap_assoc_rec = hap_assoc_reader.next()
+        self.assertEqual(hap_assoc_rec.chisq,
+                         "CHISQ",
+                         "merge_hap_assoc doesn't work correctly")
+        self.assertEqual(hap_assoc_rec.ors,
+                         "ORS",
+                         "merge_hap_assoc doesn't work correctly")
+        hap_assoc_rec = hap_assoc_reader.next()
+        hap_assoc_rec = hap_assoc_reader.next()
+        hap_assoc_rec = hap_assoc_reader.next()
+        hap_assoc_rec = hap_assoc_reader.next()
+        hap_assoc_rec = hap_assoc_reader.next()
+        hap_assoc_rec = hap_assoc_reader.next()
+        hap_assoc_rec = hap_assoc_reader.next()
+        hap_assoc_rec = hap_assoc_reader.next()
+        self.assertEqual(hap_assoc_rec.locus,
+                         "W1_WIN4",
+                         "HapAssocReader doesn't work correctly")
+        hap_assoc_rec = hap_assoc_reader.next()
+        hap_assoc_rec = hap_assoc_reader.next()
+        self.assertEqual(hap_assoc_rec.ors,
+                         1.1606,
+                         "HapAssocReader doesn't work correctly")
+        hap_assoc_rec = hap_assoc_reader.next()
+        self.assertEqual(hap_assoc_rec.snps,
+                         "rs2417733",
+                         "HapAssocReader doesn't work correctly")
+        hap_assoc_rec = hap_assoc_reader.next()
+        hap_assoc_rec = hap_assoc_reader.next()
+        hap_assoc_rec = hap_assoc_reader.next()
+        hap_assoc_rec = hap_assoc_reader.next()
+        hap_assoc_rec = hap_assoc_reader.next()
+        hap_assoc_rec = hap_assoc_reader.next()
+        hap_assoc_rec = hap_assoc_reader.next()
+        hap_assoc_rec = hap_assoc_reader.next()
+        hap_assoc_rec = hap_assoc_reader.next()
+        hap_assoc_rec = hap_assoc_reader.next()
+        self.assertEqual(hap_assoc_rec.locus,
+                         "W3_WIN1",
+                         "HapAssocReader doesn't work correctly")
+        hap_assoc_rec = hap_assoc_reader.next()
+        hap_assoc_rec = hap_assoc_reader.next()
+        self.assertEqual(hap_assoc_rec.snps,
+                         "rs2795491|rs2795492|rs2250494",
+                         "HapAssocReader doesn't work correctly")
+        hap_assoc_rec = hap_assoc_reader.next()
+        hap_assoc_rec = hap_assoc_reader.next()
+        hap_assoc_rec = hap_assoc_reader.next()
+        self.assertEqual(hap_assoc_rec.ors,
+                         0.9937,
+                         "HapAssocReader doesn't work correctly")
+
+    @unittest.skipUnless(FULL_SYSTEM_TEST or PLINK_TEST, "taking too long time to test")
+    def test_merge_hap_assocs_2(self):
+        """ test merging assoc.hap files with filtering criteria """
+
+        self.individual_debug = True
+        self.init_test(self.current_func_name)
+        filter_criteria = JOBS_SETUP_HAP_ASSOC_FILTER_PVALUE005
+        filter_criteria += "," + JOBS_SETUP_HAP_ASSOC_FILTER_DISEASE_SNP
+        jobs_setup_file = self.__create_jobs_setup_file(filter_criteria=filter_criteria)
+        pl = PlinkPipeline(jobs_setup_file=jobs_setup_file)
+        input_files = []
+        input_files.append(join_path(self.data_dir,
+                                     "input1.assoc.hap"))
+        input_files.append(join_path(self.data_dir,
+                                     "input2.assoc.hap"))
+        locus_prefixs = ["W1", "W3"]
+        out_file = join_path(self.working_dir,
+                             "merged_hap_assoc.assoc.hap"
+                             )
+        pl.merge_hap_assocs(input_files, out_file, locus_prefixs=locus_prefixs)
+        hap_assoc_reader = HapAssocReader(file_name=out_file)
+        self.assertEqual(len(list(hap_assoc_reader)),
+                         5,
+                         "merge_hap_assoc doesn't work correctly")
+
+    @unittest.skipUnless(FULL_SYSTEM_TEST or PLINK_TEST, "taking too long time to test")
     def test_extract_snps_stat_1(self):
         """ test extracting SNPs missing genotyping information """
 
-        self.individual_debug = True
         self.init_test(self.current_func_name)
         jobs_setup_file = self.__create_jobs_setup_file(input_dna_regions="9:100911000-100946000",
                                                         )
@@ -293,7 +408,6 @@ class TestPlinkPipeline(SafeTester):
     def test_extract_snps_pos_1(self):
         """ test extracting genotyping position """
 
-        self.individual_debug = True
         self.init_test(self.current_func_name)
         jobs_setup_file = self.__create_jobs_setup_file(input_dna_regions="9:100911000-100946000",
                                                         )

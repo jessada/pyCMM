@@ -9,6 +9,7 @@ from pycmm.settings import MUTREP_FAMILY_REPORT_BIN
 from pycmm.settings import MUTREP_SUMMARY_REPORT_BIN
 from pycmm.settings import PLINK_HAP_ASSOCS_SLURM_BIN
 from pycmm.settings import PLINK_HAP_ASSOCS_REPORT_BIN
+from pycmm.settings import PLINK_MERGE_HAP_ASSOCS_BIN
 
 def opj(*args):
     path = os.path.join(*args)
@@ -54,7 +55,7 @@ setup(
     packages=['pycmm',
               'pycmm.app',
               'pycmm.utils',
-              'pycmm.lib',
+              'pycmm.cmmlib',
               'pycmm.flow',
               ],
     scripts=['bin/pyCMM-dnaseq-pipeline',
@@ -70,6 +71,7 @@ setup(
              'bin/pyCMM-plink-hap-assocs',
              'bin/'+PLINK_HAP_ASSOCS_SLURM_BIN,
              'bin/'+PLINK_HAP_ASSOCS_REPORT_BIN,
+             'bin/'+PLINK_MERGE_HAP_ASSOCS_BIN,
              ],
     package=['pyCMM'],
 #    package_data={'': ['data/CBV/*.cbv']

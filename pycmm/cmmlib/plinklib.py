@@ -270,7 +270,11 @@ class HapAssocReader(Reader):
             break
         return hap_assoc_rec
 
-def merge_hap_assocs(hap_assoc_files, out_file, locus_prefixs=None):
+def merge_hap_assocs(hap_assoc_files,
+                     out_file,
+                     locus_prefixs=None,
+                     filter_criteria=None,
+                     ):
     writer = open(out_file, 'w')
     header = "LOCUS"
     header += "\tHAPLOTYPE"
@@ -292,6 +296,15 @@ def merge_hap_assocs(hap_assoc_files, out_file, locus_prefixs=None):
         hap_assoc_reader = HapAssocReader(file_name=file_name, locus_prefix=locus_prefix)
         hap_assoc_reader.next()
         for hap_assoc_rec in hap_assoc_reader:
+            if filter_criteria is not None:
+                if (filter_criteria.filter_pvalue005 and
+                    (hap_assoc_rec.pvalue > 0.05)
+                    ):
+                    continue
+                if (filter_criteria.filter_disease_snp and
+                    (hap_assoc_rec.f_a < hap_assoc_rec.f_u)
+                    ):
+                    continue
             content = hap_assoc_rec.locus
             content += "\t" + hap_assoc_rec.haplotype
             content += "\t" + str(hap_assoc_rec.f_a)
@@ -299,7 +312,10 @@ def merge_hap_assocs(hap_assoc_files, out_file, locus_prefixs=None):
             content += "\t" + str(hap_assoc_rec.chisq)
             content += "\t" + hap_assoc_rec.df
             content += "\t" + str(hap_assoc_rec.pvalue)
-            content += "\t" + "{:4.4f}".format(hap_assoc_rec.ors)
+            if type(hap_assoc_rec.ors) is str:
+                content += "\t" + hap_assoc_rec.ors
+            else:
+                content += "\t" + "{:4.4f}".format(hap_assoc_rec.ors)
             content += "\t" + hap_assoc_rec.snps
             content += "\n"
             writer.write(content)

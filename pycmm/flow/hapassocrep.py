@@ -37,10 +37,25 @@ class HapAssocRepPipeline(CMMPipeline):
         return self.__snp_info_dict
 
     def __load_snp_info(self, snp_info_file):
+        # list all snps that are in the assoc.hap file
+        hap_assoc_reader = HapAssocReader(file_name=self.__hap_assoc_file)
+        hap_assoc_snps = {}
+        hap_assoc_snps["SNP"] = 1
+        for hap_assoc_rec in hap_assoc_reader:
+            snp_list = hap_assoc_rec.snps.split("|")
+            for snp in snp_list:
+                hap_assoc_snps[snp] = 1
+        # then only pick snp in the info file that are in the list above
         self.__snp_info_dict = {}
         snp_info_reader = SnpInfoReader(file_name=snp_info_file)
         snp_info_count = 0
+#        rec = snp_info_reader.next()
+#        self.__snp_info_dict[rec.snp] = rec
+#        rec.snp_idx = snp_info_count
+#        snp_info_count += 1
         for rec in snp_info_reader:
+            if rec.snp not in hap_assoc_snps:
+                continue
             self.__snp_info_dict[rec.snp] = rec
             rec.snp_idx = snp_info_count
             snp_info_count += 1

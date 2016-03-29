@@ -135,6 +135,26 @@ def app_pycmm_plink_hap_assocs(*args, **kwargs):
     mylogger.getLogger(__name__)
     disp.new_section_txt("F I N I S H <" + func_name + ">")
 
+def app_pycmm_plink_merge_hap_assocs(*args, **kwargs):
+    mylogger.getLogger(__name__)
+
+    func_name = sys._getframe().f_code.co_name
+    pl = PlinkPipeline(jobs_setup_file=kwargs['jobs_setup_file'])
+    mylogger.getLogger(__name__)
+#    __display_report_config(func_name, kwargs, pl)
+#    raw_report_regions = kwargs['report_regions']
+#    out_file = kwargs['out_file']
+#    if raw_report_regions is None:
+#        report_regions = None
+#    else:
+#        report_regions = map(lambda x: ReportRegion(x), raw_report_regions.split(","))
+#    pl.gen_family_report(fam_id, report_regions, out_file=out_file)
+    pl.merge_hap_assocs(hap_assoc_files=kwargs['hap_assoc_files'],
+                        out_file=kwargs['out_file']
+                        )
+    mylogger.getLogger(__name__)
+    disp.new_section_txt("F I N I S H <" + func_name + ">")
+
 def app_pycmm_plink_create_jobs_setup_file(*args, **kwargs):
     mylogger.getLogger(__name__)
     func_name = sys._getframe().f_code.co_name
@@ -152,6 +172,8 @@ def app_pycmm_plink_create_jobs_setup_file(*args, **kwargs):
     optional_params = OrderedDict()
     if kwargs['input_dna_regions'] is not None:
         optional_params['input dna regions (-R)'] = kwargs['input_dna_regions'].split(",")
+    if kwargs['filter_criteria'] is not None:
+        optional_params['filter criteria (--filter_criteria)'] = kwargs['filter_criteria'].split(",")
     required_params['phenotype file (--pheno)'] = kwargs['phenotype_file']
     if kwargs['project_code'] is not None:
         optional_params['project code (-p)'] = kwargs['project_code']
@@ -173,6 +195,7 @@ def app_pycmm_plink_create_jobs_setup_file(*args, **kwargs):
                            hap_window_sizes=kwargs['hap_window_sizes'],
                            project_code=kwargs['project_code'],
                            flow_alloc_time=kwargs['flow_alloc_time'],
+                           filter_criteria=kwargs['filter_criteria'],
                            out_jobs_setup_file=kwargs['out_jobs_setup_file'],
                            )
     mylogger.getLogger(__name__)
