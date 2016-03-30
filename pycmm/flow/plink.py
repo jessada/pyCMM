@@ -16,7 +16,7 @@ from pycmm.cmmlib.plinklib import merge_lmiss_map
 
 PLINK_DUMMY_SCRIPT = "$PYCMM/bash/plink_dummy.sh"
 
-DFLT_CUTOFF_PVALUE = "0.05"
+DFLT_CUTOFF_PVALUE = 0
 DFLT_HAP_WINDOW_SIZES = "1"
 
 # *************** plink parameters section ***************
@@ -25,12 +25,14 @@ JOBS_SETUP_INPUT_FILE_PREFIX_KEY = "INPUT_FILE_PREFIX"
 JOBS_SETUP_INPUT_BINARY_KEY = "INPUT_BINARY"
 JOBS_SETUP_INPUT_DNA_REGIONS_KEY = "INPUT_DNA_REGIONS"
 JOBS_SETUP_PHENOTYPE_FILE_KEY = "PHENOTYPE_FILE"
-JOBS_SETUP_CUTOFF_PVALUE_KEY = "CUTOFF_PVALUE"
 JOBS_SETUP_HAP_WINDOW_SIZES_KEY = "HAP_WINDOW_SIZES"
 JOBS_SETUP_HAP_ASSOC_FILTER_CRITERIA_KEY = "FILTERING_CRITERIA"
 JOBS_SETUP_HAP_ASSOC_FILTER_PVALUE005 = "PVALUE005"
 JOBS_SETUP_HAP_ASSOC_FILTER_DISEASE_SNP = "DISEASE_SNP"
 
+# *************** haplotype association study parameters section ***************
+JOBS_SETUP_REPORT_PARAMS_SECTION = "REPORT_PARAMS"
+JOBS_SETUP_CUTOFF_PVALUE_KEY = "CUTOFF_PVALUE"
 
 class FilterCriteria(pyCMMBase):
     """  To handle and parse PLINK parameters  """
@@ -38,6 +40,12 @@ class FilterCriteria(pyCMMBase):
     def __init__(self, criterias, **kwargs):
         self.__criterias = criterias
         super(FilterCriteria, self).__init__(**kwargs)
+
+    def get_raw_repr(self):
+        raw_repr = OrderedDict()
+        raw_repr["filter p-value less than 0.05"] = self.filter_pvalue005
+        raw_repr["filter disease snp"] = self.filter_disease_snp
+        return raw_repr
 
     @property
     def filter_pvalue005(self):
@@ -55,10 +63,13 @@ class PlinkParams(pyCMMBase):
         super(PlinkParams, self).__init__(**kwargs)
 
     def get_raw_repr(self):
-        return {"input file prefix": self.input_file_prefix,
-                "input binary": self.input_binary,
-                "phenotype file": self.phenotype_file,
-                }
+        raw_repr = OrderedDict()
+        raw_repr["input file prefix"] = self.input_file_prefix
+        raw_repr["input binary"] = self.input_binary
+        raw_repr["phenotype_file"] = self.phenotype_file
+        raw_repr["haplo window sizes"] = self.hap_window_sizes
+        raw_repr["filter criteria"] = self.filter_criteria
+        return raw_repr
 
     @property
     def input_file_prefix(self):
@@ -80,12 +91,6 @@ class PlinkParams(pyCMMBase):
     @property
     def phenotype_file(self):
         return self.__params[JOBS_SETUP_PHENOTYPE_FILE_KEY]
-
-    @property
-    def cutoff_pvalue(self):
-        if JOBS_SETUP_CUTOFF_PVALUE_KEY in self.__params:
-            return str(self.__params[JOBS_SETUP_CUTOFF_PVALUE_KEY])
-        return DFLT_CUTOFF_PVALUE
 
     @property
     def hap_window_sizes(self):
@@ -460,8 +465,6 @@ def create_jobs_setup_file(project_name,
     if input_dna_regions is not None:
         plink_params[JOBS_SETUP_INPUT_DNA_REGIONS_KEY] = input_dna_regions.split(",")
     plink_params[JOBS_SETUP_PHENOTYPE_FILE_KEY] = phenotype_file
-    if cutoff_pvalue is not None:
-        plink_params[JOBS_SETUP_CUTOFF_PVALUE_KEY] = cutoff_pvalue
     if hap_window_sizes is not None:
         plink_params[JOBS_SETUP_HAP_WINDOW_SIZES_KEY] = hap_window_sizes.split(",")
     if filter_criteria is not None:
@@ -473,5 +476,11 @@ def create_jobs_setup_file(project_name,
                 criteria_list.append(JOBS_SETUP_HAP_ASSOC_FILTER_DISEASE_SNP)
         plink_params[JOBS_SETUP_HAP_ASSOC_FILTER_CRITERIA_KEY] = criteria_list
     job_setup_document[JOBS_SETUP_PLINK_PARAMS_SECTION] = plink_params
+    rpt_params = {}
+    if cutoff_pvalue is not None:
+        rpt_params[JOBS_SETUP_CUTOFF_PVALUE_KEY] = cutoff_pvalue
+    else:
+        rpt_params[JOBS_SETUP_CUTOFF_PVALUE_KEY] = DFLT_CUTOFF_PVALUE
+    job_setup_document[JOBS_SETUP_REPORT_PARAMS_SECTION] = rpt_params
 
     pyaml.dump(job_setup_document, stream)

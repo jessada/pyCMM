@@ -4,6 +4,7 @@ from os.path import join as join_path
 from pycmm.settings import FULL_SYSTEM_TEST
 from pycmm.template import SafeTester
 from pycmm.flow.plink import create_jobs_setup_file
+from pycmm.flow.plink import DFLT_CUTOFF_PVALUE
 from pycmm.flow.hapassocrep import HapAssocRepPipeline
 
 class TestHapAssocRepPipeline(SafeTester):
@@ -23,6 +24,7 @@ class TestHapAssocRepPipeline(SafeTester):
                                  input_binary=None,
                                  input_dna_regions=None,
                                  phenotype_file=None,
+                                 cutoff_pvalue=None,
                                  ):
         jobs_setup_file = join_path(self.working_dir,
                                     self.test_function+'_jobs_setup.txt')
@@ -44,15 +46,58 @@ class TestHapAssocRepPipeline(SafeTester):
                                phenotype_file=phenotype_file,
                                input_binary=input_binary,
                                input_dna_regions=input_dna_regions,
+                               cutoff_pvalue=cutoff_pvalue,
                                )
         return jobs_setup_file
+
+    def test_load_jobs_info_1(self):
+        """
+        test if default haplotype association study report configurations
+        are loaded correctly
+        """
+
+        self.individual_debug = True
+        self.init_test(self.current_func_name)
+        jobs_setup_file = self.__create_jobs_setup_file()
+        hap_assoc_file = join_path(self.data_dir,
+                                   "input.assoc.hap")
+        snp_info_file = join_path(self.data_dir,
+                                  "input.snp.info")
+        pl = HapAssocRepPipeline(hap_assoc_file=hap_assoc_file,
+                                 snp_info_file=snp_info_file,
+                                 jobs_setup_file=jobs_setup_file,
+                                 )
+        self.assertEqual(pl.rpt_params.cutoff_pvalue,
+                         DFLT_CUTOFF_PVALUE,
+                         "HapAssocRepPipeline cannot correctly identify 'cutoff p-value' from jobs setup file")
+
+    def test_load_jobs_info_2(self):
+        """
+        test if non-default haplotype association study report configurations
+        are loaded correctly
+        """
+
+        self.individual_debug = True
+        self.init_test(self.current_func_name)
+        jobs_setup_file = self.__create_jobs_setup_file(cutoff_pvalue=0.0005)
+        hap_assoc_file = join_path(self.data_dir,
+                                   "input.assoc.hap")
+        snp_info_file = join_path(self.data_dir,
+                                  "input.snp.info")
+        pl = HapAssocRepPipeline(hap_assoc_file=hap_assoc_file,
+                                 snp_info_file=snp_info_file,
+                                 jobs_setup_file=jobs_setup_file,
+                                 )
+        self.assertEqual(pl.rpt_params.cutoff_pvalue,
+                         0.0005,
+                         "HapAssocRepPipeline cannot correctly identify 'cutoff p-value' from jobs setup file")
 
     def test_gen_report_1(self):
         """ test generating basic haplotype associaiton study report """
 
         self.individual_debug = True
         self.init_test(self.current_func_name)
-        jobs_setup_file = self.__create_jobs_setup_file()
+        jobs_setup_file = self.__create_jobs_setup_file(cutoff_pvalue=0.005)
         hap_assoc_file = join_path(self.data_dir,
                                    "input.assoc.hap")
         snp_info_file = join_path(self.data_dir,

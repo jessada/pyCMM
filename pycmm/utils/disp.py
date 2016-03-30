@@ -5,10 +5,13 @@ from collections import OrderedDict
 
 param_display_fmt = "  {name:<50}{value}"
 
+def center_txt(txt, width):
+    txt = " " + txt + " "
+    return txt.center(width, "*")
+
 def new_section_txt(txt):
-    adj_txt = " " + txt + " "
     mylogger.info("")
-    mylogger.info(adj_txt.center(140,"*"))
+    mylogger.info(center_txt(txt, 140))
 
 def disp_header(header_txt):
     mylogger.info("")

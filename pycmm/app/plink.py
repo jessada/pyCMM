@@ -64,6 +64,10 @@ def display_plink_config(func_name,
         else:
             plink_params['filter criteria'] = None
         disp.disp_params_set("Plink parameters", plink_params)
+    if hasattr(pl, "rpt_params"):
+        rpt_params = OrderedDict()
+        rpt_params['cutoff p-value'] = pl.rpt_params.cutoff_pvalue
+        disp.disp_params_set("Report parameters", rpt_params)
     disp.new_section_txt(" . . . E X E C U T I N G . . . ")
 
 def app_pycmm_plink_hap_assocs_slurm(*args, **kwargs):

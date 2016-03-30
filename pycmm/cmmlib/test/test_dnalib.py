@@ -39,7 +39,6 @@ class TestDNARegion(SafeTester):
 
         self.init_test(self.current_func_name)
         dr = DNARegion("X:1345-56322")
-        self.dbg(dr.start_pos)
         self.assertEqual(dr.chrom,
                          "X",
                          "DNARegion cannot correctly identify 'chromosome'")

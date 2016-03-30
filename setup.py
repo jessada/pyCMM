@@ -87,5 +87,6 @@ setup(
         "pyaml >= 15.5.7",
         "xlrd >= 0.9.4",
         "openpyxl >= 2.3.3",
+        "xlsxwriter >= 0.5.3",
         ],
 )
