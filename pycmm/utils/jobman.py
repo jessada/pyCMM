@@ -53,7 +53,7 @@ class JobManager(pyCMMBase):
                  jobs_report_file=None,
                  **kwargs
                  ):
-        self.job_dict = {}
+        self.__job_dict = {}
         self.__job_rpt_fmt = "{job_id}"
         self.__job_rpt_fmt += "\t{partition}"
         self.__job_rpt_fmt += "\t{job_name}"
@@ -153,7 +153,7 @@ class JobManager(pyCMMBase):
         cmd = self.__get_sbatch_cmd(job_rec)
         p, stdout_data = exec_sh(cmd)
         job_rec.job_id = stdout_data.strip().split()[-1]
-        self.job_dict[job_name] = job_rec
+        self.__job_dict[job_name] = job_rec
         return job_rec.job_id
 
     def __write_job_report(self):
@@ -169,8 +169,8 @@ class JobManager(pyCMMBase):
                                               dependency="DEPENDENCY",
                                               job_status="STATUS",
                                               )+"\n")
-        for job_name in self.job_dict:
-            job_rec = self.job_dict[job_name]
+        for job_name in self.__job_dict:
+            job_rec = self.__job_dict[job_name]
             f_rpt.write(self.__job_rpt_fmt.format(job_id=job_rec.job_id,
                                                   partition=job_rec.partition_type,
                                                   job_name=job_rec.job_name,
@@ -208,7 +208,7 @@ class JobManager(pyCMMBase):
         # virtual function
         pass
     
-    def monitor_jobs(self, interval=10):
+    def monitor_jobs(self, interval=30):
         self.monitor_init()
         while True:
             self.update_job_status()
@@ -219,8 +219,8 @@ class JobManager(pyCMMBase):
         self.monitor_finalize()
 
     def update_job_status(self):
-        for job_name in self.job_dict:
-            job_rec = self.job_dict[job_name]
+        for job_name in self.__job_dict:
+            job_rec = self.__job_dict[job_name]
             if job_rec.job_status == JOB_STATUS_COMPLETED:
                 continue
             if job_rec.job_status == JOB_STATUS_FAILED:
@@ -237,8 +237,8 @@ class JobManager(pyCMMBase):
         return False (not yet done)
         otherwise return True 
         """
-        for job_name in self.job_dict:
-            job_rec = self.job_dict[job_name]
+        for job_name in self.__job_dict:
+            job_rec = self.__job_dict[job_name]
             if job_rec.job_status == JOB_STATUS_COMPLETED:
                 continue
             if job_rec.job_status == JOB_STATUS_FAILED:
@@ -293,7 +293,7 @@ class JobManager(pyCMMBase):
     def get_job_id(self,
                    job_name,
                    ):
-        return self.job_dict[job_name].job_id
+        return self.__job_dict[job_name].job_id
 
     def cancel_job(self,
                    job_name,

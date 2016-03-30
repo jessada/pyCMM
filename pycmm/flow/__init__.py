@@ -40,8 +40,13 @@ class CMMPipeline(JobManager):
                 }
 
     def __load_jobs_info(self, jobs_setup_file):
+        self.__jobs_setup_file = jobs_setup_file
         stream = file(jobs_setup_file, "r")
         self._jobs_info = yaml.safe_load(stream)
+
+    @property
+    def jobs_setup_file(self):
+        return self.__jobs_setup_file
 
     @property
     def jobs_report_file(self):

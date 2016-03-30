@@ -19,7 +19,7 @@ from pycmm.template import pyCMMBase
 from pycmm.utils import exec_sh
 from pycmm.utils import mylogger
 from pycmm.utils.jobman import JobManager
-from pycmm.utils.dnalib import ALL_CHROMS
+from pycmm.cmmlib.dnalib import ALL_CHROMS
 from pycmm.cmmlib.annovarlib import Annovar
 from pycmm.cmmlib.annovarlib import AnnovarParams
 from pycmm.cmmlib.annovarlib import ANNOVAR_PARAMS_INPUT_FILE_KEY

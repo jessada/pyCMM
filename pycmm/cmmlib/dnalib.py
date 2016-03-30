@@ -5,9 +5,9 @@ ALL_CHROMS = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13
 class DNARegion(pyCMMBase):
     """  To parse DNA region  """
 
-    def __init__(self, region):
-        pyCMMBase.__init__(self)
+    def __init__(self, region, **kwargs):
         self.__parse_region(region)
+        super(DNARegion, self).__init__(**kwargs)
 
     def get_raw_repr(self):
         return {"chromosome": self.chrom,
@@ -26,6 +26,14 @@ class DNARegion(pyCMMBase):
     @property
     def end_pos(self):
         return self.__end_pos
+
+    @property
+    def region_key(self):
+        key = "chr"
+        key += self.__chrom
+        if self.start_pos is not None:
+            key += "_" + self.start_pos
+        return key
     
     def __parse_region(self, region):
         region_items = region.split(":")

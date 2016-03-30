@@ -61,7 +61,9 @@ class TestHapAssocRepPipeline(SafeTester):
                                  snp_info_file=snp_info_file,
                                  jobs_setup_file=jobs_setup_file,
                                  )
-        rpt_file = pl.gen_report()
+        out_file = join_path(self.working_dir,
+                             self.current_func_name + ".xlsx")
+        rpt_file = pl.gen_report(out_file)
         self.dbg("************** not yet tested *****************")
 
     def tearDown(self):

@@ -1,98 +1,70 @@
 import sys
 from collections import OrderedDict
 from pycmm.settings import PLINK_CREATE_JOB_SETUP_FILE_DESCRIPTION
+from pycmm.settings import PLINK_HAP_ASSOCS_DESCRIPTION
+from pycmm.settings import PLINK_HAP_ASSOCS_SLURM_DESCRIPTION
+from pycmm.settings import PLINK_MERGE_HAP_ASSOCS_DESCRIPTION
 from pycmm.utils import mylogger
 from pycmm.utils import disp
+from pycmm.utils import set_log_file
 from pycmm.flow.plink import PlinkPipeline
 from pycmm.flow.plink import create_jobs_setup_file
 
-#def __display_report_config(func_name,
-#                            kwargs,
-#                            pl,
-#                            ):
-#    log_file = set_log_file(kwargs['log_file'])
-#    disp.new_section_txt("S T A R T <" + func_name + ">")
-#    required_params = OrderedDict()
-#    required_params['jobs setup file (-j)'] = kwargs['jobs_setup_file']
-#    if 'fam_id' in kwargs:
-#        required_params['family id (-f)'] = kwargs['fam_id']
-#    if 'report_regions' in kwargs:
-#        raw_report_regions = kwargs['report_regions']
-#        if raw_report_regions is None:
-#            required_params['report regions (-r)'] = "All" 
-#        else:
-#            required_params['report regions (-r)'] = raw_report_regions 
-#    if 'out_file' in kwargs:
-#        required_params['output file (-o)'] = kwargs['out_file']
-#    optional_params = None
-#    if log_file is not None:
-#        optional_params = OrderedDict()
-#        optional_params['log file (-l)'] = log_file
-#    disp.show_config(app_description=settings.MUTREP_FAMILY_REPORT_DESCRIPTION,
-#                     required_params=required_params,
-#                     optional_params=optional_params,
-#                     )
-#    layout_params = OrderedDict()
-#    layout_params['annotated columns'] = pl.report_layout.anno_cols
-#    layout_params['annoated vcf tabix file'] = pl.annotated_vcf_tabix
-#    report_regions = pl.report_layout.report_regions
-#    if report_regions is not None:
-#        report_region_outs = []
-#        for report_region in report_regions:
-#            report_region_out = report_region.chrom
-#            if report_region.start_pos is not None:
-#                report_region_out += ":" + report_region.start_pos
-#                report_region_out += "-" + report_region.end_pos
-#            report_region_outs.append(report_region_out)
-#        layout_params['report regions'] = report_region_outs
-#    else:
-#        layout_params['report regions'] = "all"
-#    layout_params['frequency ratios'] = pl.report_layout.freq_ratios
-#    layout_params['reports output folder'] = pl.rpts_out_dir
-#    layout_params['split chromosome'] = pl.report_layout.split_chrom
-#    layout_params['summary_families sheet'] = pl.report_layout.summary_families_sheet
-#    layout_params['call detail'] = pl.report_layout.call_detail
-#    if pl.report_layout.anno_excl_tags:
-#        layout_params['columns exclusion tags'] = pl.report_layout.anno_excl_tags
-#    filter_actions_out = OrderedDict()
-#    filter_actions_out['Rare'] = pl.report_layout.filter_rare
-#    filter_actions_out['Non-Intergenic'] = pl.report_layout.filter_non_intergenic
-#    filter_actions_out['Non-Intronic'] = pl.report_layout.filter_non_intronic
-#    filter_actions_out['Non-Upstream'] = pl.report_layout.filter_non_upstream
-#    filter_actions_out['Non-Downstream'] = pl.report_layout.filter_non_downtream
-#    filter_actions_out['Non-UTR'] = pl.report_layout.filter_non_utr
-#    filter_actions_out['Non-Synonymous'] = pl.report_layout.filter_non_synonymous
-#    filter_actions_out['Has-mutation'] = pl.report_layout.filter_has_mutation
-#    filter_actions_out['Has-shared'] = pl.report_layout.filter_has_shared
-#    layout_params['filter actions'] = filter_actions_out
-#    report_exclusion_out = {}
-#    layout_params['report exclusion'] = report_exclusion_out
-#    report_exclusion_out['only summary'] = pl.report_layout.only_summary
-#    report_exclusion_out['only families'] = pl.report_layout.only_families
-#    disp.disp_params_set("Report layout parameters", layout_params)
-#    disp.new_section_txt(" . . . G E N E R A T I N G   R E P O R T S . . . ")
-
-def app_pycmm_plink_hap_assocs_report(*args, **kwargs):
-    mylogger.getLogger(__name__)
-
-    func_name = sys._getframe().f_code.co_name
-    pl = PlinkPipeline(jobs_setup_file=kwargs['jobs_setup_file'])
-    mylogger.getLogger(__name__)
-#    __display_report_config(func_name, kwargs, pl)
-#    raw_report_regions = kwargs['report_regions']
-#    out_file = kwargs['out_file']
-#    if raw_report_regions is None:
-#        report_regions = None
-#    else:
-#        report_regions = map(lambda x: ReportRegion(x), raw_report_regions.split(","))
-#    pl.gen_family_report(fam_id, report_regions, out_file=out_file)
-    if pl.project_code is not None:
-        pl.run_hap_assocs_slurm(jobs_setup_file=kwargs['jobs_setup_file'],
-                                log_file=kwargs['log_file'])
-    else:
-        pl.run_hap_assocs_offline()
-    mylogger.getLogger(__name__)
-    disp.new_section_txt("F I N I S H <" + func_name + ">")
+def display_plink_config(func_name,
+                           app_description,
+                           kwargs,
+                           pl,
+                           ):
+    log_file = set_log_file(kwargs['log_file'])
+    disp.new_section_txt("S T A R T <" + func_name + ">")
+    required_params = OrderedDict()
+    required_params['jobs setup file (-j)'] = kwargs['jobs_setup_file']
+    if 'hap_assoc_files' in kwargs:
+        required_params['raw haplotype association study files (--hap_assoc_files)'] = kwargs['hap_assoc_files']
+    if 'hap_assoc_file' in kwargs:
+        required_params['haplotype association study file (--hap_assoc)'] = kwargs['hap_assoc_file']
+    if 'snp_info_file' in kwargs:
+        required_params['SNP information file (--snp_info)'] = kwargs['snp_info_file']
+    if 'out_file' in kwargs:
+        required_params['output file name (--out)'] = kwargs['out_file']
+    optional_params = None
+    if log_file is not None:
+        optional_params = OrderedDict()
+        optional_params['log file (-l)'] = log_file
+    disp.show_config(app_description=app_description,
+                     required_params=required_params,
+                     optional_params=optional_params,
+                     )
+    pipeline_params = OrderedDict()
+    pipeline_params['project name'] = pl.project_name
+    pipeline_params['project code'] = pl.project_code
+    pipeline_params['plink allocation time'] = pl.flow_alloc_time
+    pipeline_params['report allocation time'] = pl.rpt_alloc_time
+    pipeline_params['project output directory'] = pl.project_out_dir
+    disp.disp_params_set("Pipeline parameters", pipeline_params)
+    if hasattr(pl, "plink_params"):
+        plink_params = OrderedDict()
+        plink_params['input file prefix'] = pl.plink_params.input_file_prefix
+        plink_params['input binary'] = pl.plink_params.input_binary
+        plink_params['phenotype file'] = pl.plink_params.phenotype_file
+        input_dna_regions_param = []
+        for input_dna_region in pl.plink_params.input_dna_regions:
+            param = "chr" + input_dna_region.chrom
+            if input_dna_region.start_pos is not None:
+                param += ":" + input_dna_region.start_pos
+                param += "-" + input_dna_region.end_pos
+            input_dna_regions_param.append(param)
+        plink_params['dna regions'] = input_dna_regions_param
+        plink_params['haplotype windows'] = pl.plink_params.hap_window_sizes
+        if pl.plink_params.filter_criteria is not None:
+            filter_criteria = {}
+            filter_criteria["p-value 0.05"] = pl.plink_params.filter_criteria.filter_pvalue005
+            filter_criteria["disease snps"] = pl.plink_params.filter_criteria.filter_disease_snp
+            plink_params['filter criteria'] = filter_criteria
+        else:
+            plink_params['filter criteria'] = None
+        disp.disp_params_set("Plink parameters", plink_params)
+    disp.new_section_txt(" . . . E X E C U T I N G . . . ")
 
 def app_pycmm_plink_hap_assocs_slurm(*args, **kwargs):
     mylogger.getLogger(__name__)
@@ -100,14 +72,11 @@ def app_pycmm_plink_hap_assocs_slurm(*args, **kwargs):
     func_name = sys._getframe().f_code.co_name
     pl = PlinkPipeline(jobs_setup_file=kwargs['jobs_setup_file'])
     mylogger.getLogger(__name__)
-#    __display_report_config(func_name, kwargs, pl)
-#    raw_report_regions = kwargs['report_regions']
-#    out_file = kwargs['out_file']
-#    if raw_report_regions is None:
-#        report_regions = None
-#    else:
-#        report_regions = map(lambda x: ReportRegion(x), raw_report_regions.split(","))
-#    pl.gen_family_report(fam_id, report_regions, out_file=out_file)
+    display_plink_config(func_name,
+                         PLINK_HAP_ASSOCS_SLURM_DESCRIPTION,
+                         kwargs,
+                         pl,
+                         )
     if len(pl.job_nodelist) != 0:
         pl.monitor_jobs()
     mylogger.getLogger(__name__)
@@ -119,14 +88,11 @@ def app_pycmm_plink_hap_assocs(*args, **kwargs):
     func_name = sys._getframe().f_code.co_name
     pl = PlinkPipeline(jobs_setup_file=kwargs['jobs_setup_file'])
     mylogger.getLogger(__name__)
-#    __display_report_config(func_name, kwargs, pl)
-#    raw_report_regions = kwargs['report_regions']
-#    out_file = kwargs['out_file']
-#    if raw_report_regions is None:
-#        report_regions = None
-#    else:
-#        report_regions = map(lambda x: ReportRegion(x), raw_report_regions.split(","))
-#    pl.gen_family_report(fam_id, report_regions, out_file=out_file)
+    display_plink_config(func_name,
+                         PLINK_HAP_ASSOCS_DESCRIPTION,
+                         kwargs,
+                         pl,
+                         )
     if pl.project_code is not None:
         pl.run_hap_assocs_slurm(jobs_setup_file=kwargs['jobs_setup_file'],
                                 log_file=kwargs['log_file'])
@@ -141,14 +107,11 @@ def app_pycmm_plink_merge_hap_assocs(*args, **kwargs):
     func_name = sys._getframe().f_code.co_name
     pl = PlinkPipeline(jobs_setup_file=kwargs['jobs_setup_file'])
     mylogger.getLogger(__name__)
-#    __display_report_config(func_name, kwargs, pl)
-#    raw_report_regions = kwargs['report_regions']
-#    out_file = kwargs['out_file']
-#    if raw_report_regions is None:
-#        report_regions = None
-#    else:
-#        report_regions = map(lambda x: ReportRegion(x), raw_report_regions.split(","))
-#    pl.gen_family_report(fam_id, report_regions, out_file=out_file)
+    display_plink_config(func_name,
+                         PLINK_MERGE_HAP_ASSOCS_DESCRIPTION,
+                         kwargs,
+                         pl,
+                         )
     pl.merge_hap_assocs(hap_assoc_files=kwargs['hap_assoc_files'],
                         out_file=kwargs['out_file']
                         )

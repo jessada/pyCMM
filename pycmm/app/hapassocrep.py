@@ -1,7 +1,9 @@
 import sys
+from pycmm.settings import PLINK_HAP_ASSOCS_REPORT_DESCRIPTION
 from pycmm.utils import mylogger
 from pycmm.utils import disp
 from pycmm.flow.hapassocrep import HapAssocRepPipeline
+from pycmm.app.plink import display_plink_config
 
 def app_pycmm_plink_hap_assocs_report(*args, **kwargs):
     mylogger.getLogger(__name__)
@@ -11,14 +13,11 @@ def app_pycmm_plink_hap_assocs_report(*args, **kwargs):
                              snp_info_file=kwargs['snp_info_file'],
                              jobs_setup_file=kwargs['jobs_setup_file'])
     mylogger.getLogger(__name__)
-#    __display_report_config(func_name, kwargs, pl)
-#    raw_report_regions = kwargs['report_regions']
-#    out_file = kwargs['out_file']
-#    if raw_report_regions is None:
-#        report_regions = None
-#    else:
-#        report_regions = map(lambda x: ReportRegion(x), raw_report_regions.split(","))
-#    pl.gen_family_report(fam_id, report_regions, out_file=out_file)
-    pl.gen_report()
+    display_plink_config(func_name,
+                         PLINK_HAP_ASSOCS_REPORT_DESCRIPTION,
+                         kwargs,
+                         pl,
+                         )
+    pl.gen_report(out_file=kwargs['out_file'])
     mylogger.getLogger(__name__)
     disp.new_section_txt("F I N I S H <" + func_name + ">")

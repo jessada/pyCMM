@@ -6,7 +6,7 @@ from os.path import dirname
 from pycmm.template import SafeTester
 #from pycmm.utils import get_file_prefix
 #from pycmm.utils import concat_files
-from pycmm.utils.dnalib import DNARegion
+from pycmm.cmmlib.dnalib import DNARegion
 
 
 class TestDNARegion(SafeTester):

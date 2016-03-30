@@ -4,7 +4,7 @@ from os.path import join as join_path
 from os.path import dirname
 from pycmm.settings import FULL_SYSTEM_TEST
 from pycmm.template import SafeTester
-from pycmm.utils.dnalib import ALL_CHROMS
+from pycmm.cmmlib.dnalib import ALL_CHROMS
 from pycmm.cmmlib.plinklib import HapAssocUtils
 from pycmm.cmmlib.plinklib import HapAssocReader
 from pycmm.cmmlib.plinklib import LMissReader
@@ -228,7 +228,7 @@ class TestPlinkPipeline(SafeTester):
                                                         )
         pl = PlinkPipeline(jobs_setup_file=jobs_setup_file)
         hap_assoc_out = pl.run_hap_assocs_offline()
-        hat = HapAssocUtils(hap_assoc_out[0][0])
+        hat = HapAssocUtils(hap_assoc_out[pl.region_keys[0]][0])
         self.assertEqual(hat.nlines,
                          20,
                          "PlinkPipeline cannot correctly perform 'haplotype association study'")
@@ -254,14 +254,14 @@ class TestPlinkPipeline(SafeTester):
                                                         )
         pl = PlinkPipeline(jobs_setup_file=jobs_setup_file)
         hap_assoc_out = pl.run_hap_assocs_offline()
-        hat = HapAssocUtils(hap_assoc_out[0][0])
+        hat = HapAssocUtils(hap_assoc_out[pl.region_keys[0]][0])
         self.assertEqual(hat.nlines,
                          20,
                          "PlinkPipeline cannot correctly perform 'haplotype association study'")
         self.assertEqual(hat.ncols,
                          8,
                          "PlinkPipeline cannot correctly perform 'haplotype association study'")
-        hat = HapAssocUtils(hap_assoc_out[0][1])
+        hat = HapAssocUtils(hap_assoc_out[pl.region_keys[0]][1])
         self.assertEqual(hat.nlines,
                          46,
                          "PlinkPipeline cannot correctly perform 'haplotype association study'")

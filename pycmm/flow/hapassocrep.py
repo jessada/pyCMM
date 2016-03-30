@@ -27,10 +27,11 @@ class HapAssocRepPipeline(CMMPipeline):
         self.__load_snp_info(snp_info_file)
         super(HapAssocRepPipeline, self).__init__(**kwargs)
 
-    @property
-    def hap_assoc_report_file(self):
-        return join_path(self.rpts_out_dir,
-                         self.project_name+".xlsx")
+#    @property
+#    def hap_assoc_report_file(self):
+#        return self.__out_file
+#        return join_path(self.rpts_out_dir,
+#                         self.project_name+".xlsx")
 
     @property
     def snp_info_dict(self):
@@ -126,9 +127,9 @@ class HapAssocRepPipeline(CMMPipeline):
         self.__add_snps_to_ws(ws)
         self.__add_haplotypes_to_ws(ws)
 
-    def gen_report(self):
-        wb = xlsxwriter.Workbook(self.hap_assoc_report_file)
+    def gen_report(self, out_file):
+        wb = xlsxwriter.Workbook(out_file)
         self.__add_overview_haplos_sheet(wb, "overview")
         wb.close()
-        self.info(" >>>> report file: " + self.hap_assoc_report_file)
-        return self.hap_assoc_report_file
+        self.info(" >>>> report file: " + out_file)
+        return out_file

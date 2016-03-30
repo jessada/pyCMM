@@ -1,13 +1,16 @@
 # This Python file uses the following encoding: utf-8
 import pyaml
+from collections import defaultdict
 from os.path import join as join_path
 from pycmm.settings import PLINK_HAP_ASSOCS_SLURM_BIN
+from pycmm.settings import PLINK_MERGE_HAP_ASSOCS_BIN
+from pycmm.settings import PLINK_HAP_ASSOCS_REPORT_BIN
 from pycmm.template import pyCMMBase
 from pycmm.utils import exec_sh
-from pycmm.utils.dnalib import ALL_CHROMS
-from pycmm.utils.dnalib import DNARegion
 from pycmm.flow import CMMPipeline
 from pycmm.flow import init_jobs_setup_file
+from pycmm.cmmlib.dnalib import ALL_CHROMS
+from pycmm.cmmlib.dnalib import DNARegion
 from pycmm.cmmlib.plinklib import merge_hap_assocs
 from pycmm.cmmlib.plinklib import merge_lmiss_map
 
@@ -102,6 +105,9 @@ class PlinkPipeline(CMMPipeline):
         self.__plink_params = None
         self.__scratch_file_prefix = None
         self.__hap_assocs_out = None
+        self.__snp_info_files = None
+        self.__merged_hap_assoc_files = None
+        self.__submitted_jobs = {}
         super(PlinkPipeline, self).__init__(**kwargs)
 
     @property
@@ -129,6 +135,24 @@ class PlinkPipeline(CMMPipeline):
     def hap_assocs_out(self):
         return self.__hap_assocs_out
 
+    @property
+    def snp_info_files(self):
+        if self.__snp_info_files is None:
+            self.warning("Attempting to access snp info files before they are created, please review code structure")
+            return None
+        return self.__snp_info_files
+
+    @property
+    def merged_hap_assoc_files(self):
+        if self.__merged_hap_assoc_files is None:
+            self.warning("Attempting to access merged assoc.hap files before they are created, please review code structure")
+            return None
+        return self.__merged_hap_assoc_files
+
+    @property
+    def region_keys(self):
+        return map(lambda x: x.region_key, self.plink_params.input_dna_regions)
+
     def get_plink_hap_assoc_paramss(self, input_file_prefix=None):
         params = " --noweb"
         if self.plink_params.input_binary:
@@ -144,29 +168,29 @@ class PlinkPipeline(CMMPipeline):
         params += " --hap-assoc"
         params += " --geno 0.1"
         params += " --maf 0.01"
-        self.__hap_assocs_out = []
-        for region_idx in xrange(len(self.plink_params.input_dna_regions)):
-            input_dna_region = self.plink_params.input_dna_regions[region_idx]
+        self.__hap_assocs_out = {}
+        for input_dna_region in self.plink_params.input_dna_regions:
             region_params = params + " --chr " + input_dna_region.chrom
-            region_key = self.project_name
-            region_key += "_chr" + input_dna_region.chrom
+            region_key = input_dna_region.region_key
+            project_region_key = self.project_name + "_" + region_key
             if input_dna_region.start_pos is not None:
-                region_key += "_" + input_dna_region.start_pos
                 region_params += " --from-bp " + input_dna_region.start_pos
                 region_params += " --to-bp " + input_dna_region.end_pos
-            self.__hap_assocs_out.append([])
+            self.__hap_assocs_out[region_key] = []
             for window_size in self.plink_params.hap_window_sizes:
-                out_session_key = region_key
+                out_session_key = project_region_key
                 out_session_key += "_WIN_" + str(window_size)
                 out_file_prefix = join_path(self.plink_out_dir,
                                             out_session_key)
-                self.__hap_assocs_out[region_idx].append(out_file_prefix + ".assoc.hap")
+                hap_assoc_out = out_file_prefix + ".assoc.hap"
+                self.__hap_assocs_out[region_key].append(hap_assoc_out)
                 out_params = region_params + " --out " + out_file_prefix
                 out_params += " --hap-window " + str(window_size)
-                yield out_params, out_session_key
+                yield out_params, out_session_key, region_key
 
     def __submit_hap_assoc_jobs(self):
-        for params, session_key in self.get_plink_hap_assoc_paramss():
+        submitted_hap_assoc_jobs = defaultdict(list)
+        for params, session_key, region_key in self.get_plink_hap_assoc_paramss():
             job_name = session_key
             slurm_log_file = join_path(self.slurm_log_dir,
                                        job_name+".log")
@@ -180,10 +204,81 @@ class PlinkPipeline(CMMPipeline):
                             job_script,
                             params,
                             )
+            submitted_hap_assoc_jobs[region_key].append(job_name)
+        self.__submitted_jobs['hap_assoc'] = submitted_hap_assoc_jobs
+
+    def __submit_merge_hap_assocs_jobs(self):
+        merge_hap_assocs_jobs = {}
+        self.__merged_hap_assoc_files = {}
+        for input_dna_region in self.plink_params.input_dna_regions:
+            region_key = input_dna_region.region_key
+            # generate script parameters
+            params = " -j " + self.jobs_setup_file
+            hap_assoc_files = ",".join(self.hap_assocs_out[region_key])
+            params += " --hap_assoc_files " + hap_assoc_files
+            out_file = join_path(self.plink_out_dir,
+                                 "merged"+"_"+region_key+".assoc.hap")
+            params += " --out " + out_file
+            self.__merged_hap_assoc_files[region_key] = out_file
+            # generate job params
+            job_name = self.project_name + "_merged_" + region_key
+            slurm_log_file = join_path(self.slurm_log_dir,
+                                       job_name+".log")
+            job_script = PLINK_MERGE_HAP_ASSOCS_BIN
+            prereq = self.__submitted_jobs['hap_assoc'][region_key]
+            self.submit_job(job_name,
+                            self.project_code,
+                            "core",
+                            "1",
+                            self.flow_alloc_time,
+                            slurm_log_file,
+                            job_script,
+                            params,
+                            prereq=prereq,
+                            )
+            merge_hap_assocs_jobs[region_key] = [job_name]
+        self.__submitted_jobs['merge_hap_assocs'] = merge_hap_assocs_jobs
+
+    def __submit_hap_assocs_report_jobs(self):
+        hap_assocs_report_jobs = {}
+        for input_dna_region in self.plink_params.input_dna_regions:
+            region_key = input_dna_region.region_key
+            # generate script parameters
+            params = " -j " + self.jobs_setup_file
+            hap_assoc_file = self.__merged_hap_assoc_files[region_key]
+            params += " --hap_assoc " + hap_assoc_file
+            snp_info_file = self.__snp_info_files[region_key]
+            params += " --snp_info " + snp_info_file
+            out_file = join_path(self.rpts_out_dir,
+                                 self.project_name)
+            out_file += "_" + region_key
+            out_file += ".xlsx"
+            params += " --out " + out_file
+            # generate job params
+            job_name = self.project_name + "_rpt_" + region_key
+            slurm_log_file = join_path(self.slurm_log_dir,
+                                       job_name+".log")
+            job_script = PLINK_HAP_ASSOCS_REPORT_BIN
+            prereq = self.__submitted_jobs['merge_hap_assocs'][region_key]
+            self.submit_job(job_name,
+                            self.project_code,
+                            "core",
+                            "1",
+                            self.flow_alloc_time,
+                            slurm_log_file,
+                            job_script,
+                            params,
+                            prereq=prereq,
+                            )
+            hap_assocs_report_jobs[region_key] = [job_name]
+        self.__submitted_jobs['hap_assocs_report'] = hap_assocs_report_jobs
 
     def monitor_init(self, **kwargs):
         super(PlinkPipeline, self).monitor_init(**kwargs)
         self.__submit_hap_assoc_jobs()
+        self.__submit_merge_hap_assocs_jobs()
+        self.__gen_snp_info_files()
+        self.__submit_hap_assocs_report_jobs()
 
 ## *************************************************************** keep this part of code until I'm certain that there is no way to specify nodelist *************************************************************** 
 #    def copy_plink_file_to_scratch(self, suffix):
@@ -228,7 +323,7 @@ class PlinkPipeline(CMMPipeline):
                              jobs_setup_file,
                              log_file=None,
                              ):
-        job_name = self.project_name + "_hap_assocs"
+        job_name = self.project_name + "_mgr"
         slurm_log_file = join_path(self.slurm_log_dir,
                                    job_name+".log")
         job_script = PLINK_HAP_ASSOCS_SLURM_BIN
@@ -260,9 +355,8 @@ class PlinkPipeline(CMMPipeline):
             params += " --within " + self.plink_params.phenotype_file
         params += " --chr " + input_dna_region.chrom
         session_key = self.project_name
-        session_key += "_chr" + input_dna_region.chrom
+        session_key += "_" + input_dna_region.region_key
         if input_dna_region.start_pos is not None:
-            session_key += "_" + input_dna_region.start_pos
             params += " --from-bp " + input_dna_region.start_pos
             params += " --to-bp " + input_dna_region.end_pos
         out_file_prefix = join_path(self.plink_out_dir,
@@ -286,9 +380,8 @@ class PlinkPipeline(CMMPipeline):
         params += " --tab"
         params += " --chr " + input_dna_region.chrom
         session_key = self.project_name
-        session_key += "_chr" + input_dna_region.chrom
+        session_key += "_" + input_dna_region.region_key
         if input_dna_region.start_pos is not None:
-            session_key += "_" + input_dna_region.start_pos
             params += " --from-bp " + input_dna_region.start_pos
             params += " --to-bp " + input_dna_region.end_pos
         out_file_prefix = join_path(self.plink_out_dir,
@@ -310,19 +403,23 @@ class PlinkPipeline(CMMPipeline):
                          )
         self.info(" >>>> merged file: " + out_file)
 
-    def run_hap_assocs_offline(self):
+    def __gen_snp_info_files(self):
+        # generate snp.info file, one file for one input_dna_region
+        self.__snp_info_files = {}
         for input_dna_region in self.plink_params.input_dna_regions:
             lmiss_file = self.extract_snps_stat(input_dna_region)
             map_file = self.extract_snps_pos(input_dna_region)
             out_file = join_path(self.plink_out_dir,
                                  self.project_name)
-            out_file += "_chr" + input_dna_region.chrom
-            if input_dna_region.start_pos is not None:
-                out_file += "_" + input_dna_region.start_pos
+            out_file += "_" + input_dna_region.region_key
             out_file += ".snp.info"
             merge_lmiss_map(lmiss_file, map_file, out_file)
+            self.__snp_info_files[input_dna_region.region_key] = out_file
             self.info(" >>>> snp info file: " + out_file)
-        for params, session_key in self.get_plink_hap_assoc_paramss():
+
+    def run_hap_assocs_offline(self):
+        self.__gen_snp_info_files()
+        for params, session_key, region_key in self.get_plink_hap_assoc_paramss():
             cmd = PLINK_DUMMY_SCRIPT + params
             exec_sh(cmd)
         return self.hap_assocs_out
