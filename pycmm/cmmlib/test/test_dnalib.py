@@ -1,11 +1,5 @@
 import unittest
-#import filecmp
-#from os.path import join as join_path
-from os.path import dirname
-#from pycmm import settings
 from pycmm.template import SafeTester
-#from pycmm.utils import get_file_prefix
-#from pycmm.utils import concat_files
 from pycmm.cmmlib.dnalib import DNARegion
 
 

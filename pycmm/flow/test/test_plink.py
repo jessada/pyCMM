@@ -64,6 +64,7 @@ class TestPlinkPipeline(SafeTester):
                                hap_window_sizes=hap_window_sizes,
                                filter_criteria=filter_criteria,
                                project_code=project_code,
+                               out_jobs_setup_file=jobs_setup_file,
                                )
         return jobs_setup_file
 

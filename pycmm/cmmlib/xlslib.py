@@ -36,8 +36,7 @@ class CMMWorkbook(Workbook, pyCMMBase):
 
     def get_raw_repr(self):
         raw_repr = OrderedDict()
-#        raw_repr["file name"] = self.__file_name
-#        raw_repr["parser"] = self.__parser
+        raw_repr["default cell format"] = self.__dflt_hash_fmt
         return raw_repr
 
     def _add_sheet(self, name, is_chartsheet):
@@ -80,78 +79,3 @@ class CMMWorkbook(Workbook, pyCMMBase):
             color_hash_fmt['bg_color'] = COLORS_RGB[color]
             fmts[color] = self.add_format(color_hash_fmt)
         return fmts
-
-#    def init_colors_formats(self):
-#        dflt_cell_hash_fmt = self.__dflt_hash_fmt.copy()
-#        self.__cell_fmts = self.__init_colors_format(dflt_cell_hash_fmt)
-
-#    @property
-#    def reader(self):
-#        return self.__reader
-#
-#    def __iter__(self):
-#        return self
-#
-#    def next(self):
-#        return self.__parser(self.__reader.next())
-
-#class CellFormatManager(PlinkBase):
-#    """ A class to define cell format property """
-#
-#    def __init__(self, work_book, color_dict):
-#        self.__wb = work_book
-#        self.__color_dict = color_dict
-#        self.__dflt_hash_fmt = {'font_name': 'Arial', 'font_size': 9}
-#        self.__dflt_fmt = self.__add_fmt(self.__dflt_hash_fmt)
-#        self.__init_colors_formats()
-#
-#    def get_raw_repr(self):
-#        return {"color dict": self.__color_dict,
-#                "number of color": self.n_colors,
-#                }
-#
-#    def __add_fmt(self, fmt_dict):
-#        return self.__wb.add_format(fmt_dict)
-#
-#    @property
-#    def default_format(self):
-#        return self.__dflt_fmt
-#
-#    def __init_colors_format(self, default_hash_format):
-#        fmts = OrderedDict()
-#        fmts[DFLT_FMT] = self.__add_fmt(default_hash_format)
-#        colors = self.__color_dict.keys()
-#        for color_idx in xrange(len(colors)):
-#            color = colors[color_idx]
-#            color_hash_fmt = default_hash_format.copy()
-#            color_hash_fmt['bg_color'] = self.__color_dict[color]
-#            fmts[color_idx] = self.__add_fmt(color_hash_fmt)
-#            fmts[color] = fmts[color_idx]
-#        return fmts
-#
-#    def __init_colors_formats(self):
-#        dflt_bp_hash_fmt = self.__dflt_hash_fmt.copy()
-#        dflt_bp_hash_fmt['align'] = 'center'
-#        self.__bp_fmts = self.__init_colors_format(dflt_bp_hash_fmt)
-#        dflt_stat_hash_fmt = self.__dflt_hash_fmt.copy()
-#        dflt_stat_hash_fmt['rotation'] = 90
-#        self.__stat_fmts = self.__init_colors_format(dflt_stat_hash_fmt)
-#        dflt_snp_hash_fmt = self.__dflt_hash_fmt.copy()
-#        self.__snp_fmts = self.__init_colors_format(dflt_snp_hash_fmt)
-#
-#    @property
-#    def n_colors(self):
-#        return len(self.__color_dict)
-#
-#    @property
-#    def bp_fmts(self):
-#        return self.__bp_fmts
-#
-#    @property
-#    def stat_fmts(self):
-#        return self.__stat_fmts
-#
-#    @property
-#    def snp_fmts(self):
-#        return self.__snp_fmts
-

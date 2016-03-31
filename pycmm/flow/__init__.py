@@ -4,6 +4,9 @@ from os.path import join as join_path
 from pycmm.settings import DFLT_FLOW_ALLOC_TIME
 from pycmm.settings import DFLT_RPT_ALLOC_TIME
 from pycmm.utils.jobman import JobManager
+from pycmm.cmmlib.familylib import params_to_yaml
+from pycmm.cmmlib.familylib import extract_families_info
+from pycmm.cmmlib.familylib import extract_samples_list
 
 JOBS_SETUP_JOBS_REPORT_FILE_KEY = "JOBS_REPORT_FILE"
 JOBS_SETUP_PROJECT_NAME_KEY = "PROJECT_NAME"
@@ -21,10 +24,7 @@ class CMMPipeline(JobManager):
                  **kwargs
                  ):
         self.__load_jobs_info(jobs_setup_file)
-        self.__project_out_dir = None
-        self.__slurm_log_dir = None
-        self.__data_out_dir = None
-        self.__rpts_out_dir = None
+        self.__init_properties()
         kwargs['jobs_report_file'] = self.jobs_report_file
         super(CMMPipeline, self).__init__(**kwargs)
 
@@ -43,6 +43,14 @@ class CMMPipeline(JobManager):
         self.__jobs_setup_file = jobs_setup_file
         stream = file(jobs_setup_file, "r")
         self._jobs_info = yaml.safe_load(stream)
+
+    def __init_properties(self):
+        self.__project_out_dir = None
+        self.__slurm_log_dir = None
+        self.__data_out_dir = None
+        self.__rpts_out_dir = None
+        self.__families_info = None
+        self.__samples_list = None
 
     @property
     def jobs_setup_file(self):
@@ -106,6 +114,18 @@ class CMMPipeline(JobManager):
             return self._jobs_info[JOBS_SETUP_RPT_ALLOC_TIME_KEY]
         return None
 
+    @property
+    def families_info(self):
+        if self.__families_info is None:
+            self.__families_info = extract_families_info(self._jobs_info)
+        return self.__families_info
+
+    @property
+    def samples_list(self):
+        if self.__samples_list is None:
+            self.__samples_list = extract_samples_list(self._jobs_info)
+        return self.__samples_list
+
     def monitor_init(self, **kwargs):
         super(CMMPipeline, self).monitor_init(**kwargs)
 
@@ -115,11 +135,15 @@ class CMMPipeline(JobManager):
     def monitor_finalize(self, **kwargs):
         super(CMMPipeline, self).monitor_finalize(**kwargs)
 
+# a note on parameters of init_jobs_setup_file and create_jobs_setup_file
+# The reason that I explicitly list them is for documentation purpose. It is to
+# see the list of parameters that can be passed to these functions
 def init_jobs_setup_file(project_name,
                          project_out_dir,
                          project_code=None,
                          flow_alloc_time=None,
                          rpt_alloc_time=None,
+                         sample_info=None,
                          jobs_report_file=None,
                          out_jobs_setup_file=None,
                          ):
@@ -141,6 +165,9 @@ def init_jobs_setup_file(project_name,
         if rpt_alloc_time is None:
             rpt_alloc_time = DFLT_RPT_ALLOC_TIME
         job_setup_document[JOBS_SETUP_RPT_ALLOC_TIME_KEY] = '"' + rpt_alloc_time + '"'
+    yaml = params_to_yaml(sample_info=sample_info)
+    for key in yaml:
+        job_setup_document[key] = yaml[key]
     job_setup_document[JOBS_SETUP_JOBS_REPORT_FILE_KEY] = jobs_report_file
     return job_setup_document, stream
 
@@ -149,6 +176,7 @@ def create_jobs_setup_file(project_name,
                            project_code=None,
                            flow_alloc_time=None,
                            rpt_alloc_time=None,
+                           sample_info=None,
                            jobs_report_file=None,
                            out_jobs_setup_file=None,
                            ):
@@ -157,6 +185,7 @@ def create_jobs_setup_file(project_name,
                                                       project_code=project_code,
                                                       flow_alloc_time=flow_alloc_time,
                                                       rpt_alloc_time=rpt_alloc_time,
+                                                      sample_info=sample_info,
                                                       jobs_report_file=jobs_report_file,
                                                       out_jobs_setup_file=out_jobs_setup_file,
                                                       )
