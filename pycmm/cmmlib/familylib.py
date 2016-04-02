@@ -12,6 +12,7 @@ class MemberInfo(pyCMMBase):
 
     def __init__(self, info, **kwargs):
         self.__info = info
+        self.__gts = None
         super(MemberInfo, self).__init__(**kwargs)
 
     def get_raw_repr(self):
@@ -23,17 +24,27 @@ class MemberInfo(pyCMMBase):
     def sample_id(self):
         return self.__info[JOBS_SETUP_SAMPLE_ID_KEY]
 
+    @property
+    def gts(self):
+        return self.__gts
+
+    # explicit setting gts to explain possible usage
+    @gts.setter
+    def gts(self, value):
+        self.__gts = value
+
 class FamilyInfo(pyCMMBase):
     """  To structure family information """
 
     def __init__(self, info, **kwargs):
         self.__info = info
+        self.__members_info = None
         super(FamilyInfo, self).__init__(**kwargs)
 
     def get_raw_repr(self):
         raw_repr = OrderedDict()
         raw_repr["family"] = self.fam_id
-        raw_repr["members"] = self.members
+        raw_repr["members"] = self.members_info
         return raw_repr
 
     @property
@@ -41,9 +52,11 @@ class FamilyInfo(pyCMMBase):
         return str(self.__info[JOBS_SETUP_FAMILY_ID_KEY])
 
     @property
-    def members(self):
-        return map(lambda x: MemberInfo(info=x),
-                   self.__info[JOBS_SETUP_MEMBERS_LIST_KEY])
+    def members_info(self):
+        if self.__members_info is None:
+            self.__members_info = map(lambda x: MemberInfo(info=x),
+                                 self.__info[JOBS_SETUP_MEMBERS_LIST_KEY])
+        return self.__members_info
 
 def params_to_yaml(**kwargs):
     yaml = {}
@@ -77,7 +90,7 @@ def extract_families_info(yaml):
     if type(sample_infos) is str:
         return None
     else:
-        families_info = {}
+        families_info = OrderedDict()
         for entry in sample_infos:
             family_info = FamilyInfo(entry)
             families_info[family_info.fam_id] = family_info
@@ -93,6 +106,6 @@ def extract_samples_list(yaml):
         samples_list = []
         families_info = extract_families_info(yaml)
         for fam_id in families_info:
-            for member in families_info[fam_id].members:
-                samples_list.append(member.sample_id)
+            for member_info in families_info[fam_id].members_info:
+                samples_list.append(member_info.sample_id)
         return samples_list

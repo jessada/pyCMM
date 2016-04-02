@@ -38,6 +38,18 @@ def display_plink_config(func_name,
     pipeline_params = OrderedDict()
     pipeline_params['project name'] = pl.project_name
     pipeline_params['project code'] = pl.project_code
+    if pl.families_info is None:
+        families_info = None
+    else:
+        families_info = OrderedDict()
+        for fam_id in pl.families_info:
+            fam_info = pl.families_info[fam_id]
+            fam_info_txt = "fam_id: " + fam_id
+            fam_info_txt += ", members: "
+            fam_info_txt += ",".join(map(lambda x: x.sample_id,
+                                         fam_info.members_info))
+            families_info[fam_id] = fam_info_txt
+    pipeline_params['sample information'] = families_info
     pipeline_params['plink allocation time'] = pl.flow_alloc_time
     pipeline_params['report allocation time'] = pl.rpt_alloc_time
     pipeline_params['project output directory'] = pl.project_out_dir
@@ -67,6 +79,7 @@ def display_plink_config(func_name,
     if hasattr(pl, "rpt_params"):
         rpt_params = OrderedDict()
         rpt_params['cutoff p-value'] = pl.rpt_params.cutoff_pvalue
+        rpt_params['families haplotype file prefix'] = pl.rpt_params.fam_hap_prefix
         disp.disp_params_set("Report parameters", rpt_params)
     disp.new_section_txt(" . . . E X E C U T I N G . . . ")
 
@@ -144,8 +157,11 @@ def app_pycmm_plink_create_jobs_setup_file(*args, **kwargs):
     required_params['phenotype file (--pheno)'] = kwargs['phenotype_file']
     if kwargs['project_code'] is not None:
         optional_params['project code (-p)'] = kwargs['project_code']
+    if kwargs['sample_info'] is not None:
+        optional_params['sample information (-p)'] = kwargs['sample_info'].split(",")
     optional_params['flow allocation time (--flow_alloc_time)'] = kwargs['flow_alloc_time']
     optional_params['cut-off p-value (-c)'] = kwargs['cutoff_pvalue']
+    optional_params['families haplotyep file prefix (--fam_hap)'] = kwargs['fam_hap_prefix']
     optional_params['haplotype windows (--hap_window)'] = kwargs['hap_window_sizes'].split(",")
     optional_params['output jobs setup file (-o)'] = kwargs['out_jobs_setup_file']
     disp.show_config(app_description=PLINK_CREATE_JOB_SETUP_FILE_DESCRIPTION,
@@ -161,8 +177,10 @@ def app_pycmm_plink_create_jobs_setup_file(*args, **kwargs):
                            cutoff_pvalue=kwargs['cutoff_pvalue'],
                            hap_window_sizes=kwargs['hap_window_sizes'],
                            project_code=kwargs['project_code'],
+                           sample_info=kwargs['sample_info'],
                            flow_alloc_time=kwargs['flow_alloc_time'],
                            filter_criteria=kwargs['filter_criteria'],
+                           fam_hap_prefix=kwargs['fam_hap_prefix'],
                            out_jobs_setup_file=kwargs['out_jobs_setup_file'],
                            )
     mylogger.getLogger(__name__)

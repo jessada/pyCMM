@@ -12,6 +12,7 @@ argp = argparse.ArgumentParser(description=PLINK_CREATE_JOB_SETUP_FILE_DESCRIPTI
                                )
 required_group = argp.add_argument_group('required arguments')
 plink_group = argp.add_argument_group('plink arguments')
+report_group = argp.add_argument_group('report arguments')
 required_group.add_argument('-d',
                             dest='project_name',
                             metavar="project_name",
@@ -28,6 +29,12 @@ argp.add_argument('-p',
                   dest='project_code',
                   metavar="PROJECT_CODE",
                   help='UPPMAX project code',
+                  default=None,
+                  )
+argp.add_argument('--sample_info',
+                  dest='sample_info',
+                  metavar="SAMPLE_INFO",
+                  help='sample information',
                   default=None,
                   )
 plink_group.add_argument('--file',
@@ -54,13 +61,6 @@ plink_group.add_argument('-R',
                          help='dna regions (default: ALL)',
                          default=None,
                          )
-help = 'Cut-off p-value (default: {dflt_val})'.format(dflt_val=DFLT_PLINK_CUTOFF_PVALUE)
-plink_group.add_argument('-c',
-                         dest='cutoff_pvalue',
-                         metavar="FLOAT",
-                         help=help,
-                         default=DFLT_PLINK_CUTOFF_PVALUE,
-                         )
 help = 'Phase sliding window (default: {dflt_val})'.format(dflt_val=DFLT_PLINK_HAP_WINDOW_SIZES)
 plink_group.add_argument('--hap-window',
                          dest='hap_window_sizes',
@@ -78,9 +78,22 @@ plink_group.add_argument('--flow_alloc_time',
 plink_group.add_argument('--filter_criteria',
                          dest='filter_criteria',
                          metavar="CRITERIA",
-                         help=help,
+                         help='condition to filter haplotype from association study',
                          default=None,
                          )
+help = 'Cut-off p-value (default: {dflt_val})'.format(dflt_val=DFLT_PLINK_CUTOFF_PVALUE)
+report_group.add_argument('-c',
+                         dest='cutoff_pvalue',
+                         metavar="FLOAT",
+                         help=help,
+                         default=DFLT_PLINK_CUTOFF_PVALUE,
+                         )
+report_group.add_argument('--fam_hap',
+                          dest='fam_hap_prefix',
+                          metavar="{FILE ROOT}",
+                          help='Specify .tped and .tfam files',
+                          default=None,
+                          )
 argp.add_argument('-o',
                   dest='out_jobs_setup_file',
                   metavar="JOBS_SETUP_FILE",
@@ -105,7 +118,9 @@ app_pycmm_plink_create_jobs_setup_file(project_name=args.project_name,
                                        cutoff_pvalue=args.cutoff_pvalue,
                                        hap_window_sizes=args.hap_window_sizes,
                                        project_code=args.project_code,
+                                       sample_info=args.sample_info,
                                        flow_alloc_time=args.flow_alloc_time,
                                        filter_criteria=args.filter_criteria,
+                                       fam_hap_prefix=args.fam_hap_prefix,
                                        out_jobs_setup_file=args.out_jobs_setup_file,
                                        )

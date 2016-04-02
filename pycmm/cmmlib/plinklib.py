@@ -1,12 +1,7 @@
-#import sys
-#from os.path import join as join_path
 from collections import OrderedDict
-#from collections import defaultdict
 from pycmm.template import pyCMMBase
 from pycmm.utils import is_number
 from pycmm.utils import DefaultOrderedDict
-#from pycmm.utils import exec_sh
-#from pycmm.utils import get_path
 
 RAW_HAP_ASSOC_LOCUS_IDX = 0
 RAW_HAP_ASSOC_HAPLOTYPE_IDX = 1
@@ -35,6 +30,13 @@ SNP_INFO_F_MISS_A_IDX = 1
 SNP_INFO_F_MISS_U_IDX = 2
 SNP_INFO_CHROM_IDX = 3
 SNP_INFO_POS_IDX = 4
+
+FAM_FAM_ID_IDX = 0
+FAM_INDV_ID_IDX = 1
+FAM_PAT_ID_IDX = 2
+FAM_MAT_ID_IDX = 3
+FAM_SEX_IDX = 4
+FAM_PHENOTYPE_IDX = 5
 
 UNAFFECTED_PHENOTYPE = "1"
 AFFECTED_PHENOTYPE = "2"
@@ -387,7 +389,7 @@ class Map(pyCMMBase):
 
     def __init__(self, rec, **kwargs):
         self.__items = rec.strip().split()
-        if len(self.__items) != 4:
+        if len(self.__items) < 4:
             raise IOError("Invalid map file")
         super(Map, self).__init__(**kwargs)
 
@@ -561,3 +563,84 @@ def merge_lmiss_map(lmiss_file, map_file, out_file):
         content += "\n"
         writer.write(content)
     writer.close()
+
+class Fam(pyCMMBase):
+    """ To parse a record in PLINK fam and tfam file """
+
+    def __init__(self, rec, **kwargs):
+        self.__items = rec.strip().split()
+        if len(self.__items) != 6:
+            raise IOError("Invalid fam file")
+        super(Fam, self).__init__(**kwargs)
+
+    def get_raw_repr(self):
+        raw_repr = OrderedDict()
+        raw_repr["Family ID"] = self.fam_id
+        raw_repr["Individual ID"] = self.indv_id
+        raw_repr["Paternal ID"] = self.pat_id
+        raw_repr["Maternal ID"] = self.mat_id
+        raw_repr["Sex"] = self.sex
+        raw_repr["Phenotype"] = self.phenotype
+        return raw_repr
+
+    @property
+    def fam_id(self):
+        return self.__items[FAM_FAM_ID_IDX]
+
+    @property
+    def indv_id(self):
+        return self.__items[FAM_INDV_ID_IDX]
+
+    @property
+    def pat_id(self):
+        return self.__items[FAM_PAT_ID_IDX]
+
+    @property
+    def mat_id(self):
+        return self.__items[FAM_MAT_ID_IDX]
+
+    @property
+    def sex(self):
+        return self.__items[FAM_SEX_IDX]
+
+    @property
+    def phenotype(self):
+        return self.__items[FAM_PHENOTYPE_IDX]
+
+class FamReader(Reader):
+    """ To read and parse Fam information """
+
+    def __init__(self, 
+                 **kwargs
+                 ):
+        kwargs['parser'] = Fam
+        super(FamReader, self).__init__(**kwargs)
+
+class TPed(Map):
+    """ To parse a record in PLINK tped file """
+
+    def __init__(self, rec, **kwargs):
+        self.__items = rec.strip().split("\t")
+        if (len(self.__items) < 5) and (len(self.__items) != 0):
+            self.dbg(len(self.__items))
+            raise IOError("Invalid TPed file at line: " + rec)
+        kwargs['rec'] = rec
+        super(TPed, self).__init__(**kwargs)
+
+    def get_raw_repr(self):
+        raw_repr = super(TPed, self).get_raw_repr()
+        raw_repr["genotypes"] = self.gts
+        return raw_repr
+
+    @property
+    def gts(self):
+        return self.__items[4:]
+
+class TPedReader(Reader):
+    """ To read and parse Fam information """
+
+    def __init__(self, 
+                 **kwargs
+                 ):
+        kwargs['parser'] = TPed
+        super(TPedReader, self).__init__(**kwargs)

@@ -25,6 +25,8 @@ class TestHapAssocRepPipeline(SafeTester):
                                  input_dna_regions=None,
                                  phenotype_file=None,
                                  cutoff_pvalue=None,
+                                 fam_hap_prefix=None,
+                                 sample_info=None,
                                  ):
         jobs_setup_file = join_path(self.working_dir,
                                     self.test_function+'_jobs_setup.txt')
@@ -47,6 +49,8 @@ class TestHapAssocRepPipeline(SafeTester):
                                input_binary=input_binary,
                                input_dna_regions=input_dna_regions,
                                cutoff_pvalue=cutoff_pvalue,
+                               fam_hap_prefix=fam_hap_prefix,
+                               sample_info=sample_info,
                                )
         return jobs_setup_file
 
@@ -70,6 +74,9 @@ class TestHapAssocRepPipeline(SafeTester):
         self.assertEqual(pl.rpt_params.cutoff_pvalue,
                          DFLT_CUTOFF_PVALUE,
                          "HapAssocRepPipeline cannot correctly identify 'cutoff p-value' from jobs setup file")
+        self.assertEqual(pl.rpt_params.fam_hap_prefix,
+                         None,
+                         "HapAssocRepPipeline cannot correctly identify 'familyt haplotype prefix' from jobs setup file")
 
     def test_load_jobs_info_2(self):
         """
@@ -79,7 +86,11 @@ class TestHapAssocRepPipeline(SafeTester):
 
         self.individual_debug = True
         self.init_test(self.current_func_name)
-        jobs_setup_file = self.__create_jobs_setup_file(cutoff_pvalue=0.0005)
+        fam_hap_prefix = join_path(self.data_dir,
+                                   "input")
+        jobs_setup_file = self.__create_jobs_setup_file(cutoff_pvalue=0.0005,
+                                                        fam_hap_prefix=fam_hap_prefix,
+                                                        )
         hap_assoc_file = join_path(self.data_dir,
                                    "input.assoc.hap")
         snp_info_file = join_path(self.data_dir,
@@ -91,13 +102,27 @@ class TestHapAssocRepPipeline(SafeTester):
         self.assertEqual(pl.rpt_params.cutoff_pvalue,
                          0.0005,
                          "HapAssocRepPipeline cannot correctly identify 'cutoff p-value' from jobs setup file")
+        self.assertEqual(pl.rpt_params.fam_hap_prefix,
+                         fam_hap_prefix,
+                         "HapAssocRepPipeline cannot correctly identify 'familyt haplotype prefix' from jobs setup file")
 
     def test_gen_report_1(self):
         """ test generating basic haplotype associaiton study report """
 
         self.individual_debug = True
         self.init_test(self.current_func_name)
-        jobs_setup_file = self.__create_jobs_setup_file(cutoff_pvalue=0.005)
+        fam_hap_prefix = join_path(self.data_dir,
+                                   "input")
+        sample_info = "1:old_fam1_shared_only"
+        sample_info += "," + "3:fam_3"
+        sample_info += "," + "9:fam_9"
+        sample_info += "," + "10:fam_10"
+        sample_info += "," + "13:fam_13"
+        sample_info += "," + "test:test_no_exist_sample"
+        jobs_setup_file = self.__create_jobs_setup_file(cutoff_pvalue=0.005,
+                                                        fam_hap_prefix=fam_hap_prefix,
+                                                        sample_info=sample_info,
+                                                        )
         hap_assoc_file = join_path(self.data_dir,
                                    "input.assoc.hap")
         snp_info_file = join_path(self.data_dir,
@@ -108,8 +133,20 @@ class TestHapAssocRepPipeline(SafeTester):
                                  )
         out_file = join_path(self.working_dir,
                              self.current_func_name + ".xlsx")
+        self.assertEqual(pl.n_snps,
+                         10,
+                         "HapAssocRepPipeline cannot correctly identify 'number of snps'")
+        self.assertEqual(pl.families_info["3"].members_info[0].gts["rs3780457"][0],
+                         "G",
+                         "HapAssocRepPipeline cannot correctly load family haplotype information")
+        self.assertEqual(pl.families_info["3"].members_info[0].gts["rs1544205"][0],
+                         "A",
+                         "HapAssocRepPipeline cannot correctly load family haplotype information")
+        self.assertEqual(pl.families_info["3"].members_info[0].gts["rs2417733"][0],
+                         "A",
+                         "HapAssocRepPipeline cannot correctly load family haplotype information")
         rpt_file = pl.gen_report(out_file)
-        self.dbg("************** not yet tested *****************")
+        self.dbg("************** report has not yet tested *****************")
 
     def tearDown(self):
         self.remove_working_dir()

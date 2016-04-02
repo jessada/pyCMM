@@ -33,6 +33,7 @@ JOBS_SETUP_HAP_ASSOC_FILTER_DISEASE_SNP = "DISEASE_SNP"
 # *************** haplotype association study parameters section ***************
 JOBS_SETUP_REPORT_PARAMS_SECTION = "REPORT_PARAMS"
 JOBS_SETUP_CUTOFF_PVALUE_KEY = "CUTOFF_PVALUE"
+JOBS_SETUP_FAMLIY_HAPLOTYPE_PREFIX_KEY = "FAMILY_HAPLOTYPE_PREFIX"
 
 class FilterCriteria(pyCMMBase):
     """  To handle and parse PLINK parameters  """
@@ -448,6 +449,8 @@ def create_jobs_setup_file(project_name,
                            flow_alloc_time=None,
                            rpt_alloc_time=None,
                            filter_criteria=None,
+                           sample_info=None,
+                           fam_hap_prefix=None,
                            jobs_report_file=None,
                            out_jobs_setup_file=None,
                            ):
@@ -456,6 +459,7 @@ def create_jobs_setup_file(project_name,
                                                       project_code=project_code,
                                                       flow_alloc_time=flow_alloc_time,
                                                       rpt_alloc_time=rpt_alloc_time,
+                                                      sample_info=sample_info,
                                                       jobs_report_file=jobs_report_file,
                                                       out_jobs_setup_file=out_jobs_setup_file,
                                                       )
@@ -481,6 +485,8 @@ def create_jobs_setup_file(project_name,
         rpt_params[JOBS_SETUP_CUTOFF_PVALUE_KEY] = cutoff_pvalue
     else:
         rpt_params[JOBS_SETUP_CUTOFF_PVALUE_KEY] = DFLT_CUTOFF_PVALUE
+    if fam_hap_prefix is not None:
+        rpt_params[JOBS_SETUP_FAMLIY_HAPLOTYPE_PREFIX_KEY] = fam_hap_prefix
     job_setup_document[JOBS_SETUP_REPORT_PARAMS_SECTION] = rpt_params
 
     pyaml.dump(job_setup_document, stream)

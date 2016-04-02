@@ -35,17 +35,16 @@ class TestFamilyLib(SafeTester):
         self.init_test(self.current_func_name)
         jobs_setup_file = self.__create_jobs_setup_file(sample_info="18:Co-345:Co-37,12:Co-890:Co-290,13:Co-95,266:Co-131:Co-1355,314:1793-11o,987:Co-218:Co-2588,911:Co-1454:Co-4700,prostate:Pro001:Pro002:Pro003")
         pl = CMMPipeline(jobs_setup_file=jobs_setup_file)
-        fams_id = pl.families_info.keys()
-        self.assertEqual(len(fams_id),
+        self.assertEqual(len(pl.families_info),
                          8,
                          "familiylib can't handle families information")
-        self.assertEqual('prostate' in pl.families_info.keys(),
+        self.assertEqual('prostate' in pl.families_info,
                          True,
                          "familiylib can't handle families information")
-        self.assertEqual('breast' in pl.families_info.keys(),
+        self.assertEqual('breast' in pl.families_info,
                          False,
                          "familiylib can't handle families information")
-        self.assertEqual(pl.families_info["18"].members[0].sample_id,
+        self.assertEqual(pl.families_info["18"].members_info[0].sample_id,
                          "Co-345",
                          "familiylib can't handle families information")
         self.assertEqual(pl.families_info["911"].fam_id,

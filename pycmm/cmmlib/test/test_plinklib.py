@@ -2,6 +2,8 @@ import unittest
 from os.path import join as join_path
 from pycmm.template import SafeTester
 from pycmm.cmmlib.plinklib import HapAssocReader
+from pycmm.cmmlib.plinklib import FamReader
+from pycmm.cmmlib.plinklib import TPedReader
 from pycmm.cmmlib.plinklib import merge_hap_assocs
 from pycmm.cmmlib.plinklib import merge_lmiss_map
 from pycmm.cmmlib.plinklib import SnpInfoReader
@@ -189,6 +191,94 @@ class TestHapAssocReader(SafeTester):
 
     def tearDown(self):
         self.remove_working_dir()
+
+class TestFamReader(SafeTester):
+
+    def __init__(self, methodName):
+        super(TestFamReader, self).__init__(methodName=methodName,
+                                            test_module_name=__name__,
+                                            )
+
+    def setUp(self):
+        pass
+
+    def test_reader_1(self):
+        """ test basic reading without any other parameters """
+
+        self.init_test(self.current_func_name)
+        input_file = join_path(self.data_dir,
+                               "input.tfam")
+        fam_reader = FamReader(file_name=input_file)
+        self.assertEqual(len(list(fam_reader)),
+                         16,
+                         "FamReader doesn't work correctly")
+        fam_reader = FamReader(file_name=input_file)
+        fam_rec = fam_reader.next()
+        self.assertEqual(fam_rec.fam_id,
+                         "1",
+                         "FamReader doesn't work correctly")
+        fam_rec = fam_reader.next()
+        self.assertEqual(fam_rec.indv_id,
+                         "old_fam1_shared_only",
+                         "FamReader doesn't work correctly")
+
+class TestTPedReader(SafeTester):
+
+    def __init__(self, methodName):
+        super(TestTPedReader, self).__init__(methodName=methodName,
+                                             test_module_name=__name__,
+                                             )
+
+    def setUp(self):
+        pass
+
+    def test_reader_1(self):
+        """ test basic reading without any other parameters """
+
+        self.init_test(self.current_func_name)
+        input_file = join_path(self.data_dir,
+                               "input.tped")
+        tped_reader = TPedReader(file_name=input_file)
+        self.assertEqual(len(list(tped_reader)),
+                         21,
+                         "TPedReader doesn't work correctly")
+        tped_reader = TPedReader(file_name=input_file)
+        tped_rec = tped_reader.next()
+        self.assertEqual(tped_rec.chrom,
+                         "9",
+                         "TPedReader doesn't work correctly")
+        tped_rec = tped_reader.next()
+        self.assertEqual(tped_rec.snp,
+                         "rs814027",
+                         "TPedReader doesn't work correctly")
+        tped_rec = tped_reader.next()
+        self.assertEqual(tped_rec.dist,
+                         105.04,
+                         "TPedReader doesn't work correctly")
+        tped_rec = tped_reader.next()
+        self.assertEqual(tped_rec.pos,
+                         "100919318",
+                         "TPedReader doesn't work correctly")
+        tped_rec = tped_reader.next()
+        self.assertEqual(len(tped_rec.gts),
+                         16,
+                         "TPedReader doesn't work correctly")
+        tped_rec = tped_reader.next()
+        self.assertEqual(tped_rec.gts[2],
+                         "G G",
+                         "TPedReader doesn't work correctly")
+        self.assertEqual(tped_rec.gts[3],
+                         "A G",
+                         "TPedReader doesn't work correctly")
+        self.assertEqual(tped_rec.gts[6],
+                         "G A",
+                         "TPedReader doesn't work correctly")
+        self.assertEqual(tped_rec.gts[7],
+                         "0 0",
+                         "TPedReader doesn't work correctly")
+        self.assertEqual(tped_rec.gts[8],
+                         "G G",
+                         "TPedReader doesn't work correctly")
 
 class TestPlinkLib(SafeTester):
 
