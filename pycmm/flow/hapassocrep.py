@@ -7,7 +7,10 @@ from pycmm.flow import CMMPipeline
 from pycmm.flow.plink import CMMPipeline
 from pycmm.flow.plink import JOBS_SETUP_REPORT_PARAMS_SECTION
 from pycmm.flow.plink import JOBS_SETUP_CUTOFF_PVALUE_KEY
+from pycmm.flow.plink import JOBS_SETUP_CUTOFF_ORS_KEY
 from pycmm.flow.plink import JOBS_SETUP_FAMLIY_HAPLOTYPE_PREFIX_KEY
+from pycmm.flow.plink import DFLT_CUTOFF_PVALUE
+from pycmm.flow.plink import DFLT_CUTOFF_ORS
 from pycmm.cmmlib.plinklib import SnpInfoReader
 from pycmm.cmmlib.plinklib import HapAssocReader
 from pycmm.cmmlib.plinklib import FamReader
@@ -45,6 +48,12 @@ class RptParams(pyCMMBase):
         if JOBS_SETUP_CUTOFF_PVALUE_KEY in self.__params:
             return self.__params[JOBS_SETUP_CUTOFF_PVALUE_KEY]
         return DFLT_CUTOFF_PVALUE
+
+    @property
+    def cutoff_ors(self):
+        if JOBS_SETUP_CUTOFF_ORS_KEY in self.__params:
+            return self.__params[JOBS_SETUP_CUTOFF_ORS_KEY]
+        return DFLT_CUTOFF_ORS
 
     @property
     def fam_hap_prefix(self):
@@ -207,14 +216,18 @@ class HapAssocRepPipeline(CMMPipeline):
                                    ws,
                                    col,
                                    haplo_info,
-                                   color,
+                                   pvalue_color,
+                                   ors_color,
                                    ):
-        cell_fmt = self.haplo_stat_fmts[color]
+        if pvalue_color == NO_COLOR:
+            pvalue_color = ors_color
+        pvalue_fmt = self.haplo_stat_fmts[pvalue_color]
+        ors_fmt = self.haplo_stat_fmts[ors_color]
         ws.write(0, col, col+1)
-        ws.write(1, col, haplo_info.f_a, cell_format=cell_fmt)
-        ws.write(2, col, haplo_info.f_u, cell_format=cell_fmt)
-        ws.write(3, col, haplo_info.ors, cell_format=cell_fmt)
-        ws.write(4, col, haplo_info.pvalue, cell_format=cell_fmt)
+        ws.write(1, col, haplo_info.f_a, cell_format=ors_fmt)
+        ws.write(2, col, haplo_info.f_u, cell_format=ors_fmt)
+        ws.write(3, col, haplo_info.ors, cell_format=ors_fmt)
+        ws.write(4, col, haplo_info.pvalue, cell_format=pvalue_fmt)
 
     def __color_column(self, ws, col, color):
         cell_fmt = self.bp_fmts[color]
@@ -225,20 +238,32 @@ class HapAssocRepPipeline(CMMPipeline):
         hap_assoc_reader = HapAssocReader(file_name=self.__hap_assoc_file)
         # writer header
         header_rec = hap_assoc_reader.next()
-        self.__add_haplotype_stat_to_ws(ws, SNP_INFO_SIZE-1, header_rec, NO_COLOR)
+        self.__add_haplotype_stat_to_ws(ws,
+                                        col=SNP_INFO_SIZE-1,
+                                        haplo_info=header_rec,
+                                        pvalue_color=NO_COLOR,
+                                        ors_color=NO_COLOR,
+                                        )
         # write content
         haplo_col = haplo_start_col
         haplo_count = 0
         for hap_assoc_rec in hap_assoc_reader:
-            # define color of the column using cut-off p-value
+            # define color of the column using cut-off p-value and 
+            # cut-off odds ratio
             if hap_assoc_rec.pvalue < self.rpt_params.cutoff_pvalue:
-                haplotype_stat_color = "YELLOW"
+                pvalue_color = "YELLOW"
             else:
-                haplotype_stat_color = NO_COLOR
+                pvalue_color = NO_COLOR
+            if hap_assoc_rec.ors > self.rpt_params.cutoff_ors:
+                ors_color = "GREEN"
+            else:
+                ors_color = pvalue_color
             self.__add_haplotype_stat_to_ws(ws,
-                                            haplo_col,
-                                            hap_assoc_rec,
-                                            haplotype_stat_color)
+                                            col=haplo_col,
+                                            haplo_info=hap_assoc_rec,
+                                            pvalue_color=pvalue_color,
+                                            ors_color=ors_color,
+                                            )
             hap_assoc_bps_list = hap_assoc_rec.haplotype
             hap_assoc_snps_list = hap_assoc_rec.snps.split("|")
             if fam_gts is not None:
@@ -265,13 +290,13 @@ class HapAssocRepPipeline(CMMPipeline):
                         matched_allele = allele_idx
                         break
                 if matched_allele == -1:
-                    bp_color = haplotype_stat_color
+                    bp_color = ors_color
                 elif matched_allele == 0:
                     bp_color = GT0_COLOR
                 elif matched_allele == 1:
                     bp_color = GT1_COLOR
             else:
-                bp_color = haplotype_stat_color
+                bp_color = ors_color
             if bp_color != NO_COLOR:
                 self.__color_column(ws, haplo_col, bp_color)
             # Map haplo to the corresponding markers
@@ -360,6 +385,7 @@ class HapAssocRepPipeline(CMMPipeline):
                                     haplo_start_col=SNP_INFO_SIZE+2,
                                     fam_gts=gts,
                                     )
+        ws.freeze_panes(HAPLO_INFO_SIZE+1, SNP_INFO_SIZE+2)
 
     def __add_fams_haplos_sheet(self):
         for fam_id in self.families_info:

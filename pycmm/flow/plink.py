@@ -17,6 +17,7 @@ from pycmm.cmmlib.plinklib import merge_lmiss_map
 PLINK_DUMMY_SCRIPT = "$PYCMM/bash/plink_dummy.sh"
 
 DFLT_CUTOFF_PVALUE = 0
+DFLT_CUTOFF_ORS = 1000000
 DFLT_HAP_WINDOW_SIZES = "1"
 
 # *************** plink parameters section ***************
@@ -33,6 +34,7 @@ JOBS_SETUP_HAP_ASSOC_FILTER_DISEASE_SNP = "DISEASE_SNP"
 # *************** haplotype association study parameters section ***************
 JOBS_SETUP_REPORT_PARAMS_SECTION = "REPORT_PARAMS"
 JOBS_SETUP_CUTOFF_PVALUE_KEY = "CUTOFF_PVALUE"
+JOBS_SETUP_CUTOFF_ORS_KEY = "CUTOFF_ORS"
 JOBS_SETUP_FAMLIY_HAPLOTYPE_PREFIX_KEY = "FAMILY_HAPLOTYPE_PREFIX"
 
 class FilterCriteria(pyCMMBase):
@@ -444,6 +446,7 @@ def create_jobs_setup_file(project_name,
                            input_binary=True,
                            input_dna_regions=None,
                            cutoff_pvalue=None,
+                           cutoff_ors=None,
                            hap_window_sizes=None,
                            project_code=None,
                            flow_alloc_time=None,
@@ -485,6 +488,10 @@ def create_jobs_setup_file(project_name,
         rpt_params[JOBS_SETUP_CUTOFF_PVALUE_KEY] = cutoff_pvalue
     else:
         rpt_params[JOBS_SETUP_CUTOFF_PVALUE_KEY] = DFLT_CUTOFF_PVALUE
+    if cutoff_ors is not None:
+        rpt_params[JOBS_SETUP_CUTOFF_ORS_KEY] = cutoff_ors
+    else:
+        rpt_params[JOBS_SETUP_CUTOFF_ORS_KEY] = DFLT_CUTOFF_ORS
     if fam_hap_prefix is not None:
         rpt_params[JOBS_SETUP_FAMLIY_HAPLOTYPE_PREFIX_KEY] = fam_hap_prefix
     job_setup_document[JOBS_SETUP_REPORT_PARAMS_SECTION] = rpt_params

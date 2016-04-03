@@ -4,8 +4,9 @@ from argparse import RawTextHelpFormatter
 from pycmm.app.plink import app_pycmm_plink_create_jobs_setup_file
 from pycmm.settings import PLINK_CREATE_JOB_SETUP_FILE_DESCRIPTION
 from pycmm.settings import DFLT_FLOW_ALLOC_TIME
-from pycmm.settings import DFLT_PLINK_CUTOFF_PVALUE
-from pycmm.settings import DFLT_PLINK_HAP_WINDOW_SIZES
+from pycmm.flow.plink import DFLT_CUTOFF_PVALUE
+from pycmm.flow.plink import DFLT_CUTOFF_ORS
+from pycmm.flow.plink import DFLT_HAP_WINDOW_SIZES
 
 argp = argparse.ArgumentParser(description=PLINK_CREATE_JOB_SETUP_FILE_DESCRIPTION,
                                formatter_class=RawTextHelpFormatter,
@@ -61,12 +62,12 @@ plink_group.add_argument('-R',
                          help='dna regions (default: ALL)',
                          default=None,
                          )
-help = 'Phase sliding window (default: {dflt_val})'.format(dflt_val=DFLT_PLINK_HAP_WINDOW_SIZES)
+help = 'Phase sliding window (default: {dflt_val})'.format(dflt_val=DFLT_HAP_WINDOW_SIZES)
 plink_group.add_argument('--hap-window',
                          dest='hap_window_sizes',
                          metavar="{N}",
                          help=help,
-                         default=DFLT_PLINK_HAP_WINDOW_SIZES,
+                         default=DFLT_HAP_WINDOW_SIZES,
                          )
 help = 'UPPMAX allocation time (default: {dflt_val})'.format(dflt_val=DFLT_FLOW_ALLOC_TIME)
 plink_group.add_argument('--flow_alloc_time',
@@ -81,12 +82,19 @@ plink_group.add_argument('--filter_criteria',
                          help='condition to filter haplotype from association study',
                          default=None,
                          )
-help = 'Cut-off p-value (default: {dflt_val})'.format(dflt_val=DFLT_PLINK_CUTOFF_PVALUE)
-report_group.add_argument('-c',
+help = 'Cut-off p-value (default: {dflt_val})'.format(dflt_val=DFLT_CUTOFF_PVALUE)
+report_group.add_argument('--cutoff_pvalue',
                          dest='cutoff_pvalue',
                          metavar="FLOAT",
                          help=help,
-                         default=DFLT_PLINK_CUTOFF_PVALUE,
+                         default=DFLT_CUTOFF_PVALUE,
+                         )
+help = 'Cut-off odds ratio (default: {dflt_val})'.format(dflt_val=DFLT_CUTOFF_ORS)
+report_group.add_argument('--cutoff_ors',
+                         dest='cutoff_ors',
+                         metavar="FLOAT",
+                         help=help,
+                         default=DFLT_CUTOFF_ORS,
                          )
 report_group.add_argument('--fam_hap',
                           dest='fam_hap_prefix',
@@ -116,6 +124,7 @@ app_pycmm_plink_create_jobs_setup_file(project_name=args.project_name,
                                        input_dna_regions=args.input_dna_regions,
                                        phenotype_file=args.phenotype_file,
                                        cutoff_pvalue=args.cutoff_pvalue,
+                                       cutoff_ors=args.cutoff_ors,
                                        hap_window_sizes=args.hap_window_sizes,
                                        project_code=args.project_code,
                                        sample_info=args.sample_info,

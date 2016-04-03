@@ -5,6 +5,7 @@ from pycmm.settings import FULL_SYSTEM_TEST
 from pycmm.template import SafeTester
 from pycmm.flow.plink import create_jobs_setup_file
 from pycmm.flow.plink import DFLT_CUTOFF_PVALUE
+from pycmm.flow.plink import DFLT_CUTOFF_ORS
 from pycmm.flow.hapassocrep import HapAssocRepPipeline
 
 class TestHapAssocRepPipeline(SafeTester):
@@ -25,6 +26,7 @@ class TestHapAssocRepPipeline(SafeTester):
                                  input_dna_regions=None,
                                  phenotype_file=None,
                                  cutoff_pvalue=None,
+                                 cutoff_ors=None,
                                  fam_hap_prefix=None,
                                  sample_info=None,
                                  ):
@@ -49,6 +51,7 @@ class TestHapAssocRepPipeline(SafeTester):
                                input_binary=input_binary,
                                input_dna_regions=input_dna_regions,
                                cutoff_pvalue=cutoff_pvalue,
+                               cutoff_ors=cutoff_ors,
                                fam_hap_prefix=fam_hap_prefix,
                                sample_info=sample_info,
                                )
@@ -74,6 +77,9 @@ class TestHapAssocRepPipeline(SafeTester):
         self.assertEqual(pl.rpt_params.cutoff_pvalue,
                          DFLT_CUTOFF_PVALUE,
                          "HapAssocRepPipeline cannot correctly identify 'cutoff p-value' from jobs setup file")
+        self.assertEqual(pl.rpt_params.cutoff_ors,
+                         DFLT_CUTOFF_ORS,
+                         "HapAssocRepPipeline cannot correctly identify 'cutoff odds ratio' from jobs setup file")
         self.assertEqual(pl.rpt_params.fam_hap_prefix,
                          None,
                          "HapAssocRepPipeline cannot correctly identify 'familyt haplotype prefix' from jobs setup file")
@@ -89,6 +95,7 @@ class TestHapAssocRepPipeline(SafeTester):
         fam_hap_prefix = join_path(self.data_dir,
                                    "input")
         jobs_setup_file = self.__create_jobs_setup_file(cutoff_pvalue=0.0005,
+                                                        cutoff_ors=1.25,
                                                         fam_hap_prefix=fam_hap_prefix,
                                                         )
         hap_assoc_file = join_path(self.data_dir,
@@ -102,6 +109,9 @@ class TestHapAssocRepPipeline(SafeTester):
         self.assertEqual(pl.rpt_params.cutoff_pvalue,
                          0.0005,
                          "HapAssocRepPipeline cannot correctly identify 'cutoff p-value' from jobs setup file")
+        self.assertEqual(pl.rpt_params.cutoff_ors,
+                         1.25,
+                         "HapAssocRepPipeline cannot correctly identify 'cutoff odds ratio' from jobs setup file")
         self.assertEqual(pl.rpt_params.fam_hap_prefix,
                          fam_hap_prefix,
                          "HapAssocRepPipeline cannot correctly identify 'familyt haplotype prefix' from jobs setup file")
@@ -120,6 +130,7 @@ class TestHapAssocRepPipeline(SafeTester):
         sample_info += "," + "13:fam_13"
         sample_info += "," + "test:test_no_exist_sample"
         jobs_setup_file = self.__create_jobs_setup_file(cutoff_pvalue=0.005,
+                                                        cutoff_ors=1.07,
                                                         fam_hap_prefix=fam_hap_prefix,
                                                         sample_info=sample_info,
                                                         )
