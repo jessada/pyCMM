@@ -1,6 +1,5 @@
 from collections import OrderedDict
 
-
 COLORS_RGB = OrderedDict()
 COLORS_RGB['XLS_GREEN'] = '#CCFFCC'
 COLORS_RGB['XLS_PINK'] = '#E6B9B8'

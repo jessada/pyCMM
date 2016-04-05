@@ -79,3 +79,13 @@ class CMMWorkbook(Workbook, pyCMMBase):
             color_hash_fmt['bg_color'] = COLORS_RGB[color]
             fmts[color] = self.add_format(color_hash_fmt)
         return fmts
+
+def gen_colors_wb():
+    wb = CMMWorkbook(filename="colors_book.xlsx")
+    ws = wb.add_worksheet("color_sheet")
+    colors_fmt = wb.add_colors_format({})
+    row_idx = 0
+    for color in COLORS_RGB:
+        ws.write(row_idx, 0, color, cell_format=colors_fmt[color])
+        row_idx += 1
+    wb.close()
