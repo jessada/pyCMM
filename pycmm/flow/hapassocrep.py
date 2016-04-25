@@ -88,6 +88,8 @@ class HapAssocRepPipeline(CMMPipeline):
         self.__n_snps = None
         self.__sorted_ors_haplotypes = None
         self.__sorted_pvalue_haplotypes = None
+        self.__hap_assoc_header = None
+        self.__hap_assoc_recs = None
 
     @property
     def rpt_params(self):
@@ -118,13 +120,31 @@ class HapAssocRepPipeline(CMMPipeline):
         return self.__n_snps
 
     @property
+    def hap_assoc_header(self):
+        if self.__hap_assoc_header is None:
+            hap_assoc_reader = HapAssocReader(file_name=self.__hap_assoc_file)
+            self.__hap_assoc_header = hap_assoc_reader.next()
+        return self.__hap_assoc_header
+
+    @property
+    def hap_assoc_recs(self):
+        # one record represent one parsed result from one window of haplotype
+        # association study
+        if self.__hap_assoc_recs is None:
+            hap_assoc_reader = HapAssocReader(file_name=self.__hap_assoc_file)
+            hap_assoc_reader.next()
+            self.__hap_assoc_recs = list(hap_assoc_reader)
+            for idx in xrange(len(self.__hap_assoc_recs)):
+                self.__hap_assoc_recs[idx].col_idx = idx
+        return self.__hap_assoc_recs
+
+    @property
     def hap_assoc_snps(self):
         if self.__hap_assoc_snps is None:
             # list all snps that are in the assoc.hap file
-            hap_assoc_reader = HapAssocReader(file_name=self.__hap_assoc_file)
             self.__hap_assoc_snps = {}
             self.__hap_assoc_snps["SNP"] = 1
-            for hap_assoc_rec in hap_assoc_reader:
+            for hap_assoc_rec in self.hap_assoc_recs:
                 snp_list = hap_assoc_rec.snps.split("|")
                 for snp in snp_list:
                     self.__hap_assoc_snps[snp] = 1
@@ -146,20 +166,6 @@ class HapAssocRepPipeline(CMMPipeline):
                 snp_info_count += 1
             self.__n_snps = snp_info_count - 1
         return self.__snps_info
-
-    @property
-    def sorted_ors_haplotypes(self):
-        if self.__sorted_ors_haplotypes is None:
-            self.__sorted_ors_haplotypes = self.__get_sorted_haplotypes(attr="ors",
-                                                                        reverse=True,
-                                                                        )
-        return self.__sorted_ors_haplotypes
-
-    @property
-    def sorted_pvalue_haplotypes(self):
-        if self.__sorted_pvalue_haplotypes is None:
-            self.__sorted_pvalue_haplotypes = self.__get_sorted_haplotypes(attr="pvalue")
-        return self.__sorted_pvalue_haplotypes
 
     def __compare_haplotypes(self, hap_assoc_rec, fam_gts):
         hap_assoc_bps_list = hap_assoc_rec.haplotype
@@ -187,30 +193,36 @@ class HapAssocRepPipeline(CMMPipeline):
                 break
         return matched_allele
 
-    def __get_best_hap_idx(self, fam_gts, hap_assoc_recs):
-        for hap_assoc_rec in hap_assoc_recs:
+    def __get_best_hap_idx(self, fam_id, attr, reverse = False):
+        self.hap_assoc_recs.sort(key=operator.attrgetter(attr),
+                                 reverse=reverse)
+        for hap_assoc_rec in self.hap_assoc_recs:
             if len(hap_assoc_rec.haplotype) == 1:
                 continue
-            matched_allele = self.__compare_haplotypes(hap_assoc_rec, fam_gts)
+            matched_allele = hap_assoc_rec.matched_families[fam_id]
             if matched_allele != -1:
                 return hap_assoc_rec.col_idx
         return None
 
-    def __get_best_ors_hap_idx(self, fam_gts):
-        return self.__get_best_hap_idx(fam_gts, self.sorted_ors_haplotypes)
+    def __get_best_ors_hap_idx(self, fam_id):
+        return self.__get_best_hap_idx(fam_id, attr="ors", reverse=True)
 
-    def __get_best_pvalue_hap_idx(self, fam_gts):
-        return self.__get_best_hap_idx(fam_gts, self.sorted_pvalue_haplotypes)
+    def __get_best_pvalue_hap_idx(self, fam_id):
+        return self.__get_best_hap_idx(fam_id, attr="pvalue")
 
-    def __get_sorted_haplotypes(self, attr, reverse=False):
-        hap_assoc_reader = HapAssocReader(file_name=self.__hap_assoc_file)
-        hap_assoc_reader.next()
-        hap_assoc_recs = list(hap_assoc_reader)
-        for idx in xrange(len(hap_assoc_recs)):
-            hap_assoc_recs[idx].col_idx = idx
-        hap_assoc_recs.sort(key=operator.attrgetter(attr),
-                            reverse=reverse)
-        return hap_assoc_recs
+    def __compare_fam_gts_with_hap_assocs(self):
+        # compare all haplotypes from the results with all haplotypes from
+        # the families
+        for hap_assoc_rec in self.hap_assoc_recs:
+            hap_assoc_rec.matched_families = {}
+            for fam_id in self.families_info:
+                fam_info = self.families_info[fam_id]
+                for member_info in fam_info.members_info:
+                    if member_info.gts is None:
+                        continue
+                    matched_allele = self.__compare_haplotypes(hap_assoc_rec,
+                                                               member_info.gts)
+                    hap_assoc_rec.matched_families[fam_id] = matched_allele
 
     def __load_families_haplotypes(self):
         # load genotyping information from tped and tfam files and add them 
@@ -272,12 +284,10 @@ class HapAssocRepPipeline(CMMPipeline):
         ws.write(row_idx, COL_CHROM_IDX, snp_info.chrom, cell_format=cell_fmt)
         ws.write(row_idx, COL_POS_IDX, snp_info.pos, cell_format=cell_fmt)
 
-    def __add_snps_to_ws(self,
-                         ws,
-                         ):
+    def __add_snps_to_ws(self, ws, snp_start_row=HAPLO_INFO_SIZE):
         for snp in self.snps_info:
             snp_info = self.snps_info[snp]
-            row_idx = HAPLO_INFO_SIZE + snp_info.snp_idx
+            row_idx = snp_start_row + snp_info.snp_idx
             self.__add_snp_to_ws(ws, row_idx, snp_info)
         ws.set_column(COL_SNP_IDX, COL_SNP_IDX, 7)
         ws.set_column(COL_F_MISS_A_IDX, COL_F_MISS_U_IDX, 6)
@@ -290,6 +300,7 @@ class HapAssocRepPipeline(CMMPipeline):
                                    hap_info,
                                    pvalue_color,
                                    ors_color,
+                                   show_matched_families=False,
                                    ):
         if pvalue_color == NO_COLOR:
             pvalue_color = ors_color
@@ -300,32 +311,47 @@ class HapAssocRepPipeline(CMMPipeline):
         ws.write(2, col, hap_info.f_u, cell_format=ors_fmt)
         ws.write(3, col, hap_info.ors, cell_format=ors_fmt)
         ws.write(4, col, hap_info.pvalue, cell_format=pvalue_fmt)
+        if show_matched_families:
+            matched_families = filter(lambda x: hap_info.matched_families[x] != -1,
+                                      hap_info.matched_families)
+            matched_families = map(lambda x: int(x), matched_families)
+            matched_families.sort()
+            matched_families = map(lambda x: str(x), matched_families)
+            plain_fmt = self.plain_fmts[ors_color]
+            plain_fmt.set_text_wrap()
+            plain_fmt.set_align("right")
+            ws.write(5, col, "\n".join(matched_families), cell_format=plain_fmt)
+            return len(matched_families)
+        else:
+            return 0
 
-    def __color_column(self, ws, col, color):
+    def __color_column(self, ws, col, color, snp_start_row=HAPLO_INFO_SIZE):
         cell_fmt = self.bp_fmts[color]
-        for row_idx in xrange(HAPLO_INFO_SIZE+1, self.n_snps+HAPLO_INFO_SIZE+1):
+        for row_idx in xrange(snp_start_row+1, self.n_snps+snp_start_row+1):
             ws.write(row_idx, col, "", cell_format=cell_fmt)
 
     def __add_haplotypes_to_ws(self,
                                ws,
+                               fam_id=None,
                                hap_start_col=SNP_INFO_SIZE,
                                fam_gts=None,
                                best_ors_hap_idx=None,
                                best_pvalue_hap_idx=None,
+                               snp_start_row=HAPLO_INFO_SIZE,
+                               show_matched_families=False,
                                ):
-        hap_assoc_reader = HapAssocReader(file_name=self.__hap_assoc_file)
         # writer header
-        header_rec = hap_assoc_reader.next()
         self.__add_haplotype_stat_to_ws(ws,
                                         col=SNP_INFO_SIZE-1,
-                                        hap_info=header_rec,
+                                        hap_info=self.hap_assoc_header,
                                         pvalue_color=NO_COLOR,
                                         ors_color=NO_COLOR,
                                         )
         # write content
         hap_col = hap_start_col
         hap_count = 0
-        for hap_assoc_rec in hap_assoc_reader:
+        max_n_matched_fams = 0
+        for hap_assoc_rec in self.hap_assoc_recs:
             # define color of the column using cut-off p-value and 
             # cut-off odds ratio
             if ((best_pvalue_hap_idx is not None) and
@@ -344,15 +370,16 @@ class HapAssocRepPipeline(CMMPipeline):
                 ors_color = SIG_ORS_COLOR
             else:
                 ors_color = pvalue_color
-            self.__add_haplotype_stat_to_ws(ws,
-                                            col=hap_col,
-                                            hap_info=hap_assoc_rec,
-                                            pvalue_color=pvalue_color,
-                                            ors_color=ors_color,
-                                            )
+            n_matched_fams = self.__add_haplotype_stat_to_ws(ws,
+                                                             col=hap_col,
+                                                             hap_info=hap_assoc_rec,
+                                                             pvalue_color=pvalue_color,
+                                                             ors_color=ors_color,
+                                                             show_matched_families=show_matched_families,
+                                                             )
+            max_n_matched_fams = max(n_matched_fams, max_n_matched_fams)
             if fam_gts is not None:
-                matched_allele = self.__compare_haplotypes(hap_assoc_rec,
-                                                           fam_gts)
+                matched_allele = hap_assoc_rec.matched_families[fam_id]
                 if matched_allele == -1:
                     bp_color = ors_color
                 elif matched_allele == 0:
@@ -362,7 +389,11 @@ class HapAssocRepPipeline(CMMPipeline):
             else:
                 bp_color = ors_color
             if bp_color != NO_COLOR:
-                self.__color_column(ws, hap_col, bp_color)
+                self.__color_column(ws,
+                                    hap_col,
+                                    bp_color,
+                                    snp_start_row=snp_start_row,
+                                    )
             # Map haplo to the corresponding markers
             hap_assoc_bps_list = hap_assoc_rec.haplotype
             hap_assoc_snps_list = hap_assoc_rec.snps.split("|")
@@ -371,7 +402,7 @@ class HapAssocRepPipeline(CMMPipeline):
                 bp = hap_assoc_bps_list[bp_idx]
                 snp = hap_assoc_snps_list[bp_idx]
                 if snp in self.snps_info:
-                    row_idx = self.snps_info[snp].snp_idx + HAPLO_INFO_SIZE
+                    row_idx = self.snps_info[snp].snp_idx + snp_start_row
                     ws.write(row_idx, hap_col, bp, cell_format=bp_fmt)
             hap_col += 1
             hap_count += 1
@@ -379,11 +410,15 @@ class HapAssocRepPipeline(CMMPipeline):
                 log_msg = str(hap_count)
                 log_msg += " haplotypes were written to the sheet"
                 self.info(log_msg)
+        if show_matched_families:
+            ws.set_row(5, 13*max_n_matched_fams, None, {})
+            ws.set_column(hap_start_col, hap_start_col+hap_count-1, 3)
+        else:
+            ws.set_column(hap_start_col, hap_start_col+hap_count-1, 1.6)
         log_msg = "Finish .. "
         log_msg += " total of " + str(hap_count)
         log_msg += " haplotypes were written to the sheet"
         self.info(log_msg)
-        ws.set_column(hap_start_col, hap_start_col+hap_count-1, 1.6)
 
     def __set_report_format(self):
         self.__plain_fmts = self.__wb.add_colors_format({})
@@ -453,6 +488,7 @@ class HapAssocRepPipeline(CMMPipeline):
                                   gts=gts,
                                   )
         self.__add_haplotypes_to_ws(ws,
+                                    fam_id=fam_id,
                                     hap_start_col=SNP_INFO_SIZE+2,
                                     fam_gts=gts,
                                     best_ors_hap_idx=best_ors_hap_idx,
@@ -460,14 +496,26 @@ class HapAssocRepPipeline(CMMPipeline):
                                     )
         ws.freeze_panes(HAPLO_INFO_SIZE+1, SNP_INFO_SIZE+2)
 
+    def __add_overview_sheet(self):
+        sheet_name = "overview"
+        ws = self.__add_sheet(sheet_name)
+        self.info(" >> add '" + sheet_name + "' sheet")
+        self.__add_snps_to_ws(ws, snp_start_row=HAPLO_INFO_SIZE+1)
+        self.__add_haplotypes_to_ws(ws,
+                                    snp_start_row=HAPLO_INFO_SIZE+1,
+                                    show_matched_families=True,
+                                    )
+        ws.freeze_panes(HAPLO_INFO_SIZE+2, SNP_INFO_SIZE)
+
     def __add_fams_haps_sheet(self):
         for fam_id in self.families_info:
             fam_info = self.families_info[fam_id]
             for member_info in fam_info.members_info:
                 if member_info.gts is None:
                     continue
-                best_ors_hap_idx = self.__get_best_ors_hap_idx(member_info.gts)
-                best_pvalue_hap_idx = self.__get_best_pvalue_hap_idx(member_info.gts)
+                best_ors_hap_idx = self.__get_best_ors_hap_idx(fam_id)
+                best_pvalue_hap_idx = self.__get_best_pvalue_hap_idx(fam_id)
+                self.hap_assoc_recs.sort(key=operator.attrgetter("col_idx"))
                 self.__add_fam_haps_sheet(fam_id=fam_id,
                                           gts=member_info.gts,
                                           best_ors_hap_idx=best_ors_hap_idx,
@@ -488,7 +536,7 @@ class HapAssocRepPipeline(CMMPipeline):
         cell_txt = "haplotye with significant p-value (less than "
         cell_txt += str(self.rpt_params.cutoff_pvalue) + ")"
         ws.write(4, 0, cell_txt, cell_format = self.plain_fmts[SIG_PVALUE_COLOR])
-        cell_txt = "haplotye that match with the family with the best odds ratio"
+        cell_txt = "haplotye that match with the family with the best p-value"
         ws.write(5, 0, cell_txt, cell_format = self.plain_fmts[BEST_PVALUE_COLOR])
         ws.set_column(0, 0, 40)
 
@@ -497,6 +545,8 @@ class HapAssocRepPipeline(CMMPipeline):
         self.info(" >>>> generating haplotype association study report")
         self.info(" >>>> report file: " + out_file)
         self.__set_report_format()
+        self.__compare_fam_gts_with_hap_assocs()
+#        self.__add_overview_sheet()
         self.__add_fams_haps_sheet()
         self.__add_legend_sheet()
         self.__wb.close()
