@@ -7,6 +7,9 @@ from setuptools import setup
 from pycmm.settings import DUMMY_TABLE_ANNOVAR_BIN
 from pycmm.settings import MUTREP_FAMILY_REPORT_BIN
 from pycmm.settings import MUTREP_SUMMARY_REPORT_BIN
+from pycmm.settings import PLINK_HAP_ASSOCS_SLURM_BIN
+from pycmm.settings import PLINK_HAP_ASSOCS_REPORT_BIN
+from pycmm.settings import PLINK_MERGE_HAP_ASSOCS_BIN
 
 def opj(*args):
     path = os.path.join(*args)
@@ -52,7 +55,7 @@ setup(
     packages=['pycmm',
               'pycmm.app',
               'pycmm.utils',
-              'pycmm.proc',
+              'pycmm.cmmlib',
               'pycmm.flow',
               ],
     scripts=['bin/pyCMM-dnaseq-pipeline',
@@ -64,14 +67,16 @@ setup(
              'bin/pyCMM-mutrep-mutation-reports',
              'bin/'+MUTREP_FAMILY_REPORT_BIN,
              'bin/'+MUTREP_SUMMARY_REPORT_BIN,
+             'bin/pyCMM-plink-create-job-setup-file',
+             'bin/pyCMM-plink-hap-assocs',
+             'bin/'+PLINK_HAP_ASSOCS_SLURM_BIN,
+             'bin/'+PLINK_HAP_ASSOCS_REPORT_BIN,
+             'bin/'+PLINK_MERGE_HAP_ASSOCS_BIN,
              ],
     package=['pyCMM'],
 #    package_data={'': ['data/CBV/*.cbv']
 #                  },
     data_files=all_data_files,
-#    data_files=[('data/family0008_chr18/', ['data/family0008_chr18/*.csv',
-#                                            ]),
-#                ],
     url='http://pypi.python.org/pypi/pyCMM/',
     license='LICENSE.txt',
     description='Python packages for my sequencing data analysis at Center of Molecular Medicine, Karolinska Institute, Stockholm, Sweden',
@@ -81,5 +86,7 @@ setup(
         "pyvcf >= 0.6.0",
         "pyaml >= 15.5.7",
         "xlrd >= 0.9.4",
+        "openpyxl >= 2.3.3",
+        "xlsxwriter >= 0.5.3",
         ],
 )

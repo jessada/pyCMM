@@ -35,12 +35,10 @@ class JobManagerHouseKeeping(JobManager):
 
 class TestJobManager(SafeTester):
 
-    def __init__(self, test_name):
-        SafeTester.__init__(self,
-                            test_name,
-                            dirname(__file__),
-                            test_module_name=__name__,
-                            )
+    def __init__(self, methodName):
+        super(TestJobManager, self).__init__(methodName=methodName,
+                                             test_module_name=__name__,
+                                             )
 
     def setUp(self):
         pass
@@ -73,106 +71,6 @@ class TestJobManager(SafeTester):
                         "Invalid number of queried records")
         jobman.cancel_job(job_name)
 
-#    @unittest.skipUnless(SLURM_TEST, "taking too long time to test")
-#    def test_submit_job_2(self):
-#        """ check if a real GATK alignment job can be submitted """
-#
-#        self.individual_debug = True
-#        self.init_test(self.current_func_name)
-#
-#        gatk_alloc_time = "72:00:00"
-#        sample_name = "test_sample"
-#        sample_prefix = join_path(self.data_dir,
-#                                  sample_name)
-#        sample_group = self.current_func_name
-#        ref = join_path(self.data_dir,
-#                        "ref.fa")
-#        raw_aligned_reads = join_path(self.working_dir,
-#                                      sample_name+"_raw_aligned.sam")
-#        sorted_reads = join_path(self.working_dir,
-#                                 sample_name+"_sorted.bam")
-#        dedup_reads = join_path(self.working_dir,
-#                                sample_name+"_dedup.bam")
-#        raw_gvcf = join_path(self.working_dir,
-#                             sample_name+"_raw.gvcf")
-#        metrics_file = join_path(self.working_dir,
-#                                 sample_name+"_metrics.txt")
-#        jobman = JobManager()
-#
-#        bwa_mem_job_name = "test_bwa_mem"
-#        slurm_log_file = join_path(self.working_dir,
-#                                   bwa_mem_job_name+'.log')
-#        job_script = "$PYCMM/bash/GATKBP_bwa_mem.sh"
-#        job_params = " -S " + sample_prefix 
-#        job_params += " -g " + sample_group
-#        job_params += " -r " + ref
-#        job_params += " -o " + raw_aligned_reads
-#        jobman.submit_job(bwa_mem_job_name,
-#                          TEST_PROJECT_CODE,
-#                          TEST_PARTITION_TYPE,
-#                          "1",
-#                          gatk_alloc_time,
-#                          slurm_log_file,
-#                          job_script,
-#                          job_params,
-#                          )
-#
-#        sort_reads_job_name = "test_sorted_reads"
-#        slurm_log_file = join_path(self.working_dir,
-#                                   sort_reads_job_name+'.log')
-#        job_script = "$PYCMM/bash/GATKBP_sort_reads.sh"
-#        job_params = " -S " + raw_aligned_reads 
-#        job_params += " -o " + sorted_reads
-#        jobman.submit_job(sort_reads_job_name,
-#                          TEST_PROJECT_CODE,
-#                          TEST_PARTITION_TYPE,
-#                          "2",
-#                          gatk_alloc_time,
-#                          slurm_log_file,
-#                          job_script,
-#                          job_params,
-#                          prereq=[bwa_mem_job_name],
-#                          )
-#
-#        dedup_reads_job_name = "test_dedup_reads"
-#        slurm_log_file = join_path(self.working_dir,
-#                                   dedup_reads_job_name+'.log')
-#        job_script = "$PYCMM/bash/GATKBP_markdup.sh"
-#        job_params = " -B " + sorted_reads 
-#        job_params += " -o " + dedup_reads
-#        job_params += " -m " + metrics_file
-#        jobman.submit_job(dedup_reads_job_name,
-#                          TEST_PROJECT_CODE,
-#                          TEST_PARTITION_TYPE,
-#                          "4",
-#                          gatk_alloc_time,
-#                          slurm_log_file,
-#                          job_script,
-#                          job_params,
-#                          prereq=[sort_reads_job_name],
-#                          )
-#
-#        hap_cal_job_name = "test_hap_cal"
-#        slurm_log_file = join_path(self.working_dir,
-#                                   hap_cal_job_name+'.log')
-#        job_script = "$PYCMM/bash/GATKBP_haplotype_caller.sh"
-#        job_params = " -B " + dedup_reads 
-#        job_params += " -o " + raw_gvcf
-#        job_params += " -r " + ref
-#        jobman.submit_job(hap_cal_job_name,
-#                          TEST_PROJECT_CODE,
-#                          TEST_PARTITION_TYPE,
-#                          "2",
-#                          gatk_alloc_time,
-#                          slurm_log_file,
-#                          job_script,
-#                          job_params,
-#                          prereq=[dedup_reads_job_name],
-#                          )
-#
-#        job_id = jobman.get_job_id(bwa_mem_job_name)
-#        jobman.cancel_job(bwa_mem_job_name)
-#
     @unittest.skipUnless(SLURM_TEST, "taking too long time to test")
     def test_get_job_status(self):
         """ check if job status can be correctly retrieved """

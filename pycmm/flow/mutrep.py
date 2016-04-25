@@ -11,6 +11,7 @@ from os.path import join as join_path
 from os.path import isdir
 from os.path import isfile
 from collections import OrderedDict
+from collections import defaultdict
 from pycmm.settings import PREDICTION_COLS
 from pycmm.settings import DFLT_ANNOVAR_DB_FOLDER
 from pycmm.settings import DFLT_ANNOVAR_DB_NAMES
@@ -20,11 +21,11 @@ from pycmm.settings import MUTREP_FAMILY_REPORT_BIN
 from pycmm.settings import MUTREP_SUMMARY_REPORT_BIN
 from pycmm.template import pyCMMBase
 from pycmm.utils import exec_sh
-from pycmm.proc.taparser import TAVcfReader as VcfReader
-from pycmm.proc.tamodel import CMMGT_HOMOZYGOTE
-from pycmm.proc.tamodel import CMMGT_HETEROZYGOTE
+from pycmm.cmmlib.dnalib import ALL_CHROMS
+from pycmm.cmmlib.taparser import TAVcfReader as VcfReader
+from pycmm.cmmlib.tamodel import CMMGT_HOMOZYGOTE
+from pycmm.cmmlib.tamodel import CMMGT_HETEROZYGOTE
 from pycmm.flow.cmmdb import CMMDBPipeline
-from pycmm.flow.cmmdb import ALL_CHROMS
 from pycmm.flow.cmmdb import JOBS_SETUP_RPT_ALLOC_TIME_KEY
 from pycmm.flow.cmmdb import JOBS_SETUP_RPT_LAYOUT_SECTION
 from pycmm.flow.cmmdb import JOBS_SETUP_RPT_ANNOTATED_VCF_TABIX
@@ -34,6 +35,12 @@ from pycmm.flow.cmmdb import JOBS_SETUP_RPT_REGIONS_KEY
 from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FREQ_RATIOS_KEY
 from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FREQ_RATIOS_COL_KEY
 from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FREQ_RATIOS_FREQ_KEY
+from pycmm.flow.cmmdb import JOBS_SETUP_RPT_EXPRESSIONS_KEY
+from pycmm.flow.cmmdb import JOBS_SETUP_RPT_EXPRESSIONS_NAME_KEY
+from pycmm.flow.cmmdb import JOBS_SETUP_RPT_EXPRESSIONS_PATTERN_KEY
+from pycmm.flow.cmmdb import JOBS_SETUP_RPT_EXPRESSIONS_USAGES_KEY
+from pycmm.flow.cmmdb import JOBS_SETUP_RPT_EXPRESSIONS_ACTION_KEY
+from pycmm.flow.cmmdb import JOBS_SETUP_RPT_EXPRESSIONS_INFO_KEY
 from pycmm.flow.cmmdb import JOBS_SETUP_RPT_SPLIT_CHROM_KEY
 from pycmm.flow.cmmdb import JOBS_SETUP_RPT_SUMMARY_FAMILIES_KEY
 from pycmm.flow.cmmdb import JOBS_SETUP_RPT_EXTRA_ANNO_COLS_KEY
@@ -51,6 +58,10 @@ from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_HAS_MUTATION
 from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_HAS_SHARED
 from pycmm.flow.cmmdb import JOBS_SETUP_RPT_ONLY_SUMMARY_KEY
 from pycmm.flow.cmmdb import JOBS_SETUP_RPT_ONLY_FAMILIES_KEY
+
+ACTION_DELETE_ROW = "del_row"
+ACTION_COLOR_ROW = "color_row"
+ACTION_COLOR_COL = "color_col"
 
 # *** color definition sections ***
 COLOR_RGB = OrderedDict()
@@ -93,8 +104,10 @@ COLOR_RGB['MAGENTA'] = '#FF00FF'
 COLOR_RGB['ICEBLUE'] = '#A5F2F3'
 COLOR_RGB['LIGHT_BLUE'] = '#ADD8E6'
 
-CELL_TYPE_HET_SHARED = 'SILVER'
-CELL_TYPE_HOM_SHARED = 'GRAY25'
+DFLT_COLOR_HET_SHARED = 'SILVER'
+DFLT_COLOR_HOM_SHARED = 'GRAY25'
+CELL_TYPE_HET_SHARED = 'HET_SHARED'
+CELL_TYPE_HOM_SHARED = 'HOM_SHARED'
 
 DFLT_FMT = 'default_format'
 # *********************************
@@ -195,6 +208,125 @@ class ReportRegion(pyCMMBase):
             self.__start_pos = None
             self.__end_pos = None
 
+class ActionDelRow(pyCMMBase):
+    """ A structure to parse action to delete a row from a mutation report sheet """
+
+    def __init__(self,
+                 pattern,
+                 ):
+        self.__pattern = pattern
+
+    def get_raw_repr(self):
+        return {"pattern": self.pattern}
+
+    @property
+    def pattern(self):
+        return self.__pattern
+
+class ActionColorRow(pyCMMBase):
+    """ A structure to parse action to color a row in a mutation report sheet """
+
+    def __init__(self,
+                 pattern,
+                 info,
+                 ):
+        self.__pattern = pattern
+        self.__info = info
+
+    def get_raw_repr(self):
+        return {"pattern": self.pattern,
+                "color": self.color}
+
+    @property
+    def pattern(self):
+        return self.__pattern
+
+    @property
+    def color(self):
+        return self.__info
+
+class ActionColorCol(pyCMMBase):
+    """ A structure to parse action to color a column in a row in a mutation report sheet """
+
+    def __init__(self,
+                 pattern,
+                 info,
+                 ):
+        self.__pattern = pattern
+        self.__info = info
+
+    def get_raw_repr(self):
+        return {"pattern": self.pattern,
+                "column name": self.col_name,
+                "color": self.color}
+
+    @property
+    def pattern(self):
+        return self.__pattern
+
+    @property
+    def col_name(self):
+        return self.__info.split(":")[0]
+
+    @property
+    def color(self):
+        return self.__info.split(":")[1]
+
+class VcfExpressions(pyCMMBase):
+    """
+    An user-friendly structure encapsulating
+    VCF expression configuration
+    """
+
+    def __init__(self,
+                 expressions,
+                 ):
+        self.__expressions = expressions
+        self.__patterns = None
+        self.__actions = None
+
+    @property
+    def name(self):
+        return self.__expression[JOBS_SETUP_RPT_EXPRESSIONS_NAME_KEY]
+
+    @property
+    def patterns(self):
+        if self.__patterns is None:
+            self.__patterns = {}
+            for expr in self.__expressions:
+                name = expr[JOBS_SETUP_RPT_EXPRESSIONS_NAME_KEY]
+                pattern = expr[JOBS_SETUP_RPT_EXPRESSIONS_PATTERN_KEY]
+                self.__patterns[name] = pattern
+        return self.__patterns
+
+    @property
+    def actions(self):
+        if self.__actions is None:
+            # all kind of possible actions are parsed here
+            # possible actions are
+            #   - delete row
+            #   - color a column at the row
+            #   - color a row
+            # each action is structured as a list
+            # each item in the list consist of at least a pattern
+            # -> if the evaluation of the pattern is True the do the action
+            # and the item can also have an info field
+            self.__actions = defaultdict(list)
+            for expr in self.__expressions:
+                if JOBS_SETUP_RPT_EXPRESSIONS_USAGES_KEY in expr:
+                    pattern = expr[JOBS_SETUP_RPT_EXPRESSIONS_PATTERN_KEY]
+                    for usage in expr[JOBS_SETUP_RPT_EXPRESSIONS_USAGES_KEY]:
+                        action = usage[JOBS_SETUP_RPT_EXPRESSIONS_ACTION_KEY]
+                        if JOBS_SETUP_RPT_EXPRESSIONS_INFO_KEY in usage:
+                            info = usage[JOBS_SETUP_RPT_EXPRESSIONS_INFO_KEY]
+                        if action == ACTION_DELETE_ROW:
+                            self.__actions[ACTION_DELETE_ROW].append(ActionDelRow(pattern))
+                        if action == ACTION_COLOR_ROW:
+                            self.__actions[ACTION_COLOR_ROW].append(ActionColorRow(pattern, info=info))
+                        if action == ACTION_COLOR_COL:
+                            self.__actions[ACTION_COLOR_COL].append(ActionColorCol(pattern, info=info))
+        return self.__actions
+
 class ReportLayout(pyCMMBase):
     """ A structure to parse and keep mutation report layout """
 
@@ -202,22 +334,52 @@ class ReportLayout(pyCMMBase):
                  layout_params,
                  ):
         self.__layout_params = layout_params
-        self.__anno_cols = self.__cal_anno_cols()
+        self.__freq_ratios = None
+        self.__anno_cols = None
+        self.__exprs = self.__parse_exprs()
+        self.__init_cell_colors()
 
     def __cal_anno_cols(self):
+        # open the annotated vcf tabix file for checking
+        # if the expected output columns are exist
+        vcf_reader = VcfReader(filename=self.annotated_vcf_tabix)
+        vcf_record = vcf_reader.next()
+        # generate columns list
         anno_cols = []
         for col_name in self.__layout_params[JOBS_SETUP_RPT_ANNO_COLS_KEY]:
+            # excluce columns based on configuration
             excluded = False
             for excl_tag in self.anno_excl_tags:
                 if excl_tag in ALL_MUTREP_ANNO_COLS[col_name]:
                     excluded = True
                     break
-            if not excluded:
-                anno_cols.append(col_name)
+            if excluded:
+                continue
+            # exclude columns that are not actually in the annotated tabix file
+            if col_name not in vcf_record.INFO.keys():
+                self.warning("Columns " + col_name + " is missing")
+                continue
+            # here are the columns that can be shown without errors
+            anno_cols.append(col_name)
         return anno_cols
+
+    def __init_cell_colors(self):
+        self.__cell_colors = {}
+        self.__cell_colors[CELL_TYPE_HET_SHARED] = DFLT_COLOR_HET_SHARED
+        self.__cell_colors[CELL_TYPE_HOM_SHARED] = DFLT_COLOR_HOM_SHARED
+
+    @property
+    def cell_color_het_shared(self):
+        return self.__cell_colors[CELL_TYPE_HET_SHARED]
+
+    @property
+    def cell_color_hom_shared(self):
+        return self.__cell_colors[CELL_TYPE_HOM_SHARED]
 
     @property
     def anno_cols(self):
+        if self.__anno_cols is None:
+            self.__anno_cols = self.__cal_anno_cols()
         return self.__anno_cols
 
     @property
@@ -244,13 +406,26 @@ class ReportLayout(pyCMMBase):
 
     @property
     def freq_ratios(self):
-        if JOBS_SETUP_RPT_FREQ_RATIOS_KEY in self.__layout_params:
+        if ((self.__freq_ratios is None) and
+            (JOBS_SETUP_RPT_FREQ_RATIOS_KEY in self.__layout_params)
+            ):
             freq_ratios = OrderedDict()
             for freq_ratio in self.__layout_params[JOBS_SETUP_RPT_FREQ_RATIOS_KEY]:
                 col = freq_ratio[JOBS_SETUP_RPT_FREQ_RATIOS_COL_KEY]
                 freq = freq_ratio[JOBS_SETUP_RPT_FREQ_RATIOS_FREQ_KEY]
                 freq_ratios[col] = freq
-            return freq_ratios
+            self.__freq_ratios = freq_ratios
+        elif self.__freq_ratios is None:
+            self.__freq_ratios = []
+        return self.__freq_ratios
+
+    @property
+    def exprs(self):
+        return self.__exprs
+
+    def __parse_exprs(self):
+        if JOBS_SETUP_RPT_EXPRESSIONS_KEY in self.__layout_params:
+            return VcfExpressions(self.__layout_params[JOBS_SETUP_RPT_EXPRESSIONS_KEY])
         else:
             return None
 
@@ -465,7 +640,19 @@ class MutRepPipeline(CMMDBPipeline):
                         samples_list,
                         ):
         anno_cols = self.report_layout.anno_cols
-        dflt_cell_fmt = self.cell_fmt_mgr.cell_fmts[DFLT_FMT]
+        # use input expression to determine if row will have background color
+        row_color = None
+        if self.report_layout.exprs is not None:
+            color_row_actions = self.report_layout.exprs.actions[ACTION_COLOR_ROW]
+            for cra in color_row_actions:
+                if vcf_record.vcf_eval(cra.pattern):
+                    row_color = cra.color
+                    break
+        if row_color is not None:
+            dflt_cell_fmt = self.cell_fmt_mgr.cell_fmts[row_color]
+        else:
+            dflt_cell_fmt = self.cell_fmt_mgr.cell_fmts[DFLT_FMT]
+        # start writing content
         alt_allele = vcf_record.alleles[allele_idx]
         ws.write(row, 0, vcf_record.CHROM, dflt_cell_fmt)
         ws.write(row, 1, str(vcf_record.POS), dflt_cell_fmt)
@@ -473,6 +660,12 @@ class MutRepPipeline(CMMDBPipeline):
         ws.write(row, 3, str(alt_allele), dflt_cell_fmt)
         len_anno_cols = len(anno_cols)
         # annotate INFO columns
+        if self.report_layout.exprs is not None:
+            color_col_names = map(lambda x: x.col_name,
+                                  self.report_layout.exprs.actions[ACTION_COLOR_COL])
+        else:
+            color_col_names = []
+        # for each INFO column
         for anno_idx in xrange(len_anno_cols):
             anno_col_name = anno_cols[anno_idx]
             info = vcf_record.INFO[anno_col_name]
@@ -486,20 +679,34 @@ class MutRepPipeline(CMMDBPipeline):
                 info = ""
             if info == [None]:
                 info = ""
-            ws.write(row, anno_idx+LAYOUT_VCF_COLS, str(info).decode('utf-8'), dflt_cell_fmt)
+            # determine cell format
+            info_cell_fmt = dflt_cell_fmt
+            if anno_col_name in color_col_names:
+                color_col_actions = self.report_layout.exprs.actions[ACTION_COLOR_COL]
+                for cca in color_col_actions:
+                    if ((anno_col_name == cca.col_name) and
+                        vcf_record.vcf_eval(cca.pattern)
+                        ):
+                        info_cell_fmt = self.cell_fmt_mgr.cell_fmts[cca.color]
+                        break
+            ws.write(row, anno_idx+LAYOUT_VCF_COLS, str(info).decode('utf-8'), info_cell_fmt)
         # annotate samples information
         sample_start_idx = LAYOUT_VCF_COLS + len_anno_cols
         for sample_idx in xrange(len(samples_list)):
             call = vcf_record.genotype(samples_list[sample_idx])
             zygo = call.cmm_gts[allele_idx]
+            # determine cell(s) format
             if type(call.shared_mutations) is not list:
                 zygo_fmt = dflt_cell_fmt
             elif not call.shared_mutations[allele_idx]:
                 zygo_fmt = dflt_cell_fmt
             elif call.actual_gts[allele_idx] == CMMGT_HOMOZYGOTE:
-                zygo_fmt = self.cell_fmt_mgr.cell_fmts[CELL_TYPE_HOM_SHARED]
+                hom_shared_color = self.report_layout.cell_color_hom_shared
+                zygo_fmt = self.cell_fmt_mgr.cell_fmts[hom_shared_color]
             else:
-                zygo_fmt = self.cell_fmt_mgr.cell_fmts[CELL_TYPE_HET_SHARED]
+                het_shared_color = self.report_layout.cell_color_het_shared
+                zygo_fmt = self.cell_fmt_mgr.cell_fmts[het_shared_color]
+            # write content to cell(s)
             if self.report_layout.call_detail:
                 col_idx = (2*sample_idx) + (sample_start_idx)
                 ws.write(row, col_idx, zygo, zygo_fmt)
@@ -546,6 +753,15 @@ class MutRepPipeline(CMMDBPipeline):
                     continue
                 if (self.report_layout.filter_has_shared and
                     not vcf_record.has_shared(allele_idx)):
+                    continue
+                delete_row = False
+                if self.report_layout.exprs is not None:
+                    del_row_actions = self.report_layout.exprs.actions[ACTION_DELETE_ROW]
+                    for dra in del_row_actions:
+                        if vcf_record.vcf_eval(dra.pattern):
+                            delete_row = True
+                            break
+                if delete_row:
                     continue
                 self.__write_content(ws,
                                      row,

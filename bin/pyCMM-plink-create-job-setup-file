@@ -1,0 +1,135 @@
+import argparse
+import sys
+from argparse import RawTextHelpFormatter
+from pycmm.app.plink import app_pycmm_plink_create_jobs_setup_file
+from pycmm.settings import PLINK_CREATE_JOB_SETUP_FILE_DESCRIPTION
+from pycmm.settings import DFLT_FLOW_ALLOC_TIME
+from pycmm.flow.plink import DFLT_CUTOFF_PVALUE
+from pycmm.flow.plink import DFLT_CUTOFF_ORS
+from pycmm.flow.plink import DFLT_HAP_WINDOW_SIZES
+
+argp = argparse.ArgumentParser(description=PLINK_CREATE_JOB_SETUP_FILE_DESCRIPTION,
+                               formatter_class=RawTextHelpFormatter,
+                               )
+required_group = argp.add_argument_group('required arguments')
+plink_group = argp.add_argument_group('plink arguments')
+report_group = argp.add_argument_group('report arguments')
+required_group.add_argument('-d',
+                            dest='project_name',
+                            metavar="project_name",
+                            help='name of this project. This will be a part of many files name',
+                            required=True,
+                            )
+required_group.add_argument('-O',
+                            dest='project_out_dir',
+                            metavar="OUTPUT_DIR",
+                            help='a folder to keep all the running results, including log and intermediate files',
+                            required=True,
+                            )
+argp.add_argument('-p',
+                  dest='project_code',
+                  metavar="PROJECT_CODE",
+                  help='UPPMAX project code',
+                  default=None,
+                  )
+argp.add_argument('--sample_info',
+                  dest='sample_info',
+                  metavar="SAMPLE_INFO",
+                  help='sample information',
+                  default=None,
+                  )
+plink_group.add_argument('--file',
+                         dest='input_file_prefix',
+                         metavar="{FILE ROOT}",
+                         help='Specify .ped and .map files',
+                         default=None,
+                         )
+plink_group.add_argument('--bfile',
+                         dest='input_bfile_prefix',
+                         metavar="{FILE ROOT}",
+                         help='Specify .bed, .fam and .map',
+                         default=None,
+                         )
+plink_group.add_argument('--pheno',
+                         dest='phenotype_file',
+                         metavar="{FILE}",
+                         help='Specify cluster file',
+                         required=True,
+                         )
+plink_group.add_argument('-R',
+                         dest='input_dna_regions',
+                         metavar="REGIONS",
+                         help='dna regions (default: ALL)',
+                         default=None,
+                         )
+help = 'Phase sliding window (default: {dflt_val})'.format(dflt_val=DFLT_HAP_WINDOW_SIZES)
+plink_group.add_argument('--hap-window',
+                         dest='hap_window_sizes',
+                         metavar="{N}",
+                         help=help,
+                         default=DFLT_HAP_WINDOW_SIZES,
+                         )
+help = 'UPPMAX allocation time (default: {dflt_val})'.format(dflt_val=DFLT_FLOW_ALLOC_TIME)
+plink_group.add_argument('--flow_alloc_time',
+                         dest='flow_alloc_time',
+                         metavar="ALLOC_TIME",
+                         help=help,
+                         default=DFLT_FLOW_ALLOC_TIME,
+                         )
+plink_group.add_argument('--filter_criteria',
+                         dest='filter_criteria',
+                         metavar="CRITERIA",
+                         help='condition to filter haplotype from association study',
+                         default=None,
+                         )
+help = 'Cut-off p-value (default: {dflt_val})'.format(dflt_val=DFLT_CUTOFF_PVALUE)
+report_group.add_argument('--cutoff_pvalue',
+                         dest='cutoff_pvalue',
+                         metavar="FLOAT",
+                         help=help,
+                         default=DFLT_CUTOFF_PVALUE,
+                         )
+help = 'Cut-off odds ratio (default: {dflt_val})'.format(dflt_val=DFLT_CUTOFF_ORS)
+report_group.add_argument('--cutoff_ors',
+                         dest='cutoff_ors',
+                         metavar="FLOAT",
+                         help=help,
+                         default=DFLT_CUTOFF_ORS,
+                         )
+report_group.add_argument('--fam_hap',
+                          dest='fam_hap_prefix',
+                          metavar="{FILE ROOT}",
+                          help='Specify .tped and .tfam files',
+                          default=None,
+                          )
+argp.add_argument('-o',
+                  dest='out_jobs_setup_file',
+                  metavar="JOBS_SETUP_FILE",
+                  help='output file containing jobs configuration',
+                  default=sys.stdout,
+                  )
+args = argp.parse_args()
+if args.input_file_prefix is not None:
+    input_file_prefix = args.input_file_prefix
+    input_binary = False
+elif args.input_bfile_prefix is not None:
+    input_file_prefix = args.input_bfile_prefix
+    input_binary = True
+else:
+    raise IOError("either --file or --bfile argument is requirted")
+app_pycmm_plink_create_jobs_setup_file(project_name=args.project_name,
+                                       project_out_dir=args.project_out_dir,
+                                       input_file_prefix=input_file_prefix,
+                                       input_binary=input_binary,
+                                       input_dna_regions=args.input_dna_regions,
+                                       phenotype_file=args.phenotype_file,
+                                       cutoff_pvalue=args.cutoff_pvalue,
+                                       cutoff_ors=args.cutoff_ors,
+                                       hap_window_sizes=args.hap_window_sizes,
+                                       project_code=args.project_code,
+                                       sample_info=args.sample_info,
+                                       flow_alloc_time=args.flow_alloc_time,
+                                       filter_criteria=args.filter_criteria,
+                                       fam_hap_prefix=args.fam_hap_prefix,
+                                       out_jobs_setup_file=args.out_jobs_setup_file,
+                                       )

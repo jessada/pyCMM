@@ -8,6 +8,7 @@ from os import listdir
 from os.path import join as join_path
 from os.path import isdir
 from os.path import isfile
+from collections import defaultdict
 from pycmm.settings import DFLT_ANNOVAR_DB_FOLDER
 from pycmm.settings import DFLT_ANNOVAR_DB_NAMES
 from pycmm.settings import DFLT_ANNOVAR_DB_OPS
@@ -16,20 +17,21 @@ from pycmm.settings import DFLT_MUTREP_ALLOC_TIME
 from pycmm.settings import DUMMY_TABLE_ANNOVAR_BIN
 from pycmm.template import pyCMMBase
 from pycmm.utils import exec_sh
+from pycmm.utils import mylogger
 from pycmm.utils.jobman import JobManager
-from pycmm.proc.annovarlib import Annovar
-from pycmm.proc.annovarlib import AnnovarParams
-from pycmm.proc.annovarlib import ANNOVAR_PARAMS_INPUT_FILE_KEY
-from pycmm.proc.annovarlib import ANNOVAR_PARAMS_DB_FOLDER_KEY
-from pycmm.proc.annovarlib import ANNOVAR_PARAMS_BUILDVER_KEY
-from pycmm.proc.annovarlib import ANNOVAR_PARAMS_OUT_PREFIX_KEY
-from pycmm.proc.annovarlib import ANNOVAR_PARAMS_DB_NAMES_KEY
-from pycmm.proc.annovarlib import ANNOVAR_PARAMS_DB_OPS_KEY
-from pycmm.proc.annovarlib import ANNOVAR_PARAMS_NASTRING_KEY
+from pycmm.cmmlib.dnalib import ALL_CHROMS
+from pycmm.cmmlib.annovarlib import Annovar
+from pycmm.cmmlib.annovarlib import AnnovarParams
+from pycmm.cmmlib.annovarlib import ANNOVAR_PARAMS_INPUT_FILE_KEY
+from pycmm.cmmlib.annovarlib import ANNOVAR_PARAMS_DB_FOLDER_KEY
+from pycmm.cmmlib.annovarlib import ANNOVAR_PARAMS_BUILDVER_KEY
+from pycmm.cmmlib.annovarlib import ANNOVAR_PARAMS_OUT_PREFIX_KEY
+from pycmm.cmmlib.annovarlib import ANNOVAR_PARAMS_DB_NAMES_KEY
+from pycmm.cmmlib.annovarlib import ANNOVAR_PARAMS_DB_OPS_KEY
+from pycmm.cmmlib.annovarlib import ANNOVAR_PARAMS_NASTRING_KEY
 from pycmm.settings import ALL_MUTREP_ANNO_COLS
 from pycmm.settings import DFLT_MUTREP_FREQ_RATIOS
 
-ALL_CHROMS = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "MT", "X", "Y"]
 CAL_MUTATIONS_STAT_SCRIPT = "$PYCMM/bash/cal_mutations_stat.sh"
 
 # *************** jobs metadata section ***************
@@ -66,6 +68,12 @@ JOBS_SETUP_RPT_REGIONS_KEY = "REGIONS"
 JOBS_SETUP_RPT_FREQ_RATIOS_KEY = "FREQUENCY_RATIOS"
 JOBS_SETUP_RPT_FREQ_RATIOS_COL_KEY = "COLUMN"
 JOBS_SETUP_RPT_FREQ_RATIOS_FREQ_KEY = "FREQUENCY"
+JOBS_SETUP_RPT_EXPRESSIONS_KEY = "EXPRESSIONS"
+JOBS_SETUP_RPT_EXPRESSIONS_NAME_KEY = "NAME"
+JOBS_SETUP_RPT_EXPRESSIONS_PATTERN_KEY = "PATTERN"
+JOBS_SETUP_RPT_EXPRESSIONS_USAGES_KEY = "USAGES"
+JOBS_SETUP_RPT_EXPRESSIONS_ACTION_KEY = "ACTION"
+JOBS_SETUP_RPT_EXPRESSIONS_INFO_KEY = "INFO"
 JOBS_SETUP_RPT_SPLIT_CHROM_KEY = "SPLIT_CHROM"
 JOBS_SETUP_RPT_SUMMARY_FAMILIES_KEY = "SUMMARY_FAMILIES"
 JOBS_SETUP_RPT_EXTRA_ANNO_COLS_KEY = "EXTRA_ANNOTATION_COLUMNS"
@@ -418,6 +426,8 @@ def create_jobs_setup_file(dataset_name,
                            annotated_vcf_tabix=None,
                            report_regions=None,
                            frequency_ratios=None,
+                           expression_patterns=None,
+                           expression_usages=None,
                            split_chrom=False,
                            summary_families_sheet=False,
                            call_detail=False,
@@ -429,8 +439,8 @@ def create_jobs_setup_file(dataset_name,
         jobs_report_file = join_path(project_out_dir,
                                      dataset_name+"_rpt.txt")
     if out_jobs_setup_file is None:
-        out_jobs_setup_file = join_path(samples_root_dir,
-                                       dataset_name+"_job_setup.txt")
+        out_jobs_setup_file = join_path(project_out_dir,
+                                        dataset_name+"_job_setup.txt")
     annovar_config = {}
     annovar_config[JOBS_SETUP_ANNOVAR_DB_FOLDER_KEY] = annovar_human_db_dir
     annovar_config[JOBS_SETUP_ANNOVAR_BUILDVER_KEY] = annovar_buildver
@@ -495,6 +505,25 @@ def create_jobs_setup_file(dataset_name,
                                 JOBS_SETUP_RPT_FREQ_RATIOS_FREQ_KEY: freq,
                                 })
     report_layout_config[JOBS_SETUP_RPT_FREQ_RATIOS_KEY] = job_freq_ratios
+    if expression_patterns is not None:
+        exprs = []
+        for raw_pattern in  expression_patterns.split(";"):
+            name, pattern = raw_pattern.split(":")
+            expr = defaultdict(list)
+            expr[JOBS_SETUP_RPT_EXPRESSIONS_NAME_KEY] = name.strip()
+            expr[JOBS_SETUP_RPT_EXPRESSIONS_PATTERN_KEY] = pattern.strip()
+            exprs.append(expr)
+        if expression_usages is not None:
+            for raw_usage in expression_usages.split(";"):
+                usage = {}
+                usage_expr_name = raw_usage.split(":")[0]
+                usage[JOBS_SETUP_RPT_EXPRESSIONS_ACTION_KEY] = raw_usage.split(":")[1]
+                if len(raw_usage.split(":")) > 2:
+                    usage[JOBS_SETUP_RPT_EXPRESSIONS_INFO_KEY] = ":".join(raw_usage.split(":")[2:])
+                for expr in exprs:
+                    if expr[JOBS_SETUP_RPT_EXPRESSIONS_NAME_KEY] == usage_expr_name:
+                        expr[JOBS_SETUP_RPT_EXPRESSIONS_USAGES_KEY].append(usage)
+        report_layout_config[JOBS_SETUP_RPT_EXPRESSIONS_KEY] = exprs
     report_layout_config[JOBS_SETUP_RPT_SPLIT_CHROM_KEY] = split_chrom
     report_layout_config[JOBS_SETUP_RPT_SUMMARY_FAMILIES_KEY] = summary_families_sheet
     if call_detail:

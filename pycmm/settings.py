@@ -22,6 +22,10 @@ SLOW_PROJECT_CODE = 'b2011097'
 
 ENV_TEST_DIR = "PYTHON_TEST_DIR"
 
+## *********************************************************************************** General pipeline configuration  ************************************************************************************
+DFLT_FLOW_ALLOC_TIME = "4-00:00:00"
+DFLT_RPT_ALLOC_TIME = "1-00:00:00"
+
 ## ************************************************************************************* GATK Best practice (DNA seq) *************************************************************************************
 DNASEQ_PIPELINE_DESCRIPTION = "A flow to control a pipeline to process DNA sequencing data"
 DNASEQ_PIPELINE_DFLT_LOG_FILE = "dnaseq_pipeline"
@@ -52,6 +56,22 @@ DFLT_MUTREP_ALLOC_TIME = "1-00:00:00"
 MUTREP_FAMILY_REPORT_DESCRIPTION = "An appliation to generate mutation report for a given family at given regions"
 MUTREP_SUMMARY_REPORT_DESCRIPTION = "An appliation to generate summary report at given regions"
 MUTREP_CREATE_JOB_SETUP_FILE_DESCRIPTION = "An application to generate job setup file to process mutations report"
+
+## *********************************************************************************************** PLINK *************************************************************************************************
+PLINK_HAP_ASSOCS_SLURM_BIN = 'pyCMM-plink-hap-assocs-slurm'
+PLINK_MERGE_HAP_ASSOCS_BIN = 'pyCMM-plink-merge-hap-assocs'
+PLINK_HAP_ASSOCS_REPORT_BIN = 'pyCMM-plink-hap-assocs-report'
+
+PLINK_HAP_ASSOCS_DESCRIPTION = "A flow to control a PLINK haplotype association study"
+PLINK_HAP_ASSOCS_SLURM_DESCRIPTION = "A flow to control a PLINK haplotype association study in SLURM (UPPMAX)"
+PLINK_MERGE_HAP_ASSOCS_DESCRIPTION = "An applciation to merge raw Plink haplotype association study results"
+PLINK_HAP_ASSOCS_REPORT_DESCRIPTION = "A flow to generate haplotype association study report"
+#PLINK_PIPELINE_DESCRIPTION = "A flow to control a PLINK pipeline"
+PLINK_PIPELINE_DFLT_LOG_FILE = "plink_pipeline"
+
+#MUTREP_FAMILY_REPORT_DESCRIPTION = "An appliation to generate mutation report for a given family at given regions"
+#MUTREP_SUMMARY_REPORT_DESCRIPTION = "An appliation to generate summary report at given regions"
+PLINK_CREATE_JOB_SETUP_FILE_DESCRIPTION = "An application to generate job setup file to run PLINK and generate report"
 
 ## > > > > > > > > > > > > > > > > > > > > > > > > > > Annovar DB configurations < < < < < < < < < < < < < < < < < < < < < < < < < <
 DFLT_ANNOVAR_DB_FOLDER = "/glob/jessada/tools/annovar/humandb"
@@ -101,6 +121,8 @@ DFLT_ANNOVAR_DB_NAMES += ",CMM_Axeq_chr5_19"
 DFLT_ANNOVAR_DB_OPS += ",f"
 DFLT_ANNOVAR_DB_NAMES += ",CMM_Axeq_chr9"
 DFLT_ANNOVAR_DB_OPS += ",f"
+DFLT_ANNOVAR_DB_NAMES += ",CMM_oncoarray_gw"
+DFLT_ANNOVAR_DB_OPS += ",f"
 DFLT_ANNOVAR_DB_NAMES += ",200_Danes"
 DFLT_ANNOVAR_DB_OPS += ",f"
 DFLT_ANNOVAR_DB_NAMES += ",249_Swedes"
@@ -137,6 +159,8 @@ ILL_BR_COLS_TAG = "ILL_BR"
 NK64_COLS_TAG = "NK64"
 # Group of columns annotating detailed information of mutation stat
 MUTSTAT_DETAILS_COLS_TAG = "Mutstat_details"
+# Group of columns from associaton studies
+ASSOC_COLS_TAG = "Assoc"
 # Group of LJB score columns
 LJB_SCORE_COLS_TAG = "LJB_score"
 # Group of ExAC scores beside ExAC_ALL and ExAC_NFE
@@ -406,6 +430,50 @@ AXEQ_CHR9_OTH_COL_NAME = "AXEQ_CHR9_OTH"
 AXEQ_CHR9_NA_COL_NAME = "AXEQ_CHR9_NA"
 AXEQ_CHR9_GT_COL_NAME = "AXEQ_CHR9_GT"
 AXEQ_CHR9_AF_COL_NAME = "AXEQ_CHR9_AF"
+ONC_ASSOC_SNPS_COL_NAME = "Assoc_SNPs"
+ONC_CORRECTION_SNPS_COL_NAME = "Correction_SNPs"
+ONC_1000G_ALL_COL_NAME = "1000g_ALL"
+ONC_1000G_EUR_COL_NAME = "1000g_EUR"
+ONC_HAPLOTYPE1_COL_NAME = "haplotype_1"
+ONC_F_A1_COL_NAME = "F_A_1"
+ONC_F_U1_COL_NAME = "F_U_1"
+ONC_P_VALUE1_COL_NAME = "P-value_1"
+ONC_OR1_COL_NAME = "OR_1"
+ONC_HAPLOTYPE2_COL_NAME = "haplotype_2"
+ONC_F_A2_COL_NAME = "F_A_2"
+ONC_F_U2_COL_NAME = "F_U_2"
+ONC_P_VALUE2_COL_NAME = "P-value_2"
+ONC_OR2_COL_NAME = "OR_2"
+ONC_HAPLOTYPE3_COL_NAME = "haplotype_3"
+ONC_F_A3_COL_NAME = "F_A_3"
+ONC_F_U3_COL_NAME = "F_U_3"
+ONC_P_VALUE3_COL_NAME = "P-value_3"
+ONC_OR3_COL_NAME = "OR_3"
+ONC_HAPLOTYPE4_COL_NAME = "haplotype_4"
+ONC_F_A4_COL_NAME = "F_A_4"
+ONC_F_U4_COL_NAME = "F_U_4"
+ONC_P_VALUE4_COL_NAME = "P-value_4"
+ONC_OR4_COL_NAME = "OR_4"
+ONC_HAPLOTYPE5_COL_NAME = "haplotype_5"
+ONC_F_A5_COL_NAME = "F_A_5"
+ONC_F_U5_COL_NAME = "F_U_5"
+ONC_P_VALUE5_COL_NAME = "P-value_5"
+ONC_OR5_COL_NAME = "OR_5"
+ONC_HAPLOTYPE6_COL_NAME = "haplotype_6"
+ONC_F_A6_COL_NAME = "F_A_6"
+ONC_F_U6_COL_NAME = "F_U_6"
+ONC_P_VALUE6_COL_NAME = "P-value_6"
+ONC_OR6_COL_NAME = "OR_6"
+ONC_HAPLOTYPE7_COL_NAME = "haplotype_7"
+ONC_F_A7_COL_NAME = "F_A_7"
+ONC_F_U7_COL_NAME = "F_U_7"
+ONC_P_VALUE7_COL_NAME = "P-value_7"
+ONC_OR7_COL_NAME = "OR_7"
+ONC_HAPLOTYPE8_COL_NAME = "haplotype_8"
+ONC_F_A8_COL_NAME = "F_A_8"
+ONC_F_U8_COL_NAME = "F_U_8"
+ONC_P_VALUE8_COL_NAME = "P-value_8"
+ONC_OR8_COL_NAME = "OR_8"
 SIFT_SCORE_COL_NAME = "SIFT_score"
 POLYPHEN2_HDIV_SCORE_COL_NAME = "Polyphen2_HDIV_score"
 POLYPHEN2_HVAR_SCORE_COL_NAME = "Polyphen2_HVAR_score"
@@ -428,6 +496,8 @@ DFLT_MUTREP_FREQ_RATIOS = PRIMARY_MAF_VAR + ":0.2"
 FUNC_REFGENE_VAR = FUNC_REFGENE_COL_NAME
 EXONICFUNC_REFGENE_VAR = EXONICFUNC_REFGENE_COL_NAME
 
+# defining all annotation columns
+# manually assigning is because not all columns have their own tags
 ALL_MUTREP_ANNO_COLS = OrderedDict()
 ALL_MUTREP_ANNO_COLS[FUNC_REFGENE_COL_NAME] = []
 ALL_MUTREP_ANNO_COLS[EXONICFUNC_REFGENE_COL_NAME] = []
@@ -545,6 +615,50 @@ ALL_MUTREP_ANNO_COLS[AXEQ_CHR9_OTH_COL_NAME] = []
 ALL_MUTREP_ANNO_COLS[AXEQ_CHR9_NA_COL_NAME] = []
 ALL_MUTREP_ANNO_COLS[AXEQ_CHR9_GT_COL_NAME] = []
 ALL_MUTREP_ANNO_COLS[AXEQ_CHR9_AF_COL_NAME] = []
+ALL_MUTREP_ANNO_COLS[ONC_ASSOC_SNPS_COL_NAME] = []
+ALL_MUTREP_ANNO_COLS[ONC_CORRECTION_SNPS_COL_NAME] = []
+ALL_MUTREP_ANNO_COLS[ONC_1000G_ALL_COL_NAME] = []
+ALL_MUTREP_ANNO_COLS[ONC_1000G_EUR_COL_NAME] = []
+ALL_MUTREP_ANNO_COLS[ONC_HAPLOTYPE1_COL_NAME] = []
+ALL_MUTREP_ANNO_COLS[ONC_F_A1_COL_NAME] = []
+ALL_MUTREP_ANNO_COLS[ONC_F_U1_COL_NAME] = []
+ALL_MUTREP_ANNO_COLS[ONC_P_VALUE1_COL_NAME] = []
+ALL_MUTREP_ANNO_COLS[ONC_OR1_COL_NAME] = []
+ALL_MUTREP_ANNO_COLS[ONC_HAPLOTYPE2_COL_NAME] = []
+ALL_MUTREP_ANNO_COLS[ONC_F_A2_COL_NAME] = []
+ALL_MUTREP_ANNO_COLS[ONC_F_U2_COL_NAME] = []
+ALL_MUTREP_ANNO_COLS[ONC_P_VALUE2_COL_NAME] = []
+ALL_MUTREP_ANNO_COLS[ONC_OR2_COL_NAME] = []
+ALL_MUTREP_ANNO_COLS[ONC_HAPLOTYPE3_COL_NAME] = []
+ALL_MUTREP_ANNO_COLS[ONC_F_A3_COL_NAME] = []
+ALL_MUTREP_ANNO_COLS[ONC_F_U3_COL_NAME] = []
+ALL_MUTREP_ANNO_COLS[ONC_P_VALUE3_COL_NAME] = []
+ALL_MUTREP_ANNO_COLS[ONC_OR3_COL_NAME] = []
+ALL_MUTREP_ANNO_COLS[ONC_HAPLOTYPE4_COL_NAME] = []
+ALL_MUTREP_ANNO_COLS[ONC_F_A4_COL_NAME] = []
+ALL_MUTREP_ANNO_COLS[ONC_F_U4_COL_NAME] = []
+ALL_MUTREP_ANNO_COLS[ONC_P_VALUE4_COL_NAME] = []
+ALL_MUTREP_ANNO_COLS[ONC_OR4_COL_NAME] = []
+ALL_MUTREP_ANNO_COLS[ONC_HAPLOTYPE5_COL_NAME] = []
+ALL_MUTREP_ANNO_COLS[ONC_F_A5_COL_NAME] = []
+ALL_MUTREP_ANNO_COLS[ONC_F_U5_COL_NAME] = []
+ALL_MUTREP_ANNO_COLS[ONC_P_VALUE5_COL_NAME] = []
+ALL_MUTREP_ANNO_COLS[ONC_OR5_COL_NAME] = []
+ALL_MUTREP_ANNO_COLS[ONC_HAPLOTYPE6_COL_NAME] = []
+ALL_MUTREP_ANNO_COLS[ONC_F_A6_COL_NAME] = []
+ALL_MUTREP_ANNO_COLS[ONC_F_U6_COL_NAME] = []
+ALL_MUTREP_ANNO_COLS[ONC_P_VALUE6_COL_NAME] = []
+ALL_MUTREP_ANNO_COLS[ONC_OR6_COL_NAME] = []
+ALL_MUTREP_ANNO_COLS[ONC_HAPLOTYPE7_COL_NAME] = []
+ALL_MUTREP_ANNO_COLS[ONC_F_A7_COL_NAME] = []
+ALL_MUTREP_ANNO_COLS[ONC_F_U7_COL_NAME] = []
+ALL_MUTREP_ANNO_COLS[ONC_P_VALUE7_COL_NAME] = []
+ALL_MUTREP_ANNO_COLS[ONC_OR7_COL_NAME] = []
+ALL_MUTREP_ANNO_COLS[ONC_HAPLOTYPE8_COL_NAME] = []
+ALL_MUTREP_ANNO_COLS[ONC_F_A8_COL_NAME] = []
+ALL_MUTREP_ANNO_COLS[ONC_F_U8_COL_NAME] = []
+ALL_MUTREP_ANNO_COLS[ONC_P_VALUE8_COL_NAME] = []
+ALL_MUTREP_ANNO_COLS[ONC_OR8_COL_NAME] = []
 ALL_MUTREP_ANNO_COLS[SIFT_SCORE_COL_NAME] = []
 ALL_MUTREP_ANNO_COLS[LJB_SIFT_PREDICTION_COL_NAME] = []
 ALL_MUTREP_ANNO_COLS[POLYPHEN2_HDIV_SCORE_COL_NAME] = []
@@ -764,6 +878,53 @@ cols_tags[MUTSTAT_DETAILS_COLS_TAG].append(PMS2_SPORADIC_FAM24_OTH_COL_NAME)
 cols_tags[MUTSTAT_DETAILS_COLS_TAG].append(PMS2_SPORADIC_FAM24_NA_COL_NAME)
 cols_tags[MUTSTAT_DETAILS_COLS_TAG].append(PMS2_SPORADIC_FAM24_GT_COL_NAME)
 cols_tags[MUTSTAT_DETAILS_COLS_TAG].append(PMS2_SPORADIC_FAM24_AF_COL_NAME)
+
+# set columns from association studies
+cols_tags[ASSOC_COLS_TAG] = []
+cols_tags[ASSOC_COLS_TAG].append(ONC_ASSOC_SNPS_COL_NAME)
+cols_tags[ASSOC_COLS_TAG].append(ONC_CORRECTION_SNPS_COL_NAME)
+cols_tags[ASSOC_COLS_TAG].append(ONC_1000G_ALL_COL_NAME)
+cols_tags[ASSOC_COLS_TAG].append(ONC_1000G_EUR_COL_NAME)
+cols_tags[ASSOC_COLS_TAG].append(ONC_HAPLOTYPE1_COL_NAME)
+cols_tags[ASSOC_COLS_TAG].append(ONC_F_A1_COL_NAME)
+cols_tags[ASSOC_COLS_TAG].append(ONC_F_U1_COL_NAME)
+cols_tags[ASSOC_COLS_TAG].append(ONC_P_VALUE1_COL_NAME)
+cols_tags[ASSOC_COLS_TAG].append(ONC_OR1_COL_NAME)
+cols_tags[ASSOC_COLS_TAG].append(ONC_HAPLOTYPE2_COL_NAME)
+cols_tags[ASSOC_COLS_TAG].append(ONC_F_A2_COL_NAME)
+cols_tags[ASSOC_COLS_TAG].append(ONC_F_U2_COL_NAME)
+cols_tags[ASSOC_COLS_TAG].append(ONC_P_VALUE2_COL_NAME)
+cols_tags[ASSOC_COLS_TAG].append(ONC_OR2_COL_NAME)
+cols_tags[ASSOC_COLS_TAG].append(ONC_HAPLOTYPE3_COL_NAME)
+cols_tags[ASSOC_COLS_TAG].append(ONC_F_A3_COL_NAME)
+cols_tags[ASSOC_COLS_TAG].append(ONC_F_U3_COL_NAME)
+cols_tags[ASSOC_COLS_TAG].append(ONC_P_VALUE3_COL_NAME)
+cols_tags[ASSOC_COLS_TAG].append(ONC_OR3_COL_NAME)
+cols_tags[ASSOC_COLS_TAG].append(ONC_HAPLOTYPE4_COL_NAME)
+cols_tags[ASSOC_COLS_TAG].append(ONC_F_A4_COL_NAME)
+cols_tags[ASSOC_COLS_TAG].append(ONC_F_U4_COL_NAME)
+cols_tags[ASSOC_COLS_TAG].append(ONC_P_VALUE4_COL_NAME)
+cols_tags[ASSOC_COLS_TAG].append(ONC_OR4_COL_NAME)
+cols_tags[ASSOC_COLS_TAG].append(ONC_HAPLOTYPE5_COL_NAME)
+cols_tags[ASSOC_COLS_TAG].append(ONC_F_A5_COL_NAME)
+cols_tags[ASSOC_COLS_TAG].append(ONC_F_U5_COL_NAME)
+cols_tags[ASSOC_COLS_TAG].append(ONC_P_VALUE5_COL_NAME)
+cols_tags[ASSOC_COLS_TAG].append(ONC_OR5_COL_NAME)
+cols_tags[ASSOC_COLS_TAG].append(ONC_HAPLOTYPE6_COL_NAME)
+cols_tags[ASSOC_COLS_TAG].append(ONC_F_A6_COL_NAME)
+cols_tags[ASSOC_COLS_TAG].append(ONC_F_U6_COL_NAME)
+cols_tags[ASSOC_COLS_TAG].append(ONC_P_VALUE6_COL_NAME)
+cols_tags[ASSOC_COLS_TAG].append(ONC_OR6_COL_NAME)
+cols_tags[ASSOC_COLS_TAG].append(ONC_HAPLOTYPE7_COL_NAME)
+cols_tags[ASSOC_COLS_TAG].append(ONC_F_A7_COL_NAME)
+cols_tags[ASSOC_COLS_TAG].append(ONC_F_U7_COL_NAME)
+cols_tags[ASSOC_COLS_TAG].append(ONC_P_VALUE7_COL_NAME)
+cols_tags[ASSOC_COLS_TAG].append(ONC_OR7_COL_NAME)
+cols_tags[ASSOC_COLS_TAG].append(ONC_HAPLOTYPE8_COL_NAME)
+cols_tags[ASSOC_COLS_TAG].append(ONC_F_A8_COL_NAME)
+cols_tags[ASSOC_COLS_TAG].append(ONC_F_U8_COL_NAME)
+cols_tags[ASSOC_COLS_TAG].append(ONC_P_VALUE8_COL_NAME)
+cols_tags[ASSOC_COLS_TAG].append(ONC_OR8_COL_NAME)
 
 # set columns associated with LJB_SCORE_COLS_TAG
 cols_tags[LJB_SCORE_COLS_TAG] = []
