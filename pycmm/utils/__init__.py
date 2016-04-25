@@ -1,5 +1,6 @@
 import subprocess
 import datetime
+import re
 from os.path import dirname
 from os.path import realpath
 from pycmm.utils import mylogger
@@ -74,6 +75,10 @@ def is_number(s):
         return True
     except ValueError:
         return False
+
+def is_version(s):
+    result = re.match("^(\d+\.){0,3}(\d+)$", s)
+    return result is not None
 
 class DefaultOrderedDict(OrderedDict):
     # Source: http://stackoverflow.com/a/6190500/562769
