@@ -1,17 +1,16 @@
+# This Python file uses the following encoding: utf-8
 from os.path import join as join_path
 from os.path import dirname
 from pycmm.template import SafeTester
-from pycmm.proc.taparser import TAVcfReader
+from pycmm.cmmlib.taparser import TAVcfReader
 
 
 class TestTAVcfReader(SafeTester):
 
-    def __init__(self, test_name):
-        SafeTester.__init__(self,
-                            test_name,
-                            dirname(__file__),
-                            test_module_name=__name__,
-                            )
+    def __init__(self, methodName):
+        super(TestTAVcfReader, self).__init__(methodName=methodName,
+                                              test_module_name=__name__,
+                                              )
 
     def setUp(self):
         pass

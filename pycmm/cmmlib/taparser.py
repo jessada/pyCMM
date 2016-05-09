@@ -3,9 +3,9 @@ import re
 from vcf import Reader as VcfReader
 from vcf import RESERVED_INFO
 from collections import OrderedDict
-from pycmm.proc.annovarlib import PredictionTranslator
-from pycmm.proc.tamodel import _TAVcfRecord
-from pycmm.proc.tamodel import _TAVcfCall
+from pycmm.cmmlib.annovarlib import PredictionTranslator
+from pycmm.cmmlib.tamodel import _TAVcfRecord
+from pycmm.cmmlib.tamodel import _TAVcfCall
 from pycmm.template import pyCMMBase
 
 try:

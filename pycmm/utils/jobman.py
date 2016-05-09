@@ -1,6 +1,7 @@
 import time
 import sys
 import datetime
+import tempfile
 from pycmm.template import pyCMMBase
 from pycmm.utils import exec_sh
 
@@ -13,7 +14,7 @@ JOB_STATUS_FAILED = "FAILED"
 class JobRecord(pyCMMBase):
     """ to keep UPPMAX SLURM job information """
 
-    def __init__(self):
+    def __init__(self, **kwargs):
         self.job_name = None
         self.project_code = None
         self.partition_type = None
@@ -26,6 +27,8 @@ class JobRecord(pyCMMBase):
         self.job_status = "NA"
         self.email = None
         self.prereq = None
+        self.nodelist = None
+        super(JobRecord, self).__init__(**kwargs)
     
     def get_raw_repr(self):
         return {"job name": self.job_name,
@@ -40,6 +43,7 @@ class JobRecord(pyCMMBase):
                 "job status": self.job_status,
                 "report usage email": self.email,
                 "pre-requisite": self.prereq,
+                "node list": self.nodelist,
                 }
 
 class JobManager(pyCMMBase):
@@ -47,8 +51,9 @@ class JobManager(pyCMMBase):
 
     def __init__(self,
                  jobs_report_file=None,
+                 **kwargs
                  ):
-        self.job_dict = {}
+        self.__job_dict = {}
         self.__job_rpt_fmt = "{job_id}"
         self.__job_rpt_fmt += "\t{partition}"
         self.__job_rpt_fmt += "\t{job_name}"
@@ -59,18 +64,45 @@ class JobManager(pyCMMBase):
         self.__job_rpt_fmt += "\t{dependency}"
         self.__job_rpt_fmt += "\t{job_status}"
         self.__job_rpt_file = jobs_report_file
+        self.__local_scratch_dir = None
+        self.__job_id = None
+        self.__job_name = None
+        self.__job_nodelist = None
+        super(JobManager, self).__init__(**kwargs)
+
+    @property
+    def local_scratch_dir(self):
+        if self.__local_scratch_dir is None:
+            self.__local_scratch_dir = tempfile.mkdtemp()
+        return self.__local_scratch_dir
+
+    @property
+    def job_id(self):
+        if self.__job_id is None:
+            p, stdout_data = exec_sh("echo $SLURM_JOB_ID")
+            self.__job_id = stdout_data.strip()
+        return self.__job_id
+
+    @property
+    def job_name(self):
+        if self.__job_name is None:
+            p, stdout_data = exec_sh("echo $SLURM_JOB_NAME")
+            self.__job_name = stdout_data.strip()
+        return self.__job_name
+
+    @property
+    def job_nodelist(self):
+        if self.__job_nodelist is None:
+            p, stdout_data = exec_sh("echo $SLURM_JOB_NODELIST")
+            self.__job_nodelist = stdout_data.strip()
+        return self.__job_nodelist
+
+    def new_local_tmp_file(self):
+        return join_path(self.local_scratch_dir,
+                         self.get_tmp_file_name())
 
     def get_raw_repr(self):
-        return {"NA1": "NA1",
-                "NA2": "NA2",
-                }
-
-    def __exec_sh(self, cmd):
-        p, err_code = exec_sh(cmd)
-        out, err_msg = p.communicate()
-        if err_code:
-            raise Exception("[exit " + str(err_code) + "]: " + err_msg)
-        return out
+        return None
 
     def __get_sbatch_cmd(self, job_rec):
         cmd = "sbatch"
@@ -84,10 +116,11 @@ class JobManager(pyCMMBase):
         cmd += " -o " + job_rec.slurm_log_file
         if (job_rec.prereq is not None) and (len(job_rec.prereq) > 0) and (type(job_rec.prereq) is list):
             cmd += " --dependency=afterok"
-            self.dbg(job_rec.prereq)
             for job_name in job_rec.prereq:
                 job_id = self.get_job_id(job_name)
                 cmd += ":" + job_id
+        if (job_rec.nodelist is not None) and (len(job_rec.nodelist) > 0):
+            cmd += " -w " + job_rec.nodelist
         cmd += " " + job_rec.job_script
         cmd += " " + job_rec.job_params
         return cmd
@@ -103,6 +136,7 @@ class JobManager(pyCMMBase):
                    job_params,
                    email=False,
                    prereq=None,
+                   nodelist=None,
                    ):
         job_rec = JobRecord()
         job_rec.job_name = job_name
@@ -115,10 +149,11 @@ class JobManager(pyCMMBase):
         job_rec.job_params = job_params
         job_rec.email = email
         job_rec.prereq =  prereq
+        job_rec.nodelist =  nodelist
         cmd = self.__get_sbatch_cmd(job_rec)
-        out = self.__exec_sh(cmd)
-        job_rec.job_id = out.strip().split()[-1]
-        self.job_dict[job_name] = job_rec
+        p, stdout_data = exec_sh(cmd)
+        job_rec.job_id = stdout_data.strip().split()[-1]
+        self.__job_dict[job_name] = job_rec
         return job_rec.job_id
 
     def __write_job_report(self):
@@ -134,8 +169,8 @@ class JobManager(pyCMMBase):
                                               dependency="DEPENDENCY",
                                               job_status="STATUS",
                                               )+"\n")
-        for job_name in self.job_dict:
-            job_rec = self.job_dict[job_name]
+        for job_name in self.__job_dict:
+            job_rec = self.__job_dict[job_name]
             f_rpt.write(self.__job_rpt_fmt.format(job_id=job_rec.job_id,
                                                   partition=job_rec.partition_type,
                                                   job_name=job_rec.job_name,
@@ -173,7 +208,7 @@ class JobManager(pyCMMBase):
         # virtual function
         pass
     
-    def monitor_jobs(self, interval=10):
+    def monitor_jobs(self, interval=30):
         self.monitor_init()
         while True:
             self.update_job_status()
@@ -184,8 +219,8 @@ class JobManager(pyCMMBase):
         self.monitor_finalize()
 
     def update_job_status(self):
-        for job_name in self.job_dict:
-            job_rec = self.job_dict[job_name]
+        for job_name in self.__job_dict:
+            job_rec = self.__job_dict[job_name]
             if job_rec.job_status == JOB_STATUS_COMPLETED:
                 continue
             if job_rec.job_status == JOB_STATUS_FAILED:
@@ -202,8 +237,8 @@ class JobManager(pyCMMBase):
         return False (not yet done)
         otherwise return True 
         """
-        for job_name in self.job_dict:
-            job_rec = self.job_dict[job_name]
+        for job_name in self.__job_dict:
+            job_rec = self.__job_dict[job_name]
             if job_rec.job_status == JOB_STATUS_COMPLETED:
                 continue
             if job_rec.job_status == JOB_STATUS_FAILED:
@@ -224,20 +259,41 @@ class JobManager(pyCMMBase):
         cmd += " " + job_id
         cmd += " | grep " + job_id
         cmd += " | head -1"
-        out = ""
+        stdout_data = ""
         icount = 0
-        while (len(out) == 0) and (icount < 100):
+        while (len(stdout_data) == 0) and (icount < 100):
             time.sleep(1)
             icount += 1
-            out = self.__exec_sh(cmd)
-        if len(out) == 0 :
+            p, stdout_data = exec_sh(cmd)
+        if len(stdout_data) == 0 :
             raise Exception(job_name + " status cannot be found")
-        return out.strip().split()[5]
+        return stdout_data.strip().split()[5]
+
+    def get_job_node(self,
+                     job_name,
+                     ):
+        if job_name.isdigit():
+            job_id = job_name
+        else:
+            job_id = self.get_job_id(job_name)
+        cmd = "squeue -j"
+        cmd += " " + job_id
+        cmd += " | grep " + job_id
+        cmd += " | head -1"
+        stdout_data = ""
+        icount = 0
+        while (len(stdout_data) == 0) and (icount < 100):
+            time.sleep(1)
+            icount += 1
+            p, stdout_data = exec_sh(cmd)
+        if len(stdout_data) == 0 :
+            raise Exception(job_name + " status cannot be found")
+        return stdout_data.strip().split()[7]
 
     def get_job_id(self,
                    job_name,
                    ):
-        return self.job_dict[job_name].job_id
+        return self.__job_dict[job_name].job_id
 
     def cancel_job(self,
                    job_name,
@@ -248,4 +304,4 @@ class JobManager(pyCMMBase):
             job_id = self.get_job_id(job_name)
         job_status = self.get_job_status(job_id)
         cmd = "scancel -b " + job_id
-        out = self.__exec_sh(cmd)
+        exec_sh(cmd)

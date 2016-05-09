@@ -7,17 +7,17 @@ from pycmm.settings import FULL_SYSTEM_TEST
 from pycmm.template import SafeTester
 from pycmm.utils import count_lines
 from pycmm.flow.mutrep import MutRepPipeline
-from pycmm.proc.annovarlib import Annovar
-from pycmm.proc.annovarlib import PredictionTranslator
-from pycmm.proc.annovarlib import SIFT_PRED_COL
-from pycmm.proc.annovarlib import POLYPHEN2_HDIV_PRED_COL
-from pycmm.proc.annovarlib import POLYPHEN2_HVAR_PRED_COL
-from pycmm.proc.annovarlib import LRT_PRED_COL
-from pycmm.proc.annovarlib import MUTATIONTASTER_PRED_COL
-from pycmm.proc.annovarlib import MUTATIONASSESSOR_PRED_COL
-from pycmm.proc.annovarlib import FATHMM_PRED_COL
-from pycmm.proc.annovarlib import RADIALSVM_PRED_COL
-from pycmm.proc.annovarlib import LR_PRED_COL
+from pycmm.cmmlib.annovarlib import Annovar
+from pycmm.cmmlib.annovarlib import PredictionTranslator
+from pycmm.cmmlib.annovarlib import SIFT_PRED_COL
+from pycmm.cmmlib.annovarlib import POLYPHEN2_HDIV_PRED_COL
+from pycmm.cmmlib.annovarlib import POLYPHEN2_HVAR_PRED_COL
+from pycmm.cmmlib.annovarlib import LRT_PRED_COL
+from pycmm.cmmlib.annovarlib import MUTATIONTASTER_PRED_COL
+from pycmm.cmmlib.annovarlib import MUTATIONASSESSOR_PRED_COL
+from pycmm.cmmlib.annovarlib import FATHMM_PRED_COL
+from pycmm.cmmlib.annovarlib import RADIALSVM_PRED_COL
+from pycmm.cmmlib.annovarlib import LR_PRED_COL
 from pycmm.flow.test.test_cmmdb import DFLT_ANNOVAR_TEST_DB_FOLDER
 from pycmm.flow.test.test_cmmdb import DFLT_ANNOVAR_TEST_DB_NAMES
 from pycmm.flow.test.test_cmmdb import DFLT_ANNOVAR_TEST_DB_OPS
@@ -25,12 +25,10 @@ from pycmm.flow.test.test_cmmdb import DFLT_ANNOVAR_TEST_DB_OPS
 
 class TestAnnovar(SafeTester):
 
-    def __init__(self, test_name):
-        SafeTester.__init__(self,
-                            test_name,
-                            dirname(__file__),
-                            test_module_name=__name__,
-                            )
+    def __init__(self, methodName):
+        super(TestAnnovar, self).__init__(methodName=methodName,
+                                          test_module_name=__name__,
+                                          )
 
     def setUp(self):
         pass
@@ -94,12 +92,10 @@ class TestAnnovar(SafeTester):
 
 class TestPredictionTranslator(SafeTester):
 
-    def __init__(self, test_name):
-        SafeTester.__init__(self,
-                            test_name,
-                            dirname(__file__),
-                            test_module_name=__name__,
-                            )
+    def __init__(self, methodName):
+        super(TestPredictionTranslator, self).__init__(methodName=methodName,
+                                                       test_module_name=__name__,
+                                                       )
 
     def setUp(self):
         pass

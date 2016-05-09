@@ -21,11 +21,11 @@ from pycmm.settings import MUTREP_FAMILY_REPORT_BIN
 from pycmm.settings import MUTREP_SUMMARY_REPORT_BIN
 from pycmm.template import pyCMMBase
 from pycmm.utils import exec_sh
-from pycmm.proc.taparser import TAVcfReader as VcfReader
-from pycmm.proc.tamodel import CMMGT_HOMOZYGOTE
-from pycmm.proc.tamodel import CMMGT_HETEROZYGOTE
+from pycmm.cmmlib.dnalib import ALL_CHROMS
+from pycmm.cmmlib.taparser import TAVcfReader as VcfReader
+from pycmm.cmmlib.tamodel import CMMGT_HOMOZYGOTE
+from pycmm.cmmlib.tamodel import CMMGT_HETEROZYGOTE
 from pycmm.flow.cmmdb import CMMDBPipeline
-from pycmm.flow.cmmdb import ALL_CHROMS
 from pycmm.flow.cmmdb import JOBS_SETUP_RPT_ALLOC_TIME_KEY
 from pycmm.flow.cmmdb import JOBS_SETUP_RPT_LAYOUT_SECTION
 from pycmm.flow.cmmdb import JOBS_SETUP_RPT_ANNOTATED_VCF_TABIX
@@ -257,7 +257,8 @@ class ActionColorCol(pyCMMBase):
 
     def get_raw_repr(self):
         return {"pattern": self.pattern,
-                "info": self.info}
+                "column name": self.col_name,
+                "color": self.color}
 
     @property
     def pattern(self):
@@ -639,6 +640,7 @@ class MutRepPipeline(CMMDBPipeline):
                         samples_list,
                         ):
         anno_cols = self.report_layout.anno_cols
+        # use input expression to determine if row will have background color
         row_color = None
         if self.report_layout.exprs is not None:
             color_row_actions = self.report_layout.exprs.actions[ACTION_COLOR_ROW]
@@ -650,6 +652,7 @@ class MutRepPipeline(CMMDBPipeline):
             dflt_cell_fmt = self.cell_fmt_mgr.cell_fmts[row_color]
         else:
             dflt_cell_fmt = self.cell_fmt_mgr.cell_fmts[DFLT_FMT]
+        # start writing content
         alt_allele = vcf_record.alleles[allele_idx]
         ws.write(row, 0, vcf_record.CHROM, dflt_cell_fmt)
         ws.write(row, 1, str(vcf_record.POS), dflt_cell_fmt)
@@ -662,7 +665,7 @@ class MutRepPipeline(CMMDBPipeline):
                                   self.report_layout.exprs.actions[ACTION_COLOR_COL])
         else:
             color_col_names = []
-        self.dbg(color_col_names)
+        # for each INFO column
         for anno_idx in xrange(len_anno_cols):
             anno_col_name = anno_cols[anno_idx]
             info = vcf_record.INFO[anno_col_name]
@@ -676,6 +679,7 @@ class MutRepPipeline(CMMDBPipeline):
                 info = ""
             if info == [None]:
                 info = ""
+            # determine cell format
             info_cell_fmt = dflt_cell_fmt
             if anno_col_name in color_col_names:
                 color_col_actions = self.report_layout.exprs.actions[ACTION_COLOR_COL]
@@ -691,6 +695,7 @@ class MutRepPipeline(CMMDBPipeline):
         for sample_idx in xrange(len(samples_list)):
             call = vcf_record.genotype(samples_list[sample_idx])
             zygo = call.cmm_gts[allele_idx]
+            # determine cell(s) format
             if type(call.shared_mutations) is not list:
                 zygo_fmt = dflt_cell_fmt
             elif not call.shared_mutations[allele_idx]:
@@ -701,6 +706,7 @@ class MutRepPipeline(CMMDBPipeline):
             else:
                 het_shared_color = self.report_layout.cell_color_het_shared
                 zygo_fmt = self.cell_fmt_mgr.cell_fmts[het_shared_color]
+            # write content to cell(s)
             if self.report_layout.call_detail:
                 col_idx = (2*sample_idx) + (sample_start_idx)
                 ws.write(row, col_idx, zygo, zygo_fmt)

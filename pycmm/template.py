@@ -6,7 +6,6 @@ import subprocess
 import inspect
 import fileinput
 import gc
-import tempfile
 import string
 from random import choice
 from os.path import join as join_path
@@ -21,8 +20,9 @@ ENV_TMPDIR = "TMPDIR"
 class pyCMMBase(object):
     """ pyCMM base class """
 
-    def __init__(self):
+    def __init__(self, **kwargs):
         self.pkg_root_dir = dirname(dirname(__file__))
+        super(pyCMMBase, self).__init__(**kwargs)
 
     def __str__(self):
         return self.__repr__()
@@ -33,15 +33,9 @@ class pyCMMBase(object):
     def get_raw_repr(self):
         return "Not yet implemented"
 
-    @property
-    def local_scratch_dir(self):
-        return tempfile.mkdtemp()
-
-    @property
-    def local_tmp_file(self):
+    def get_tmp_file_name(self):
         chars = string.ascii_letters
-        file_name = "tmp" + ''.join([choice(chars) for i in range(6)])
-        return join_path(self.local_scratch_dir, file_name)
+        return "tmp_" + ''.join([choice(chars) for i in range(6)])
 
     def remove_dir(self, dir_name):
         if os.path.exists(dir_name):
@@ -64,7 +58,8 @@ class pyCMMBase(object):
                 fout.write(line)
 
     def copy_file(self, src, dst):
-        self.delete_file(dst)
+        if not os.path.isdir(dst):
+            self.delete_file(dst)
         if os.path.islink(src):
             linkto = os.readlink(src)
             os.symlink(linkto, dst)
@@ -118,14 +113,10 @@ class Tester(unittest.TestCase, pyCMMBase):
 
     individual_debug = False
 
-    def __init__(self,
-                 test_name,
-                 module_path,
-                 test_module_name=None,
-                 ):
-        unittest.TestCase.__init__(self, test_name)
-        pyCMMBase.__init__(self)
+    def __init__(self, test_module_name, **kwargs):
         self.test_module_name = test_module_name
+        super(Tester, self).__init__(**kwargs)
+        pyCMMBase.__init__(self)
 
     def remove_dir(self, dir_name):
         self.assertTrue(dir_name, '"None" is not a valid directory')
@@ -187,16 +178,8 @@ class SafeTester(Tester):
 
     """
 
-    def __init__(self,
-                 test_name,
-                 module_path,
-                 test_module_name=None,
-                 ):
-        Tester.__init__(self,
-                        test_name,
-                        module_path,
-                        test_module_name=test_module_name,
-                        )
+    def __init__(self, **kwargs):
+        super(SafeTester, self).__init__(**kwargs)
 
 
 class RiskyTester(Tester):

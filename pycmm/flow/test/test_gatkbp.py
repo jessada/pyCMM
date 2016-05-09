@@ -31,12 +31,10 @@ DFLT_REF_FILE = 'ref.fa'
 
 class TestGATKBPPipeline(SafeTester):
 
-    def __init__(self, test_name):
-        SafeTester.__init__(self,
-                            test_name,
-                            dirname(__file__),
-                            test_module_name=__name__,
-                            )
+    def __init__(self, methodName):
+        super(TestGATKBPPipeline, self).__init__(methodName=methodName,
+                                                 test_module_name=__name__,
+                                                 )
 
     def setUp(self):
         pass

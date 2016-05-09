@@ -44,14 +44,12 @@ DFLT_TEST_MUTREP_COLS[CRC_CRC_PF_COL_NAME] = ALL_MUTREP_ANNO_COLS[CRC_CRC_PF_COL
 
 DFLT_TEST_REPORT_REGIONS = "18:12512255-14542551"
 
-class TestMutRepPipeline(SafeTester):
+class TestMutRepPipelineSlurm(SafeTester):
 
-    def __init__(self, test_name):
-        SafeTester.__init__(self,
-                            test_name,
-                            dirname(__file__),
-                            test_module_name=__name__,
-                            )
+    def __init__(self, methodName):
+        super(TestMutRepPipelineSlurm, self).__init__(methodName=methodName,
+                                                      test_module_name=__name__,
+                                                      )
 
     def setUp(self):
         pass
