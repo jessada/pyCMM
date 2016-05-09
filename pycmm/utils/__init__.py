@@ -33,7 +33,7 @@ def log_file_with_time_stamp(raw_file, time_stamp):
     log_file += '.log'
     return log_file
 
-def exec_sh(cmd):
+def exec_sh(cmd, silent=False):
     mylogger.debug("executing: " + repr(cmd))
     p = subprocess.Popen(cmd,
                          shell=True,
@@ -42,9 +42,10 @@ def exec_sh(cmd):
                          )
     stdout_data, stderr_data = p.communicate()
     return_code = p.returncode
-    print stdout_data
-    if return_code:
-        mylogger.throw("Error found during execute command '%s' with error code: %d, %s" % (cmd, return_code, stderr_data))
+    if not silent:
+        print stdout_data
+        if return_code:
+            mylogger.throw("Error found during execute command '%s' with error code: %d, %s" % (cmd, return_code, stderr_data))
     elif stderr_data:
         print stderr_data
     return p, stdout_data
@@ -77,6 +78,11 @@ def is_number(s):
         return False
 
 def is_version(s):
+    # this allow version number like
+    # 2
+    # 2.1
+    # 2.2.3
+    # 2.11.0.4
     result = re.match("^(\d+\.){0,3}(\d+)$", s)
     return result is not None
 
