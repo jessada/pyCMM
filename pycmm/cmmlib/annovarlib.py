@@ -11,7 +11,6 @@ from pycmm.settings import LJB_MUTATIONASSESSOR_PREDICTION_COL_NAME as MUTATIONA
 from pycmm.settings import LJB_FATHMM_PREDICTION_COL_NAME as FATHMM_PRED_COL
 from pycmm.settings import LJB_RADIALSVM_PREDICTION_COL_NAME as RADIALSVM_PRED_COL
 from pycmm.settings import LJB_LR_PREDICTION_COL_NAME as LR_PRED_COL
-from pycmm.utils import exec_sh
 from pycmm.utils import get_path
 
 ANNOVAR_PARAMS_INPUT_FILE_KEY = "input_file"
@@ -150,7 +149,7 @@ class Annovar(pyCMMBase):
         return cmd
 
     def __gen_annotated_vcf(self):
-        return exec_sh(self.table_annovar_cmd)
+        return self.exec_sh(self.table_annovar_cmd)
 
     def run_table_annovar(self):
         # run table_annovar.pl, the result is in local tmp folder

@@ -3,6 +3,7 @@ import datetime
 import re
 from os.path import dirname
 from os.path import realpath
+from os.path import getsize
 from pycmm.utils import mylogger
 from collections import OrderedDict
 from collections import Callable
@@ -46,9 +47,20 @@ def exec_sh(cmd, silent=False):
         print stdout_data
         if return_code:
             mylogger.throw("Error found during execute command '%s' with error code: %d, %s" % (cmd, return_code, stderr_data))
+        print stderr_data
     elif stderr_data:
         print stderr_data
     return p, stdout_data
+
+def get_dict_val(my_dict, key, required=False, default_val=None):
+    if key in my_dict:
+        return my_dict[key]
+    if required:
+        # cascading exactly the same errors
+        print my_dict
+        print required
+        return my_dict[key]
+    return default_val
 
 def concat_files(in_files,
                  out_file):
@@ -63,6 +75,9 @@ def concat_files(in_files,
 def count_lines(file_name):
     with open(file_name) as f:
         return sum(1 for _ in f)
+
+def file_size(file_name):
+    return getsize(file_name)
 
 def check_equal(var1, var2):
     return var1 == var2

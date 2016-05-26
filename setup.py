@@ -4,10 +4,11 @@ import pkgutil
 import os
 import fnmatch
 from setuptools import setup
+from pycmm.settings import DNASEQ_SLURM_MONITOR_PIPELINE_BIN
 from pycmm.settings import DUMMY_TABLE_ANNOVAR_BIN
 from pycmm.settings import MUTREP_FAMILY_REPORT_BIN
 from pycmm.settings import MUTREP_SUMMARY_REPORT_BIN
-from pycmm.settings import PLINK_HAP_ASSOCS_SLURM_BIN
+from pycmm.settings import PLINK_SLURM_MONITOR_PIPELINE_BIN
 from pycmm.settings import PLINK_HAP_ASSOCS_REPORT_BIN
 from pycmm.settings import PLINK_MERGE_HAP_ASSOCS_BIN
 
@@ -58,7 +59,8 @@ setup(
               'pycmm.cmmlib',
               'pycmm.flow',
               ],
-    scripts=['bin/pyCMM-dnaseq-pipeline',
+    scripts=['bin/'+DNASEQ_SLURM_MONITOR_PIPELINE_BIN,
+             'bin/pyCMM-dnaseq-pipeline',
              'bin/pyCMM-dnaseq-create-job-setup-file',
              'bin/pyCMM-cmmdb-cal-mut-stat',
              'bin/pyCMM-cmmdb-table-annovar',
@@ -69,7 +71,7 @@ setup(
              'bin/'+MUTREP_SUMMARY_REPORT_BIN,
              'bin/pyCMM-plink-create-job-setup-file',
              'bin/pyCMM-plink-hap-assocs',
-             'bin/'+PLINK_HAP_ASSOCS_SLURM_BIN,
+             'bin/'+PLINK_SLURM_MONITOR_PIPELINE_BIN,
              'bin/'+PLINK_HAP_ASSOCS_REPORT_BIN,
              'bin/'+PLINK_MERGE_HAP_ASSOCS_BIN,
              ],

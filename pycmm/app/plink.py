@@ -10,11 +10,13 @@ from pycmm.utils import set_log_file
 from pycmm.flow.plink import PlinkPipeline
 from pycmm.flow.plink import create_jobs_setup_file
 
+# *********************************************************************************************** Need refactoring ***********************************************************************************************
+# Need to be replaced with the ones form pycmm.app
 def display_plink_config(func_name,
-                           app_description,
-                           kwargs,
-                           pl,
-                           ):
+                         app_description,
+                         kwargs,
+                         pl,
+                         ):
     log_file = set_log_file(kwargs['log_file'])
     disp.new_section_txt("S T A R T <" + func_name + ">")
     required_params = OrderedDict()
@@ -35,25 +37,7 @@ def display_plink_config(func_name,
                      required_params=required_params,
                      optional_params=optional_params,
                      )
-    pipeline_params = OrderedDict()
-    pipeline_params['project name'] = pl.project_name
-    pipeline_params['project code'] = pl.project_code
-    if pl.families_info is None:
-        families_info = None
-    else:
-        families_info = OrderedDict()
-        for fam_id in pl.families_info:
-            fam_info = pl.families_info[fam_id]
-            fam_info_txt = "fam_id: " + fam_id
-            fam_info_txt += ", members: "
-            fam_info_txt += ",".join(map(lambda x: x.sample_id,
-                                         fam_info.members_info))
-            families_info[fam_id] = fam_info_txt
-    pipeline_params['sample information'] = families_info
-    pipeline_params['plink allocation time'] = pl.flow_alloc_time
-    pipeline_params['report allocation time'] = pl.rpt_alloc_time
-    pipeline_params['project output directory'] = pl.project_out_dir
-    disp.disp_params_set("Pipeline parameters", pipeline_params)
+    disp.disp_params_set("Pipeline parameters", pl.get_params())
     if hasattr(pl, "plink_params"):
         plink_params = OrderedDict()
         plink_params['input file prefix'] = pl.plink_params.input_file_prefix
@@ -95,6 +79,7 @@ def app_pycmm_plink_hap_assocs_slurm(*args, **kwargs):
                          kwargs,
                          pl,
                          )
+    # check if itself is in job mode 
     if len(pl.job_nodelist) != 0:
         pl.monitor_jobs()
     mylogger.getLogger(__name__)
@@ -135,6 +120,7 @@ def app_pycmm_plink_merge_hap_assocs(*args, **kwargs):
                         )
     mylogger.getLogger(__name__)
     disp.new_section_txt("F I N I S H <" + func_name + ">")
+# *********************************************************************************************** Need refactoring ***********************************************************************************************
 
 def app_pycmm_plink_create_jobs_setup_file(*args, **kwargs):
     mylogger.getLogger(__name__)

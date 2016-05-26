@@ -11,6 +11,7 @@ from random import choice
 from os.path import join as join_path
 from os.path import dirname
 from pycmm.utils import mylogger
+from pycmm.utils import exec_sh
 from pycmm.settings import ENV_TEST_DIR
 from pycmm.settings import DEBUG_MODE
 
@@ -66,30 +67,37 @@ class pyCMMBase(object):
         else:
             shutil.copy(src, dst)
 
-    def dbg(self, dbg_msg):
+    def dbg(self, dbg_msg=""):
         if DEBUG_MODE:
             frm = inspect.stack()[1]
             mod = inspect.getmodule(frm[0])
             mylogger.getLogger(mod.__name__)
             mylogger.debug(dbg_msg)
 
-    def info(self, info_msg):
+    def info(self, info_msg=""):
         frm = inspect.stack()[1]
         mod = inspect.getmodule(frm[0])
         mylogger.getLogger(mod.__name__)
         mylogger.info(info_msg)
 
-    def warning(self, warning_msg):
+    def warning(self, warning_msg=""):
         frm = inspect.stack()[1]
         mod = inspect.getmodule(frm[0])
         mylogger.getLogger(mod.__name__)
         mylogger.warning(warning_msg)
 
-    def throw(self, err_msg):
+    def throw(self, err_msg=""):
         frm = inspect.stack()[1]
         mod = inspect.getmodule(frm[0])
         mylogger.getLogger(mod.__name__)
         mylogger.throw(err_msg)
+
+    # having this function built-in for only informative logging purpose
+    def exec_sh(self, cmd, silent=False):
+        frm = inspect.stack()[1]
+        mod = inspect.getmodule(frm[0])
+        mylogger.getLogger(mod.__name__)
+        return exec_sh(cmd, silent)
 
     @property
     def current_func_name(self):

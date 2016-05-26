@@ -19,7 +19,6 @@ class TestVersionManager(SafeTester):
         self.init_test(self.current_func_name)
         job_name = self.test_function
         vm = VersionManager()
-        self.dbg(vm.pycmm_version)
         self.assertTrue(is_version(vm.pysam_version),
                         "Cannot identify version of pysam package")
         self.assertTrue(is_version(vm.pyvcf_version),

@@ -32,6 +32,7 @@ def disp_subparam(subparam_name, subparam_value):
     disp_param("  "+subparam_name, subparam_value)
 
 def show_config(app_description,
+                third_party_software_version,
                 required_params,
                 optional_params,
                 ):
@@ -40,7 +41,7 @@ def show_config(app_description,
     disp_header("Version and environment configuration")
     disp_param("pyCMM version", pkg_resources.get_distribution("pycmm").version)
     disp_param("parameters", " ".join(sys.argv[1:]))
-    debug_param("debug mode", "ON")
+    disp_params_set("Third party software version", third_party_software_version)
     disp_params_set("Required parameters", required_params) 
     if optional_params is not None:
         disp_params_set("Optional parameters", optional_params) 

@@ -3,7 +3,6 @@ import sys
 import datetime
 import tempfile
 from pycmm.template import pyCMMBase
-from pycmm.utils import exec_sh
 
 JOB_STATUS_PENDING = "PENDING"
 JOB_STATUS_RUNNING = "RUNNING"
@@ -20,7 +19,8 @@ class JobRecord(pyCMMBase):
         self.partition_type = None
         self.ntasks = None
         self.alloc_time = None
-        self.slurm_log_file = None
+        self.__slurm_log_prefix = None
+        self.__slurm_log_file = None
         self.job_script = None
         self.job_params = None
         self.job_id = None
@@ -28,6 +28,7 @@ class JobRecord(pyCMMBase):
         self.email = None
         self.prereq = None
         self.nodelist = None
+        self.__time_stamp = datetime.datetime.now()
         super(JobRecord, self).__init__(**kwargs)
     
     def get_raw_repr(self):
@@ -36,7 +37,7 @@ class JobRecord(pyCMMBase):
                 "partition type": self.partition_type,
                 "number of cpus": self.ntasks,
                 "allocation time": self.alloc_time,
-                "slurm log file": self.slurm_log_file,
+                "slurm log file": self.slurm_log_prefix,
                 "job script": self.job_script,
                 "job paramters": self.job_params,
                 "job id": self.job_id,
@@ -45,6 +46,22 @@ class JobRecord(pyCMMBase):
                 "pre-requisite": self.prereq,
                 "node list": self.nodelist,
                 }
+
+    @property
+    def slurm_log_prefix(self):
+        return self.__slurm_log_prefix
+
+    @slurm_log_prefix.setter
+    def slurm_log_prefix(self, value):
+        self.__slurm_log_prefix = value
+        self.__slurm_log_file = value
+        self.__slurm_log_file += "_"
+        self.__slurm_log_file += self.__time_stamp.strftime("%Y%m%d%H%M%S")
+        self.__slurm_log_file += ".log"
+
+    @property
+    def slurm_log_file(self):
+        return self.__slurm_log_file
 
 class JobManager(pyCMMBase):
     """ A class to manage UPPMAX SLURM job """
@@ -77,23 +94,27 @@ class JobManager(pyCMMBase):
         return self.__local_scratch_dir
 
     @property
+    def job_dict(self):
+        return self.__job_dict
+
+    @property
     def job_id(self):
         if self.__job_id is None:
-            p, stdout_data = exec_sh("echo $SLURM_JOB_ID")
+            p, stdout_data = self.exec_sh("echo $SLURM_JOB_ID")
             self.__job_id = stdout_data.strip()
         return self.__job_id
 
     @property
     def job_name(self):
         if self.__job_name is None:
-            p, stdout_data = exec_sh("echo $SLURM_JOB_NAME")
+            p, stdout_data = self.exec_sh("echo $SLURM_JOB_NAME")
             self.__job_name = stdout_data.strip()
         return self.__job_name
 
     @property
     def job_nodelist(self):
         if self.__job_nodelist is None:
-            p, stdout_data = exec_sh("echo $SLURM_JOB_NODELIST")
+            p, stdout_data = self.exec_sh("echo $SLURM_JOB_NODELIST")
             self.__job_nodelist = stdout_data.strip()
         return self.__job_nodelist
 
@@ -120,7 +141,7 @@ class JobManager(pyCMMBase):
                 job_id = self.get_job_id(job_name)
                 cmd += ":" + job_id
         if (job_rec.nodelist is not None) and (len(job_rec.nodelist) > 0):
-            cmd += " -w " + job_rec.nodelist
+            cmd += " --nodelist=" + job_rec.nodelist
         cmd += " " + job_rec.job_script
         cmd += " " + job_rec.job_params
         return cmd
@@ -131,7 +152,7 @@ class JobManager(pyCMMBase):
                    partition_type,
                    ntasks,
                    alloc_time,
-                   slurm_log_file,
+                   slurm_log_prefix,
                    job_script,
                    job_params,
                    email=False,
@@ -144,14 +165,14 @@ class JobManager(pyCMMBase):
         job_rec.partition_type = partition_type
         job_rec.ntasks = ntasks
         job_rec.alloc_time = alloc_time
-        job_rec.slurm_log_file = slurm_log_file
+        job_rec.slurm_log_prefix = slurm_log_prefix
         job_rec.job_script = job_script
         job_rec.job_params = job_params
         job_rec.email = email
         job_rec.prereq =  prereq
         job_rec.nodelist =  nodelist
         cmd = self.__get_sbatch_cmd(job_rec)
-        p, stdout_data = exec_sh(cmd)
+        p, stdout_data = self.exec_sh(cmd)
         job_rec.job_id = stdout_data.strip().split()[-1]
         self.__job_dict[job_name] = job_rec
         return job_rec.job_id
@@ -264,7 +285,7 @@ class JobManager(pyCMMBase):
         while (len(stdout_data) == 0) and (icount < 100):
             time.sleep(1)
             icount += 1
-            p, stdout_data = exec_sh(cmd)
+            p, stdout_data = self.exec_sh(cmd)
         if len(stdout_data) == 0 :
             raise Exception(job_name + " status cannot be found")
         return stdout_data.strip().split()[5]
@@ -285,7 +306,7 @@ class JobManager(pyCMMBase):
         while (len(stdout_data) == 0) and (icount < 100):
             time.sleep(1)
             icount += 1
-            p, stdout_data = exec_sh(cmd)
+            p, stdout_data = self.exec_sh(cmd)
         if len(stdout_data) == 0 :
             raise Exception(job_name + " status cannot be found")
         return stdout_data.strip().split()[7]
@@ -304,4 +325,4 @@ class JobManager(pyCMMBase):
             job_id = self.get_job_id(job_name)
         job_status = self.get_job_status(job_id)
         cmd = "scancel -b " + job_id
-        exec_sh(cmd)
+        self.exec_sh(cmd)

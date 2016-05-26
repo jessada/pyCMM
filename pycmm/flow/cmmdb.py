@@ -338,6 +338,7 @@ class CMMDBPipeline(JobManager):
                                            job_name)
                 slurm_log_file += self.time_stamp.strftime("%Y%m%d%H%M%S")
                 slurm_log_file += ".log"
+# *********************************************************************************************** Need refactoring ***********************************************************************************************
                 self.submit_job(job_name,
                                 self.project_code,
                                 "core",
@@ -347,6 +348,7 @@ class CMMDBPipeline(JobManager):
                                 CAL_MUTATIONS_STAT_SCRIPT,
                                 params,
                                 )
+# *********************************************************************************************** Need refactoring ***********************************************************************************************
         else:
             self.__out_stat_file = join_path(self.data_out_dir,
                                              self.dataset_name + ".stat")
@@ -360,6 +362,7 @@ class CMMDBPipeline(JobManager):
                                        job_name)
             slurm_log_file += self.time_stamp.strftime("%Y%m%d%H%M%S")
             slurm_log_file += ".log"
+# *********************************************************************************************** Need refactoring ***********************************************************************************************
             self.submit_job(job_name,
                             self.project_code,
                             "core",
@@ -369,6 +372,7 @@ class CMMDBPipeline(JobManager):
                             CAL_MUTATIONS_STAT_SCRIPT,
                             params,
                             )
+# *********************************************************************************************** Need refactoring ***********************************************************************************************
 
     def table_annovar(self):
         cfg = self.annovar_config
@@ -387,6 +391,7 @@ class CMMDBPipeline(JobManager):
                                        job_name)
             slurm_log_file += self.time_stamp.strftime("%Y%m%d%H%M%S")
             slurm_log_file += ".log"
+# *********************************************************************************************** Need refactoring ***********************************************************************************************
             self.submit_job(job_name,
                             self.project_code,
                             "core",
@@ -396,6 +401,7 @@ class CMMDBPipeline(JobManager):
                             table_annovar_cmd,
                             "",
                             )
+# *********************************************************************************************** Need refactoring ***********************************************************************************************
         else:
             exec_sh(table_annovar_cmd)
 

@@ -858,6 +858,7 @@ class MutRepPipeline(CMMDBPipeline):
                 job_params += " -r " + region_param
                 job_params += " -o " + out_file
                 self.dbg(job_script + job_params)
+# *********************************************************************************************** Need refactoring ***********************************************************************************************
                 self.submit_job(job_name,
                                 self.project_code,
                                 "core",
@@ -867,6 +868,7 @@ class MutRepPipeline(CMMDBPipeline):
                                 job_script,
                                 job_params,
                                 )
+# *********************************************************************************************** Need refactoring ***********************************************************************************************
         else:
             slurm_log_file = slurm_log_prefix
             slurm_log_file += "_" + self.time_stamp.strftime("%Y%m%d%H%M%S")
@@ -878,6 +880,7 @@ class MutRepPipeline(CMMDBPipeline):
                 job_params += " -r " + ",".join(map(lambda x: x.raw_region,
                                                     report_regions))
             job_params += " -o " + out_file
+# *********************************************************************************************** Need refactoring ***********************************************************************************************
             self.submit_job(job_name,
                             self.project_code,
                             "core",
@@ -887,6 +890,7 @@ class MutRepPipeline(CMMDBPipeline):
                             job_script,
                             job_params,
                             )
+# *********************************************************************************************** Need refactoring ***********************************************************************************************
 
     def gen_summary_report(self,
                            report_regions,
