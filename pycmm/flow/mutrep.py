@@ -21,11 +21,11 @@ from pycmm.settings import MUTREP_FAMILY_REPORT_BIN
 from pycmm.settings import MUTREP_SUMMARY_REPORT_BIN
 from pycmm.template import pyCMMBase
 from pycmm.utils import exec_sh
-from pycmm.proc.taparser import TAVcfReader as VcfReader
-from pycmm.proc.tamodel import CMMGT_HOMOZYGOTE
-from pycmm.proc.tamodel import CMMGT_HETEROZYGOTE
+from pycmm.cmmlib.dnalib import ALL_CHROMS
+from pycmm.cmmlib.taparser import TAVcfReader as VcfReader
+from pycmm.cmmlib.tamodel import CMMGT_HOMOZYGOTE
+from pycmm.cmmlib.tamodel import CMMGT_HETEROZYGOTE
 from pycmm.flow.cmmdb import CMMDBPipeline
-from pycmm.flow.cmmdb import ALL_CHROMS
 from pycmm.flow.cmmdb import JOBS_SETUP_RPT_ALLOC_TIME_KEY
 from pycmm.flow.cmmdb import JOBS_SETUP_RPT_LAYOUT_SECTION
 from pycmm.flow.cmmdb import JOBS_SETUP_RPT_ANNOTATED_VCF_TABIX
@@ -858,6 +858,7 @@ class MutRepPipeline(CMMDBPipeline):
                 job_params += " -r " + region_param
                 job_params += " -o " + out_file
                 self.dbg(job_script + job_params)
+# *********************************************************************************************** Need refactoring ***********************************************************************************************
                 self.submit_job(job_name,
                                 self.project_code,
                                 "core",
@@ -867,6 +868,7 @@ class MutRepPipeline(CMMDBPipeline):
                                 job_script,
                                 job_params,
                                 )
+# *********************************************************************************************** Need refactoring ***********************************************************************************************
         else:
             slurm_log_file = slurm_log_prefix
             slurm_log_file += "_" + self.time_stamp.strftime("%Y%m%d%H%M%S")
@@ -878,6 +880,7 @@ class MutRepPipeline(CMMDBPipeline):
                 job_params += " -r " + ",".join(map(lambda x: x.raw_region,
                                                     report_regions))
             job_params += " -o " + out_file
+# *********************************************************************************************** Need refactoring ***********************************************************************************************
             self.submit_job(job_name,
                             self.project_code,
                             "core",
@@ -887,6 +890,7 @@ class MutRepPipeline(CMMDBPipeline):
                             job_script,
                             job_params,
                             )
+# *********************************************************************************************** Need refactoring ***********************************************************************************************
 
     def gen_summary_report(self,
                            report_regions,

@@ -1,1 +1,1 @@
-/glob/jessada/private/master_data/reference/Homo_sapiens.GRCh37.57.dna.concat.fa.pac
+../../../../../../../links/reference/ref.fa.pac

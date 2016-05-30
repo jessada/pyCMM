@@ -19,19 +19,19 @@ from pycmm.template import pyCMMBase
 from pycmm.utils import exec_sh
 from pycmm.utils import mylogger
 from pycmm.utils.jobman import JobManager
-from pycmm.proc.annovarlib import Annovar
-from pycmm.proc.annovarlib import AnnovarParams
-from pycmm.proc.annovarlib import ANNOVAR_PARAMS_INPUT_FILE_KEY
-from pycmm.proc.annovarlib import ANNOVAR_PARAMS_DB_FOLDER_KEY
-from pycmm.proc.annovarlib import ANNOVAR_PARAMS_BUILDVER_KEY
-from pycmm.proc.annovarlib import ANNOVAR_PARAMS_OUT_PREFIX_KEY
-from pycmm.proc.annovarlib import ANNOVAR_PARAMS_DB_NAMES_KEY
-from pycmm.proc.annovarlib import ANNOVAR_PARAMS_DB_OPS_KEY
-from pycmm.proc.annovarlib import ANNOVAR_PARAMS_NASTRING_KEY
+from pycmm.cmmlib.dnalib import ALL_CHROMS
+from pycmm.cmmlib.annovarlib import Annovar
+from pycmm.cmmlib.annovarlib import AnnovarParams
+from pycmm.cmmlib.annovarlib import ANNOVAR_PARAMS_INPUT_FILE_KEY
+from pycmm.cmmlib.annovarlib import ANNOVAR_PARAMS_DB_FOLDER_KEY
+from pycmm.cmmlib.annovarlib import ANNOVAR_PARAMS_BUILDVER_KEY
+from pycmm.cmmlib.annovarlib import ANNOVAR_PARAMS_OUT_PREFIX_KEY
+from pycmm.cmmlib.annovarlib import ANNOVAR_PARAMS_DB_NAMES_KEY
+from pycmm.cmmlib.annovarlib import ANNOVAR_PARAMS_DB_OPS_KEY
+from pycmm.cmmlib.annovarlib import ANNOVAR_PARAMS_NASTRING_KEY
 from pycmm.settings import ALL_MUTREP_ANNO_COLS
 from pycmm.settings import DFLT_MUTREP_FREQ_RATIOS
 
-ALL_CHROMS = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "MT", "X", "Y"]
 CAL_MUTATIONS_STAT_SCRIPT = "$PYCMM/bash/cal_mutations_stat.sh"
 
 # *************** jobs metadata section ***************
@@ -338,6 +338,7 @@ class CMMDBPipeline(JobManager):
                                            job_name)
                 slurm_log_file += self.time_stamp.strftime("%Y%m%d%H%M%S")
                 slurm_log_file += ".log"
+# *********************************************************************************************** Need refactoring ***********************************************************************************************
                 self.submit_job(job_name,
                                 self.project_code,
                                 "core",
@@ -347,6 +348,7 @@ class CMMDBPipeline(JobManager):
                                 CAL_MUTATIONS_STAT_SCRIPT,
                                 params,
                                 )
+# *********************************************************************************************** Need refactoring ***********************************************************************************************
         else:
             self.__out_stat_file = join_path(self.data_out_dir,
                                              self.dataset_name + ".stat")
@@ -360,6 +362,7 @@ class CMMDBPipeline(JobManager):
                                        job_name)
             slurm_log_file += self.time_stamp.strftime("%Y%m%d%H%M%S")
             slurm_log_file += ".log"
+# *********************************************************************************************** Need refactoring ***********************************************************************************************
             self.submit_job(job_name,
                             self.project_code,
                             "core",
@@ -369,6 +372,7 @@ class CMMDBPipeline(JobManager):
                             CAL_MUTATIONS_STAT_SCRIPT,
                             params,
                             )
+# *********************************************************************************************** Need refactoring ***********************************************************************************************
 
     def table_annovar(self):
         cfg = self.annovar_config
@@ -387,6 +391,7 @@ class CMMDBPipeline(JobManager):
                                        job_name)
             slurm_log_file += self.time_stamp.strftime("%Y%m%d%H%M%S")
             slurm_log_file += ".log"
+# *********************************************************************************************** Need refactoring ***********************************************************************************************
             self.submit_job(job_name,
                             self.project_code,
                             "core",
@@ -396,6 +401,7 @@ class CMMDBPipeline(JobManager):
                             table_annovar_cmd,
                             "",
                             )
+# *********************************************************************************************** Need refactoring ***********************************************************************************************
         else:
             exec_sh(table_annovar_cmd)
 
@@ -439,7 +445,7 @@ def create_jobs_setup_file(dataset_name,
         jobs_report_file = join_path(project_out_dir,
                                      dataset_name+"_rpt.txt")
     if out_jobs_setup_file is None:
-        out_jobs_setup_file = join_path(samples_root_dir,
+        out_jobs_setup_file = join_path(project_out_dir,
                                         dataset_name+"_job_setup.txt")
     annovar_config = {}
     annovar_config[JOBS_SETUP_ANNOVAR_DB_FOLDER_KEY] = annovar_human_db_dir

@@ -1,37 +1,9 @@
 import sys
-import datetime
 from collections import OrderedDict
-from pycmm import settings
+from pycmm.settings import DNASEQ_PIPELINE_DESCRIPTION
 from pycmm.utils import mylogger
 from pycmm.utils import disp
-from pycmm.utils import log_file_with_time_stamp
-from pycmm.flow.gatkbp import GATKBPPipeline
 from pycmm.flow.gatkbp import create_jobs_setup_file
-
-
-def app_pycmm_dnaseq_pipeline(*args, **kwargs):
-    mylogger.getLogger(__name__)
-    time_stamp = datetime.datetime.now()
-    log_file = log_file_with_time_stamp(kwargs["log_file"],
-                                        time_stamp,
-                                        )
-    mylogger.set_log_file(kwargs["log_file"])
-    func_name = sys._getframe().f_code.co_name
-
-    disp.new_section_txt("S T A R T <" + func_name + ">")
-    required_params = OrderedDict()
-    required_params['jobs setup file (-j)'] = kwargs['jobs_setup_file']
-    optional_params = OrderedDict()
-    optional_params['log file (-l)'] = log_file
-    disp.show_config(app_description=settings.DNASEQ_PIPELINE_DESCRIPTION,
-                     required_params=required_params,
-                     optional_params=optional_params,
-                     )
-    pl = GATKBPPipeline(kwargs['jobs_setup_file'])
-    pl.preprocess_dataset()
-    pl.monitor_jobs()
-    mylogger.getLogger(__name__)
-    disp.new_section_txt("F I N I S H <" + func_name + ">")
 
 def app_pycmm_gatkbp_create_jobs_setup_file(*args, **kwargs):
     mylogger.getLogger(__name__)
@@ -40,7 +12,6 @@ def app_pycmm_gatkbp_create_jobs_setup_file(*args, **kwargs):
     disp.new_section_txt("S T A R T <" + func_name + ">")
     required_params = OrderedDict()
     required_params['dataset name (-d)'] = kwargs['dataset_name']
-    required_params['sample group (-g)'] = kwargs['sample_group']
     required_params['project code (-p)'] = kwargs['project_code']
     required_params['reference file (-R)'] = kwargs['reference_file']
     required_params['project output directory (-O)'] = kwargs['project_out_dir']
@@ -58,17 +29,17 @@ def app_pycmm_gatkbp_create_jobs_setup_file(*args, **kwargs):
     if kwargs['targets_interval_list'] is not None:
         optional_params['targets interval list (--targets_interval_list)'] = kwargs['targets_interval_list']
     optional_params['output jobs setup file (-o)'] = kwargs['out_jobs_setup_file']
-    disp.show_config(app_description=settings.DNASEQ_PIPELINE_DESCRIPTION,
+    disp.show_config(app_description=DNASEQ_PIPELINE_DESCRIPTION,
+                     third_party_software_version=None,
                      required_params=required_params,
                      optional_params=optional_params,
                      )
-    create_jobs_setup_file(dataset_name=kwargs['dataset_name'],
-                           sample_group=kwargs['sample_group'],
-                           project_code=kwargs['project_code'],
-                           gatkbp_alloc_time=kwargs['gatkbp_alloc_time'],
-                           reference_file=kwargs['reference_file'],
+    create_jobs_setup_file(project_name=kwargs['dataset_name'],
                            project_out_dir=kwargs['project_out_dir'],
+                           reference_file=kwargs['reference_file'],
                            samples_root_dir=kwargs['samples_root_dir'],
+                           project_code=kwargs['project_code'],
+                           flow_alloc_time=kwargs['gatkbp_alloc_time'],
                            known_indels_file=kwargs['known_indels_file'],
                            dbsnp_file=kwargs['dbsnp_file'],
                            variants_calling=kwargs['variants_calling'],

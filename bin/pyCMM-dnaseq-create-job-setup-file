@@ -1,88 +1,85 @@
 import argparse
 import sys
-from pycmm import settings
+from argparse import RawTextHelpFormatter
+from pycmm.settings import DNASEQ_CREATE_JOB_SETUP_FILE_DESCRIPTION
 from pycmm.app.gatkbp import app_pycmm_gatkbp_create_jobs_setup_file
 from collections import OrderedDict
 
-argp = argparse.ArgumentParser(description=settings.DNASEQ_CREATE_JOB_SETUP_FILE_DESCRIPTION)
-argp.add_argument('-d',
-                  dest='dataset_name',
-                  metavar="DATASET NAME",
-                  help='name of this dataset. This will be the name of the merged vcf file',
-                  required=True,
-                  )
-argp.add_argument('-g',
-                  dest='sample_group',
-                  metavar="SAMPLE GROUP",
-                  help='name of sample group, this will appear in bam files',
-                  required=True,
-                  )
+argp = argparse.ArgumentParser(description=DNASEQ_CREATE_JOB_SETUP_FILE_DESCRIPTION,
+                               formatter_class=RawTextHelpFormatter,
+                               )
+required_group = argp.add_argument_group('required arguments')
+gatk_group = argp.add_argument_group('GATK-Best-Practice pipeline arguments')
+required_group.add_argument('-d',
+                            dest='dataset_name',
+                            metavar="NAME",
+                            help='name of this dataset. This will be the name of the merged vcf file',
+                            required=True,
+                            )
+required_group.add_argument('-O',
+                            dest='project_out_dir',
+                            metavar="DIR",
+                            help='a folder to keep all the running results, including log and intermediate files',
+                            required=True,
+                            )
 argp.add_argument('-p',
                   dest='project_code',
                   metavar="PROJECT CODE",
                   help='UPPMAX project code',
-                  required=True,
-                  )
-argp.add_argument('--gatkbp_alloc_time',
-                  dest='gatkbp_alloc_time',
-                  metavar="ALLOC_TIME",
-                  help='UPPMAX allocation time for DNA Seq GATK Best Practice workflow',
                   default=None,
                   )
-argp.add_argument('-R',
-                  dest='reference_file',
-                  metavar="REFERENCE FILE",
-                  help='reference file',
-                  required=True,
-                  )
-argp.add_argument('-O',
-                  dest='project_out_dir',
-                  metavar="OUTPUT DIR",
-                  help='a folder to keep all the running results, including log and intermediate files',
-                  required=True,
-                  )
-argp.add_argument('-I',
-                  dest='samples_root_dir',
-                  metavar="SAMPLES DIR",
-                  help='a folder where the fastq files of each sample are kept',
-                  required=True,
-                  )
-argp.add_argument('--known_indels',
-                  dest='known_indels_file',
-                  metavar="KNOWN INDELS",
-                  help='known indels files',
-                  nargs='*',
-                  default=None,
-                  )
-argp.add_argument('--dbsnp',
-                  dest='dbsnp_file',
-                  metavar="DBSNP",
-                  help='dbsnp file',
-                  default=None,
-                  )
-argp.add_argument('--variants_calling',
-                  dest='variants_calling',
-                  metavar="VARIANTS CALLING",
-                  help="indicated if variants calling for this dataset need to be done",
-                  nargs='?',
-                  const="YES",
-                  default="NO",
-                  )
-argp.add_argument('--targets_interval_list',
-                  dest='targets_interval_list',
-                  metavar="TARGETS INTERVAL",
-                  help="a file with list of targets interval",
-                  default=None,
-                  )
+gatk_group.add_argument('--gatkbp_alloc_time',
+                        dest='gatkbp_alloc_time',
+                        metavar="TIME",
+                        help='UPPMAX allocation time for DNA Seq GATK Best Practice workflow',
+                        default=None,
+                        )
+gatk_group.add_argument('-R',
+                        dest='reference_file',
+                        metavar="FILE",
+                        help='reference file',
+                        required=True,
+                        )
+gatk_group.add_argument('-I',
+                        dest='samples_root_dir',
+                        metavar="DIR",
+                        help='a folder where the fastq files of each sample are kept',
+                        required=True,
+                        )
+gatk_group.add_argument('--known_indels',
+                        dest='known_indels_file',
+                        metavar="KNOWN INDELS",
+                        help='known indels files',
+                        nargs='*',
+                        default=None,
+                        )
+gatk_group.add_argument('--dbsnp',
+                        dest='dbsnp_file',
+                        metavar="FILE",
+                        help='dbsnp file',
+                        default=None,
+                        )
+gatk_group.add_argument('--variants_calling',
+                        dest='variants_calling',
+                        action='store_const',
+                        help="indicated if variants calling for this dataset need to be done",
+                        const=True,
+                        default=False,
+                        )
+gatk_group.add_argument('--targets_interval_list',
+                        dest='targets_interval_list',
+                        metavar="FILE",
+                        help="a file with list of targets interval",
+                        default=None,
+                        )
 argp.add_argument('-o',
                   dest='out_jobs_setup_file',
-                  metavar="JOBS SETUP FILE",
+                  metavar="FILE",
                   help='a file containing jobs configuration',
                   default=sys.stdout,
                   )
 args = argp.parse_args()
 app_pycmm_gatkbp_create_jobs_setup_file(dataset_name=args.dataset_name,
-                                        sample_group=args.sample_group,
                                         project_code=args.project_code,
                                         gatkbp_alloc_time=args.gatkbp_alloc_time,
                                         reference_file=args.reference_file,

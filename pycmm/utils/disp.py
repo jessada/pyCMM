@@ -5,10 +5,13 @@ from collections import OrderedDict
 
 param_display_fmt = "  {name:<50}{value}"
 
+def center_txt(txt, width):
+    txt = " " + txt + " "
+    return txt.center(width, "*")
+
 def new_section_txt(txt):
-    adj_txt = " " + txt + " "
     mylogger.info("")
-    mylogger.info(adj_txt.center(140,"*"))
+    mylogger.info(center_txt(txt, 140))
 
 def disp_header(header_txt):
     mylogger.info("")
@@ -29,6 +32,7 @@ def disp_subparam(subparam_name, subparam_value):
     disp_param("  "+subparam_name, subparam_value)
 
 def show_config(app_description,
+                third_party_software_version,
                 required_params,
                 optional_params,
                 ):
@@ -37,7 +41,7 @@ def show_config(app_description,
     disp_header("Version and environment configuration")
     disp_param("pyCMM version", pkg_resources.get_distribution("pycmm").version)
     disp_param("parameters", " ".join(sys.argv[1:]))
-    debug_param("debug mode", "ON")
+    disp_params_set("Third party software version", third_party_software_version)
     disp_params_set("Required parameters", required_params) 
     if optional_params is not None:
         disp_params_set("Optional parameters", optional_params) 
