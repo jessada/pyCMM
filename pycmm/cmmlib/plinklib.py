@@ -2,6 +2,7 @@ from collections import OrderedDict
 from pycmm.template import pyCMMBase
 from pycmm.utils import is_number
 from pycmm.utils import DefaultOrderedDict
+from pycmm.cmmlib.readerlib import Reader
 
 RAW_HAP_ASSOC_LOCUS_IDX = 0
 RAW_HAP_ASSOC_HAPLOTYPE_IDX = 1
@@ -42,35 +43,6 @@ UNAFFECTED_PHENOTYPE = "1"
 AFFECTED_PHENOTYPE = "2"
 
 
-class Reader(pyCMMBase):
-    """ a base class for read and parse file content """
-
-    def __init__(self, 
-                 file_name,
-                 parser,
-                 **kwargs
-                 ):
-        self.__file_name = file_name
-        self.__reader = open(file_name, 'rt')
-        self.__parser = parser
-        super(Reader, self).__init__(**kwargs)
-
-    def get_raw_repr(self):
-        raw_repr = OrderedDict()
-        raw_repr["file name"] = self.__file_name
-        raw_repr["parser"] = self.__parser
-        return raw_repr
-
-    @property
-    def reader(self):
-        return self.__reader
-
-    def __iter__(self):
-        return self
-
-    def next(self):
-        return self.__parser(self.__reader.next())
-
 class HapAssocUtils(pyCMMBase):
     """ an util to gather basic info from haplotype association study result """
 
@@ -95,7 +67,7 @@ class HapAssocUtils(pyCMMBase):
         with open(self.hap_assoc_file, 'r') as f:
             return len(f.next().strip().split())
 
-class HapAssoc(pyCMMBase):
+class HapAssocParser(pyCMMBase):
     """ To parse haplotype association study result """
 
     def __init__(self, rec, locus_prefix=None, **kwargs):
@@ -106,7 +78,7 @@ class HapAssoc(pyCMMBase):
         else:
             self.__locus_prefix = locus_prefix + "_"
         self.__set_idxs()
-        super(HapAssoc, self).__init__(**kwargs)
+        super(HapAssocParser, self).__init__(**kwargs)
 
     def get_raw_repr(self):
         raw_repr = OrderedDict()
@@ -260,13 +232,13 @@ class HapAssocReader(Reader):
                  **kwargs
                  ):
         self.__locus_prefix = locus_prefix
-        kwargs['parser'] = HapAssoc
+        kwargs['parser'] = HapAssocParser
         super(HapAssocReader, self).__init__(**kwargs)
 
     def next(self):
         while True:
-            hap_assoc_rec = HapAssoc(self.reader.next(),
-                                     locus_prefix=self.__locus_prefix)
+            hap_assoc_rec = HapAssocParser(self.reader.next(),
+                                           locus_prefix=self.__locus_prefix)
             if hap_assoc_rec.haplotype == "OMNIBUS":
                 continue
             break
@@ -323,14 +295,14 @@ def merge_hap_assocs(hap_assoc_files,
             writer.write(content)
     writer.close()
 
-class LMiss(pyCMMBase):
+class LMissParser(pyCMMBase):
     """ To parse snps missing genotyping information """
 
     def __init__(self, rec, **kwargs):
         self.__items = rec.strip().split()
         if len(self.__items) != 7:
             raise IOError("Invalid lmiss file")
-        super(LMiss, self).__init__(**kwargs)
+        super(LMissParser, self).__init__(**kwargs)
 
     def get_raw_repr(self):
         raw_repr = OrderedDict()
@@ -381,17 +353,17 @@ class LMissReader(Reader):
     def __init__(self, 
                  **kwargs
                  ):
-        kwargs['parser'] = LMiss
+        kwargs['parser'] = LMissParser
         super(LMissReader, self).__init__(**kwargs)
 
-class Map(pyCMMBase):
+class MapParser(pyCMMBase):
     """ To parse a record in PLINK map file """
 
     def __init__(self, rec, **kwargs):
         self.__items = rec.strip().split()
         if len(self.__items) < 4:
             raise IOError("Invalid map file")
-        super(Map, self).__init__(**kwargs)
+        super(MapParser, self).__init__(**kwargs)
 
     def get_raw_repr(self):
         raw_repr = OrderedDict()
@@ -427,10 +399,10 @@ class MapReader(Reader):
     def __init__(self, 
                  **kwargs
                  ):
-        kwargs['parser'] = Map
+        kwargs['parser'] = MapParser
         super(MapReader, self).__init__(**kwargs)
 
-class SnpInfo(pyCMMBase):
+class SnpInfoParser(pyCMMBase):
     """ To parse snp information """
 
     def __init__(self, rec=None, **kwargs):
@@ -458,7 +430,7 @@ class SnpInfo(pyCMMBase):
             self.__chrom = None
             self.__pos = None
         self.__snp_idx = None
-        super(SnpInfo, self).__init__(**kwargs)
+        super(SnpInfoParser, self).__init__(**kwargs)
 
     def get_raw_repr(self):
         raw_repr = OrderedDict()
@@ -524,12 +496,12 @@ class SnpInfoReader(Reader):
     def __init__(self, 
                  **kwargs
                  ):
-        kwargs['parser'] = SnpInfo
+        kwargs['parser'] = SnpInfoParser
         super(SnpInfoReader, self).__init__(**kwargs)
 
 def merge_lmiss_map(lmiss_file, map_file, out_file):
     # read snp info
-    snp_info = DefaultOrderedDict(SnpInfo)
+    snp_info = DefaultOrderedDict(SnpInfoParser)
     lmiss_reader = LMissReader(file_name=lmiss_file)
     for lmiss_rec in lmiss_reader:
         snp = lmiss_rec.snp
@@ -564,14 +536,14 @@ def merge_lmiss_map(lmiss_file, map_file, out_file):
         writer.write(content)
     writer.close()
 
-class Fam(pyCMMBase):
+class FamParser(pyCMMBase):
     """ To parse a record in PLINK fam and tfam file """
 
     def __init__(self, rec, **kwargs):
         self.__items = rec.strip().split()
         if len(self.__items) != 6:
             raise IOError("Invalid fam file")
-        super(Fam, self).__init__(**kwargs)
+        super(FamParser, self).__init__(**kwargs)
 
     def get_raw_repr(self):
         raw_repr = OrderedDict()
@@ -613,10 +585,10 @@ class FamReader(Reader):
     def __init__(self, 
                  **kwargs
                  ):
-        kwargs['parser'] = Fam
+        kwargs['parser'] = FamParser
         super(FamReader, self).__init__(**kwargs)
 
-class TPed(Map):
+class TPedParser(MapParser):
     """ To parse a record in PLINK tped file """
 
     def __init__(self, rec, **kwargs):
@@ -625,10 +597,10 @@ class TPed(Map):
             self.dbg(len(self.__items))
             raise IOError("Invalid TPed file at line: " + rec)
         kwargs['rec'] = rec
-        super(TPed, self).__init__(**kwargs)
+        super(TPedParser, self).__init__(**kwargs)
 
     def get_raw_repr(self):
-        raw_repr = super(TPed, self).get_raw_repr()
+        raw_repr = super(TPedParser, self).get_raw_repr()
         raw_repr["genotypes"] = self.gts
         return raw_repr
 
@@ -642,5 +614,5 @@ class TPedReader(Reader):
     def __init__(self, 
                  **kwargs
                  ):
-        kwargs['parser'] = TPed
+        kwargs['parser'] = TPedParser
         super(TPedReader, self).__init__(**kwargs)

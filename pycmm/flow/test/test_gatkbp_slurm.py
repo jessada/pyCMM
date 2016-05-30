@@ -23,7 +23,6 @@ class TestGATKBPPipelineSlurm(SafeTester):
     def __create_jobs_setup_file(self,
                                  project_code=SLOW_PROJECT_CODE,
                                  flow_alloc_time=DFLT_GATKBP_ALLOC_TIME,
-                                 indel_recal=True,
                                  variants_calling=True,
                                  targets_interval_list=None,
                                  dataset_usage_mail=False,
@@ -34,7 +33,6 @@ class TestGATKBPPipelineSlurm(SafeTester):
                                            data_dir=self.data_dir,
                                            project_code=project_code,
                                            flow_alloc_time=flow_alloc_time,
-                                           indel_recal=indel_recal,
                                            variants_calling=variants_calling,
                                            targets_interval_list=targets_interval_list,
                                            dataset_usage_mail=dataset_usage_mail,
@@ -119,7 +117,6 @@ class TestGATKBPPipelineSlurm(SafeTester):
         targets_interval_list = join_path(self.data_dir,
                                           "targets.interval_list") 
         jobs_setup_file = self.__create_jobs_setup_file(targets_interval_list=targets_interval_list,
-                                                        indel_recal=False,
                                                         )
         pl = GATKBPPipeline(jobs_setup_file=jobs_setup_file)
         pl.preprocess_sample(sample_id)

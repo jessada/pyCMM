@@ -8,6 +8,8 @@ from pycmm.settings import SLOW_PROJECT_CODE
 from pycmm.flow.gatkbp import GATKBPPipeline
 from pycmm.flow.gatkbp import create_jobs_setup_file
 from pycmm.utils import file_size
+from pycmm.cmmlib.fastqlib import ENCODING_ILLUMINA_1_5
+from pycmm.cmmlib.fastqlib import ENCODING_ILLUMINA_1_8
 
 DFLT_KNOWN_INDELS = []
 DFLT_KNOWN_INDELS.append('1000G_phase1.indels.b37.vcf')
@@ -22,7 +24,6 @@ def create_gatk_jobs_setup_file(test_function,
                                 data_dir,
                                 project_code=None,
                                 flow_alloc_time=None,
-                                indel_recal=True,
                                 variants_calling=False,
                                 known_indels=DFLT_KNOWN_INDELS,
                                 targets_interval_list=None,
@@ -41,7 +42,6 @@ def create_gatk_jobs_setup_file(test_function,
                            reference_file=reference_file,
                            project_out_dir=working_dir,
                            samples_root_dir=data_dir,
-                           indel_recal=indel_recal,
                            variants_calling=variants_calling,
                            known_indels_file=known_indels_file,
                            dbsnp_file=dbsnp_file,
@@ -65,7 +65,6 @@ class TestGATKBPPipeline(SafeTester):
     def __create_jobs_setup_file(self,
                                  project_code=None,
                                  flow_alloc_time=None,
-                                 indel_recal=True,
                                  variants_calling=False,
                                  known_indels=DFLT_KNOWN_INDELS,
                                  targets_interval_list=None,
@@ -77,7 +76,6 @@ class TestGATKBPPipeline(SafeTester):
                                            data_dir=self.data_dir,
                                            project_code=project_code,
                                            flow_alloc_time=flow_alloc_time,
-                                           indel_recal=indel_recal,
                                            variants_calling=variants_calling,
                                            known_indels=known_indels,
                                            targets_interval_list=targets_interval_list,
@@ -118,9 +116,6 @@ class TestGATKBPPipeline(SafeTester):
         self.assertEqual(pl.project_out_dir,
                          self.working_dir,
                          "GATKBPPipeline cannot correctly identify 'output directory' from jobs setup file")
-        self.assertEqual(pl.gatk_params.indel_recal,
-                         True,
-                         "GATKBPPipeline cannot correctly identify 'indel recalibration' from jobs setup file")
         self.assertEqual(pl.gatk_params.variants_calling,
                          False,
                          "GATKBPPipeline cannot correctly identify 'variants calling' from jobs setup file")
@@ -134,11 +129,14 @@ class TestGATKBPPipeline(SafeTester):
                          False,
                          "GATKBPPipeline cannot correctly identify 'usage mail' from jobs setup file")
         self.assertEqual(len(pl.samples),
-                         3,
+                         6,
                          "GATKBPPipeline cannot correctly identify number of samples from jobs setup file")
         test_sample_id_3 = 'test_sample_3'
         self.assertEqual(pl.samples[test_sample_id_3].sample_id,
                          test_sample_id_3,
+                         "GATKBPPipeline cannot correctly read sample information from jobs setup file")
+        self.assertEqual(pl.samples[test_sample_id_3].encoding,
+                         ENCODING_ILLUMINA_1_8,
                          "GATKBPPipeline cannot correctly read sample information from jobs setup file")
         self.assertEqual(pl.samples[test_sample_id_3].library,
                          'lib1',
@@ -156,6 +154,9 @@ class TestGATKBPPipeline(SafeTester):
         test_sample_id_1 = 'test_sample_1'
         self.assertEqual(pl.samples[test_sample_id_1].sample_id,
                          test_sample_id_1,
+                         "GATKBPPipeline cannot correctly read sample information from jobs setup file")
+        self.assertEqual(pl.samples[test_sample_id_1].encoding,
+                         ENCODING_ILLUMINA_1_8,
                          "GATKBPPipeline cannot correctly read sample information from jobs setup file")
         self.assertEqual(pl.samples[test_sample_id_1].preprocess_sample,
                          True,
@@ -176,6 +177,22 @@ class TestGATKBPPipeline(SafeTester):
         self.assertEqual(pl.samples[test_sample_id_1].fastq_pairs[0]['R2'],
                          exp_R2_file,
                          "GATKBPPipeline cannot correctly read sample information from jobs setup file")
+        test_sample_id_2 = 'test_sample_2'
+        self.assertEqual(pl.samples[test_sample_id_2].encoding,
+                         ENCODING_ILLUMINA_1_5,
+                         "GATKBPPipeline cannot correctly read sample information from jobs setup file")
+        test_sample_id_4 = 'test_sample_4'
+        self.assertEqual(pl.samples[test_sample_id_4].encoding,
+                         ENCODING_ILLUMINA_1_8,
+                         "GATKBPPipeline cannot correctly read sample information from jobs setup file")
+        test_sample_id_5 = 'test_sample_5'
+        self.assertEqual(pl.samples[test_sample_id_5].encoding,
+                         ENCODING_ILLUMINA_1_5,
+                         "GATKBPPipeline cannot correctly read sample information from jobs setup file")
+        test_sample_id_6 = 'test_sample_6'
+        self.assertEqual(pl.samples[test_sample_id_6].encoding,
+                         ENCODING_ILLUMINA_1_8,
+                         "GATKBPPipeline cannot correctly read sample information from jobs setup file")
 
     def test_load_jobs_info_2(self):
         """ test if modified job configurations are loaded correctly """
@@ -185,7 +202,6 @@ class TestGATKBPPipeline(SafeTester):
         targets_interval_list = join_path(self.data_dir,
                                           "targets.interval_list") 
         jobs_setup_file = self.__create_jobs_setup_file(project_code=SLOW_PROJECT_CODE,
-                                                        indel_recal=False,
                                                         variants_calling=True,
                                                         flow_alloc_time="20:00:00",
                                                         targets_interval_list=targets_interval_list,
@@ -195,9 +211,6 @@ class TestGATKBPPipeline(SafeTester):
         self.assertEqual(pl.flow_alloc_time,
                          "20:00:00",
                          "GATKBPPipeline cannot correctly identify 'gatk allocation time' from jobs setup file")
-        self.assertEqual(pl.gatk_params.indel_recal,
-                         False,
-                         "GATKBPPipeline cannot correctly identify 'indel recalibration' from jobs setup file")
         self.assertEqual(pl.gatk_params.variants_calling,
                          True,
                          "GATKBPPipeline cannot correctly identify 'variants calling' from jobs setup file")

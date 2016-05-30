@@ -29,7 +29,6 @@ def display_configs(func_name,
         gatk_params['reference file'] = pl.gatk_params.reference
         gatk_params['known indels'] = pl.gatk_params.known_indels
         gatk_params['dbsnp file'] = pl.gatk_params.dbsnp
-        gatk_params['indel recalibration'] = pl.gatk_params.indel_recal
         gatk_params['variants calling'] = pl.gatk_params.variants_calling
         gatk_params['targets interval list'] = pl.gatk_params.targets_interval_list
         gatk_params['dataset usage mail'] = pl.gatk_params.dataset_usage_mail

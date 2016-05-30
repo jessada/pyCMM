@@ -25,7 +25,6 @@ def app_pycmm_gatkbp_create_jobs_setup_file(*args, **kwargs):
             optional_params['known indels #'+str(idx+1)+' (--known_indels)'] = known_indels_files[idx]
     if kwargs['dbsnp_file'] is not None:
         optional_params['dbSNP (--dbsnp)'] = kwargs['dbsnp_file']
-    optional_params['indel recalibration (--indel_recal)'] = kwargs['indel_recal']
     optional_params['variants calling (--variants_calling)'] = kwargs['variants_calling']
     if kwargs['targets_interval_list'] is not None:
         optional_params['targets interval list (--targets_interval_list)'] = kwargs['targets_interval_list']
@@ -43,7 +42,6 @@ def app_pycmm_gatkbp_create_jobs_setup_file(*args, **kwargs):
                            flow_alloc_time=kwargs['gatkbp_alloc_time'],
                            known_indels_file=kwargs['known_indels_file'],
                            dbsnp_file=kwargs['dbsnp_file'],
-                           indel_recal=kwargs['indel_recal'],
                            variants_calling=kwargs['variants_calling'],
                            targets_interval_list=kwargs['targets_interval_list'],
                            out_jobs_setup_file=kwargs['out_jobs_setup_file'],

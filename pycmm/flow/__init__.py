@@ -88,6 +88,7 @@ class CMMPipeline(JobManager):
                                "1",
                                job_script,
                                job_params,
+                               alloc_time="10-00:00:00",
                                )
 
     def run_offline_pipeline(self):
