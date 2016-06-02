@@ -39,7 +39,7 @@ def app_pycmm_gatkbp_create_jobs_setup_file(*args, **kwargs):
                            reference_file=kwargs['reference_file'],
                            samples_root_dir=kwargs['samples_root_dir'],
                            project_code=kwargs['project_code'],
-                           flow_alloc_time=kwargs['gatkbp_alloc_time'],
+                           job_alloc_time=kwargs['gatkbp_alloc_time'],
                            known_indels_file=kwargs['known_indels_file'],
                            dbsnp_file=kwargs['dbsnp_file'],
                            variants_calling=kwargs['variants_calling'],

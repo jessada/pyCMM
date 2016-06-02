@@ -2,11 +2,10 @@ import yaml
 import pyaml
 from os.path import join as join_path
 from collections import OrderedDict
-from pycmm.settings import DFLT_FLOW_ALLOC_TIME
-from pycmm.settings import DFLT_RPT_ALLOC_TIME
+from pycmm.settings import DFLT_JOB_ALLOC_TIME
 from pycmm.utils import get_dict_val
 from pycmm.utils.jobman import JobManager
-from pycmm.cmmlib.familylib import params_to_yaml
+from pycmm.cmmlib.familylib import params_to_yaml_doc
 from pycmm.cmmlib.familylib import SamplesInfo
 from pycmm.cmmlib.familylib import Family
 from pycmm.cmmlib.familylib import JOBS_SETUP_SAMPLES_INFOS_KEY
@@ -16,8 +15,7 @@ JOBS_SETUP_JOBS_REPORT_FILE_KEY = "JOBS_REPORT_FILE"
 JOBS_SETUP_PROJECT_NAME_KEY = "PROJECT_NAME"
 JOBS_SETUP_PROJECT_OUT_DIR_KEY = "PROJECT_OUT_DIR"
 JOBS_SETUP_PROJECT_CODE_KEY = "PROJECT_CODE"
-JOBS_SETUP_FLOW_ALLOC_TIME_KEY = "FLOW_ALLOC_TIME"
-JOBS_SETUP_RPT_ALLOC_TIME_KEY = "RPT_ALLOC_TIME"
+JOBS_SETUP_JOB_ALLOC_TIME_KEY = "JOB_ALLOC_TIME"
 
 
 class CMMPipeline(JobManager):
@@ -40,7 +38,7 @@ class CMMPipeline(JobManager):
         raw_repr["data out dir"] = self.data_out_dir,
         raw_repr["reports out dir"] = self.rpts_out_dir,
         raw_repr["project code"] = self.project_code,
-        raw_repr["flow allocation time"] = self.flow_alloc_time,
+        raw_repr["flow allocation time"] = self.job_alloc_time,
         raw_repr["report allocation time"] = self.rpt_alloc_time,
         raw_repr["jobs report file"] = self.jobs_report_file,
         return raw_repr
@@ -112,7 +110,7 @@ class CMMPipeline(JobManager):
                           prereq=None,
                           ):
         if alloc_time is None:
-            alloc_time = self.flow_alloc_time
+            alloc_time = self.job_alloc_time
         slurm_log_prefix = join_path(self.slurm_log_dir,
                                      job_name)
         self.submit_job(job_name,
@@ -147,8 +145,7 @@ class CMMPipeline(JobManager):
                                              fam_info.members))
                 samples_info[fam_id] = fam_info_txt
         params['sample information'] = samples_info
-        params['flow allocation time'] = self.flow_alloc_time
-        params['report allocation time'] = self.rpt_alloc_time
+        params['flow allocation time'] = self.job_alloc_time
         params['project output directory'] = self.project_out_dir
         return params
 
@@ -164,6 +161,10 @@ class CMMPipeline(JobManager):
     def jobs_report_file(self):
         return join_path(self.project_out_dir,
                          self.project_name+"_rpt.txt")
+
+    @property
+    def dataset_name(self):
+        return self.project_name
 
     @property
     def project_name(self):
@@ -201,12 +202,8 @@ class CMMPipeline(JobManager):
         return self._get_job_config(JOBS_SETUP_PROJECT_CODE_KEY)
 
     @property
-    def flow_alloc_time(self):
-        return self._get_job_config(JOBS_SETUP_FLOW_ALLOC_TIME_KEY)
-
-    @property
-    def rpt_alloc_time(self):
-        return self._get_job_config(JOBS_SETUP_RPT_ALLOC_TIME_KEY)
+    def job_alloc_time(self):
+        return self._get_job_config(JOBS_SETUP_JOB_ALLOC_TIME_KEY)
 
     @property
     def families_info(self):
@@ -220,6 +217,10 @@ class CMMPipeline(JobManager):
     def samples_id(self):
         return self.__samples_info.samples_id
 
+    @property
+    def samples_id_w_fam_pref(self):
+        return self.__samples_info.samples_id_w_fam_pref
+
     def monitor_init(self, **kwargs):
         super(CMMPipeline, self).monitor_init(**kwargs)
 
@@ -232,55 +233,44 @@ class CMMPipeline(JobManager):
 # a note on parameters of init_jobs_setup_file and create_jobs_setup_file
 # The reason that I explicitly list them is for documentation purpose. It is to
 # see the list of parameters that can be passed to these functions
-def init_jobs_setup_file(project_name,
-                         project_out_dir,
-                         project_code=None,
-                         flow_alloc_time=None,
-                         rpt_alloc_time=None,
-                         sample_info=None,
-                         jobs_report_file=None,
-                         out_jobs_setup_file=None,
-                         ):
-    if jobs_report_file is None:
-        jobs_report_file = join_path(project_out_dir,
-                                     project_name+"_rpt.txt")
-    if out_jobs_setup_file is None:
-        out_jobs_setup_file = join_path(project_out_dir,
-                                        project_name+"_jobs_setup.txt")
+def get_func_arg(var_name, jobs_setup_kwargs, default_val=None):
+    if ((var_name in jobs_setup_kwargs) and
+        (jobs_setup_kwargs[var_name] is not None)):
+        return jobs_setup_kwargs[var_name]
+    return default_val
+    
+def init_jobs_setup_file(*args, **kwargs):
+    project_out_dir = kwargs['project_out_dir']
+    project_name = kwargs['project_name']
+    jobs_report_file = get_func_arg('jobs_report_file',
+                                    kwargs,
+                                    join_path(project_out_dir,
+                                              project_name+"_rpt.txt"),
+                                    )
+    out_jobs_setup_file = get_func_arg('out_jobs_setup_file',
+                                       kwargs,
+                                       join_path(project_out_dir,
+                                                 project_name+"_jobs_setup.txt"),
+                                       )
     stream = file(out_jobs_setup_file, 'w')
     job_setup_document = {}
-    job_setup_document[JOBS_SETUP_PROJECT_NAME_KEY] = project_name
-    job_setup_document[JOBS_SETUP_PROJECT_OUT_DIR_KEY] = project_out_dir
+    job_setup_document[JOBS_SETUP_PROJECT_NAME_KEY] = kwargs['project_name']
+    job_setup_document[JOBS_SETUP_PROJECT_OUT_DIR_KEY] = kwargs['project_out_dir']
+    project_code = get_func_arg('project_code', kwargs)
     if project_code is not None:
         job_setup_document[JOBS_SETUP_PROJECT_CODE_KEY] = project_code
-        if flow_alloc_time is None:
-            flow_alloc_time = DFLT_FLOW_ALLOC_TIME
-        job_setup_document[JOBS_SETUP_FLOW_ALLOC_TIME_KEY] = '"' + flow_alloc_time + '"'
-        if rpt_alloc_time is None:
-            rpt_alloc_time = DFLT_RPT_ALLOC_TIME
-        job_setup_document[JOBS_SETUP_RPT_ALLOC_TIME_KEY] = '"' + rpt_alloc_time + '"'
-    yaml = params_to_yaml(sample_info=sample_info)
+        job_alloc_time = get_func_arg('job_alloc_time',
+                                      kwargs,
+                                      DFLT_JOB_ALLOC_TIME,
+                                      )
+        job_setup_document[JOBS_SETUP_JOB_ALLOC_TIME_KEY] = '"' + job_alloc_time + '"'
+    yaml = params_to_yaml_doc(sample_info=get_func_arg('sample_info', kwargs))
     for key in yaml:
         job_setup_document[key] = yaml[key]
+    jobs_report_file = get_func_arg('jobs_report_file', kwargs)
     job_setup_document[JOBS_SETUP_JOBS_REPORT_FILE_KEY] = jobs_report_file
     return job_setup_document, stream
 
-def create_jobs_setup_file(project_name,
-                           project_out_dir,
-                           project_code=None,
-                           flow_alloc_time=None,
-                           rpt_alloc_time=None,
-                           sample_info=None,
-                           jobs_report_file=None,
-                           out_jobs_setup_file=None,
-                           ):
-    job_setup_document, stream = init_jobs_setup_file(project_name=project_name,
-                                                      project_out_dir=project_out_dir,
-                                                      project_code=project_code,
-                                                      flow_alloc_time=flow_alloc_time,
-                                                      rpt_alloc_time=rpt_alloc_time,
-                                                      sample_info=sample_info,
-                                                      jobs_report_file=jobs_report_file,
-                                                      out_jobs_setup_file=out_jobs_setup_file,
-                                                      )
+def create_jobs_setup_file(*args, **kwargs):
+    job_setup_document, stream = init_jobs_setup_file(*args, **kwargs)
     pyaml.dump(job_setup_document, stream)

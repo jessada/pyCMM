@@ -51,6 +51,9 @@ class TestFamilyLib(SafeTester):
         self.assertEqual(pl.families_info["911"].fam_id,
                          "911",
                          "familiylib can't handle families information")
+        self.assertEqual(pl.families_info["prostate"].members[0].fam_id,
+                         "prostate",
+                         "familiylib can't handle families information")
 
     def test_extract_families_info_2(self):
         """ test if Family objects can be extract from no data """

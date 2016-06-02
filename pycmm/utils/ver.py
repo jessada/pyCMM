@@ -20,6 +20,7 @@ class VersionManager(pyCMMBase):
                 "plink": self.plink_version,
                 "table_annovar": self.table_annovar_version,
                 "GATK": self.gatk_version,
+                "vcftools": self.vcftools_version,
                 }
 
     @property
@@ -63,3 +64,11 @@ class VersionManager(pyCMMBase):
         if search_result is None:
             return None
         return search_result.group(0)
+
+    @property
+    def vcftools_version(self):
+        p, data = exec_sh("vcftools", silent=True)
+        self.dbg(data)
+        search_result = re.search("(\d+\.){0,3}(\d+)", data)
+        return search_result.group(0)
+

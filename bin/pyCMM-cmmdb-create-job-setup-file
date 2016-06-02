@@ -18,15 +18,15 @@ from pycmm.settings import ASSOC_COLS_TAG
 from pycmm.settings import LJB_SCORE_COLS_TAG
 from pycmm.settings import EXAC_OTH_COLS_TAG
 from pycmm.settings import UNKNOWN_COLS_TAG
-from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_RARE
-from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_NON_INTERGENIC
-from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_NON_INTRONIC
-from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_NON_UPSTREAM
-from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_NON_DOWNSTREAM
-from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_NON_UTR
-from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_NON_SYNONYMOUS
-from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_HAS_MUTATION
-from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_HAS_SHARED
+from pycmm.flow.mutrep import JOBS_SETUP_RPT_FILTER_RARE
+from pycmm.flow.mutrep import JOBS_SETUP_RPT_FILTER_NON_INTERGENIC
+from pycmm.flow.mutrep import JOBS_SETUP_RPT_FILTER_NON_INTRONIC
+from pycmm.flow.mutrep import JOBS_SETUP_RPT_FILTER_NON_UPSTREAM
+from pycmm.flow.mutrep import JOBS_SETUP_RPT_FILTER_NON_DOWNSTREAM
+from pycmm.flow.mutrep import JOBS_SETUP_RPT_FILTER_NON_UTR
+from pycmm.flow.mutrep import JOBS_SETUP_RPT_FILTER_NON_SYNONYMOUS
+from pycmm.flow.mutrep import JOBS_SETUP_RPT_FILTER_HAS_MUTATION
+from pycmm.flow.mutrep import JOBS_SETUP_RPT_FILTER_HAS_SHARED
 
 argp = argparse.ArgumentParser(description=settings.CMMDB_CREATE_JOB_SETUP_FILE_DESCRIPTION,
                                formatter_class=RawTextHelpFormatter,

@@ -11,50 +11,23 @@ from pycmm.settings import LJB_MUTATIONASSESSOR_PREDICTION_COL_NAME as MUTATIONA
 from pycmm.settings import LJB_FATHMM_PREDICTION_COL_NAME as FATHMM_PRED_COL
 from pycmm.settings import LJB_RADIALSVM_PREDICTION_COL_NAME as RADIALSVM_PRED_COL
 from pycmm.settings import LJB_LR_PREDICTION_COL_NAME as LR_PRED_COL
+from pycmm.settings import DFLT_ANV_DB_DIR
+from pycmm.settings import DFLT_ANV_DB_NAMES
+from pycmm.settings import DFLT_ANV_DB_OPS
 from pycmm.utils import get_path
+from pycmm.flow import get_func_arg
+from pycmm.cmmlib import CMMParams
 
-ANNOVAR_PARAMS_INPUT_FILE_KEY = "input_file"
-ANNOVAR_PARAMS_DB_FOLDER_KEY = "db_folder"
-ANNOVAR_PARAMS_BUILDVER_KEY = "buildver"
-ANNOVAR_PARAMS_OUT_PREFIX_KEY = "out_prefix"
-ANNOVAR_PARAMS_DB_NAMES_KEY = "db_names"
-ANNOVAR_PARAMS_DB_OPS_KEY = "db_ops"
-ANNOVAR_PARAMS_NASTRING_KEY = "nastring"
+ANV_PARAMS_INPUT_FILE_KEY = "input_file"
+ANV_PARAMS_DB_DIR_KEY = "db_dir"
+ANV_PARAMS_BUILDVER_KEY = "buildver"
+ANV_PARAMS_OUT_PREFIX_KEY = "out_prefix"
+ANV_PARAMS_DB_NAMES_KEY = "db_names"
+ANV_PARAMS_DB_OPS_KEY = "db_ops"
+ANV_PARAMS_NASTRING_KEY = "nastring"
 
 _DESCRIPTION = "Description"
 _HARMFUL = "Harmful"
-
-class AnnovarParams(pyCMMBase):
-    """ A structure to parse and keep sample information """
-
-    def __init__(self,
-                 params,
-                 ):
-        self.__params = params
-
-    @property
-    def input_file(self):
-        return self.__params[ANNOVAR_PARAMS_INPUT_FILE_KEY]
-
-    @property
-    def db_folder(self):
-        return self.__params[ANNOVAR_PARAMS_DB_FOLDER_KEY]
-
-    @property
-    def buildver(self):
-        return self.__params[ANNOVAR_PARAMS_BUILDVER_KEY]
-
-    @property
-    def protocols(self):
-        return self.__params[ANNOVAR_PARAMS_DB_NAMES_KEY]
-
-    @property
-    def operations(self):
-        return self.__params[ANNOVAR_PARAMS_DB_OPS_KEY]
-
-    @property
-    def nastring(self):
-        return self.__params[ANNOVAR_PARAMS_NASTRING_KEY]
 
 class Annovar(pyCMMBase):
     """ A structure to parse and keep sample information """
@@ -62,7 +35,7 @@ class Annovar(pyCMMBase):
     def __init__(self,
                  dataset_name,
                  input_file,
-                 db_folder,
+                 db_dir,
                  buildver,
                  protocols,
                  operations,
@@ -71,7 +44,7 @@ class Annovar(pyCMMBase):
                  ):
         self.__dataset_name = dataset_name
         self.__input_file = input_file
-        self.__db_folder = db_folder
+        self.__db_dir = db_dir
         self.__buildver = buildver
         self.__protocols = protocols
         self.__operations = operations
@@ -83,7 +56,7 @@ class Annovar(pyCMMBase):
         raw_repr = OrderedDict()
         raw_repr["dataset name"] = self.dataset_name
         raw_repr["input file"] = self.input_file
-        raw_repr["db folder"] = self.db_folder
+        raw_repr["db folder"] = self.db_dir
         raw_repr["build ver"] = self.buildver
         raw_repr["protocols"] = self.protocols
         raw_repr["operations"] = self.operations
@@ -102,8 +75,8 @@ class Annovar(pyCMMBase):
         return self.__input_file
 
     @property
-    def db_folder(self):
-        return self.__db_folder
+    def db_dir(self):
+        return self.__db_dir
 
     @property
     def buildver(self):
@@ -138,7 +111,7 @@ class Annovar(pyCMMBase):
     def table_annovar_cmd(self):
         cmd = "table_annovar.pl"
         cmd += " " + self.input_file
-        cmd += " " + self.db_folder
+        cmd += " " + self.db_dir
         cmd += " -buildver " + self.buildver
         cmd += " -out " + self.tmp_annovar_prefix
         cmd += " -remove"
@@ -411,3 +384,119 @@ class PredictionTranslator(pyCMMBase):
     @property
     def predictor_list(self):
         return self.__pred_info.keys()
+
+#class AnnovarParams(pyCMMBase):
+#    """ A structure to parse and keep sample information """
+#
+#    def __init__(self,
+#                 params,
+#                 ):
+#        self.__params = params
+#
+#    @property
+#    def input_file(self):
+#        return self.__params[ANV_PARAMS_INPUT_FILE_KEY]
+#
+#    @property
+#    def db_dir(self):
+#        return self.__params[ANV_PARAMS_DB_DIR_KEY]
+#
+#    @property
+#    def buildver(self):
+#        return self.__params[ANV_PARAMS_BUILDVER_KEY]
+#
+#    @property
+#    def protocols(self):
+#        return self.__params[ANV_PARAMS_DB_NAMES_KEY]
+#
+#    @property
+#    def operations(self):
+#        return self.__params[ANV_PARAMS_DB_OPS_KEY]
+#
+#    @property
+#    def nastring(self):
+#        return self.__params[ANV_PARAMS_NASTRING_KEY]
+#
+class AnnovarParams(CMMParams):
+    """  To handle and parse CMMDB parameters  """
+
+    def __init__(self, **kwargs):
+        super(AnnovarParams, self).__init__(**kwargs)
+
+    def get_raw_repr(self, **kwargs):
+        raw_repr = super(AnnovarParams, self).get_raw_repr(**kwargs)
+        raw_repr["input vcf tabix file"] = self.input_vcf_tabix
+        raw_repr["annovar db dir"] = self.db_dir
+        raw_repr["annovar build ver"] = self.buildver
+        raw_repr["annovar NA string"] = self.nastring
+        raw_repr["annovar protocols"] = self.protocols
+        raw_repr["annovar operations"] = self.operations
+        return raw_repr
+
+    @property
+    def input_vcf_tabix(self):
+        return self._get_job_config(ANV_PARAMS_INPUT_FILE_KEY, required=True)
+
+    @property
+    def db_dir(self):
+        return self._get_job_config(ANV_PARAMS_DB_DIR_KEY, required=True)
+
+    @property
+    def buildver(self):
+        return self._get_job_config(ANV_PARAMS_BUILDVER_KEY, required=True)
+
+    @property
+    def nastring(self):
+        return self._get_job_config(ANV_PARAMS_NASTRING_KEY, required=True)
+
+    @property
+    def protocols(self):
+        return self._get_job_config(ANV_PARAMS_DB_NAMES_KEY, required=True)
+
+    @property
+    def operations(self):
+        return self._get_job_config(ANV_PARAMS_DB_OPS_KEY, required=True)
+
+def get_annovar_params_sections(*args, **kwargs):
+    anv_params = {}
+    vcf_tabix_file = get_func_arg('vcf_tabix_file', kwargs)
+    if vcf_tabix_file is not None:
+        anv_params[ANV_PARAMS_INPUT_FILE_KEY] = vcf_tabix_file
+    anv_params[ANV_PARAMS_DB_DIR_KEY] = get_func_arg('annovar_db_dir',
+                                                     kwargs,
+                                                     DFLT_ANV_DB_DIR,
+                                                     )
+    anv_params[ANV_PARAMS_BUILDVER_KEY] = get_func_arg('annovar_buildver',
+                                                       kwargs,
+                                                       'hg19',
+                                                       )
+    anv_params[ANV_PARAMS_NASTRING_KEY] = get_func_arg('annovar_nastring',
+                                                       kwargs,
+                                                       '.',
+                                                       )
+    anv_params[ANV_PARAMS_DB_NAMES_KEY] = get_func_arg('annovar_db_names',
+                                                       kwargs,
+                                                       DFLT_ANV_DB_NAMES,
+                                                       )
+    anv_params[ANV_PARAMS_DB_OPS_KEY] = get_func_arg('annovar_db_ops',
+                                                     kwargs,
+                                                     DFLT_ANV_DB_OPS,
+                                                     )
+    return anv_params
+#                           annovar_human_db_dir=DFLT_ANV_DB_DIR,
+#                           annovar_buildver="hg19",
+#                           annovar_db_names=DFLT_ANV_DB_NAMES,
+#                           annovar_db_ops=DFLT_ANV_DB_OPS,
+#                           annovar_nastring=".",
+#ANV_PARAMS_DB_DIR_KEY = "db_dir"
+#ANV_PARAMS_BUILDVER_KEY = "buildver"
+#ANV_PARAMS_OUT_PREFIX_KEY = "out_prefix"
+#ANV_PARAMS_DB_NAMES_KEY = "db_names"
+#ANV_PARAMS_DB_OPS_KEY = "db_ops"
+#ANV_PARAMS_NASTRING_KEY = "nastring"
+#    anv_params[JOBS_SETUP_ANV_BUILDVER_KEY] = annovar_buildver
+#    anv_params[JOBS_SETUP_ANV_DB_NAMES_KEY] = annovar_db_names
+#    anv_params[JOBS_SETUP_ANV_DB_OPS_KEY] = annovar_db_ops
+#    anv_params[JOBS_SETUP_ANV_NASTRING_KEY] = annovar_nastring
+#    anv_paramsjob_setup_document[JOBS_SETUP_TABLE_ANNOVAR_PARAMS_SECTION] = anv_params
+

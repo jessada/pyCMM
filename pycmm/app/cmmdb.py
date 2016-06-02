@@ -22,11 +22,12 @@ def app_pycmm_cmmdb_cal_mut_stat(*args, **kwargs):
     if log_file is not None:
         optional_params = OrderedDict()
         optional_params['log file (-l)'] = log_file
+    pl = CMMDBPipeline(jobs_setup_file=kwargs['jobs_setup_file'])
     disp.show_config(app_description=CMMDB_MUTSTAT_DESCRIPTION,
+                     third_party_software_version=pl.get_third_party_software_version(),
                      required_params=required_params,
                      optional_params=optional_params,
                      )
-    pl = CMMDBPipeline(kwargs['jobs_setup_file'])
     pl.cal_mut_stat()
     mylogger.getLogger(__name__)
     disp.new_section_txt("F I N I S H <" + func_name + ">")
@@ -43,11 +44,11 @@ def app_pycmm_cmmdb_table_annovar(*args, **kwargs):
     if log_file is not None:
         optional_params = OrderedDict()
         optional_params['log file (-l)'] = log_file
+    pl = CMMDBPipeline(jobs_setup_file=kwargs['jobs_setup_file'])
     disp.show_config(app_description=CMMDB_TABLEANNOVAR_DESCRIPTION,
                      required_params=required_params,
                      optional_params=optional_params,
                      )
-    pl = CMMDBPipeline(kwargs['jobs_setup_file'])
     mylogger.getLogger(__name__)
     ta_params = OrderedDict()
     ta_params['vcf tabix input file'] = pl.annovar_config.input_file
@@ -83,6 +84,7 @@ def app_pycmm_cmmdb_create_jobs_setup_file(*args, **kwargs):
         optional_params['report allocation time (--rpt_alloc_time)'] = kwargs['rpt_alloc_time']
     optional_params['output jobs setup file (-o)'] = kwargs['out_jobs_setup_file']
     disp.show_config(app_description=CMMDB_CREATE_JOB_SETUP_FILE_DESCRIPTION,
+                     third_party_software_version=None,
                      required_params=required_params,
                      optional_params=optional_params,
                      )
@@ -111,7 +113,7 @@ def app_pycmm_cmmdb_create_jobs_setup_file(*args, **kwargs):
     layout_params['only summary report (--only_summary)'] = kwargs['only_summary']
     layout_params['only families report (--only_families)'] = kwargs['only_families']
     disp.disp_params_set("Report layout parameters", layout_params)
-    create_jobs_setup_file(dataset_name=kwargs['dataset_name'],
+    create_jobs_setup_file(project_name=kwargs['dataset_name'],
                            project_out_dir=kwargs['project_out_dir'],
                            vcf_tabix_file=kwargs['vcf_tabix_file'],
                            db_region=kwargs['db_region'],

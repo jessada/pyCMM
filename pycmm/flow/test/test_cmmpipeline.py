@@ -1,8 +1,7 @@
 import unittest
 from os.path import join as join_path
 from os.path import dirname
-from pycmm.settings import DFLT_FLOW_ALLOC_TIME
-from pycmm.settings import DFLT_RPT_ALLOC_TIME
+from pycmm.settings import DFLT_JOB_ALLOC_TIME
 from pycmm.template import SafeTester
 from pycmm.flow import CMMPipeline
 from pycmm.flow import create_jobs_setup_file
@@ -21,8 +20,7 @@ class TestCMMPipeline(SafeTester):
                                  project_name=None,
                                  project_out_dir=None,
                                  project_code=None,
-                                 flow_alloc_time=None,
-                                 rpt_alloc_time=None,
+                                 job_alloc_time=None,
                                  ):
         jobs_setup_file = join_path(self.working_dir,
                                     self.test_function+'_jobs_setup.txt')
@@ -33,8 +31,7 @@ class TestCMMPipeline(SafeTester):
         create_jobs_setup_file(project_name=project_name,
                                project_out_dir=project_out_dir,
                                project_code=project_code,
-                               flow_alloc_time=flow_alloc_time,
-                               rpt_alloc_time=rpt_alloc_time,
+                               job_alloc_time=job_alloc_time,
                                )
         return jobs_setup_file
 
@@ -64,31 +61,21 @@ class TestCMMPipeline(SafeTester):
         self.assertEqual(pl.project_code,
                          "b2011097",
                          "CMMPipeline cannot correctly identify 'project code' from jobs setup file")
-        self.assertEqual(pl.flow_alloc_time,
-                         DFLT_FLOW_ALLOC_TIME,
+        self.assertEqual(pl.job_alloc_time,
+                         DFLT_JOB_ALLOC_TIME,
                          "CMMPipeline cannot correctly identify 'flow allocation time' from jobs setup file")
-        self.assertEqual(pl.rpt_alloc_time,
-                         DFLT_RPT_ALLOC_TIME,
-                         "CMMPipeline cannot correctly identify 'report allocation time' from jobs setup file")
 
     def test_load_jobs_info_3(self):
         """ test if special basic CMM pipeline configurations are loaded correctly """
 
         self.init_test(self.current_func_name)
         jobs_setup_file = self.__create_jobs_setup_file(project_code="b2012247",
-                                                        flow_alloc_time="12:00:00",
-                                                        rpt_alloc_time="10:00:00",
+                                                        job_alloc_time="12:00:00",
                                                         )
         pl = CMMPipeline(jobs_setup_file)
         self.assertEqual(pl.project_code,
                          "b2012247",
                          "CMMPipeline cannot correctly identify 'project code' from jobs setup file")
-        self.assertEqual(pl.flow_alloc_time,
+        self.assertEqual(pl.job_alloc_time,
                          "12:00:00",
                          "CMMPipeline cannot correctly identify 'flow allocation time' from jobs setup file")
-        self.assertEqual(pl.rpt_alloc_time,
-                         "10:00:00",
-                         "CMMPipeline cannot correctly identify 'report allocation time' from jobs setup file")
-
-    def tearDown(self):
-        self.remove_working_dir()

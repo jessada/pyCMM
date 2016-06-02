@@ -4,6 +4,9 @@ from os.path import join as join_path
 from os.path import dirname
 from os.path import basename
 from pycmm.settings import FULL_SYSTEM_TEST
+from pycmm.settings import DFLT_ANV_DB_DIR
+from pycmm.settings import DFLT_ANV_DB_NAMES
+from pycmm.settings import DFLT_ANV_DB_OPS
 from pycmm.template import SafeTester
 from pycmm.utils import count_lines
 from pycmm.flow.mutrep import MutRepPipeline
@@ -18,9 +21,14 @@ from pycmm.cmmlib.annovarlib import MUTATIONASSESSOR_PRED_COL
 from pycmm.cmmlib.annovarlib import FATHMM_PRED_COL
 from pycmm.cmmlib.annovarlib import RADIALSVM_PRED_COL
 from pycmm.cmmlib.annovarlib import LR_PRED_COL
-from pycmm.flow.test.test_cmmdb import DFLT_ANNOVAR_TEST_DB_FOLDER
-from pycmm.flow.test.test_cmmdb import DFLT_ANNOVAR_TEST_DB_NAMES
-from pycmm.flow.test.test_cmmdb import DFLT_ANNOVAR_TEST_DB_OPS
+
+DFLT_ANV_TEST_DB_DIR = DFLT_ANV_DB_DIR
+DFLT_ANV_TEST_DB_NAMES = "refGene"
+DFLT_ANV_TEST_DB_OPS = "g"
+DFLT_ANV_TEST_DB_NAMES += ",cytoBand"
+DFLT_ANV_TEST_DB_OPS += ",r"
+DFLT_ANV_TEST_DB_NAMES += ",genomicSuperDups"
+DFLT_ANV_TEST_DB_OPS += ",r"
 
 
 class TestAnnovar(SafeTester):
