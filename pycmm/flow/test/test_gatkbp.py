@@ -23,7 +23,7 @@ def create_gatk_jobs_setup_file(test_function,
                                 working_dir,
                                 data_dir,
                                 project_code=None,
-                                flow_alloc_time=None,
+                                job_alloc_time=None,
                                 variants_calling=False,
                                 known_indels=DFLT_KNOWN_INDELS,
                                 targets_interval_list=None,
@@ -38,7 +38,7 @@ def create_gatk_jobs_setup_file(test_function,
     reference_file = join_path(data_dir, DFLT_REF_FILE)
     create_jobs_setup_file(project_name=test_function,
                            project_code=project_code,
-                           flow_alloc_time=flow_alloc_time,
+                           job_alloc_time=job_alloc_time,
                            reference_file=reference_file,
                            project_out_dir=working_dir,
                            samples_root_dir=data_dir,
@@ -64,7 +64,7 @@ class TestGATKBPPipeline(SafeTester):
 
     def __create_jobs_setup_file(self,
                                  project_code=None,
-                                 flow_alloc_time=None,
+                                 job_alloc_time=None,
                                  variants_calling=False,
                                  known_indels=DFLT_KNOWN_INDELS,
                                  targets_interval_list=None,
@@ -75,7 +75,7 @@ class TestGATKBPPipeline(SafeTester):
                                            working_dir=self.working_dir,
                                            data_dir=self.data_dir,
                                            project_code=project_code,
-                                           flow_alloc_time=flow_alloc_time,
+                                           job_alloc_time=job_alloc_time,
                                            variants_calling=variants_calling,
                                            known_indels=known_indels,
                                            targets_interval_list=targets_interval_list,
@@ -98,7 +98,7 @@ class TestGATKBPPipeline(SafeTester):
         self.assertEqual(pl.project_code,
                          None,
                          "GATKBPPipeline cannot correctly identify 'project code' from jobs setup file")
-        self.assertEqual(pl.flow_alloc_time,
+        self.assertEqual(pl.job_alloc_time,
                          None,
                          "GATKBPPipeline cannot correctly identify 'gatk allocation time' from jobs setup file")
         self.assertEqual(pl.gatk_params.known_indels[0],
@@ -203,12 +203,12 @@ class TestGATKBPPipeline(SafeTester):
                                           "targets.interval_list") 
         jobs_setup_file = self.__create_jobs_setup_file(project_code=SLOW_PROJECT_CODE,
                                                         variants_calling=True,
-                                                        flow_alloc_time="20:00:00",
+                                                        job_alloc_time="20:00:00",
                                                         targets_interval_list=targets_interval_list,
                                                         )
         pl = GATKBPPipeline(jobs_setup_file=jobs_setup_file)
         exp_project_name = self.test_function
-        self.assertEqual(pl.flow_alloc_time,
+        self.assertEqual(pl.job_alloc_time,
                          "20:00:00",
                          "GATKBPPipeline cannot correctly identify 'gatk allocation time' from jobs setup file")
         self.assertEqual(pl.gatk_params.variants_calling,
@@ -835,6 +835,3 @@ class TestGATKBPPipeline(SafeTester):
 #                         " garbage collecting process doesn't work properly")
 #        self.assertFalse(path_exists(sorted_reads_dest),
 #                         " garbage collecting process doesn't work properly")
-
-    def tearDown(self):
-        self.remove_working_dir()

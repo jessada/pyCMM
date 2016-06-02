@@ -1,3 +1,5 @@
+import yaml
+from os.path import isfile
 from collections import OrderedDict
 from pycmm.template import pyCMMBase
 from pycmm.cmmlib import CMMParams
@@ -13,8 +15,9 @@ NO_FAMILY = "NO_FAMILY"
 class Sample(CMMParams):
     """  To parse and structure family member information """
 
-    def __init__(self, member_info, **kwargs):
+    def __init__(self, member_info, fam_id=None, **kwargs):
         self.__gts = None
+        self.__fam_id = fam_id
         kwargs["entries"] = member_info
         super(Sample, self).__init__(**kwargs)
 
@@ -26,6 +29,10 @@ class Sample(CMMParams):
     @property
     def sample_id(self):
         return self._get_job_config(JOBS_SETUP_SAMPLE_ID_KEY, required=True)
+
+    @property
+    def fam_id(self):
+        return self.__fam_id
 
     @property
     def gts(self):
@@ -57,7 +64,8 @@ class Family(CMMParams):
     @property
     def members(self):
         if self.__members is None:
-            self.__members = map(lambda x: Sample(member_info=x),
+            self.__members = map(lambda x: Sample(member_info=x,
+                                                  fam_id=self.fam_id),
                                  self._get_job_config(JOBS_SETUP_MEMBERS_LIST_KEY,
                                                       required=True)
                                  )
@@ -108,13 +116,25 @@ class SamplesInfo(pyCMMBase):
             return None
         return map(lambda x: x.sample_id, self.samples_list)
 
-def params_to_yaml(**kwargs):
-    yaml = {}
+    @property
+    def samples_id_w_fam_pref(self):
+        if self.samples_list is None:
+            return None
+        return map(lambda x: x.fam_id+"-"+x.sample_id,
+                   self.samples_list)
+
+def params_to_yaml_doc(**kwargs):
+    yaml_doc = {}
     if 'sample_info' not in kwargs:
-        return yaml
+        return yaml_doc
     sample_info = kwargs['sample_info']
     if sample_info is None:
-        return yaml
+        return yaml_doc
+    if isfile(sample_info):
+        s_stream = file(sample_info, "r")
+        document = yaml.safe_load(s_stream)
+        yaml_doc[JOBS_SETUP_SAMPLES_INFOS_KEY] = document[JOBS_SETUP_SAMPLES_INFOS_KEY]
+        return yaml_doc
     families = []
     samples_w_no_fam = []
     for raw_family_info in sample_info.split(","):
@@ -138,5 +158,5 @@ def params_to_yaml(**kwargs):
         family_info[JOBS_SETUP_FAMILY_ID_KEY] = '"' + NO_FAMILY + '"'
         family_info[JOBS_SETUP_MEMBERS_LIST_KEY] = samples_w_no_fam
         families.append(family_info)
-    yaml[JOBS_SETUP_SAMPLES_INFOS_KEY] = families
-    return yaml
+    yaml_doc[JOBS_SETUP_SAMPLES_INFOS_KEY] = families
+    return yaml_doc

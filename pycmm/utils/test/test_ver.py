@@ -45,6 +45,10 @@ class TestVersionManager(SafeTester):
                         "Cannot identify version of table_annovar")
         self.assertTrue(len(vm.table_annovar_version.split('\n')) == 1,
                         "Cannot identify version of table_annovar")
+        self.assertTrue(vm.vcftools_version > 0,
+                        "Cannot identify version of vcftools")
+        self.assertTrue(len(vm.vcftools_version.split('\n')) == 1,
+                        "Cannot identify version of vcftools")
 
     def tearDown(self):
         self.remove_working_dir()

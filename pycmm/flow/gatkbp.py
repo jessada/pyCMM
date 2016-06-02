@@ -266,7 +266,7 @@ class GATKBPPipeline(CMMPipeline):
         self.__init_properties()
 
     def get_raw_repr(self, **kwargs):
-        raw_repr = super(GATKSample, self).get_raw_repr(**kwargs)
+        raw_repr = super(GATKBPPipeline, self).get_raw_repr(**kwargs)
         raw_repr["dataset name"] = self.dataset_name
         raw_repr["GATK parameters"] = self.gatk_params
         raw_repr["samples"] = self.samples
@@ -275,16 +275,8 @@ class GATKBPPipeline(CMMPipeline):
     def __init_properties(self):
         for sample_id in self.samples:
             sample = self.samples[sample_id]
-#            sample.working_dir =join_path(self.working_dir,
-#                                      sample_id)
-#            sample.pdf_out_dir = self.pdf_out_dir
             sample.bam_out_dir = self.bam_out_dir
             sample.gvcf_out_dir = self.gvcf_out_dir
-#            self.create_dir(sample.working_dir)
-
-    @property
-    def dataset_name(self):
-        return self.project_name
 
     @property
     def gatk_params(self):
@@ -662,7 +654,7 @@ class GATKBPPipeline(CMMPipeline):
             return self.combined_gvcfs_file
         else:
             self._submit_slurm_job(job_name,
-                                   "2",
+                                   "6",
                                    job_script,
                                    job_params,
                                    email=self.gatk_params.dataset_usage_mail,
@@ -698,7 +690,7 @@ class GATKBPPipeline(CMMPipeline):
             return self.combined_gvcfs_file
         else:
             self._submit_slurm_job(job_name,
-                                   "2",
+                                   "4",
                                    job_script,
                                    job_params,
                                    email=self.gatk_params.dataset_usage_mail,
@@ -738,16 +730,14 @@ def create_jobs_setup_file(project_name,
                            dataset_usage_mail=False,
                            sample_usage_mail={},
                            project_code=None,
-                           flow_alloc_time=None,
-                           rpt_alloc_time=None,
+                           job_alloc_time=None,
                            jobs_report_file=None,
                            out_jobs_setup_file=None,
                            ):
     job_setup_document, stream = init_jobs_setup_file(project_name=project_name,
                                                       project_out_dir=project_out_dir,
                                                       project_code=project_code,
-                                                      flow_alloc_time=flow_alloc_time,
-                                                      rpt_alloc_time=rpt_alloc_time,
+                                                      job_alloc_time=job_alloc_time,
                                                       sample_info=None,
                                                       jobs_report_file=jobs_report_file,
                                                       out_jobs_setup_file=out_jobs_setup_file,

@@ -40,7 +40,7 @@ class pyCMMBase(object):
 
     def remove_dir(self, dir_name):
         if os.path.exists(dir_name):
-            shutil.rmtree(dir_name)
+            shutil.rmtree(dir_name, ignore_errors=True)
 
     def create_dir(self, dir_name):
         if not os.path.exists(dir_name):
