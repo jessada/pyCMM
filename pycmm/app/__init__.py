@@ -31,6 +31,7 @@ def display_configs(func_name,
         gatk_params['dbsnp file'] = pl.gatk_params.dbsnp
         gatk_params['variants calling'] = pl.gatk_params.variants_calling
         gatk_params['targets interval list'] = pl.gatk_params.targets_interval_list
+        gatk_params['split chromosome regions'] = pl.gatk_params.split_regions_file
         gatk_params['dataset usage mail'] = pl.gatk_params.dataset_usage_mail
         disp.disp_params_set("GATK DNA-Seq Best Practice parameters", gatk_params)
     disp.new_section_txt(" . . . E X E C U T I N G . . . ")

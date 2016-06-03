@@ -27,8 +27,10 @@ def create_gatk_jobs_setup_file(test_function,
                                 variants_calling=False,
                                 known_indels=DFLT_KNOWN_INDELS,
                                 targets_interval_list=None,
+                                split_regions_file=None,
                                 dataset_usage_mail=False,
                                 sample_usage_mail={},
+                                preprocess_sample=True,
                                 ):
     jobs_setup_file = join_path(working_dir, test_function+'_jobs_setup.txt')
     known_indels_file = []
@@ -46,8 +48,10 @@ def create_gatk_jobs_setup_file(test_function,
                            known_indels_file=known_indels_file,
                            dbsnp_file=dbsnp_file,
                            targets_interval_list=targets_interval_list,
+                           split_regions_file=split_regions_file,
                            dataset_usage_mail=dataset_usage_mail,
                            sample_usage_mail=sample_usage_mail,
+                           preprocess_sample=preprocess_sample,
                            out_jobs_setup_file=jobs_setup_file,
                            )
     return jobs_setup_file
@@ -68,8 +72,10 @@ class TestGATKBPPipeline(SafeTester):
                                  variants_calling=False,
                                  known_indels=DFLT_KNOWN_INDELS,
                                  targets_interval_list=None,
+                                 split_regions_file=None,
                                  dataset_usage_mail=False,
                                  sample_usage_mail={},
+                                 preprocess_sample=True,
                                  ):
         return create_gatk_jobs_setup_file(test_function=self.test_function,
                                            working_dir=self.working_dir,
@@ -79,8 +85,10 @@ class TestGATKBPPipeline(SafeTester):
                                            variants_calling=variants_calling,
                                            known_indels=known_indels,
                                            targets_interval_list=targets_interval_list,
+                                           split_regions_file=split_regions_file,
                                            dataset_usage_mail=dataset_usage_mail,
                                            sample_usage_mail=sample_usage_mail,
+                                           preprocess_sample=preprocess_sample,
                                            )
 
     def test_load_jobs_info_1(self):
@@ -125,6 +133,9 @@ class TestGATKBPPipeline(SafeTester):
         self.assertEqual(pl.gatk_params.targets_interval_list,
                          None,
                          "GATKBPPipeline cannot correctly identify 'targets.interval_list' from jobs setup file")
+        self.assertEqual(pl.gatk_params.split_regions_file,
+                         None,
+                         "GATKBPPipeline cannot correctly identify 'split regions list' from jobs setup file")
         self.assertEqual(pl.gatk_params.dataset_usage_mail,
                          False,
                          "GATKBPPipeline cannot correctly identify 'usage mail' from jobs setup file")
@@ -181,6 +192,9 @@ class TestGATKBPPipeline(SafeTester):
         self.assertEqual(pl.samples[test_sample_id_2].encoding,
                          ENCODING_ILLUMINA_1_5,
                          "GATKBPPipeline cannot correctly read sample information from jobs setup file")
+        self.assertEqual(pl.samples[test_sample_id_2].preprocess_sample,
+                         True,
+                         "GATKBPPipeline cannot correctly read sample information from jobs setup file")
         test_sample_id_4 = 'test_sample_4'
         self.assertEqual(pl.samples[test_sample_id_4].encoding,
                          ENCODING_ILLUMINA_1_8,
@@ -197,14 +211,19 @@ class TestGATKBPPipeline(SafeTester):
     def test_load_jobs_info_2(self):
         """ test if modified job configurations are loaded correctly """
 
+        self.individual_debug = True
         self.init_test(self.current_func_name)
         job_name = self.test_function
         targets_interval_list = join_path(self.data_dir,
                                           "targets.interval_list") 
+        split_regions_file = join_path(self.data_dir,
+                                       "split.regions_file") 
         jobs_setup_file = self.__create_jobs_setup_file(project_code=SLOW_PROJECT_CODE,
                                                         variants_calling=True,
                                                         job_alloc_time="20:00:00",
                                                         targets_interval_list=targets_interval_list,
+                                                        split_regions_file=split_regions_file,
+                                                        preprocess_sample=False,
                                                         )
         pl = GATKBPPipeline(jobs_setup_file=jobs_setup_file)
         exp_project_name = self.test_function
@@ -217,184 +236,321 @@ class TestGATKBPPipeline(SafeTester):
         self.assertEqual(pl.gatk_params.targets_interval_list,
                          targets_interval_list,
                          "GATKBPPipeline cannot correctly identify 'targets.interval_list' from jobs setup file")
-
-# ************************************** test very small sequence w/o indel **************************************
-    @unittest.skipUnless(FULL_SYSTEM_TEST or GATKBP_TEST, "taking too long time to test")
-    def test_bwa_mem_1(self):
-        """ test basic bwa mem (w/o indel), a normal pair of small fastq files """
-
-        self.init_test(self.current_func_name)
-        jobs_setup_file = self.__create_jobs_setup_file()
-        sample_id = "test-S_sample"
-        pl = GATKBPPipeline(jobs_setup_file=jobs_setup_file)
-        result = pl.bwa_mem(sample_id)
-        exp_result = join_path(self.data_dir,
-                               "exp_result")
-        self.assertTrue(filecmp.cmp(result,
-                                    exp_result),
-                        "bwa-mem doesn't function correctly")
+        self.assertEqual(pl.gatk_params.split_regions_file,
+                         split_regions_file,
+                         "GATKBPPipeline cannot correctly identify 'split regions list' from jobs setup file")
+        test_sample_id_2 = 'test_sample_2'
+        self.assertEqual(pl.samples[test_sample_id_2].preprocess_sample,
+                         False,
+                         "GATKBPPipeline cannot correctly read sample information from jobs setup file")
+        self.assertEqual(len(pl.gatk_params.split_regions_txt_list),
+                         3,
+                         "GATKBPPipeline cannot correctly identify 'split regions list' from jobs setup file")
+        self.assertEqual(pl.gatk_params.split_regions_txt_list[1],
+                         '19_57742321_57742390',
+                         "GATKBPPipeline cannot correctly identify 'split regions list' from jobs setup file")
 
     @unittest.skipUnless(FULL_SYSTEM_TEST or GATKBP_TEST, "taking too long time to test")
-    def test_sort_sam_1(self):
-        """ test basic sort sam (w/o indel), a sam file from one pair of small fastq files """
+    def test_split_gvcfs_01(self):
+        """
+        test basic split gvcf produced by sample preprocessing.
+        input are result from normal pairs of small fastq files
+        """
 
         self.init_test(self.current_func_name)
-        jobs_setup_file = self.__create_jobs_setup_file()
-        sample_id = "test-S_sample"
+        split_regions_file = join_path(self.data_dir,
+                                       "split.regions_file") 
+        jobs_setup_file = self.__create_jobs_setup_file(split_regions_file=split_regions_file)
         pl = GATKBPPipeline(jobs_setup_file=jobs_setup_file)
-        sam_file = join_path(self.data_dir,
-                             sample_id+".sam")
-        result = pl.sort_sam(sample_id, sam_file=sam_file)
-        exp_result = join_path(self.data_dir,
-                               "exp_result")
-        self.assertTrue(filecmp.cmp(result,
-                                    exp_result),
-                        "SortSam doesn't function correctly")
+        for sample_id in pl.samples_id:
+            gvcf_file = join_path(join_path(self.data_dir,
+                                            "gvcf"),
+                                  sample_id+".g.vcf.gz")
+            pl.copy_file(gvcf_file,
+                         pl.gvcf_out_dir)
+            tbi_file = join_path(join_path(self.data_dir,
+                                           "gvcf"),
+                                  sample_id+".g.vcf.gz.tbi")
+            pl.copy_file(tbi_file,
+                         pl.gvcf_out_dir)
+        pl.split_gvcfs()
+        region_txt = pl.gatk_params.split_regions_txt_list[0]
+        split_gz = join_path(join_path(pl.split_gvcfs_out_dir,
+                                       region_txt),
+                             pl.samples_id[0]+"."+region_txt+".g.vcf.gz")
+        self.assertEqual(file_size(split_gz),
+                         4523,
+                         "split_gvcfs doesn't function correctly")
+        region_txt = pl.gatk_params.split_regions_txt_list[1]
+        split_tbi = join_path(join_path(pl.split_gvcfs_out_dir,
+                                        region_txt),
+                              pl.samples_id[0]+"."+region_txt+".g.vcf.gz.tbi")
+        self.assertEqual(file_size(split_tbi),
+                         174,
+                         "split_gvcfs doesn't function correctly")
+                                          
+    @unittest.skipUnless(FULL_SYSTEM_TEST or GATKBP_TEST, "taking too long time to test")
+    def test_combine_gvcfs_01(self):
+        """
+        test combine split gvcf files. Input are result from normal pairs of
+        small fastq files
+        """
+
+        self.init_test(self.current_func_name)
+        split_regions_file = join_path(self.data_dir,
+                                       "split.regions_file") 
+        jobs_setup_file = self.__create_jobs_setup_file(split_regions_file=split_regions_file)
+        pl = GATKBPPipeline(jobs_setup_file=jobs_setup_file)
+        src_dir = join_path(self.data_dir,
+                            'split_gvcfs')
+        cmd = "cp -r"
+        cmd += " " + src_dir
+        cmd += " " + pl.working_dir
+        self.exec_sh(cmd)
+        region_txt = pl.gatk_params.split_regions_txt_list[2]
+        out_file = pl.combine_gvcfs(region_txt=region_txt)
+        self.assertTrue(file_size(out_file) > 5000,
+                        "combine gvcfs doesn't function correctly")
 
     @unittest.skipUnless(FULL_SYSTEM_TEST or GATKBP_TEST, "taking too long time to test")
-    def test_mark_dup_1(self):
-        """ test mark duplicate (w/o indel) (small bam) """
+    def test_genotype_gvcfs_01(self):
+        """
+        test GATK genotype gvcfs function. Input are result from normal pairs of
+        small fastq files
+        """
 
         self.init_test(self.current_func_name)
-        jobs_setup_file = self.__create_jobs_setup_file()
-        sample_id = "test-S_sample"
-        bam_file = join_path(self.data_dir,
-                             sample_id+"_sorted_reads.bam")
+        split_regions_file = join_path(self.data_dir,
+                                       "split.regions_file") 
+        jobs_setup_file = self.__create_jobs_setup_file(split_regions_file=split_regions_file)
         pl = GATKBPPipeline(jobs_setup_file=jobs_setup_file)
-        result = pl.mark_dup(sample_id, bam_file=bam_file)
-        exp_result = join_path(self.data_dir,
-                               "exp_result")
-        self.assertTrue(filecmp.cmp(result,
-                                    exp_result),
-                        "MarkDuplicates doesn't function correctly")
+        src_dir = join_path(self.data_dir,
+                            'tmp')
+        cmd = "cp -r"
+        cmd += " " + src_dir
+        cmd += " " + pl.project_out_dir
+        self.exec_sh(cmd)
+        region_txt = pl.gatk_params.split_regions_txt_list[2]
+        out_file = pl.genotype_gvcfs(region_txt=region_txt)
+        self.assertTrue(file_size(out_file) > 5000,
+                        "genotype gvcfs doesn't function correctly")
 
-    @unittest.skipUnless(FULL_SYSTEM_TEST or GATKBP_TEST, "taking too long time to test")
-    def test_base_recal_1(self):
-        """ test standard base recalibration (w/o indel) (small) """
-
-        self.init_test(self.current_func_name)
-        jobs_setup_file = self.__create_jobs_setup_file()
-        sample_id = "test-S_sample"
-        pl = GATKBPPipeline(jobs_setup_file=jobs_setup_file)
-        bam_file = join_path(self.data_dir,
-                             sample_id+"_realigned_reads.bam")
-        result = pl.base_recal(sample_id, bam_file=bam_file)
-        exp_result = join_path(self.data_dir,
-                               "exp_result")
-        self.assertTrue(filecmp.cmp(result,
-                                    exp_result),
-                        "BaseRecalibrator doesn't function correctly")
-
-    @unittest.skipUnless(FULL_SYSTEM_TEST or GATKBP_TEST, "taking too long time to test")
-    def test_haplotype_caller_1(self):
-        """ test haplotype caller with small data size (w/o indel) """
-
-        self.init_test(self.current_func_name)
-        targets_interval_list = join_path(self.data_dir,
-                                          "targets.interval_list") 
-        jobs_setup_file = self.__create_jobs_setup_file(targets_interval_list=targets_interval_list)
-        sample_id = "test-S_sample"
-        dedup_reads_file = join_path(self.data_dir,
-                                     sample_id+"_recal_reads.bam")
-        pl = GATKBPPipeline(jobs_setup_file=jobs_setup_file)
-        result = pl.hap_cal(sample_id, 
-                            bam_file=dedup_reads_file,
-                            )
-        exp_result = join_path(self.data_dir,
-                               "exp_result")
-        self.assertTrue(file_size(result) > 5000,
-                        "HaplotypeCaller doesn't function correctly")
-# ************************************** test very small sequence w/o indel **************************************
-
-# ************************************** test very small sequence with indel **************************************
-    @unittest.skipUnless(FULL_SYSTEM_TEST or GATKBP_TEST, "taking too long time to test")
-    def test_bwa_mem_2(self):
-        """ test basic bwa mem with indel, a normal pair of small fastq files """
-
-        self.init_test(self.current_func_name)
-        jobs_setup_file = self.__create_jobs_setup_file()
-        sample_id = "test-S_sample_w_indel"
-        pl = GATKBPPipeline(jobs_setup_file=jobs_setup_file)
-        result = pl.bwa_mem(sample_id)
-        exp_result = join_path(self.data_dir,
-                               "exp_result")
-        self.assertTrue(filecmp.cmp(result,
-                                    exp_result),
-                        "bwa-mem doesn't function correctly")
-
-    @unittest.skipUnless(FULL_SYSTEM_TEST or GATKBP_TEST, "taking too long time to test")
-    def test_sort_sam_2(self):
-        """ test basic sort sam with indel, a sam file from one pair of small fastq files """
-
-        self.init_test(self.current_func_name)
-        jobs_setup_file = self.__create_jobs_setup_file()
-        sample_id = "test-S_sample_w_indel"
-        pl = GATKBPPipeline(jobs_setup_file=jobs_setup_file)
-        sam_file = join_path(self.data_dir,
-                             sample_id+".sam")
-        result = pl.sort_sam(sample_id, sam_file=sam_file)
-        exp_result = join_path(self.data_dir,
-                               "exp_result")
-        self.assertTrue(filecmp.cmp(result,
-                                    exp_result),
-                        "SortSam doesn't function correctly")
-
-    @unittest.skipUnless(FULL_SYSTEM_TEST or GATKBP_TEST, "taking too long time to test")
-    def test_mark_dup_2(self):
-        """ test mark duplicate with indel (small bam) """
-
-        self.init_test(self.current_func_name)
-        jobs_setup_file = self.__create_jobs_setup_file()
-        sample_id = "test-S_sample_w_indel"
-        bam_file = join_path(self.data_dir,
-                             sample_id+"_sorted_reads.bam")
-        pl = GATKBPPipeline(jobs_setup_file=jobs_setup_file)
-        result = pl.mark_dup(sample_id, bam_file=bam_file)
-        exp_result = join_path(self.data_dir,
-                               "exp_result")
-        self.assertTrue(filecmp.cmp(result,
-                                    exp_result),
-                        "MarkDuplicates doesn't function correctly")
-
-#    # too elaborate to setup a test
-#    # with known indels, it results in millions of re-alignment sites
-#    # without know indels, it results in no re-alignment sites
 #    @unittest.skipUnless(FULL_SYSTEM_TEST or GATKBP_TEST, "taking too long time to test")
-#    def test_create_intervals_2(self):
-#        """ test standard creating indels target intervals (small) """
+    def test_preprocess_dataset_01(self):
+        """
+        test dataset processing without sample preprocessing steps.
+        Input are result from normal pairs of small fastq files
+        """
+
+        self.individual_debug = True
+        self.init_test(self.current_func_name)
+        split_regions_file = join_path(self.data_dir,
+                                       "split.regions_file") 
+        jobs_setup_file = self.__create_jobs_setup_file(split_regions_file=split_regions_file,
+                                                        preprocess_sample=False,
+                                                        variants_calling=True,
+                                                        )
+        pl = GATKBPPipeline(jobs_setup_file=jobs_setup_file)
+        for sample_id in pl.samples_id:
+            gvcf_file = join_path(join_path(self.data_dir,
+                                            "gvcf"),
+                                  sample_id+".g.vcf.gz")
+            pl.copy_file(gvcf_file,
+                         pl.gvcf_out_dir)
+            tbi_file = join_path(join_path(self.data_dir,
+                                           "gvcf"),
+                                  sample_id+".g.vcf.gz.tbi")
+            pl.copy_file(tbi_file,
+                         pl.gvcf_out_dir)
+        pl.preprocess_dataset()
+#        src_dir = join_path(self.data_dir,
+#                            'tmp')
+#        cmd = "cp -r"
+#        cmd += " " + src_dir
+#        cmd += " " + pl.project_out_dir
+#        self.exec_sh(cmd)
+#        region_txt = pl.gatk_params.split_regions_txt_list[2]
+#        out_file = pl.genotype_gvcfs(region_txt=region_txt)
+#        self.assertTrue(file_size(out_file) > 5000,
+#                        "genotype gvcfs doesn't function correctly")
+
+## ************************************** test very small sequence w/o indel **************************************
+#    @unittest.skipUnless(FULL_SYSTEM_TEST or GATKBP_TEST, "taking too long time to test")
+#    def test_bwa_mem_1(self):
+#        """ test basic bwa mem (w/o indel), a normal pair of small fastq files """
 #
-#        self.individual_debug = True
 #        self.init_test(self.current_func_name)
-#        jobs_setup_file = self.__create_jobs_setup_file(known_indels=[])
-#        sample_id = "test-S_sample_w_indel"
+#        jobs_setup_file = self.__create_jobs_setup_file()
+#        sample_id = "test-S_sample"
 #        pl = GATKBPPipeline(jobs_setup_file=jobs_setup_file)
-#        bam_file = join_path(self.data_dir,
-#                             sample_id+"_dedup_reads.bam")
-#        result = pl.create_intervals(sample_id, bam_file=bam_file)
+#        result = pl.bwa_mem(sample_id)
 #        exp_result = join_path(self.data_dir,
 #                               "exp_result")
 #        self.assertTrue(filecmp.cmp(result,
 #                                    exp_result),
-#                        "RealignerTargetCreator doesn't function correctly")
+#                        "bwa-mem doesn't function correctly")
 #
 #    @unittest.skipUnless(FULL_SYSTEM_TEST or GATKBP_TEST, "taking too long time to test")
-#    def test_indels_realign_2(self):
-#        """ test standard indel realignment (small) """
+#    def test_sort_sam_1(self):
+#        """ test basic sort sam (w/o indel), a sam file from one pair of small fastq files """
 #
-#        self.individual_debug = True
 #        self.init_test(self.current_func_name)
-#        jobs_setup_file = self.__create_jobs_setup_file(known_indels=[])
+#        jobs_setup_file = self.__create_jobs_setup_file()
+#        sample_id = "test-S_sample"
+#        pl = GATKBPPipeline(jobs_setup_file=jobs_setup_file)
+#        sam_file = join_path(self.data_dir,
+#                             sample_id+".sam")
+#        result = pl.sort_sam(sample_id, sam_file=sam_file)
+#        exp_result = join_path(self.data_dir,
+#                               "exp_result")
+#        self.assertTrue(filecmp.cmp(result,
+#                                    exp_result),
+#                        "SortSam doesn't function correctly")
+#
+#    @unittest.skipUnless(FULL_SYSTEM_TEST or GATKBP_TEST, "taking too long time to test")
+#    def test_mark_dup_1(self):
+#        """ test mark duplicate (w/o indel) (small bam) """
+#
+#        self.init_test(self.current_func_name)
+#        jobs_setup_file = self.__create_jobs_setup_file()
+#        sample_id = "test-S_sample"
+#        bam_file = join_path(self.data_dir,
+#                             sample_id+"_sorted_reads.bam")
+#        pl = GATKBPPipeline(jobs_setup_file=jobs_setup_file)
+#        result = pl.mark_dup(sample_id, bam_file=bam_file)
+#        exp_result = join_path(self.data_dir,
+#                               "exp_result")
+#        self.assertTrue(filecmp.cmp(result,
+#                                    exp_result),
+#                        "MarkDuplicates doesn't function correctly")
+#
+#    @unittest.skipUnless(FULL_SYSTEM_TEST or GATKBP_TEST, "taking too long time to test")
+#    def test_base_recal_1(self):
+#        """ test standard base recalibration (w/o indel) (small) """
+#
+#        self.init_test(self.current_func_name)
+#        jobs_setup_file = self.__create_jobs_setup_file()
 #        sample_id = "test-S_sample"
 #        pl = GATKBPPipeline(jobs_setup_file=jobs_setup_file)
 #        bam_file = join_path(self.data_dir,
-#                             sample_id+"_dedup_reads.bam")
-#        indels_target_intervals_file = join_path(self.data_dir,
-#                                                 'indels_target_intervals.list')
-#        pl.indels_realign(sample_id,
-#                          bam_file=bam_file,
-#                          indels_target_intervals_file=indels_target_intervals_file,
-#                          )
-# ************************************** test very small sequence with indel **************************************
+#                             sample_id+"_realigned_reads.bam")
+#        result = pl.base_recal(sample_id, bam_file=bam_file)
+#        exp_result = join_path(self.data_dir,
+#                               "exp_result")
+#        self.assertTrue(filecmp.cmp(result,
+#                                    exp_result),
+#                        "BaseRecalibrator doesn't function correctly")
+#
+#    @unittest.skipUnless(FULL_SYSTEM_TEST or GATKBP_TEST, "taking too long time to test")
+#    def test_haplotype_caller_1(self):
+#        """ test haplotype caller with small data size (w/o indel) """
+#
+#        self.init_test(self.current_func_name)
+#        targets_interval_list = join_path(self.data_dir,
+#                                          "targets.interval_list") 
+#        jobs_setup_file = self.__create_jobs_setup_file(targets_interval_list=targets_interval_list)
+#        sample_id = "test-S_sample"
+#        dedup_reads_file = join_path(self.data_dir,
+#                                     sample_id+"_recal_reads.bam")
+#        pl = GATKBPPipeline(jobs_setup_file=jobs_setup_file)
+#        result = pl.hap_cal(sample_id, 
+#                            bam_file=dedup_reads_file,
+#                            )
+#        exp_result = join_path(self.data_dir,
+#                               "exp_result")
+#        self.assertTrue(file_size(result) > 5000,
+#                        "HaplotypeCaller doesn't function correctly")
+## ************************************** test very small sequence w/o indel **************************************
+#
+## ************************************** test very small sequence with indel **************************************
+#    @unittest.skipUnless(FULL_SYSTEM_TEST or GATKBP_TEST, "taking too long time to test")
+#    def test_bwa_mem_2(self):
+#        """ test basic bwa mem with indel, a normal pair of small fastq files """
+#
+#        self.init_test(self.current_func_name)
+#        jobs_setup_file = self.__create_jobs_setup_file()
+#        sample_id = "test-S_sample_w_indel"
+#        pl = GATKBPPipeline(jobs_setup_file=jobs_setup_file)
+#        result = pl.bwa_mem(sample_id)
+#        exp_result = join_path(self.data_dir,
+#                               "exp_result")
+#        self.assertTrue(filecmp.cmp(result,
+#                                    exp_result),
+#                        "bwa-mem doesn't function correctly")
+#
+#    @unittest.skipUnless(FULL_SYSTEM_TEST or GATKBP_TEST, "taking too long time to test")
+#    def test_sort_sam_2(self):
+#        """ test basic sort sam with indel, a sam file from one pair of small fastq files """
+#
+#        self.init_test(self.current_func_name)
+#        jobs_setup_file = self.__create_jobs_setup_file()
+#        sample_id = "test-S_sample_w_indel"
+#        pl = GATKBPPipeline(jobs_setup_file=jobs_setup_file)
+#        sam_file = join_path(self.data_dir,
+#                             sample_id+".sam")
+#        result = pl.sort_sam(sample_id, sam_file=sam_file)
+#        exp_result = join_path(self.data_dir,
+#                               "exp_result")
+#        self.assertTrue(filecmp.cmp(result,
+#                                    exp_result),
+#                        "SortSam doesn't function correctly")
+#
+#    @unittest.skipUnless(FULL_SYSTEM_TEST or GATKBP_TEST, "taking too long time to test")
+#    def test_mark_dup_2(self):
+#        """ test mark duplicate with indel (small bam) """
+#
+#        self.init_test(self.current_func_name)
+#        jobs_setup_file = self.__create_jobs_setup_file()
+#        sample_id = "test-S_sample_w_indel"
+#        bam_file = join_path(self.data_dir,
+#                             sample_id+"_sorted_reads.bam")
+#        pl = GATKBPPipeline(jobs_setup_file=jobs_setup_file)
+#        result = pl.mark_dup(sample_id, bam_file=bam_file)
+#        exp_result = join_path(self.data_dir,
+#                               "exp_result")
+#        self.assertTrue(filecmp.cmp(result,
+#                                    exp_result),
+#                        "MarkDuplicates doesn't function correctly")
+#
+##    # too elaborate to setup a test
+##    # with known indels, it results in millions of re-alignment sites
+##    # without know indels, it results in no re-alignment sites
+##    @unittest.skipUnless(FULL_SYSTEM_TEST or GATKBP_TEST, "taking too long time to test")
+##    def test_create_intervals_2(self):
+##        """ test standard creating indels target intervals (small) """
+##
+##        self.individual_debug = True
+##        self.init_test(self.current_func_name)
+##        jobs_setup_file = self.__create_jobs_setup_file(known_indels=[])
+##        sample_id = "test-S_sample_w_indel"
+##        pl = GATKBPPipeline(jobs_setup_file=jobs_setup_file)
+##        bam_file = join_path(self.data_dir,
+##                             sample_id+"_dedup_reads.bam")
+##        result = pl.create_intervals(sample_id, bam_file=bam_file)
+##        exp_result = join_path(self.data_dir,
+##                               "exp_result")
+##        self.assertTrue(filecmp.cmp(result,
+##                                    exp_result),
+##                        "RealignerTargetCreator doesn't function correctly")
+##
+##    @unittest.skipUnless(FULL_SYSTEM_TEST or GATKBP_TEST, "taking too long time to test")
+##    def test_indels_realign_2(self):
+##        """ test standard indel realignment (small) """
+##
+##        self.individual_debug = True
+##        self.init_test(self.current_func_name)
+##        jobs_setup_file = self.__create_jobs_setup_file(known_indels=[])
+##        sample_id = "test-S_sample"
+##        pl = GATKBPPipeline(jobs_setup_file=jobs_setup_file)
+##        bam_file = join_path(self.data_dir,
+##                             sample_id+"_dedup_reads.bam")
+##        indels_target_intervals_file = join_path(self.data_dir,
+##                                                 'indels_target_intervals.list')
+##        pl.indels_realign(sample_id,
+##                          bam_file=bam_file,
+##                          indels_target_intervals_file=indels_target_intervals_file,
+##                          )
+## ************************************** test very small sequence with indel **************************************
 
 
 

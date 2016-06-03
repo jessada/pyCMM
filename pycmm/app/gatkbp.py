@@ -26,8 +26,11 @@ def app_pycmm_gatkbp_create_jobs_setup_file(*args, **kwargs):
     if kwargs['dbsnp_file'] is not None:
         optional_params['dbSNP (--dbsnp)'] = kwargs['dbsnp_file']
     optional_params['variants calling (--variants_calling)'] = kwargs['variants_calling']
+    optional_params['preprocess sample (--preprocess_sample)'] = kwargs['preprocess_sample']
     if kwargs['targets_interval_list'] is not None:
         optional_params['targets interval list (--targets_interval_list)'] = kwargs['targets_interval_list']
+    if kwargs['split_regions_file'] is not None:
+        optional_params['split chromosome regions (--split_regions_file)'] = kwargs['split_regions_file']
     optional_params['output jobs setup file (-o)'] = kwargs['out_jobs_setup_file']
     disp.show_config(app_description=DNASEQ_PIPELINE_DESCRIPTION,
                      third_party_software_version=None,
@@ -44,6 +47,8 @@ def app_pycmm_gatkbp_create_jobs_setup_file(*args, **kwargs):
                            dbsnp_file=kwargs['dbsnp_file'],
                            variants_calling=kwargs['variants_calling'],
                            targets_interval_list=kwargs['targets_interval_list'],
+                           split_regions_file=kwargs['split_regions_file'],
+                           preprocess_sample=kwargs['preprocess_sample'],
                            out_jobs_setup_file=kwargs['out_jobs_setup_file'],
                            )
     mylogger.getLogger(__name__)
