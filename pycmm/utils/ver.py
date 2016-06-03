@@ -68,7 +68,6 @@ class VersionManager(pyCMMBase):
     @property
     def vcftools_version(self):
         p, data = exec_sh("vcftools", silent=True)
-        self.dbg(data)
         search_result = re.search("(\d+\.){0,3}(\d+)", data)
         return search_result.group(0)
 

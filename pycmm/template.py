@@ -67,6 +67,15 @@ class pyCMMBase(object):
         else:
             shutil.copy(src, dst)
 
+    def copytree(src, dst, symlinks=False, ignore=None):
+        for item in os.listdir(src):
+            src_item = os.path.join(src, item)
+            dst_item = os.path.join(dst, item)
+            if os.path.isdir(s):
+                shutil.copytree(src_item, dst_item, symlinks, ignore)
+            else:
+                shutil.copy2(src_item, dst_item)
+
     def dbg(self, dbg_msg=""):
         if DEBUG_MODE:
             frm = inspect.stack()[1]

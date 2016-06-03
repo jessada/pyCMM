@@ -26,6 +26,7 @@ from pycmm.utils.ver import VersionManager
 #BASE_RECAL_SCRIPT = "$PYCMM/bash/GATKBP_base_recal.sh"
 #HAPLOTYPE_CALLER_SCRIPT = "$PYCMM/bash/GATKBP_haplotype_caller.sh"
 PREPROCESS_SAMPLE_SCRIPT = "$PYCMM/bash/GATKBP_preprocess_sample.sh"
+SPLIT_GVCFS_SCRIPT = "$PYCMM/bash/split_gvcfs.sh"
 COMBINE_GVCFS_SCRIPT = "$PYCMM/bash/GATKBP_combine_gvcfs.sh"
 GENOTYPE_GVCFS_SCRIPT = "$PYCMM/bash/GATKBP_genotype_gvcfs.sh"
 
@@ -36,6 +37,7 @@ JOBS_SETUP_DBSNP_KEY = "DBSNP"
 JOBS_SETUP_REFFERENCE_KEY = "REFERENCE"
 JOBS_SETUP_VARIANTS_CALLING_KEY = "VARIANTS_CALLING"
 JOBS_SETUP_TARGETS_INTERVAL_LIST_KEY = "TARGETS_INTERVAL_LIST"
+JOBS_SETUP_SPLIT_REGIONS_FILE_KEY = "SPLIT_REGIONS_FILE"
 JOBS_SETUP_OPTIONS_KEY = "OPTIONS"
 JOBS_SETUP_USAGE_MAIL = "USAGE_MAIL"
 
@@ -217,6 +219,7 @@ class GATKParams(CMMParams):
 
     def __init__(self, **kwargs):
         super(GATKParams, self).__init__(**kwargs)
+        self.__init_properties()
 
     def get_raw_repr(self, **kwargs):
         raw_repr = super(GATKParams, self).get_raw_repr(**kwargs)
@@ -228,6 +231,13 @@ class GATKParams(CMMParams):
         raw_repr["usage mail"] = self.dataset_usage_mail
         raw_repr["samples"] = self.samples
         return raw_repr
+
+    def __init_properties(self):
+        regions_list = self.split_regions_file
+        if regions_list is not None:
+            regions_list = map(lambda x: x.strip().replace(":", "_").replace("-", "_"),
+                               open(regions_list, 'rt'))
+        self.__split_regions_txt_list = regions_list
 
     @property
     def known_indels(self):
@@ -248,6 +258,14 @@ class GATKParams(CMMParams):
     @property
     def targets_interval_list(self):
         return self._get_job_config(JOBS_SETUP_TARGETS_INTERVAL_LIST_KEY)
+
+    @property
+    def split_regions_file(self):
+        return self._get_job_config(JOBS_SETUP_SPLIT_REGIONS_FILE_KEY)
+
+    @property
+    def split_regions_txt_list(self):
+        return self.__split_regions_txt_list
 
     @property
     def options(self):
@@ -300,18 +318,29 @@ class GATKBPPipeline(CMMPipeline):
         return self._get_sub_project_dir("gvcf")
 
     @property
+    def split_gvcfs_out_dir(self):
+        return join_path(self.working_dir,
+                         "split_gvcfs")
+
+    @property
     def vcf_out_dir(self):
         return self._get_sub_project_dir("vcf")
 
-    @property
-    def combined_gvcfs_file(self):
-        return join_path(self.working_dir,
-                         self.dataset_name+"_cohort.g.vcf.gz")
+    def get_combined_gvcfs_file_name(self, region_txt=None):
+        file_name = join_path(self.working_dir,
+                              self.dataset_name)
+        if region_txt is not None:
+            file_name += "_" + region_txt
+        file_name += "_cohort.g.vcf.gz"
+        return file_name
 
-    @property
-    def genotyped_gvcfs_file(self):
-        return join_path(self.vcf_out_dir,
-                         self.dataset_name+"_genotyped.vcf.gz")
+    def get_genotyped_gvcfs_file_name(self, region_txt=None):
+        file_name = join_path(self.vcf_out_dir,
+                              self.dataset_name)
+        if region_txt is not None:
+            file_name += "_" + region_txt
+        file_name += "_genotyped.vcf.gz"
+        return file_name
 
     def get_third_party_software_version(self):
         vm = VersionManager()
@@ -625,33 +654,70 @@ class GATKBPPipeline(CMMPipeline):
         super(GATKBPPipeline, self).monitor_action(**kwargs)
         self.__garbage_collecting()
 
+    def split_gvcfs(self,
+                    gvcf_list=None,
+                    prereq=None,
+                    ):
+        """
+        Combines any number of gVCF files that were produced by
+        the Haplotype Caller into a single joint gVCF file
+        """
+
+        job_name = self.dataset_name + "_split_gvcfs"
+        job_script = SPLIT_GVCFS_SCRIPT
+        job_params = " -i " + self.gvcf_out_dir
+        job_params += " -r " + self.gatk_params.split_regions_file
+        job_params += " -o " + self.split_gvcfs_out_dir
+        if self.project_code is None:
+            self.exec_sh(job_script + job_params)
+            return None
+        else:
+            self._submit_slurm_job(job_name,
+                                   "1",
+                                   job_script,
+                                   job_params,
+                                   email=self.gatk_params.dataset_usage_mail,
+                                   prereq=prereq,
+                                   )
+            return job_name
+
     def combine_gvcfs(self,
                       gvcf_list=None,
                       prereq=None,
+                      region_txt=None,
                       ):
         """
         Combines any number of gVCF files that were produced by
         the Haplotype Caller into a single joint gVCF file
         """
 
-        job_name = self.dataset_name + "_comb_gvcfs"
+        job_name = self.dataset_name + "_comb_gvcfs_" + region_txt
         job_script = COMBINE_GVCFS_SCRIPT
         gvcf_list_file = join_path(self.working_dir,
                                    job_name+"_gvcf.list")
         f_gvcf = open(gvcf_list_file, "w")
-        if gvcf_list is None:
+        if (gvcf_list is None) and (region_txt is None):
             for sample_id in self.samples:
                 sample_rec = self.samples[sample_id]
                 f_gvcf.write(sample_rec.gvcf_file + "\n")
+            output_file = self.get_combined_gvcfs_file_name()
+        elif gvcf_list is None:
+            for sample_id in self.samples:
+                split_gz = join_path(join_path(self.split_gvcfs_out_dir,
+                                               region_txt),
+                                     sample_id+"."+region_txt+".g.vcf.gz")
+                f_gvcf.write(split_gz + "\n")
+            output_file = self.get_combined_gvcfs_file_name(region_txt=region_txt)
         else:
             map(lambda x: f_gvcf.write(x+"\n"), gvcf_list)
+            output_file = self.get_combined_gvcfs_file_name()
         f_gvcf.close()
         job_params = " -G " + gvcf_list_file 
-        job_params += " -o " + self.combined_gvcfs_file
+        job_params += " -o " + output_file
         job_params += " -r " + self.gatk_params.reference
         if self.project_code is None:
             self.exec_sh(job_script + job_params)
-            return self.combined_gvcfs_file
+            return output_file
         else:
             self._submit_slurm_job(job_name,
                                    "6",
@@ -663,31 +729,37 @@ class GATKBPPipeline(CMMPipeline):
             return job_name
 
     def genotype_gvcfs(self,
-                      gvcf_list=None,
-                      prereq=None,
+                       gvcf_list=None,
+                       prereq=None,
+                       region_txt=None,
                       ):
         """
         Combines any number of gVCF files that were produced by
         the Haplotype Caller into a single joint gVCF file
         """
 
-        job_name = self.dataset_name + "_genotype_gvcfs"
+        job_name = self.dataset_name + "_genotype_gvcfs" + region_txt
         job_script = GENOTYPE_GVCFS_SCRIPT
         gvcf_list_file = join_path(self.working_dir,
                                    job_name+"_gvcf.list")
         f_gvcf = open(gvcf_list_file, "w")
-        if gvcf_list is None:
-            f_gvcf.write(self.combined_gvcfs_file + "\n")
+        if (gvcf_list is None) and (region_txt is None):
+            f_gvcf.write(self.get_combined_gvcfs_file_name() + "\n")
+            output_file = self.get_genotyped_gvcfs_file_name()
+        elif gvcf_list is None:
+            f_gvcf.write(self.get_combined_gvcfs_file_name(region_txt=region_txt) + "\n")
+            output_file = self.get_genotyped_gvcfs_file_name(region_txt=region_txt)
         else:
             map(lambda x: f_gvcf.write(x+"\n"), gvcf_list)
+            output_file = self.get_genotyped_gvcfs_file_name()
         f_gvcf.close()
 
         job_params = " -G " + gvcf_list_file
-        job_params += " -o " + self.genotyped_gvcfs_file
+        job_params += " -o " + output_file
         job_params += " -r " + self.gatk_params.reference
         if self.project_code is None:
             self.exec_sh(job_script + job_params)
-            return self.combined_gvcfs_file
+            return output_file
         else:
             self._submit_slurm_job(job_name,
                                    "4",
@@ -713,7 +785,16 @@ class GATKBPPipeline(CMMPipeline):
         for sample_id in self.samples:
             if self.samples[sample_id].preprocess_sample:
                 prereq.append(self.preprocess_sample(sample_id))
-        if self.gatk_params.variants_calling:
+        if ((self.gatk_params.variants_calling) and
+            (self.gatk_params.split_regions_txt_list is not None)
+            ):
+            job_name_split_gvcfs = self.split_gvcfs(prereq=prereq)
+            for region_txt in self.gatk_params.split_regions_txt_list:
+                job_name_combine_gvcfs = self.combine_gvcfs(region_txt=region_txt,
+                                                            prereq=[job_name_split_gvcfs])
+                job_name_genotype_gvcfs = self.genotype_gvcfs(region_txt=region_txt,
+                                                              prereq=[job_name_combine_gvcfs]) 
+        elif self.gatk_params.variants_calling:
             job_name_combine_gvcfs = self.combine_gvcfs(prereq=prereq) 
             job_name_genotype_gvcfs = self.genotype_gvcfs(prereq=[job_name_combine_gvcfs]) 
             return job_name_genotype_gvcfs
@@ -727,8 +808,10 @@ def create_jobs_setup_file(project_name,
                            dbsnp_file=None,
                            variants_calling=False,
                            targets_interval_list=None,
+                           split_regions_file=None,
                            dataset_usage_mail=False,
                            sample_usage_mail={},
+                           preprocess_sample=True,
                            project_code=None,
                            job_alloc_time=None,
                            jobs_report_file=None,
@@ -751,6 +834,8 @@ def create_jobs_setup_file(project_name,
     gatk_params[JOBS_SETUP_VARIANTS_CALLING_KEY] = variants_calling
     if targets_interval_list is not None:
         gatk_params[JOBS_SETUP_TARGETS_INTERVAL_LIST_KEY] = targets_interval_list
+    if split_regions_file is not None:
+        gatk_params[JOBS_SETUP_SPLIT_REGIONS_FILE_KEY] = split_regions_file
     options = []
     if dataset_usage_mail:
         options.append(JOBS_SETUP_USAGE_MAIL)
@@ -784,7 +869,7 @@ def create_jobs_setup_file(project_name,
                                 sample[JOBS_SETUP_SAMPLE_USAGE_MAIL_KEY] = 'YES'
                             else:
                                 sample[JOBS_SETUP_SAMPLE_USAGE_MAIL_KEY] = 'NO'
-                            sample[JOBS_SETUP_PREPROCESS_SAMPLE_KEY] = 'YES'
+                            sample[JOBS_SETUP_PREPROCESS_SAMPLE_KEY] = preprocess_sample
                             break
                     # look for fastq.gz files to fastq files info for R1,R2 pairs or R1 alone
                     fastq_files = []
