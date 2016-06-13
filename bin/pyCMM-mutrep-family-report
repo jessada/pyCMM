@@ -1,8 +1,9 @@
-from pycmm import settings
+from pycmm.settings import MUTREP_FAMILY_REPORT_DESCRIPTION
+from pycmm.settings import MUTREP_PIPELINE_DFLT_LOG_FILE
 from pycmm.app.mutrep import app_pycmm_family_report
 import argparse
 
-argp = argparse.ArgumentParser(description=settings.MUTREP_FAMILY_REPORT_DESCRIPTION)
+argp = argparse.ArgumentParser(description=MUTREP_FAMILY_REPORT_DESCRIPTION)
 argp.add_argument('-j',
                   dest='jobs_setup_file',
                   metavar="JOBS SETUP FILE",
@@ -31,7 +32,7 @@ argp.add_argument('-l',
                   dest='log_file',
                   metavar='FILE',
                   help='log file',
-                  default=None)
+                  default=MUTREP_PIPELINE_DFLT_LOG_FILE)
 args = argp.parse_args()
 app_pycmm_family_report(jobs_setup_file=args.jobs_setup_file,
                         fam_id=args.fam_id,

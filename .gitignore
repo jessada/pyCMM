@@ -52,9 +52,12 @@ docs/_build/
 
 # PyBuilder
 target/
+
+# custom
 *obsolete
 tmp
 *test_uniq_avdb_2*
 *test_concat_files_2*
 *exp_test_vcf2avdb_2*
 *exp_test_avdb2bed_2*
+*.vcf.idx

@@ -1,0 +1,46 @@
+import argparse
+import sys
+from argparse import RawTextHelpFormatter
+from pycmm.app.hapassocrep import app_pycmm_plink_hap_assocs_report
+from pycmm.settings import PLINK_HAP_ASSOCS_REPORT_DESCRIPTION
+
+argp = argparse.ArgumentParser(description=PLINK_HAP_ASSOCS_REPORT_DESCRIPTION,
+                               formatter_class=RawTextHelpFormatter,
+                               )
+required_group = argp.add_argument_group('required arguments')
+required_group.add_argument('-j',
+                            dest='jobs_setup_file',
+                            metavar="JOBS SETUP FILE",
+                            help='a file containing jobs configuration',
+                            required=True,
+                            )
+required_group.add_argument('--hap_assoc_file',
+                            dest='hap_assoc_file',
+                            metavar="FILE",
+                            help='a result file from haplotype association study',
+                            required=True,
+                            )
+required_group.add_argument('--snp_info_file',
+                            dest='snp_info_file',
+                            metavar="FILE",
+                            help='a snp.info file, a file containing missing genotyping information and genome coordinate for all related snps',
+                            required=True,
+                            )
+required_group.add_argument('--out',
+                            dest='out_file',
+                            metavar="FILE",
+                            help='output file name',
+                            required=True,
+                            )
+argp.add_argument('-l',
+                  dest='log_file',
+                  metavar='FILE',
+                  help='log file',
+                  default=None)
+args = argp.parse_args()
+app_pycmm_plink_hap_assocs_report(hap_assoc_file=args.hap_assoc_file,
+                                  snp_info_file=args.snp_info_file,
+                                  out_file=args.out_file,
+                                  jobs_setup_file=args.jobs_setup_file,
+                                  log_file=args.log_file,
+                                  )

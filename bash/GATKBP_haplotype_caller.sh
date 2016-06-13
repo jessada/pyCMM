@@ -94,7 +94,7 @@ cmd+=" -I $bam_file"
 cmd+=" --emitRefConfidence GVCF"
 cmd+=" --variant_index_type LINEAR"
 cmd+=" --variant_index_parameter 128000"
-#cmd+=" -allowPotentiallyMisencodedQuals"
+cmd+=" --disable_auto_index_creation_and_locking_when_reading_rods"
 if [ ! -z "$dbsnp" ]
 then
     cmd+=" --dbsnp $dbsnp"

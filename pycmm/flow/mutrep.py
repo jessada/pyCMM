@@ -1,172 +1,100 @@
 # This Python file uses the following encoding: utf-8
-import sys
 import re
-import datetime
 import pyaml
-import yaml
-import vcf
-import xlsxwriter
-from os import listdir
 from os.path import join as join_path
-from os.path import isdir
-from os.path import isfile
+from collections import defaultdict
 from collections import OrderedDict
-from pycmm.settings import PREDICTION_COLS
-from pycmm.settings import DFLT_ANNOVAR_DB_FOLDER
-from pycmm.settings import DFLT_ANNOVAR_DB_NAMES
-from pycmm.settings import DFLT_ANNOVAR_DB_OPS
 from pycmm.settings import ALL_MUTREP_ANNO_COLS
+from pycmm.settings import DFLT_MUTREP_FREQ_RATIOS
+from pycmm.settings import PREDICTION_COLS
+from pycmm.template import pyCMMBase
+from pycmm.utils.ver import VersionManager
+from pycmm.cmmlib import CMMParams
+from pycmm.cmmlib.taparser import TAVcfReader as VcfReader
+from pycmm.cmmlib.xlslib import CMMWorkbook as Workbook
+from pycmm.cmmlib.xlslib import NO_COLOR
+from pycmm.flow import get_func_arg
+from pycmm.flow.cmmdb import CMMPipeline
+from pycmm.flow import init_jobs_setup_file
+#from pycmm.flow.cmmdb import create_cmmdb_jobs_setup_file
+#import sys
+#import datetime
+#import yaml
+#import vcf
+#from os import listdir
+#from os.path import isdir
+#from os.path import isfile
 from pycmm.settings import MUTREP_FAMILY_REPORT_BIN
 from pycmm.settings import MUTREP_SUMMARY_REPORT_BIN
-from pycmm.template import pyCMMBase
-from pycmm.utils import exec_sh
-from pycmm.proc.taparser import TAVcfReader as VcfReader
-from pycmm.proc.tamodel import CMMGT_HOMOZYGOTE
-from pycmm.proc.tamodel import CMMGT_HETEROZYGOTE
-from pycmm.flow.cmmdb import CMMDBPipeline
-from pycmm.flow.cmmdb import ALL_CHROMS
-from pycmm.flow.cmmdb import JOBS_SETUP_RPT_ALLOC_TIME_KEY
-from pycmm.flow.cmmdb import JOBS_SETUP_RPT_LAYOUT_SECTION
-from pycmm.flow.cmmdb import JOBS_SETUP_RPT_ANNOTATED_VCF_TABIX
-from pycmm.flow.cmmdb import JOBS_SETUP_RPT_ANNO_COLS_KEY
-from pycmm.flow.cmmdb import JOBS_SETUP_RPT_ANNO_EXCL_TAGS_KEY
-from pycmm.flow.cmmdb import JOBS_SETUP_RPT_REGIONS_KEY
-from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FREQ_RATIOS_KEY
-from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FREQ_RATIOS_COL_KEY
-from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FREQ_RATIOS_FREQ_KEY
-from pycmm.flow.cmmdb import JOBS_SETUP_RPT_SPLIT_CHROM_KEY
-from pycmm.flow.cmmdb import JOBS_SETUP_RPT_SUMMARY_FAMILIES_KEY
-from pycmm.flow.cmmdb import JOBS_SETUP_RPT_EXTRA_ANNO_COLS_KEY
-from pycmm.flow.cmmdb import JOBS_SETUP_RPT_CALL_DETAIL_KEY
-from pycmm.flow.cmmdb import JOBS_SETUP_RPT_MT_KEY
-from pycmm.flow.cmmdb import JOBS_SETUP_RPT_ROWS_FILTER_ACTIONS_CRITERIA_KEY
-from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_RARE
-from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_NON_INTERGENIC
-from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_NON_INTRONIC
-from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_NON_UPSTREAM
-from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_NON_DOWNSTREAM
-from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_NON_UTR
-from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_NON_SYNONYMOUS
-from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_HAS_MUTATION
-from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_HAS_SHARED
-from pycmm.flow.cmmdb import JOBS_SETUP_RPT_ONLY_SUMMARY_KEY
-from pycmm.flow.cmmdb import JOBS_SETUP_RPT_ONLY_FAMILIES_KEY
+#from pycmm.utils import exec_sh
+from pycmm.cmmlib.dnalib import ALL_CHROMS
+from pycmm.cmmlib.tamodel import CMMGT_HOMOZYGOTE
+from pycmm.cmmlib.tamodel import CMMGT_HETEROZYGOTE
 
-# *** color definition sections ***
-COLOR_RGB = OrderedDict()
-COLOR_RGB['GREEN_ANNIKA'] = '#CCFFCC'
-COLOR_RGB['PINK_ANNIKA'] = '#E6B9B8'
-COLOR_RGB['GRAY25'] = '#DCDCDC'
-COLOR_RGB['PLUM'] = '#8E4585'
-COLOR_RGB['GREEN'] = '#008000'
-COLOR_RGB['LIGHT_GREEN'] = '#90EE90'
-COLOR_RGB['SKY_BLUE'] = '#87CEEB'
-COLOR_RGB['GRAY40'] = '#808080'
-COLOR_RGB['LIGHT_YELLOW'] = '#FFFFE0'
-COLOR_RGB['OLIVE'] = '#808000'
-COLOR_RGB['ORANGE'] = '#FF6600'
-COLOR_RGB['DARK_SLATE_GRAY'] = '#2F4F4F'
-COLOR_RGB['PURPLE'] = '#800080'
-COLOR_RGB['RED'] = '#FF0000'
-COLOR_RGB['ROSY_BROWN'] = '#BC8F8F'
-COLOR_RGB['SILVER'] = '#C0C0C0'
-COLOR_RGB['SKY_BLUE'] = '#87CEEB'
-COLOR_RGB['TAN'] = '#D2B48C'
-COLOR_RGB['TEAL'] = '#008080'
-COLOR_RGB['TURQUOISE'] = '#40E0D0'
-COLOR_RGB['YELLOW'] = '#FFFF00'
-COLOR_RGB['MEDIUM_AQUA_MARINE'] = '#66CDAA'
-COLOR_RGB['BLUE'] = '#0000FF'
-COLOR_RGB['SLATE_GRAY'] = '#708090'
-COLOR_RGB['LIME_GREEN'] = '#32CD32'
-COLOR_RGB['BROWN'] = '#800000'
-COLOR_RGB['CORAL'] = '#FF7F50'
-COLOR_RGB['DARK_BLUE'] = '#00008B'
-COLOR_RGB['YELLOW_GREEN'] = '#9ACD32'
-COLOR_RGB['DODGER_BLUE'] = '#1E90FF'
-COLOR_RGB['GOLDEN_ROD'] = '#DAA520'
-COLOR_RGB['CYAN'] = '#00FFFF'
-COLOR_RGB['ROYAL_BLUE'] = '#4169E1'
-COLOR_RGB['GOLD'] = '#FFD700'
-COLOR_RGB['LIME'] = '#00FF00'
-COLOR_RGB['MAGENTA'] = '#FF00FF'
-COLOR_RGB['ICEBLUE'] = '#A5F2F3'
-COLOR_RGB['LIGHT_BLUE'] = '#ADD8E6'
+ACTION_DELETE_ROW = "del_row"
+ACTION_COLOR_ROW = "color_row"
+ACTION_COLOR_COL = "color_col"
 
-CELL_TYPE_HET_SHARED = 'SILVER'
-CELL_TYPE_HOM_SHARED = 'GRAY25'
-
-DFLT_FMT = 'default_format'
-# *********************************
+DFLT_COLOR_HET_SHARED = 'SILVER'
+DFLT_COLOR_HOM_SHARED = 'GRAY25'
+CELL_TYPE_HET_SHARED = 'HET_SHARED'
+CELL_TYPE_HOM_SHARED = 'HOM_SHARED'
 
 CHROM_POS_PATTERN = re.compile(r'''(?P<chrom>.+?):(?P<start_pos>.+?)-(?P<end_pos>.+)''')
 LAYOUT_VCF_COLS = 4
 RECORDS_LOG_INTERVAL = 1000
 
-class CellFormatManager(pyCMMBase):
-    """ A class to define cell format property """
-
-    def __init__(self, work_book, color_dict):
-        self.__wb = work_book
-        self.__color_dict = color_dict
-        self.__dflt_hash_fmt = {'font_name': 'Arial', 'font_size': 10}
-        self.__dflt_fmt = self.__add_fmt(self.__dflt_hash_fmt)
-        self.__init_colors_formats()
-
-    def get_raw_repr(self):
-        return {"color dict": self.__color_dict,
-                "number of color": self.n_colors,
-                }
-
-    def __add_fmt(self, fmt_dict):
-        return self.__wb.add_format(fmt_dict)
-
-    @property
-    def default_format(self):
-        return self.__dflt_fmt
-
-    def __init_colors_format(self, default_hash_format):
-        fmts = OrderedDict()
-        fmts[DFLT_FMT] = self.__add_fmt(default_hash_format)
-        colors = self.__color_dict.keys()
-        for color_idx in xrange(len(colors)):
-            color = colors[color_idx]
-            color_hash_fmt = default_hash_format.copy()
-            color_hash_fmt['bg_color'] = self.__color_dict[color]
-            fmts[color_idx] = self.__add_fmt(color_hash_fmt)
-            fmts[color] = fmts[color_idx]
-        return fmts
-
-    def __init_colors_formats(self):
-        dflt_cell_hash_fmt = self.__dflt_hash_fmt.copy()
-        self.__cell_fmts = self.__init_colors_format(dflt_cell_hash_fmt)
-
-    @property
-    def n_colors(self):
-        return len(self.__color_dict)
-
-    @property
-    def cell_fmts(self):
-        return self.__cell_fmts
+# *************** report layout section ***************
+JOBS_SETUP_RPT_LAYOUT_SECTION = "REPORT_LAYOUT"
+JOBS_SETUP_RPT_ANNOTATED_VCF_TABIX = "ANNOTATED_VCF_TABIX"
+JOBS_SETUP_RPT_ANNO_COLS_KEY = "COLUMNS"
+JOBS_SETUP_RPT_ANNO_EXCL_TAGS_KEY = "ANNOTATION_EXCLUSION_TAGS"
+JOBS_SETUP_RPT_REGIONS_KEY = "REGIONS"
+JOBS_SETUP_RPT_FREQ_RATIOS_KEY = "FREQUENCY_RATIOS"
+JOBS_SETUP_RPT_FREQ_RATIOS_COL_KEY = "COLUMN"
+JOBS_SETUP_RPT_FREQ_RATIOS_FREQ_KEY = "FREQUENCY"
+JOBS_SETUP_RPT_EXPRESSIONS_KEY = "EXPRESSIONS"
+JOBS_SETUP_RPT_EXPRESSIONS_NAME_KEY = "NAME"
+JOBS_SETUP_RPT_EXPRESSIONS_PATTERN_KEY = "PATTERN"
+JOBS_SETUP_RPT_EXPRESSIONS_USAGES_KEY = "USAGES"
+JOBS_SETUP_RPT_EXPRESSIONS_ACTION_KEY = "ACTION"
+JOBS_SETUP_RPT_EXPRESSIONS_INFO_KEY = "INFO"
+JOBS_SETUP_RPT_SPLIT_CHROM_KEY = "SPLIT_CHROM"
+JOBS_SETUP_RPT_SUMMARY_FAMILIES_KEY = "SUMMARY_FAMILIES"
+JOBS_SETUP_RPT_EXTRA_ANNO_COLS_KEY = "EXTRA_ANNOTATION_COLUMNS"
+JOBS_SETUP_RPT_CALL_DETAIL_KEY = "Calling_detail"
+JOBS_SETUP_RPT_MT_KEY = "Mitochondria"
+JOBS_SETUP_RPT_ROWS_FILTER_ACTIONS_CRITERIA_KEY = "ROWS_FILTER_ACTIONS_CRITERIA"
+JOBS_SETUP_RPT_FILTER_RARE = "Rare"
+JOBS_SETUP_RPT_FILTER_NON_INTERGENIC = "Non-Intergenic"
+JOBS_SETUP_RPT_FILTER_NON_INTRONIC = "Non-Intronic"
+JOBS_SETUP_RPT_FILTER_NON_UPSTREAM = "Non-Upstream"
+JOBS_SETUP_RPT_FILTER_NON_DOWNSTREAM = "Non-Downstream"
+JOBS_SETUP_RPT_FILTER_NON_UTR = "Non-UTR"
+JOBS_SETUP_RPT_FILTER_NON_SYNONYMOUS = "Non-Synonymous"
+JOBS_SETUP_RPT_FILTER_HAS_MUTATION = "Has-Mutation"
+JOBS_SETUP_RPT_FILTER_HAS_SHARED = "Has-Shared"
+JOBS_SETUP_RPT_ONLY_SUMMARY_KEY = "ONLY_SUMMARY"
+JOBS_SETUP_RPT_ONLY_FAMILIES_KEY = "ONLY_FAMILIES"
 
 class ReportRegion(pyCMMBase):
     """ A structure to parse and keep mutation report region """
 
     def __init__(self,
                  raw_region,
+                 **kwargs
                  ):
+        super(ReportRegion, self).__init__(**kwargs)
         self.__parse_region(raw_region)
         self.__raw_region = raw_region
 
     def get_raw_repr(self):
+        raw_repr = OrderedDict()
+        raw_repr["chrom"] = self.chrom
         if self.start_pos is not None:
-            return {"chrom": self.chrom,
-                    "start position": self.start_pos,
-                    "end_pos": self.end_pos,
-                    }
-        else:
-            return {"chrom": self.chrom,
-                    }
+            raw_repr["start position"] = self.start_pos
+            raw_repr["end position"] = self.end_pos
+        return raw_repr
 
     @property
     def chrom(self):
@@ -195,197 +123,360 @@ class ReportRegion(pyCMMBase):
             self.__start_pos = None
             self.__end_pos = None
 
-class ReportLayout(pyCMMBase):
-    """ A structure to parse and keep mutation report layout """
+class ActionDelRow(pyCMMBase):
+    """ A structure to parse action to delete a row from a mutation report sheet """
 
     def __init__(self,
-                 layout_params,
+                 pattern,
+                 **kwargs
                  ):
-        self.__layout_params = layout_params
-        self.__anno_cols = self.__cal_anno_cols()
+        super(ActionDelRow, self).__init__(**kwargs)
+        self.__pattern = pattern
+
+    def get_raw_repr(self):
+        return {"pattern": self.pattern}
+
+    @property
+    def pattern(self):
+        return self.__pattern
+
+class ActionColorRow(pyCMMBase):
+    """ A structure to parse action to color a row in a mutation report sheet """
+
+    def __init__(self,
+                 pattern,
+                 info,
+                 **kwargs
+                 ):
+        super(ActionColorRow, self).__init__(**kwargs)
+        self.__pattern = pattern
+        self.__info = info
+
+    def get_raw_repr(self):
+        return {"pattern": self.pattern,
+                "color": self.color}
+
+    @property
+    def pattern(self):
+        return self.__pattern
+
+    @property
+    def color(self):
+        return self.__info
+
+class ActionColorCol(pyCMMBase):
+    """ A structure to parse action to color a column in a row in a mutation report sheet """
+
+    def __init__(self,
+                 pattern,
+                 info,
+                 **kwargs
+                 ):
+        super(ActionColorCol, self).__init__(**kwargs)
+        self.__pattern = pattern
+        self.__info = info
+
+    def get_raw_repr(self):
+        return {"pattern": self.pattern,
+                "column name": self.col_name,
+                "color": self.color}
+
+    @property
+    def pattern(self):
+        return self.__pattern
+
+    @property
+    def col_name(self):
+        return self.__info.split(":")[0]
+
+    @property
+    def color(self):
+        return self.__info.split(":")[1]
+
+class VcfExpressions(pyCMMBase):
+    """
+    An user-friendly structure encapsulating
+    VCF expression configuration
+    """
+
+    def __init__(self,
+                 expressions,
+                 **kwargs
+                 ):
+        super(VcfExpressions, self).__init__(**kwargs)
+        self.__expressions = expressions
+        self.__patterns = None
+        self.__actions = None
+
+    @property
+    def name(self):
+        return self.__expression[JOBS_SETUP_RPT_EXPRESSIONS_NAME_KEY]
+
+    @property
+    def patterns(self):
+        if self.__patterns is None:
+            self.__patterns = {}
+            for expr in self.__expressions:
+                name = expr[JOBS_SETUP_RPT_EXPRESSIONS_NAME_KEY]
+                pattern = expr[JOBS_SETUP_RPT_EXPRESSIONS_PATTERN_KEY]
+                self.__patterns[name] = pattern
+        return self.__patterns
+
+    @property
+    def actions(self):
+        if self.__actions is None:
+            # all kind of possible actions are parsed here
+            # possible actions are
+            #   - delete row
+            #   - color a column at the row
+            #   - color a row
+            # each action is structured as a list
+            # each item in the list consist of at least a pattern
+            # -> if the evaluation of the pattern is True the do the action
+            # and the item can also have an info field
+            self.__actions = defaultdict(list)
+            for expr in self.__expressions:
+                if JOBS_SETUP_RPT_EXPRESSIONS_USAGES_KEY in expr:
+                    pattern = expr[JOBS_SETUP_RPT_EXPRESSIONS_PATTERN_KEY]
+                    for usage in expr[JOBS_SETUP_RPT_EXPRESSIONS_USAGES_KEY]:
+                        action = usage[JOBS_SETUP_RPT_EXPRESSIONS_ACTION_KEY]
+                        if JOBS_SETUP_RPT_EXPRESSIONS_INFO_KEY in usage:
+                            info = usage[JOBS_SETUP_RPT_EXPRESSIONS_INFO_KEY]
+                        if action == ACTION_DELETE_ROW:
+                            self.__actions[ACTION_DELETE_ROW].append(ActionDelRow(pattern))
+                        if action == ACTION_COLOR_ROW:
+                            self.__actions[ACTION_COLOR_ROW].append(ActionColorRow(pattern, info=info))
+                        if action == ACTION_COLOR_COL:
+                            self.__actions[ACTION_COLOR_COL].append(ActionColorCol(pattern, info=info))
+        return self.__actions
+
+class ReportLayout(CMMParams):
+    """ A structure to parse and keep mutation report layout """
+
+    def __init__(self, **kwargs):
+        super(ReportLayout, self).__init__(**kwargs)
+        self.__init_properties()
+        self.__init_cell_colors()
+
+    def get_raw_repr(self, **kwargs):
+        raw_repr = super(ReportLayout, self).get_raw_repr(**kwargs)
+        raw_repr["annotated tabix file"] = self.annotated_vcf_tabix
+        raw_repr["annotated columns"] = self.anno_cols
+        if self.anno_excl_tags is not None and len(self.anno_excl_tags) > 0:
+            raw_repr["annotation exclusion tags"] = self.anno_excl_tags
+        raw_repr["genotyping calling detail"] = self.call_detail
+        raw_repr["frequency ratio(s)"] = self.freq_ratios
+        if self.report_regions is None:
+            raw_repr["report region(s)"] = "ALL"
+        else:
+            raw_repr["report region(s)"] = self.report_regions
+        raw_repr["split chromosome"] = self.split_chrom
+        filter_actions = OrderedDict()
+        filter_actions['Rare'] = self.filter_rare
+        filter_actions['Non-Intergenic'] = self.filter_non_intergenic
+        filter_actions['Non-Intronic'] = self.filter_non_intronic
+        filter_actions['Non-Upstream'] = self.filter_non_upstream
+        filter_actions['Non-Downstream'] = self.filter_non_downtream
+        filter_actions['Non-UTR'] = self.filter_non_utr
+        filter_actions['Non-Synonymous'] = self.filter_non_synonymous
+        filter_actions['Has-mutation'] = self.filter_has_mutation
+        filter_actions['Has-shared'] = self.filter_has_shared
+        raw_repr['filter actions'] = filter_actions
+        report_exclusion = {}
+        report_exclusion['only summary'] = self.only_summary
+        report_exclusion['only families'] = self.only_families
+        raw_repr['report exclusion'] = report_exclusion
+        raw_repr["summary_families sheet"] = self.summary_families_sheet
+        return raw_repr
+
+    def __init_properties(self):
+        self.__anno_cols = None
+        self.__freq_ratios = None
+        self.__exprs = self._get_job_config(JOBS_SETUP_RPT_EXPRESSIONS_KEY)
+        if self.__exprs is not None:
+            self.__exprs = VcfExpressions(self.__exprs)
 
     def __cal_anno_cols(self):
+        # open the annotated vcf tabix file for checking
+        # if the expected output columns are exist
+        vcf_reader = VcfReader(filename=self.annotated_vcf_tabix)
+        vcf_record = vcf_reader.next()
+        # generate columns list
         anno_cols = []
-        for col_name in self.__layout_params[JOBS_SETUP_RPT_ANNO_COLS_KEY]:
+        for col_name in self._get_job_config(JOBS_SETUP_RPT_ANNO_COLS_KEY,
+                                             required=True):
+            # excluce columns based on configuration
             excluded = False
             for excl_tag in self.anno_excl_tags:
                 if excl_tag in ALL_MUTREP_ANNO_COLS[col_name]:
                     excluded = True
                     break
-            if not excluded:
-                anno_cols.append(col_name)
+            if excluded:
+                continue
+            # exclude columns that are not actually in the annotated tabix file
+            if col_name not in vcf_record.INFO.keys():
+                self.warning("Columns " + col_name + " is missing")
+                continue
+            # here are the columns that can be shown without errors
+            anno_cols.append(col_name)
         return anno_cols
 
     @property
-    def anno_cols(self):
-        return self.__anno_cols
+    def annotated_vcf_tabix(self):
+        return self._get_job_config(JOBS_SETUP_RPT_ANNOTATED_VCF_TABIX,
+                                    required=True)
 
     @property
     def anno_excl_tags(self):
-        if JOBS_SETUP_RPT_ANNO_EXCL_TAGS_KEY in self.__layout_params:
-            return self.__layout_params[JOBS_SETUP_RPT_ANNO_EXCL_TAGS_KEY]
-        else:
-            return []
+        return self._get_job_config(JOBS_SETUP_RPT_ANNO_EXCL_TAGS_KEY,
+                                    default_val=[])
 
     @property
-    def annotated_vcf_tabix(self):
-        if JOBS_SETUP_RPT_ANNOTATED_VCF_TABIX in self.__layout_params:
-            return self.__layout_params[JOBS_SETUP_RPT_ANNOTATED_VCF_TABIX]
-        else:
-            return None
+    def anno_cols(self):
+        if self.__anno_cols is None:
+            self.__anno_cols = self.__cal_anno_cols()
+        return self.__anno_cols
 
     @property
     def report_regions(self):
-        if JOBS_SETUP_RPT_REGIONS_KEY in self.__layout_params:
-            return map(lambda x: ReportRegion(str(x)),
-                       self.__layout_params[JOBS_SETUP_RPT_REGIONS_KEY])
-        else:
-            return None
+        regions = self._get_job_config(JOBS_SETUP_RPT_REGIONS_KEY)
+        if regions is not None:
+            regions = map(lambda x: ReportRegion(str(x)),
+                           regions)
+        return regions
 
     @property
-    def freq_ratios(self):
-        if JOBS_SETUP_RPT_FREQ_RATIOS_KEY in self.__layout_params:
-            freq_ratios = {}
-            for freq_ratio in self.__layout_params[JOBS_SETUP_RPT_FREQ_RATIOS_KEY]:
-                col = freq_ratio[JOBS_SETUP_RPT_FREQ_RATIOS_COL_KEY]
-                freq = freq_ratio[JOBS_SETUP_RPT_FREQ_RATIOS_FREQ_KEY]
-                freq_ratios[col] = freq
-            return freq_ratios
-        else:
-            return None
+    def exprs(self):
+        return self.__exprs
 
     @property
     def split_chrom(self):
-        if JOBS_SETUP_RPT_SPLIT_CHROM_KEY in self.__layout_params:
-            return self.__layout_params[JOBS_SETUP_RPT_SPLIT_CHROM_KEY]
-        else:
-            return False
+        return self._get_job_config(JOBS_SETUP_RPT_SPLIT_CHROM_KEY,
+                                    default_val=False)
 
     @property
     def summary_families_sheet(self):
-        if JOBS_SETUP_RPT_SUMMARY_FAMILIES_KEY in self.__layout_params:
-            return self.__layout_params[JOBS_SETUP_RPT_SUMMARY_FAMILIES_KEY]
-        else:
-            return False
+        return self._get_job_config(JOBS_SETUP_RPT_SUMMARY_FAMILIES_KEY,
+                                    default_val=False)
 
     @property
     def call_detail(self):
-        if JOBS_SETUP_RPT_EXTRA_ANNO_COLS_KEY not in self.__layout_params:
-            return False
-        else:
-            return JOBS_SETUP_RPT_CALL_DETAIL_KEY in self.__layout_params[JOBS_SETUP_RPT_EXTRA_ANNO_COLS_KEY]
+        return JOBS_SETUP_RPT_CALL_DETAIL_KEY in self._get_job_config(JOBS_SETUP_RPT_EXTRA_ANNO_COLS_KEY,
+                                                                      default_val=[])
 
     @property
     def filter_rare(self):
-        if JOBS_SETUP_RPT_ROWS_FILTER_ACTIONS_CRITERIA_KEY not in self.__layout_params:
-            return False
-        else:
-            return JOBS_SETUP_RPT_FILTER_RARE in self.__layout_params[JOBS_SETUP_RPT_ROWS_FILTER_ACTIONS_CRITERIA_KEY]
+        return JOBS_SETUP_RPT_FILTER_RARE in self._get_job_config(JOBS_SETUP_RPT_ROWS_FILTER_ACTIONS_CRITERIA_KEY,
+                                                                  default_val=[])
 
     @property
     def filter_non_intergenic(self):
-        if JOBS_SETUP_RPT_ROWS_FILTER_ACTIONS_CRITERIA_KEY not in self.__layout_params:
-            return False
-        else:
-            return JOBS_SETUP_RPT_FILTER_NON_INTERGENIC in self.__layout_params[JOBS_SETUP_RPT_ROWS_FILTER_ACTIONS_CRITERIA_KEY]
+        return JOBS_SETUP_RPT_FILTER_NON_INTERGENIC in self._get_job_config(JOBS_SETUP_RPT_ROWS_FILTER_ACTIONS_CRITERIA_KEY,
+                                                                            default_val=[])
 
     @property
     def filter_non_intronic(self):
-        if JOBS_SETUP_RPT_ROWS_FILTER_ACTIONS_CRITERIA_KEY not in self.__layout_params:
-            return False
-        else:
-            return JOBS_SETUP_RPT_FILTER_NON_INTRONIC in self.__layout_params[JOBS_SETUP_RPT_ROWS_FILTER_ACTIONS_CRITERIA_KEY]
+        return JOBS_SETUP_RPT_FILTER_NON_INTRONIC in self._get_job_config(JOBS_SETUP_RPT_ROWS_FILTER_ACTIONS_CRITERIA_KEY,
+                                                                          default_val=[])
 
     @property
     def filter_non_upstream(self):
-        if JOBS_SETUP_RPT_ROWS_FILTER_ACTIONS_CRITERIA_KEY not in self.__layout_params:
-            return False
-        else:
-            return JOBS_SETUP_RPT_FILTER_NON_UPSTREAM in self.__layout_params[JOBS_SETUP_RPT_ROWS_FILTER_ACTIONS_CRITERIA_KEY]
+        return JOBS_SETUP_RPT_FILTER_NON_UPSTREAM in self._get_job_config(JOBS_SETUP_RPT_ROWS_FILTER_ACTIONS_CRITERIA_KEY,
+                                                                          default_val=[])
 
     @property
     def filter_non_downtream(self):
-        if JOBS_SETUP_RPT_ROWS_FILTER_ACTIONS_CRITERIA_KEY not in self.__layout_params:
-            return False
-        else:
-            return JOBS_SETUP_RPT_FILTER_NON_DOWNSTREAM in self.__layout_params[JOBS_SETUP_RPT_ROWS_FILTER_ACTIONS_CRITERIA_KEY]
+        return JOBS_SETUP_RPT_FILTER_NON_DOWNSTREAM in self._get_job_config(JOBS_SETUP_RPT_ROWS_FILTER_ACTIONS_CRITERIA_KEY,
+                                                                            default_val=[])
 
     @property
     def filter_non_utr(self):
-        if JOBS_SETUP_RPT_ROWS_FILTER_ACTIONS_CRITERIA_KEY not in self.__layout_params:
-            return False
-        else:
-            return JOBS_SETUP_RPT_FILTER_NON_UTR in self.__layout_params[JOBS_SETUP_RPT_ROWS_FILTER_ACTIONS_CRITERIA_KEY]
+        return JOBS_SETUP_RPT_FILTER_NON_UTR in self._get_job_config(JOBS_SETUP_RPT_ROWS_FILTER_ACTIONS_CRITERIA_KEY,
+                                                                     default_val=[])
 
     @property
     def filter_non_synonymous(self):
-        if JOBS_SETUP_RPT_ROWS_FILTER_ACTIONS_CRITERIA_KEY not in self.__layout_params:
-            return False
-        else:
-            return JOBS_SETUP_RPT_FILTER_NON_SYNONYMOUS in self.__layout_params[JOBS_SETUP_RPT_ROWS_FILTER_ACTIONS_CRITERIA_KEY]
+        return JOBS_SETUP_RPT_FILTER_NON_SYNONYMOUS in self._get_job_config(JOBS_SETUP_RPT_ROWS_FILTER_ACTIONS_CRITERIA_KEY,
+                                                                            default_val=[])
 
     @property
     def filter_has_mutation(self):
-        if JOBS_SETUP_RPT_ROWS_FILTER_ACTIONS_CRITERIA_KEY not in self.__layout_params:
-            return False
-        else:
-            return JOBS_SETUP_RPT_FILTER_HAS_MUTATION in self.__layout_params[JOBS_SETUP_RPT_ROWS_FILTER_ACTIONS_CRITERIA_KEY]
+        return JOBS_SETUP_RPT_FILTER_HAS_MUTATION in self._get_job_config(JOBS_SETUP_RPT_ROWS_FILTER_ACTIONS_CRITERIA_KEY,
+                                                                          default_val=[])
 
     @property
     def filter_has_shared(self):
-        if JOBS_SETUP_RPT_ROWS_FILTER_ACTIONS_CRITERIA_KEY not in self.__layout_params:
-            return False
-        else:
-            return JOBS_SETUP_RPT_FILTER_HAS_SHARED in self.__layout_params[JOBS_SETUP_RPT_ROWS_FILTER_ACTIONS_CRITERIA_KEY]
+        return JOBS_SETUP_RPT_FILTER_HAS_SHARED in self._get_job_config(JOBS_SETUP_RPT_ROWS_FILTER_ACTIONS_CRITERIA_KEY,
+                                                                        default_val=[])
 
+
+        return self._get_job_config(JOBS_SETUP_RPT_SUMMARY_FAMILIES_KEY,
+                                    default_val=False)
     @property
     def only_summary(self):
-        if JOBS_SETUP_RPT_ONLY_SUMMARY_KEY in self.__layout_params:
-            return self.__layout_params[JOBS_SETUP_RPT_ONLY_SUMMARY_KEY]
-        else:
-            return False
+        return self._get_job_config(JOBS_SETUP_RPT_ONLY_SUMMARY_KEY,
+                                    default_val=False)
 
     @property
     def only_families(self):
-        if JOBS_SETUP_RPT_ONLY_FAMILIES_KEY in self.__layout_params:
-            return self.__layout_params[JOBS_SETUP_RPT_ONLY_FAMILIES_KEY]
-        else:
-            return False
-
-class MutRepPipeline(CMMDBPipeline):
-    """ A class to control mutation report pipeline """
-
-    def __init__(self,
-                 jobs_setup_file,
-                 ):
-        CMMDBPipeline.__init__(self,
-                               jobs_setup_file=jobs_setup_file
-                               )
-        self.__parse_report_layout()
-
-    def get_raw_repr(self):
-        return {"dataset name": self.dataset_name,
-                "project code": self.project_code,
-                "jobs report file": self.jobs_report_file,
-                }
-
-    def __parse_report_layout(self):
-        self.__report_layout = ReportLayout(self._jobs_info[JOBS_SETUP_RPT_LAYOUT_SECTION])
+        return self._get_job_config(JOBS_SETUP_RPT_ONLY_FAMILIES_KEY,
+                                    default_val=False)
 
     @property
-    def rpt_alloc_time(self):
-        return self._jobs_info[JOBS_SETUP_RPT_ALLOC_TIME_KEY]
+    def freq_ratios(self):
+        freq_ratios = self._get_job_config(JOBS_SETUP_RPT_FREQ_RATIOS_KEY)
+        if ((self.__freq_ratios is None) and
+            (freq_ratios is not None)
+            ):
+            tmp_ratios = OrderedDict()
+            for freq_ratio in freq_ratios:
+                col = freq_ratio[JOBS_SETUP_RPT_FREQ_RATIOS_COL_KEY]
+                freq = freq_ratio[JOBS_SETUP_RPT_FREQ_RATIOS_FREQ_KEY]
+                tmp_ratios[col] = freq
+            self.__freq_ratios = tmp_ratios
+        elif self.__freq_ratios is None:
+            self.__freq_ratios = []
+        return self.__freq_ratios
+
+    def __init_cell_colors(self):
+        self.__cell_colors = {}
+        self.__cell_colors[CELL_TYPE_HET_SHARED] = DFLT_COLOR_HET_SHARED
+        self.__cell_colors[CELL_TYPE_HOM_SHARED] = DFLT_COLOR_HOM_SHARED
 
     @property
-    def annotated_vcf_tabix(self):
-        if self.report_layout.annotated_vcf_tabix is not None:
-            return self.report_layout.annotated_vcf_tabix
-        else:
-            return self.annovar_config.annotated_vcf + ".gz"
+    def cell_color_het_shared(self):
+        return self.__cell_colors[CELL_TYPE_HET_SHARED]
+
+    @property
+    def cell_color_hom_shared(self):
+        return self.__cell_colors[CELL_TYPE_HOM_SHARED]
+
+class MutRepPipeline(CMMPipeline):
+    """ A class to control CMMDB best practice pipeline """
+
+    def __init__(self, **kwargs):
+        super(MutRepPipeline, self).__init__(**kwargs)
+        self.__init_properties()
+
+    def get_raw_repr(self, **kwargs):
+        raw_repr = super(MutRepPipeline, self).get_raw_repr(**kwargs)
+        return raw_repr
+
+    def get_third_party_software_version(self):
+        vm = VersionManager()
+        versions = OrderedDict()
+        versions['pyvcf'] = vm.pyvcf_version
+        versions['pyaml'] = vm.pyaml_version
+        versions['xlsxwriter'] = vm.xlsxwriter_version
+        return versions
+
+    def __init_properties(self):
+        pass
 
     @property
     def report_layout(self):
-        return self.__report_layout
+        return ReportLayout(entries=self._get_job_config(JOBS_SETUP_RPT_LAYOUT_SECTION,
+                                                         required=True))
 
     @property
     def summary_rpt_file(self):
@@ -393,26 +484,40 @@ class MutRepPipeline(CMMDBPipeline):
                          self.dataset_name+"_summary.xlsx")
 
     @property
-    def cell_fmt_mgr(self):
-        return self.__cell_fmt_mgr
+    def plain_fmts(self):
+        return self.__plain_fmts
 
-    def __cal_gt(self, gt, allele_idx):
-        if gt == ".":
-            return "."
-        if gt == "./.":
-            return "."
-        gts = gt.split("/")
-        if (gts[0] == "0") and (gts[1] == "0"):
-            return "wt"
-        if (gts[0] == str(allele_idx)) or (gts[1] == str(allele_idx)):
-            if gts[0] == gts[1]:
-                return "hom"
+    def __set_report_format(self):
+        self.__plain_fmts = self.__wb.add_colors_format({})
+
+    def __add_sheet(self, sheet_name):
+        ws = self.__wb.add_worksheet(sheet_name)
+        ws.set_default_row(12)
+        return ws
+
+    def __write_header(self, ws, samples_id):
+        anno_cols = self.report_layout.anno_cols
+        cell_fmt = self.plain_fmts[NO_COLOR]
+        ws.write(0, 0, "CHROM", cell_fmt)
+        ws.write(0, 1, "POS", cell_fmt)
+        ws.write(0, 2, "REF", cell_fmt)
+        ws.write(0, 3, "ALT", cell_fmt)
+        len_anno_cols = len(anno_cols)
+        for anno_idx in xrange(len_anno_cols):
+            ws.write(0, anno_idx+LAYOUT_VCF_COLS, anno_cols[anno_idx], cell_fmt)
+        sample_start_idx = LAYOUT_VCF_COLS + len_anno_cols
+        ncol = sample_start_idx
+        for sample_idx in xrange(len(samples_id)):
+            sample_id = samples_id[sample_idx]
+            if self.report_layout.call_detail:
+                col_idx = (2*sample_idx) + (sample_start_idx)
+                ws.write(0, col_idx, sample_id, cell_fmt)
+                ws.write(0, col_idx+1, sample_id+"(detail)", cell_fmt)
+                ncol += 2
             else:
-                return "het"
-        return "."
-
-    def __set_layout(self, ws, record_size):
-        ws.autofilter(0, 0, 0, record_size-1)
+                ws.write(0, sample_idx+sample_start_idx, sample_id, cell_fmt)
+                ncol += 1
+        return ncol
 
     def __format_call_detail(self, call, call_fmt):
         call_detail = []
@@ -428,47 +533,27 @@ class MutRepPipeline(CMMDBPipeline):
                 call_detail.append(fmt + "=" + str(data))
         return ":".join(call_detail)
 
-    def __init_cells_format(self, wb):
-        self.__cell_fmt_mgr = CellFormatManager(wb, COLOR_RGB)
-
-    def __add_sheet(self, wb, sheet_name):
-        ws = wb.add_worksheet(sheet_name)
-        ws.set_default_row(12)
-        return ws
-
-    def __write_header(self, ws, samples_list):
-        anno_cols = self.report_layout.anno_cols
-        cell_fmt = self.cell_fmt_mgr.cell_fmts[DFLT_FMT]
-        ws.write(0, 0, "CHROM", cell_fmt)
-        ws.write(0, 1, "POS", cell_fmt)
-        ws.write(0, 2, "REF", cell_fmt)
-        ws.write(0, 3, "ALT", cell_fmt)
-        len_anno_cols = len(anno_cols)
-        for anno_idx in xrange(len_anno_cols):
-            ws.write(0, anno_idx+LAYOUT_VCF_COLS, anno_cols[anno_idx], cell_fmt)
-        sample_start_idx = LAYOUT_VCF_COLS + len_anno_cols
-        ncol = sample_start_idx
-        for sample_idx in xrange(len(samples_list)):
-            sample_id = samples_list[sample_idx]
-            if self.report_layout.call_detail:
-                col_idx = (2*sample_idx) + (sample_start_idx)
-                ws.write(0, col_idx, sample_id, cell_fmt)
-                ws.write(0, col_idx+1, sample_id+"(detail)", cell_fmt)
-                ncol += 2
-            else:
-                ws.write(0, sample_idx+sample_start_idx, sample_id, cell_fmt)
-                ncol += 1
-        return ncol
-
     def __write_content(self,
                         ws,
                         row,
                         vcf_record,
                         allele_idx,
-                        samples_list,
+                        samples_id,
                         ):
         anno_cols = self.report_layout.anno_cols
-        dflt_cell_fmt = self.cell_fmt_mgr.cell_fmts[DFLT_FMT]
+        # use input expression to determine if row will have background color
+        row_color = None
+        if self.report_layout.exprs is not None:
+            color_row_actions = self.report_layout.exprs.actions[ACTION_COLOR_ROW]
+            for cra in color_row_actions:
+                if vcf_record.vcf_eval(cra.pattern):
+                    row_color = cra.color
+                    break
+        if row_color is not None:
+            dflt_cell_fmt = self.plain_fmts[row_color]
+        else:
+            dflt_cell_fmt = self.plain_fmts[NO_COLOR]
+        # start writing content
         alt_allele = vcf_record.alleles[allele_idx]
         ws.write(row, 0, vcf_record.CHROM, dflt_cell_fmt)
         ws.write(row, 1, str(vcf_record.POS), dflt_cell_fmt)
@@ -476,6 +561,12 @@ class MutRepPipeline(CMMDBPipeline):
         ws.write(row, 3, str(alt_allele), dflt_cell_fmt)
         len_anno_cols = len(anno_cols)
         # annotate INFO columns
+        if self.report_layout.exprs is not None:
+            color_col_names = map(lambda x: x.col_name,
+                                  self.report_layout.exprs.actions[ACTION_COLOR_COL])
+        else:
+            color_col_names = []
+        # for each INFO column
         for anno_idx in xrange(len_anno_cols):
             anno_col_name = anno_cols[anno_idx]
             info = vcf_record.INFO[anno_col_name]
@@ -489,20 +580,34 @@ class MutRepPipeline(CMMDBPipeline):
                 info = ""
             if info == [None]:
                 info = ""
-            ws.write(row, anno_idx+LAYOUT_VCF_COLS, str(info).decode('utf-8'), dflt_cell_fmt)
+            # determine cell format
+            info_cell_fmt = dflt_cell_fmt
+            if anno_col_name in color_col_names:
+                color_col_actions = self.report_layout.exprs.actions[ACTION_COLOR_COL]
+                for cca in color_col_actions:
+                    if ((anno_col_name == cca.col_name) and
+                        vcf_record.vcf_eval(cca.pattern)
+                        ):
+                        info_cell_fmt = self.plain_fmts[cca.color]
+                        break
+            ws.write(row, anno_idx+LAYOUT_VCF_COLS, str(info).decode('utf-8'), info_cell_fmt)
         # annotate samples information
         sample_start_idx = LAYOUT_VCF_COLS + len_anno_cols
-        for sample_idx in xrange(len(samples_list)):
-            call = vcf_record.genotype(samples_list[sample_idx])
+        for sample_idx in xrange(len(samples_id)):
+            call = vcf_record.genotype(samples_id[sample_idx])
             zygo = call.cmm_gts[allele_idx]
+            # determine cell(s) format
             if type(call.shared_mutations) is not list:
                 zygo_fmt = dflt_cell_fmt
             elif not call.shared_mutations[allele_idx]:
                 zygo_fmt = dflt_cell_fmt
             elif call.actual_gts[allele_idx] == CMMGT_HOMOZYGOTE:
-                zygo_fmt = self.cell_fmt_mgr.cell_fmts[CELL_TYPE_HOM_SHARED]
+                hom_shared_color = self.report_layout.cell_color_hom_shared
+                zygo_fmt = self.plain_fmts[hom_shared_color]
             else:
-                zygo_fmt = self.cell_fmt_mgr.cell_fmts[CELL_TYPE_HET_SHARED]
+                het_shared_color = self.report_layout.cell_color_het_shared
+                zygo_fmt = self.plain_fmts[het_shared_color]
+            # write content to cell(s)
             if self.report_layout.call_detail:
                 col_idx = (2*sample_idx) + (sample_start_idx)
                 ws.write(row, col_idx, zygo, zygo_fmt)
@@ -515,13 +620,13 @@ class MutRepPipeline(CMMDBPipeline):
                          ws,
                          row,
                          vcf_records,
-                         samples_list,
+                         samples_id,
                          check_shared,
                          ):
         for vcf_record in vcf_records:
             for allele_idx in xrange(1, len(vcf_record.alleles)):
                 if (check_shared and
-                    not vcf_record.is_shared(samples_list, allele_idx)):
+                    not vcf_record.is_shared(samples_id, allele_idx)):
                     continue
                 if (self.report_layout.filter_rare and
                     not vcf_record.is_rare(allele_idx=allele_idx)):
@@ -545,16 +650,27 @@ class MutRepPipeline(CMMDBPipeline):
                     vcf_record.is_synonymous[allele_idx]):
                     continue
                 if (self.report_layout.filter_has_mutation and
-                    not vcf_record.has_mutation(samples_list, allele_idx)):
+                    not vcf_record.has_mutation(samples_id, allele_idx)):
                     continue
                 if (self.report_layout.filter_has_shared and
                     not vcf_record.has_shared(allele_idx)):
+                    continue
+                if vcf_record.alleles[allele_idx] == "*":
+                    continue
+                delete_row = False
+                if self.report_layout.exprs is not None:
+                    del_row_actions = self.report_layout.exprs.actions[ACTION_DELETE_ROW]
+                    for dra in del_row_actions:
+                        if vcf_record.vcf_eval(dra.pattern):
+                            delete_row = True
+                            break
+                if delete_row:
                     continue
                 self.__write_content(ws,
                                      row,
                                      vcf_record,
                                      allele_idx,
-                                     samples_list)
+                                     samples_id)
                 if row % RECORDS_LOG_INTERVAL == 0:
                     log_msg = str(row)
                     log_msg += " records were written to the sheet"
@@ -562,27 +678,31 @@ class MutRepPipeline(CMMDBPipeline):
                 row += 1
         return row
 
+    def __set_layout(self, ws, record_size):
+        ws.autofilter(0, 0, 0, record_size-1)
+
     def __add_muts_sheet(self,
-                         wb,
                          sheet_name,
                          report_regions,
-                         samples_list=None,
+                         samples_id=None,
                          samples_header=None,
                          check_shared=False,
                          ):
-        if self.annotated_vcf_tabix.endswith('.vcf.gz'):
-            vcf_reader = VcfReader(filename=self.annotated_vcf_tabix,
-                                   family_infos=self.family_infos,
+        wb = self.__wb
+        annotated_vcf_tabix = self.report_layout.annotated_vcf_tabix
+        if annotated_vcf_tabix.endswith('.vcf.gz'):
+            vcf_reader = VcfReader(filename=annotated_vcf_tabix,
+                                   family_infos=self.families_info,
                                    freq_ratios=self.report_layout.freq_ratios,
                                    )
         else:
-            self.thrown(self.annotated_vcf_tabix + ' does not endswith .vcf.gz')
+            self.thrown(annotated_vcf_tabix + ' does not endswith .vcf.gz')
         row = 1
-        if samples_list is None:
+        if samples_id is None:
             samples = vcf_reader.samples
         else:
-            samples = samples_list
-        ws = self.__add_sheet(wb, sheet_name)
+            samples = samples_id
+        ws = self.__add_sheet(sheet_name)
         if samples_header is not None:
             ncol = self.__write_header(ws, samples_header)
         else:
@@ -617,6 +737,35 @@ class MutRepPipeline(CMMDBPipeline):
         self.__set_layout(ws, ncol)
         ws.freeze_panes(1, 0)
 
+    def gen_summary_report(self,
+                           report_regions,
+                           out_file=None,
+                           ):
+        if out_file is None:
+            out_file = self.summary_rpt_file
+        self.info("")
+        self.info(" >>>> generating summary report")
+        self.info(" >>>> report file: " + out_file)
+        self.__wb = Workbook(filename=out_file)
+        self.__set_report_format()
+        self.info("")
+        self.info(" >> add 'summary_all' sheet")
+        self.__add_muts_sheet("summary_all",
+                              report_regions,
+                              samples_id=self.samples_id,
+                              samples_header=self.samples_id_w_fam_pref,
+                              )
+#        if (self.report_layout.summary_families_sheet and
+#            self.families_info is not None):
+#            self.info("")
+#            self.info(" >> add 'summary_families' sheet")
+#            self.__add_muts_sheet("summary_families",
+#                                  report_regions,
+#                                  samples_id=self.samples_id,
+#                                  samples_header=self.samples_id_w_fam_pref,
+#                                  )
+        self.__wb.close()
+
     def __submit_report_jobs(self,
                              job_script,
                              job_params_prefix,
@@ -632,10 +781,8 @@ class MutRepPipeline(CMMDBPipeline):
                 region_params = map(lambda x: x.raw_region,
                                     report_regions)
             for region_param in region_params:
-                slurm_log_file = slurm_log_prefix
-                slurm_log_file += "_chr" + region_param.split(":")[0]
-                slurm_log_file += "_" + self.time_stamp.strftime("%Y%m%d%H%M%S")
-                slurm_log_file += ".log"
+                chr_slurm_log_prefix = slurm_log_prefix
+                chr_slurm_log_prefix += "_chr" + region_param.split(":")[0]
                 job_name = job_name_prefix
                 job_name += "_chr" + region_param.split(":")[0]
                 out_file = out_file_prefix
@@ -644,20 +791,17 @@ class MutRepPipeline(CMMDBPipeline):
                 job_params = job_params_prefix
                 job_params += " -r " + region_param
                 job_params += " -o " + out_file
-                self.debug(job_script + job_params)
+                self.dbg(job_script + job_params)
                 self.submit_job(job_name,
                                 self.project_code,
                                 "core",
-                                "1",
-                                self.rpt_alloc_time,
-                                slurm_log_file,
+                                "4",
+                                self.job_alloc_time,
+                                chr_slurm_log_prefix,
                                 job_script,
                                 job_params,
                                 )
         else:
-            slurm_log_file = slurm_log_prefix
-            slurm_log_file += "_" + self.time_stamp.strftime("%Y%m%d%H%M%S")
-            slurm_log_file += ".log"
             job_name = job_name_prefix
             out_file = out_file_prefix + ".xlsx"
             job_params = job_params_prefix
@@ -668,41 +812,12 @@ class MutRepPipeline(CMMDBPipeline):
             self.submit_job(job_name,
                             self.project_code,
                             "core",
-                            "1",
-                            self.rpt_alloc_time,
-                            slurm_log_file,
+                            "4",
+                            self.job_alloc_time,
+                            slurm_log_prefix,
                             job_script,
                             job_params,
                             )
-
-    def gen_summary_report(self,
-                           report_regions,
-                           out_file=None,
-                           ):
-        if out_file is None:
-            out_file = self.summary_rpt_file
-        self.info("")
-        self.info(" >>>> generating summary report")
-        self.info(" >>>> report file: " + out_file)
-        wb = xlsxwriter.Workbook(out_file)
-        self.__init_cells_format(wb)
-        self.info("")
-        self.info(" >> add 'summary_all' sheet")
-        self.__add_muts_sheet(wb,
-                              "summary_all",
-                              report_regions,
-                              )
-        if (self.report_layout.summary_families_sheet and
-            self.family_infos is not None):
-            self.info("")
-            self.info(" >> add 'summary_families' sheet")
-            self.__add_muts_sheet(wb,
-                                  "summary_families",
-                                  report_regions,
-                                  samples_list=self.samples_list,
-                                  samples_header=self.samples_list_w_fam_pref,
-                                  )
-        wb.close()
 
     def gen_summary_reports(self):
         report_regions = self.report_layout.report_regions
@@ -730,42 +845,39 @@ class MutRepPipeline(CMMDBPipeline):
                           report_regions,
                           out_file=None,
                           ):
-        fam_info = self.family_infos[fam_id]
+        fam_info = self.families_info[fam_id]
         if out_file is None:
             out_file = join_path(self.rpts_out_dir,
                                  self.dataset_name+"_fam"+fam_info.fam_id+".xlsx")
         self.info("")
         self.info(" >>>> generating family report for family " + fam_info.fam_id)
         self.info(" >>>> report file: " + out_file)
-        samples_list = map(lambda x: x.sample_id, fam_info.members)
-        wb = xlsxwriter.Workbook(out_file)
-        self.__init_cells_format(wb)
-        if len(samples_list) == 1:
+        samples_id = map(lambda x: x.sample_id, fam_info.members)
+        self.__wb = Workbook(filename=out_file)
+        self.__set_report_format()
+        if len(samples_id) == 1:
             self.info("")
-            self.info(" >> add '" + samples_list[0] + "' sheet")
-            self.__add_muts_sheet(wb,
-                                  samples_list[0],
+            self.info(" >> add '" + samples_id[0] + "' sheet")
+            self.__add_muts_sheet(samples_id[0],
                                   report_regions,
-                                  samples_list=samples_list,
+                                  samples_id=samples_id,
                                   check_shared=True,
                                   )
         else:
             self.info("")
             self.info(" >> add 'shared' sheet")
-            self.__add_muts_sheet(wb,
-                                  "shared",
+            self.__add_muts_sheet("shared",
                                   report_regions,
-                                  samples_list=samples_list,
+                                  samples_id=samples_id,
                                   check_shared=True)
-            for sample_name in samples_list:
+            for sample_name in samples_id:
                 self.info("")
                 self.info(" >> add '" + sample_name + "' sheet")
-                self.__add_muts_sheet(wb,
-                                      sample_name,
+                self.__add_muts_sheet(sample_name,
                                       report_regions,
-                                      samples_list=[sample_name],
+                                      samples_id=[sample_name],
                                       check_shared=True)
-        wb.close()
+        self.__wb.close()
 
     def __gen_family_reports(self, fam_id):
         report_regions = self.report_layout.report_regions
@@ -791,17 +903,178 @@ class MutRepPipeline(CMMDBPipeline):
                                       )
 
     def gen_families_reports(self):
-        if self.family_infos is None:
+        if self.families_info is None:
             return
-        for fam_id in self.family_infos:
+        for fam_id in self.families_info:
             self.__gen_family_reports(fam_id)
 
-    def gen_reports(self):
-        pass
+    def monitor_init(self, **kwargs):
+        if self.report_layout.only_summary:
+            self.gen_summary_reports()
+        elif self.report_layout.only_families:
+            self.gen_families_reports()
+        else:
+            self.gen_families_reports()
+            self.gen_summary_reports()
+        super(MutRepPipeline, self).monitor_init(**kwargs)
 
-    def __garbage_collecting(self):
-        pass
+#class MutRepPipeline(CMMDBPipeline):
+#    """ A class to control mutation report pipeline """
+#
+#    def __init__(self,
+#                 jobs_setup_file,
+#                 ):
+#        CMMDBPipeline.__init__(self,
+#                               jobs_setup_file=jobs_setup_file
+#                               )
+#        self.__parse_report_layout()
+#
+#    def get_raw_repr(self):
+#        return {"dataset name": self.dataset_name,
+#                "project code": self.project_code,
+#                "jobs report file": self.jobs_report_file,
+#                }
+#
+#    def __parse_report_layout(self):
+#        self.__report_layout = ReportLayout(self._jobs_info[JOBS_SETUP_RPT_LAYOUT_SECTION])
+#
+#    @property
+#    def job_alloc_time(self):
+#        return self._jobs_info[JOBS_SETUP_RPT_ALLOC_TIME_KEY]
+#
+#    @property
+#    def annotated_vcf_tabix(self):
+#        return self.report_layout.annotated_vcf_tabix
+#
+#    @property
+#    def report_layout(self):
+#        return self.__report_layout
+#
+#    @property
+#    def cell_fmt_mgr(self):
+#        return self.__cell_fmt_mgr
+#
+#    def __cal_gt(self, gt, allele_idx):
+#        if gt == ".":
+#            return "."
+#        if gt == "./.":
+#            return "."
+#        gts = gt.split("/")
+#        if (gts[0] == "0") and (gts[1] == "0"):
+#            return "wt"
+#        if (gts[0] == str(allele_idx)) or (gts[1] == str(allele_idx)):
+#            if gts[0] == gts[1]:
+#                return "hom"
+#            else:
+#                return "het"
+#        return "."
+#
+#    def __init_cells_format(self, wb):
+#        self.__cell_fmt_mgr = CellFormatManager(wb, COLOR_RGB)
+#
+#
+#    def gen_reports(self):
+#        pass
+#
+#    def __garbage_collecting(self):
+#        pass
+#
+#    def monitor_action(self):
+#        CMMDBPipeline.monitor_action(self)
+#        self.__garbage_collecting()
 
-    def monitor_action(self):
-        CMMDBPipeline.monitor_action(self)
-        self.__garbage_collecting()
+def create_jobs_setup_file(*args, **kwargs):
+    job_setup_document, stream = init_jobs_setup_file(*args, **kwargs)
+    rpt_cfg = {}
+    anno_cols = get_func_arg('anno_cols', kwargs)
+    rpt_cfg[JOBS_SETUP_RPT_ANNOTATED_VCF_TABIX] = get_func_arg('annotated_vcf_tabix',
+                                                               kwargs)
+    if anno_cols is None:
+        rpt_cfg[JOBS_SETUP_RPT_ANNO_COLS_KEY] = ALL_MUTREP_ANNO_COLS.keys()
+    else:
+        rpt_cfg[JOBS_SETUP_RPT_ANNO_COLS_KEY] = anno_cols.split(",")
+    anno_excl_tags = get_func_arg('anno_excl_tags', kwargs)
+    if anno_excl_tags is not None:
+        rpt_cfg[JOBS_SETUP_RPT_ANNO_EXCL_TAGS_KEY] = anno_excl_tags.split(",")
+    report_regions = get_func_arg('report_regions', kwargs)
+    if report_regions is not None:
+        rpt_cfg[JOBS_SETUP_RPT_REGIONS_KEY] = report_regions.split(",")
+    expression_patterns = get_func_arg('expression_patterns', kwargs)
+    if expression_patterns is not None:
+        exprs = []
+        for raw_pattern in  expression_patterns.split(";"):
+            name, pattern = raw_pattern.split(":")
+            expr = defaultdict(list)
+            expr[JOBS_SETUP_RPT_EXPRESSIONS_NAME_KEY] = name.strip()
+            expr[JOBS_SETUP_RPT_EXPRESSIONS_PATTERN_KEY] = pattern.strip()
+            exprs.append(expr)
+        expression_usages = get_func_arg('expression_usages', kwargs)
+        if expression_usages is not None:
+            for raw_usage in expression_usages.split(";"):
+                usage = {}
+                usage_expr_name = raw_usage.split(":")[0]
+                usage[JOBS_SETUP_RPT_EXPRESSIONS_ACTION_KEY] = raw_usage.split(":")[1]
+                if len(raw_usage.split(":")) > 2:
+                    usage[JOBS_SETUP_RPT_EXPRESSIONS_INFO_KEY] = ":".join(raw_usage.split(":")[2:])
+                for expr in exprs:
+                    if expr[JOBS_SETUP_RPT_EXPRESSIONS_NAME_KEY] == usage_expr_name:
+                        expr[JOBS_SETUP_RPT_EXPRESSIONS_USAGES_KEY].append(usage)
+        rpt_cfg[JOBS_SETUP_RPT_EXPRESSIONS_KEY] = exprs
+    rpt_cfg[JOBS_SETUP_RPT_SPLIT_CHROM_KEY] = get_func_arg('split_chrom',
+                                                           kwargs,
+                                                           default_val=False,
+                                                           )
+    rpt_cfg[JOBS_SETUP_RPT_SUMMARY_FAMILIES_KEY] = get_func_arg('summary_families_sheet',
+                                                                kwargs,
+                                                                default_val=False,
+                                                                )
+    rpt_cfg[JOBS_SETUP_RPT_ONLY_SUMMARY_KEY] = get_func_arg('only_summary',
+                                                            kwargs,
+                                                            default_val=False,
+                                                            )
+    rpt_cfg[JOBS_SETUP_RPT_ONLY_FAMILIES_KEY] = get_func_arg('only_families',
+                                                             kwargs,
+                                                             default_val=False,
+                                                             )
+    call_detail = get_func_arg('call_detail', kwargs, default_val=False)
+    if call_detail:
+        extra_anno_cols = []
+        if call_detail:
+            extra_anno_cols.append(JOBS_SETUP_RPT_CALL_DETAIL_KEY)
+        rpt_cfg[JOBS_SETUP_RPT_EXTRA_ANNO_COLS_KEY] = extra_anno_cols
+    rows_filter_actions = get_func_arg('rows_filter_actions', kwargs)
+    if rows_filter_actions is not None:
+        filter_criterias = []
+        for filter_criteria in rows_filter_actions.split(","):
+            if filter_criteria == JOBS_SETUP_RPT_FILTER_RARE:
+                filter_criterias.append(JOBS_SETUP_RPT_FILTER_RARE)
+            if filter_criteria == JOBS_SETUP_RPT_FILTER_NON_INTERGENIC:
+                filter_criterias.append(JOBS_SETUP_RPT_FILTER_NON_INTERGENIC)
+            if filter_criteria == JOBS_SETUP_RPT_FILTER_NON_INTRONIC:
+                filter_criterias.append(JOBS_SETUP_RPT_FILTER_NON_INTRONIC)
+            if filter_criteria == JOBS_SETUP_RPT_FILTER_NON_UPSTREAM:
+                filter_criterias.append(JOBS_SETUP_RPT_FILTER_NON_UPSTREAM)
+            if filter_criteria == JOBS_SETUP_RPT_FILTER_NON_DOWNSTREAM:
+                filter_criterias.append(JOBS_SETUP_RPT_FILTER_NON_DOWNSTREAM)
+            if filter_criteria == JOBS_SETUP_RPT_FILTER_NON_UTR:
+                filter_criterias.append(JOBS_SETUP_RPT_FILTER_NON_UTR)
+            if filter_criteria == JOBS_SETUP_RPT_FILTER_NON_SYNONYMOUS:
+                filter_criterias.append(JOBS_SETUP_RPT_FILTER_NON_SYNONYMOUS)
+            if filter_criteria == JOBS_SETUP_RPT_FILTER_HAS_MUTATION:
+                filter_criterias.append(JOBS_SETUP_RPT_FILTER_HAS_MUTATION)
+            if filter_criteria == JOBS_SETUP_RPT_FILTER_HAS_SHARED:
+                filter_criterias.append(JOBS_SETUP_RPT_FILTER_HAS_SHARED)
+        rpt_cfg[JOBS_SETUP_RPT_ROWS_FILTER_ACTIONS_CRITERIA_KEY] = filter_criterias
+    frequency_ratios = get_func_arg('frequency_ratios',
+                                    kwargs,
+                                    default_val=DFLT_MUTREP_FREQ_RATIOS,
+                                    )
+    job_freq_ratios = []
+    for frequency_ratio in frequency_ratios.split(","):
+        (col, freq) = frequency_ratio.split(":")
+        job_freq_ratios.append({JOBS_SETUP_RPT_FREQ_RATIOS_COL_KEY: col,
+                                JOBS_SETUP_RPT_FREQ_RATIOS_FREQ_KEY: freq,
+                                })
+    rpt_cfg[JOBS_SETUP_RPT_FREQ_RATIOS_KEY] = job_freq_ratios
+    job_setup_document[JOBS_SETUP_RPT_LAYOUT_SECTION] = rpt_cfg
+    pyaml.dump(job_setup_document, stream)

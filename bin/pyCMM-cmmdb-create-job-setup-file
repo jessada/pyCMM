@@ -3,35 +3,11 @@ import sys
 from argparse import RawTextHelpFormatter
 from pycmm import settings
 from pycmm.app.cmmdb import app_pycmm_cmmdb_create_jobs_setup_file
-from pycmm.settings import AXEQ_CHR3_6_14_18_COLS_TAG
-from pycmm.settings import AXEQ_CHR5_19_COLS_TAG
-from pycmm.settings import AXEQ_CHR9_COLS_TAG
-from pycmm.settings import CRC_101_COLS_TAG
-from pycmm.settings import CRC_CAFAM_COLS_TAG
-from pycmm.settings import CRC_COLON_COLS_TAG
-from pycmm.settings import CRC_RECTAL_COLS_TAG
-from pycmm.settings import CRC_CRC_COLS_TAG
-from pycmm.settings import ILL_BR_COLS_TAG
-from pycmm.settings import NK64_COLS_TAG
-from pycmm.settings import MUTSTAT_DETAILS_COLS_TAG
-from pycmm.settings import LJB_SCORE_COLS_TAG
-from pycmm.settings import EXAC_OTH_COLS_TAG
-from pycmm.settings import UNKNOWN_COLS_TAG
-from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_RARE
-from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_NON_INTERGENIC
-from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_NON_INTRONIC
-from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_NON_UPSTREAM
-from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_NON_DOWNSTREAM
-from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_NON_UTR
-from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_NON_SYNONYMOUS
-from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_HAS_MUTATION
-from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_HAS_SHARED
 
 argp = argparse.ArgumentParser(description=settings.CMMDB_CREATE_JOB_SETUP_FILE_DESCRIPTION,
                                formatter_class=RawTextHelpFormatter,
                                )
 db_group = argp.add_argument_group('db-generator arguments')
-mutrep_group = argp.add_argument_group('mutation-report arguments')
 argp.add_argument('-d',
                   dest='dataset_name',
                   metavar="DATASET_NAME",
@@ -45,7 +21,7 @@ argp.add_argument('-O',
                   required=True,
                   )
 argp.add_argument('-s',
-                  dest='sample_infos',
+                  dest='sample_info',
                   metavar="SAMPLE_INFOS",
                   help='sample information',
                   default=None,
@@ -56,6 +32,12 @@ argp.add_argument('-p',
                   help='UPPMAX project code',
                   default=None,
                   )
+argp.add_argument('--job_alloc_time',
+                   dest='job_alloc_time',
+                   metavar="ALLOC_TIME",
+                   help='UPPMAX allocation time for jobs that create databases (i.e. mut stat, table annovar)',
+                   default=None,
+                   )
 db_group.add_argument('-i',
                   dest='vcf_tabix_file',
                   metavar="INPUT_FILE",
@@ -68,117 +50,6 @@ db_group.add_argument('-r',
                   help='vcf region to be used in calculation',
                   default=None,
                   )
-db_group.add_argument('--db_alloc_time',
-                      dest='db_alloc_time',
-                      metavar="ALLOC_TIME",
-                      help='UPPMAX allocation time for jobs that create databases (i.e. mut stat, table annovar)',
-                      default=None,
-                      )
-mutrep_group.add_argument('--rpt_alloc_time',
-                          dest='rpt_alloc_time',
-                          metavar="ALLOC_TIME",
-                          help='UPPMAX allocation time for jobs that create reports (i.e. summary mutations report, family mutaiton report)',
-                          default=None,
-                          )
-mutrep_group.add_argument('-A',
-                          dest='annotated_vcf_tabix',
-                          metavar="FILE",
-                          help='annoated vcf tabix file',
-                          default=None,
-                          )
-mutrep_group.add_argument('-a',
-                          dest='anno_cols',
-                          metavar="ANNOTATED_COLS",
-                          help='intital columns to be annotated in the result excel sheet (default all). Some of these of columns might be later excluded with argument "-E"(exclude columns)',
-                          default=None,
-                          )
-help_txt = 'groups(tags) of columns to be excluded (comma separated). Possible groups to be excluded are as follows:\n'
-help_txt += '\n'
-help_txt += '\t' + AXEQ_CHR3_6_14_18_COLS_TAG + ': columns that are related to mutations statistics generated from dataset Axeq chr3, 6, 14, 18\n'
-help_txt += '\t' + AXEQ_CHR5_19_COLS_TAG + ': columns that are related to dataset Axeq chr5, 19\n'
-help_txt += '\t' + AXEQ_CHR9_COLS_TAG + ': columns that are related to dataset Axeq chr9\n'
-help_txt += '\t' + CRC_101_COLS_TAG + ': columns that are related to mutations statistics generated from all 101 CRC samples\n'
-help_txt += '\t' + CRC_CAFAM_COLS_TAG + ': columns that are related to mutations statistics generated from cancer-family subdataset of CRC dataset\n'
-help_txt += '\t' + CRC_COLON_COLS_TAG + ': columns that are related to mutations statistics generated from colon-cancer subdataset of CRC dataset\n'
-help_txt += '\t' + CRC_RECTAL_COLS_TAG + ': columns that are related to mutations statistics generated from rectal-cancer subdataset of CRC dataset\n'
-help_txt += '\t' + CRC_CRC_COLS_TAG + ': columns that are related to mutations statistics generated from colorectal-cancer subdataset of CRC dataset\n'
-help_txt += '\t' + ILL_BR_COLS_TAG + ': columns that are related to mutations statistics generated from a dataset consisting of 30 breast-cancer samples from Illumina\n'
-help_txt += '\t' + NK64_COLS_TAG + ': columns that are related to mutations statistics generated from a dataset consisting of PMS2-, early onset- and famliy 24 samples\n'
-help_txt += '\t' + MUTSTAT_DETAILS_COLS_TAG + ': detailed information of mutations statistics\n'
-help_txt += '\t' + LJB_SCORE_COLS_TAG + ': prediction score from LJB\n'
-help_txt += '\t' + EXAC_OTH_COLS_TAG + ': other columns from ExAC database beside ExAC_ALL and ExAC_NFE\n'
-help_txt += '\t' + UNKNOWN_COLS_TAG + ": columns that I don't know that they are about\n"
-help_txt += '\n'
-help_txt += 'example: -E ' + AXEQ_CHR9_COLS_TAG + ',' + MUTSTAT_DETAILS_COLS_TAG + '\n'
-help_txt += '\n'
-mutrep_group.add_argument('-E',
-                          dest='anno_excl_tags',
-                          metavar="EXCLUDE_COLS",
-                          help=help_txt,
-                          default=None,
-                          )
-help_txt = 'Criteria of rows to be filtered. The list are as follows:\n'
-help_txt += '\n'
-help_txt += '\t' + JOBS_SETUP_RPT_FILTER_RARE + '\n'
-help_txt += '\t' + JOBS_SETUP_RPT_FILTER_NON_INTERGENIC + '\n'
-help_txt += '\t' + JOBS_SETUP_RPT_FILTER_NON_INTRONIC + '\n'
-help_txt += '\t' + JOBS_SETUP_RPT_FILTER_NON_UPSTREAM + '\n'
-help_txt += '\t' + JOBS_SETUP_RPT_FILTER_NON_DOWNSTREAM + '\n'
-help_txt += '\t' + JOBS_SETUP_RPT_FILTER_NON_UTR + '\n'
-help_txt += '\t' + JOBS_SETUP_RPT_FILTER_NON_SYNONYMOUS + '\n'
-help_txt += '\t' + JOBS_SETUP_RPT_FILTER_HAS_MUTATION + '\n'
-help_txt += '\t' + JOBS_SETUP_RPT_FILTER_HAS_SHARED + '\n'
-help_txt += '\n'
-help_txt += 'example: --filter_actions ' + JOBS_SETUP_RPT_FILTER_RARE + ',' + JOBS_SETUP_RPT_FILTER_HAS_SHARED + '\n'
-help_txt += '\n'
-mutrep_group.add_argument('--filter_actions',
-                          dest='rows_filter_actions',
-                          metavar="CRITERIA(S)",
-                          help=help_txt,
-                          default=None,
-                          )
-mutrep_group.add_argument('-R',
-                          dest='report_regions',
-                          metavar="REPORT_REGIONS",
-                          help='vcf regions to be shown up in the report (default all)',
-                          default=None,
-                          )
-mutrep_group.add_argument('-f',
-                          dest='freq_ratios',
-                          metavar="FREQ_RATIOS",
-                          help='frequencies ratios to be of the mutations to be identified as rare',
-                          default=None,
-                          )
-mutrep_group.add_argument('--split_chrom',
-                          dest='split_chrom',
-                          action="store_true",
-                          help='identified if the report should be splited for each chromsome when it is generated by SLURM',
-                          default=False,
-                          )
-mutrep_group.add_argument('--summary_families',
-                          dest='summary_families_sheet',
-                          action="store_true",
-                          help='identified if summary_families sheet in summary report should be generated',
-                          default=False,
-                          )
-mutrep_group.add_argument('--call_detail',
-                          dest='call_detail',
-                          action="store_true",
-                          help='indicate if other call information beside GT are required',
-                          default=False,
-                          )
-mutrep_group.add_argument('--only_summary',
-                          dest='only_summary',
-                          action="store_true",
-                          help='identified if only want to generate summary report',
-                          default=False,
-                          )
-mutrep_group.add_argument('--only_families',
-                          dest='only_families',
-                          action="store_true",
-                          help='identified if only want to generate families report',
-                          default=False,
-                          )
 argp.add_argument('-o',
                   dest='out_jobs_setup_file',
                   metavar="JOBS_SETUP_FILE",
@@ -190,20 +61,8 @@ app_pycmm_cmmdb_create_jobs_setup_file(dataset_name=args.dataset_name,
                                        project_out_dir=args.project_out_dir,
                                        vcf_tabix_file=args.vcf_tabix_file,
                                        db_region=args.db_region,
-                                       sample_infos=args.sample_infos,
+                                       sample_info=args.sample_info,
                                        project_code=args.project_code,
-                                       db_alloc_time=args.db_alloc_time,
-                                       rpt_alloc_time=args.rpt_alloc_time,
-                                       anno_cols=args.anno_cols,
-                                       rows_filter_actions=args.rows_filter_actions,
-                                       anno_excl_tags=args.anno_excl_tags,
-                                       annotated_vcf_tabix=args.annotated_vcf_tabix,
-                                       report_regions=args.report_regions,
-                                       frequency_ratios=args.freq_ratios,
-                                       split_chrom=args.split_chrom,
-                                       summary_families_sheet=args.summary_families_sheet,
-                                       call_detail=args.call_detail,
-                                       only_summary=args.only_summary,
-                                       only_families=args.only_families,
+                                       job_alloc_time=args.job_alloc_time,
                                        out_jobs_setup_file=args.out_jobs_setup_file,
                                        )
