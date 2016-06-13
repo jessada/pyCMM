@@ -1,3 +1,4 @@
+# This Python file uses the following encoding: utf-8
 import unittest
 import filecmp
 import datetime
@@ -147,6 +148,7 @@ class TestCMMDBPipeline(SafeTester):
     def test_load_jobs_info_3(self):
         """ test if families structures are loaded correctly """
 
+        self.individual_debug = True
         self.init_test(self.current_func_name)
         job_name = self.test_function
         dummy_vcf_tabix_file = "/path/to/vcf_tabix_file"
@@ -182,7 +184,7 @@ class TestCMMDBPipeline(SafeTester):
         job_name = self.test_function
         dummy_vcf_tabix_file = "/path/to/vcf_tabix_file"
         sample_info_file = join_path(self.data_dir,
-                                      "sample_info")
+                                     "sample_info")
         jobs_setup_file = self.__create_jobs_setup_file(vcf_tabix_file=dummy_vcf_tabix_file,
                                                         sample_info=sample_info_file,
                                                         )
@@ -204,15 +206,23 @@ class TestCMMDBPipeline(SafeTester):
     def test_load_jobs_info_5(self):
         """ test if can load sample infos in family structured format as a file """
 
+        self.individual_debug = True
         self.init_test(self.current_func_name)
         job_name = self.test_function
         dummy_vcf_tabix_file = "/path/to/vcf_tabix_file"
         sample_info_file = join_path(self.data_dir,
-                                      "sample_info")
+                                     "sample_info")
         jobs_setup_file = self.__create_jobs_setup_file(vcf_tabix_file=dummy_vcf_tabix_file,
                                                         sample_info=sample_info_file,
                                                         )
         pl = CMMDBPipeline(jobs_setup_file=jobs_setup_file)
+        for fam_id in pl.families_info:
+            self.assertTrue(type(fam_id) is str,
+                            "CMMDBPipeline cannot correctly read 'samples' from jobs setup file")
+            fam_info = pl.families_info[fam_id]
+            for member in fam_info.members:
+                self.assertTrue(type(member.sample_id) is str,
+                                "CMMDBPipeline cannot correctly read 'samples' from jobs setup file")
         self.assertEqual(pl.samples_id,
                          ["Alb-31", "Br-466", "Br-432", "Al-161", "Br-504", "Al-65"],
                          "CMMDBPipeline cannot correctly read 'samples' from jobs setup file")
@@ -315,7 +325,7 @@ class TestCMMDBPipeline(SafeTester):
                                                         project_code=None)
         pl = CMMDBPipeline(jobs_setup_file=jobs_setup_file)
         pl.table_annovar()
-        out_annotated_vcf = join_path(self.working_dir,
+        out_annotated_vcf = join_path(pl.data_out_dir,
                                       self.current_func_name+"_annotated.vcf")
         self.assertEqual(count_lines(out_annotated_vcf),
                          151,

@@ -11,7 +11,6 @@ from pycmm.settings import FULL_SYSTEM_TEST
 from pycmm.settings import DFLT_ANV_DB_DIR
 from pycmm.settings import DFLT_ANV_DB_NAMES
 from pycmm.settings import DFLT_ANV_DB_OPS
-from pycmm.settings import DFLT_CMMDB_ALLOC_TIME
 from pycmm.settings import FAST_PROJECT_CODE
 from pycmm.settings import SLOW_PROJECT_CODE
 from pycmm.utils import count_lines

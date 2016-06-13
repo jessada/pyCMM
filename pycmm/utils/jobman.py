@@ -1,7 +1,6 @@
 import time
-import sys
 import datetime
-import tempfile
+import sys
 from pycmm.template import pyCMMBase
 
 JOB_STATUS_PENDING = "PENDING"
@@ -28,7 +27,6 @@ class JobRecord(pyCMMBase):
         self.email = None
         self.prereq = None
         self.nodelist = None
-        self.__time_stamp = datetime.datetime.now()
         super(JobRecord, self).__init__(**kwargs)
     
     def get_raw_repr(self):
@@ -56,7 +54,7 @@ class JobRecord(pyCMMBase):
         self.__slurm_log_prefix = value
         self.__slurm_log_file = value
         self.__slurm_log_file += "_"
-        self.__slurm_log_file += self.__time_stamp.strftime("%Y%m%d%H%M%S")
+        self.__slurm_log_file += self.time_stamp.strftime("%Y%m%d%H%M%S")
         self.__slurm_log_file += ".log"
 
     @property
@@ -81,17 +79,10 @@ class JobManager(pyCMMBase):
         self.__job_rpt_fmt += "\t{dependency}"
         self.__job_rpt_fmt += "\t{job_status}"
         self.__job_rpt_file = jobs_report_file
-        self.__local_scratch_dir = None
         self.__job_id = None
         self.__job_name = None
         self.__job_nodelist = None
         super(JobManager, self).__init__(**kwargs)
-
-    @property
-    def local_scratch_dir(self):
-        if self.__local_scratch_dir is None:
-            self.__local_scratch_dir = tempfile.mkdtemp()
-        return self.__local_scratch_dir
 
     @property
     def job_dict(self):
@@ -117,10 +108,6 @@ class JobManager(pyCMMBase):
             p, stdout_data = self.exec_sh("echo $SLURM_JOB_NODELIST")
             self.__job_nodelist = stdout_data.strip()
         return self.__job_nodelist
-
-    def new_local_tmp_file(self):
-        return join_path(self.local_scratch_dir,
-                         self.get_tmp_file_name())
 
     def get_raw_repr(self):
         return None

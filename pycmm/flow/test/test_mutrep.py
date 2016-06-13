@@ -9,7 +9,7 @@ from pycmm.settings import DFLT_MUTREP_FREQ_RATIOS
 from pycmm.settings import ALL_MUTREP_ANNO_COLS
 from pycmm.settings import MT_COLS_TAG
 from pycmm.settings import AXEQ_CHR9_COLS_TAG
-from pycmm.settings import CRC_CRC_COLS_TAG
+#from pycmm.settings import CRC_CRC_COLS_TAG
 from pycmm.settings import NK64_COLS_TAG
 from pycmm.settings import MUTSTAT_DETAILS_COLS_TAG
 from pycmm.settings import EXAC_OTH_COLS_TAG
@@ -22,9 +22,9 @@ from pycmm.settings import CYTOBAND_COL_NAME
 from pycmm.settings import KG2014OCT_ALL_COL_NAME
 from pycmm.settings import AXEQ_CHR9_HET_COL_NAME
 from pycmm.settings import AXEQ_CHR3_6_14_18_PF_COL_NAME
-from pycmm.settings import CRC_CAFAM_WT_COL_NAME
+#from pycmm.settings import CRC_CAFAM_WT_COL_NAME
 from pycmm.settings import AXEQ_CHR5_19_GF_COL_NAME
-from pycmm.settings import CRC_CRC_PF_COL_NAME
+#from pycmm.settings import CRC_CRC_PF_COL_NAME
 from pycmm.settings import PRIMARY_MAF_VAR
 from pycmm.settings import ILL_BR_PF_COL_NAME
 from pycmm.settings import EXAC_ALL_COL_NAME
@@ -49,16 +49,16 @@ DFLT_TEST_MUTREP_COLS[CYTOBAND_COL_NAME] = ALL_MUTREP_ANNO_COLS[CYTOBAND_COL_NAM
 DFLT_TEST_MUTREP_COLS[KG2014OCT_ALL_COL_NAME] = ALL_MUTREP_ANNO_COLS[KG2014OCT_ALL_COL_NAME]
 DFLT_TEST_MUTREP_COLS[AXEQ_CHR9_HET_COL_NAME] = ALL_MUTREP_ANNO_COLS[AXEQ_CHR9_HET_COL_NAME]
 DFLT_TEST_MUTREP_COLS[AXEQ_CHR3_6_14_18_PF_COL_NAME] = ALL_MUTREP_ANNO_COLS[AXEQ_CHR3_6_14_18_PF_COL_NAME]
-DFLT_TEST_MUTREP_COLS[CRC_CAFAM_WT_COL_NAME] = ALL_MUTREP_ANNO_COLS[CRC_CAFAM_WT_COL_NAME]
+#DFLT_TEST_MUTREP_COLS[CRC_CAFAM_WT_COL_NAME] = ALL_MUTREP_ANNO_COLS[CRC_CAFAM_WT_COL_NAME]
 DFLT_TEST_MUTREP_COLS[AXEQ_CHR5_19_GF_COL_NAME] = ALL_MUTREP_ANNO_COLS[AXEQ_CHR5_19_GF_COL_NAME]
-DFLT_TEST_MUTREP_COLS[CRC_CRC_PF_COL_NAME] = ALL_MUTREP_ANNO_COLS[CRC_CRC_PF_COL_NAME]
+#DFLT_TEST_MUTREP_COLS[CRC_CRC_PF_COL_NAME] = ALL_MUTREP_ANNO_COLS[CRC_CRC_PF_COL_NAME]
 
 DFLT_TEST_REPORT_REGIONS = "18:12512255-14542551"
 DFLT_TEST_FREQ_RATIOS = DFLT_MUTREP_FREQ_RATIOS
 
 DFLT_TEST_ANNO_EXCL_TAGS = MT_COLS_TAG
 DFLT_TEST_ANNO_EXCL_TAGS += "," + AXEQ_CHR9_COLS_TAG
-DFLT_TEST_ANNO_EXCL_TAGS += "," + CRC_CRC_COLS_TAG
+#FLT_TEST_ANNO_EXCL_TAGS += "," + CRC_CRC_COLS_TAG
 DFLT_TEST_ANNO_EXCL_TAGS += "," + NK64_COLS_TAG
 DFLT_TEST_ANNO_EXCL_TAGS += "," + MUTSTAT_DETAILS_COLS_TAG
 DFLT_TEST_ANNO_EXCL_TAGS += "," + EXAC_OTH_COLS_TAG
@@ -135,7 +135,7 @@ class TestMutRepPipeline(SafeTester):
                          AXEQ_CHR9_HET_COL_NAME,
                          "MutRepPipeline cannot correctly read report layout info 'layout columns' from jobs setup file")
         self.assertEqual(len(pl.report_layout.anno_cols),
-                         11,
+                         9,
                          "MutRepPipeline cannot correctly read report layout info 'layout columns' from jobs setup file")
         self.assertEqual(len(pl.report_layout.anno_excl_tags),
                          0,
@@ -201,7 +201,7 @@ class TestMutRepPipeline(SafeTester):
                          8,
                          "MutRepPipeline cannot correctly read report layout info 'layout columns' from jobs setup file")
         self.assertEqual(len(pl.report_layout.anno_excl_tags),
-                         7,
+                         6,
                          "MutRepPipeline cannot correctly read report layout info 'annotation excluded tags' from jobs setup file")
         self.assertEqual(pl.report_layout.report_regions[1].end_pos,
                          "14542551",
@@ -457,6 +457,31 @@ class TestMutRepPipeline(SafeTester):
         self.assertEqual(xu.count_rows(),
                          2,
                          "report with swedish unicode character cannot be generated correctly"
+                         )
+
+    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST, "taking too long time to test")
+    def test_summary_report_7(self):
+        """ test excluding "*" allele """
+
+        self.init_test(self.current_func_name)
+        annotated_vcf_tabix = join_path(self.data_dir,
+                                        "input.vcf.gz")
+        project_name = self.test_function
+        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
+                                                        annotated_vcf_tabix=annotated_vcf_tabix,
+                                                        anno_excl_tags=DFLT_TEST_ANNO_EXCL_TAGS,
+                                                        report_regions=None,
+                                                        call_detail=False,
+                                                        )
+        pl = MutRepPipeline(jobs_setup_file=jobs_setup_file)
+        pl.gen_summary_report(pl.report_layout.report_regions)
+        xls_file = join_path(self.working_dir,
+                             "rpts",
+                             project_name+"_summary.xlsx")
+        xu = XlsUtils(xls_file)
+        self.assertEqual(xu.count_rows(),
+                         12,
+                         "mutation report cannot exclude '*' allele"
                          )
 
     @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST, "taking too long time to test")

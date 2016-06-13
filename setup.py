@@ -6,6 +6,7 @@ import fnmatch
 from setuptools import setup
 from pycmm.settings import DNASEQ_SLURM_MONITOR_PIPELINE_BIN
 from pycmm.settings import DUMMY_TABLE_ANNOVAR_BIN
+from pycmm.settings import MUTREP_SLURM_MONITOR_PIPELINE_BIN
 from pycmm.settings import MUTREP_FAMILY_REPORT_BIN
 from pycmm.settings import MUTREP_SUMMARY_REPORT_BIN
 from pycmm.settings import PLINK_SLURM_MONITOR_PIPELINE_BIN
@@ -66,9 +67,12 @@ setup(
              'bin/pyCMM-cmmdb-table-annovar',
              'bin/pyCMM-cmmdb-create-job-setup-file',
              'bin/'+DUMMY_TABLE_ANNOVAR_BIN,
+             'bin/'+MUTREP_SLURM_MONITOR_PIPELINE_BIN,
+             'bin/pyCMM-mutrep-pipeline',
              'bin/pyCMM-mutrep-mutation-reports',
              'bin/'+MUTREP_FAMILY_REPORT_BIN,
              'bin/'+MUTREP_SUMMARY_REPORT_BIN,
+             'bin/pyCMM-mutrep-create-job-setup-file',
              'bin/pyCMM-plink-create-job-setup-file',
              'bin/pyCMM-plink-hap-assocs',
              'bin/'+PLINK_SLURM_MONITOR_PIPELINE_BIN,

@@ -4,6 +4,7 @@ from os.path import join as join_path
 from os.path import isdir
 from os.path import isfile
 from collections import OrderedDict
+from pycmm.utils.ver import VersionManager
 from pycmm.cmmlib import CMMParams
 from pycmm.cmmlib.familylib import JOBS_SETUP_SAMPLES_INFOS_KEY
 from pycmm.cmmlib.familylib import JOBS_SETUP_SAMPLE_ID_KEY
@@ -16,7 +17,6 @@ from pycmm.cmmlib.fastqlib import Fastq
 from pycmm.flow import CMMPipeline
 from pycmm.flow import init_jobs_setup_file
 #from pycmm.utils.jobman import JOB_STATUS_COMPLETED
-from pycmm.utils.ver import VersionManager
 
 #BWA_MEM_SCRIPT = "$PYCMM/bash/GATKBP_bwa_mem.sh"
 #SORT_SAM_SCRIPT = "$PYCMM/bash/GATKBP_sort_sam.sh"
@@ -738,7 +738,7 @@ class GATKBPPipeline(CMMPipeline):
         the Haplotype Caller into a single joint gVCF file
         """
 
-        job_name = self.dataset_name + "_genotype_gvcfs" + region_txt
+        job_name = self.dataset_name + "_gnt_gvcfs_" + region_txt
         job_script = GENOTYPE_GVCFS_SCRIPT
         gvcf_list_file = join_path(self.working_dir,
                                    job_name+"_gvcf.list")

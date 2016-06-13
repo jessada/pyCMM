@@ -3,6 +3,7 @@ from os.path import join as join_path
 from pycmm.template import SafeTester
 from pycmm.flow import CMMPipeline
 from pycmm.flow import create_jobs_setup_file
+from pycmm.cmmlib.familylib import NO_FAMILY
 
 
 class TestFamilyLib(SafeTester):
@@ -111,6 +112,43 @@ class TestFamilyLib(SafeTester):
                          False,
                          "familiylib can't handle families information")
         self.assertEqual('Pro003' in pl.samples_id,
+                         True,
+                         "familiylib can't handle families information")
+
+    def test_extract_samples_id_w_fam_pref_1(self):
+        """ 
+        test if samples id can be extract from jobs setup data """
+
+        self.individual_debug = True
+        self.init_test(self.current_func_name)
+        sample_info_list = []
+        sample_info_list.append("18:Co-345:Co-37")
+        sample_info_list.append("12:Co-890:Co-290")
+        sample_info_list.append("13:Co-95")
+        sample_info_list.append("266:Co-131:Co-1355")
+        sample_info_list.append("314:1793-11o")
+        sample_info_list.append("987:Co-218:Co-2588")
+        sample_info_list.append("prostate:Pro001:Pro002:Pro003")
+        sample_info_list.append(NO_FAMILY+":AB-27:AB-28:1003-06o:1068-05o")
+        sample_info = ",".join(sample_info_list)
+        jobs_setup_file = self.__create_jobs_setup_file(sample_info=sample_info)
+        pl = CMMPipeline(jobs_setup_file=jobs_setup_file)
+        self.assertEqual(len(pl.samples_id_w_fam_pref),
+                         17,
+                         "familiylib can't handle families information")
+        self.assertEqual('987-Co-2588' in pl.samples_id_w_fam_pref,
+                         True,
+                         "familiylib can't handle families information")
+        self.assertEqual('Co-2588' in pl.samples_id_w_fam_pref,
+                         False,
+                         "familiylib can't handle families information")
+        self.assertEqual('prostate-Pro003' in pl.samples_id_w_fam_pref,
+                         True,
+                         "familiylib can't handle families information")
+        self.assertEqual('AB-27' in pl.samples_id_w_fam_pref,
+                         True,
+                         "familiylib can't handle families information")
+        self.assertEqual('1068-05o' in pl.samples_id_w_fam_pref,
                          True,
                          "familiylib can't handle families information")
 

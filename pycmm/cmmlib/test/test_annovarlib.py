@@ -51,14 +51,14 @@ class TestAnnovar(SafeTester):
                                "input.vcf.gz")
         data_out_folder = self.working_dir
         av = Annovar(dataset_name=dataset_name,
-                     input_file=input_file,
-                     db_folder=DFLT_ANNOVAR_TEST_DB_FOLDER,
-                     buildver="hg19",
-                     protocols=DFLT_ANNOVAR_TEST_DB_NAMES,
-                     operations=DFLT_ANNOVAR_TEST_DB_OPS,
-                     nastring=".",
-                     data_out_folder=data_out_folder,
-                     )
+                        input_file=input_file,
+                        db_dir=DFLT_ANV_TEST_DB_DIR,
+                        buildver="hg19",
+                        protocols=DFLT_ANV_TEST_DB_NAMES,
+                        operations=DFLT_ANV_TEST_DB_OPS,
+                        nastring=".",
+                        data_out_folder=data_out_folder,
+                        )
         av.run_table_annovar()
         self.assertEqual(count_lines(av.out_annotated_vcf),
                          151,
@@ -79,20 +79,20 @@ class TestAnnovar(SafeTester):
         dataset_name = self.current_func_name
         input_file = join_path(self.data_dir,
                                "input.vcf.gz")
-        annovar_db_names = DFLT_ANNOVAR_TEST_DB_NAMES
+        annovar_db_names = DFLT_ANV_TEST_DB_NAMES
         annovar_db_names += ",test_pyCMM"
-        annovar_db_ops = DFLT_ANNOVAR_TEST_DB_OPS
+        annovar_db_ops = DFLT_ANV_TEST_DB_OPS
         annovar_db_ops += ",f"
         data_out_folder = self.working_dir
         av = Annovar(dataset_name=dataset_name,
-                     input_file=input_file,
-                     db_folder=DFLT_ANNOVAR_TEST_DB_FOLDER,
-                     buildver="hg19",
-                     protocols=annovar_db_names,
-                     operations=annovar_db_ops,
-                     nastring=".",
-                     data_out_folder=data_out_folder,
-                     )
+                        input_file=input_file,
+                        db_dir=DFLT_ANV_TEST_DB_DIR,
+                        buildver="hg19",
+                        protocols=annovar_db_names,
+                        operations=annovar_db_ops,
+                        nastring=".",
+                        data_out_folder=data_out_folder,
+                        )
         av.run_table_annovar()
         self.assertEqual(count_lines(av.out_annotated_vcf),
                          158,

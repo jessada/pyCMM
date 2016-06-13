@@ -5,7 +5,6 @@ from pycmm.settings import SLURM_GATKBP_TEST
 from pycmm.settings import FULL_SYSTEM_TEST
 from pycmm.template import SafeTester
 from pycmm.settings import SLOW_PROJECT_CODE
-from pycmm.settings import DFLT_GATKBP_ALLOC_TIME
 from pycmm.flow.gatkbp import GATKBPPipeline
 from pycmm.flow.test.test_gatkbp import create_gatk_jobs_setup_file
 
@@ -20,9 +19,10 @@ class TestGATKBPPipelineSlurm(SafeTester):
     def setUp(self):
         pass
 
+## *********************************************************************************************** Need refactoring ***********************************************************************************************
+# need to change to just forwarding kwargs
     def __create_jobs_setup_file(self,
                                  project_code=SLOW_PROJECT_CODE,
-                                 flow_alloc_time=DFLT_GATKBP_ALLOC_TIME,
                                  variants_calling=True,
                                  targets_interval_list=None,
                                  dataset_usage_mail=False,
@@ -32,12 +32,12 @@ class TestGATKBPPipelineSlurm(SafeTester):
                                            working_dir=self.working_dir,
                                            data_dir=self.data_dir,
                                            project_code=project_code,
-                                           flow_alloc_time=flow_alloc_time,
                                            variants_calling=variants_calling,
                                            targets_interval_list=targets_interval_list,
                                            dataset_usage_mail=dataset_usage_mail,
                                            sample_usage_mail=sample_usage_mail,
                                            )
+## *********************************************************************************************** Need refactoring ***********************************************************************************************
 
 # ************************************** test very small sequence w/o indel **************************************
     @unittest.skipUnless(SLURM_GATKBP_TEST, "taking too much UPPMAX cpu-core hours")

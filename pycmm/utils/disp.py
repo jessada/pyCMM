@@ -13,8 +13,9 @@ def new_section_txt(txt):
     mylogger.info("")
     mylogger.info(center_txt(txt, 140))
 
-def disp_header(header_txt):
-    mylogger.info("")
+def disp_header(header_txt, new_line=True):
+    if new_line:
+        mylogger.info("")
     mylogger.info(header_txt)
 
 def disp_subheader(subheader_txt):
@@ -48,20 +49,34 @@ def show_config(app_description,
 
 def disp_params_set(params_name,
                     params,
+                    indent="",
                     ):
     if params is None:
         return
-    disp_header(params_name)
-    for key in params:
-        val = params[key]
-        if type(val) is list:
-            disp_subheader(key)
-            for entry_idx in xrange(len(val)):
-                disp_subparam("#"+str(entry_idx+1), val[entry_idx])
-        elif (type(val) is dict) or (type(val) is OrderedDict):
-            disp_subheader(key)
-            for sub_key in val:
-                disp_subparam(sub_key, val[sub_key])
-        else:
-            disp_param(key, params[key])
-
+    if len(indent) == 0:
+        disp_header(params_name)
+    else:
+        disp_header(params_name, new_line=False)
+    if type(params) is list:
+        for entry_idx in xrange(len(params)):
+            entry = params[entry_idx]
+            if ((type(entry) is list) or
+                (type(entry) is dict) or
+                (type(entry) is OrderedDict)
+                ):
+                disp_params_set(indent+"  #"+str(entry_idx+1),
+                                entry,
+                                indent=indent+"  ")
+            else:
+                disp_param(indent+"#"+str(entry_idx+1), entry)
+    else:
+        # assuming params is dict
+        for key in params:
+            val = params[key]
+            if ((type(val) is list) or
+                (type(val) is dict) or
+                (type(val) is OrderedDict)
+                ):
+                disp_params_set("  "+indent+key, val, indent=indent+"  ")
+            else:
+                disp_param(indent+key, params[key])
