@@ -1,300 +1,105 @@
-import filecmp
 import unittest
 from os.path import join as join_path
-from os.path import dirname
-from os.path import basename
-from pycmm.settings import FULL_SYSTEM_TEST
 from pycmm.template import SafeTester
-from pycmm.utils import count_lines
-from pycmm.flow.mutrep import MutRepPipeline
-from pycmm.flow.test.test_cmmdb import DFLT_ANNOVAR_TEST_DB_FOLDER
-from pycmm.flow.test.test_cmmdb import DFLT_ANNOVAR_TEST_DB_NAMES
-from pycmm.flow.test.test_cmmdb import DFLT_ANNOVAR_TEST_DB_OPS
+from pycmm.cmmlib.fastqlib import FastqReader
+from pycmm.cmmlib.fastqlib import Fastq
+from pycmm.cmmlib.fastqlib import ENCODING_ILLUMINA_1_5
+from pycmm.cmmlib.fastqlib import ENCODING_ILLUMINA_1_8
 
+class TestFastqReader(SafeTester):
 
-#class TestAnnovar(SafeTester):
-#
-#    def __init__(self, methodName):
-#        super(TestAnnovar, self).__init__(methodName=methodName,
-#                                          test_module_name=__name__,
-#                                          )
-#
-#    def setUp(self):
-#        pass
-#
-#    @unittest.skipUnless(FULL_SYSTEM_TEST, "taking too long time to test")
-#    def test_table_annovar_offline_1(self):
-#        """ test offline version (w/o slurm) of table_annovar """
-#
-#        self.init_test(self.current_func_name)
-#        dataset_name = self.current_func_name
-#        input_file = join_path(self.data_dir,
-#                               "input.vcf.gz")
-#        data_out_folder = self.working_dir
-#        av = Annovar(dataset_name=dataset_name,
-#                     input_file=input_file,
-#                     db_folder=DFLT_ANNOVAR_TEST_DB_FOLDER,
-#                     buildver="hg19",
-#                     protocols=DFLT_ANNOVAR_TEST_DB_NAMES,
-#                     operations=DFLT_ANNOVAR_TEST_DB_OPS,
-#                     nastring=".",
-#                     data_out_folder=data_out_folder,
-#                     )
-#        av.run_table_annovar()
-#        self.assertEqual(count_lines(av.out_annotated_vcf),
-#                         151,
-#                         "table annovar result is incorrect ")
-#        exp_annotated_vcf = dataset_name + "_annotated.vcf"
-#        self.assertEqual(basename(av.out_annotated_vcf),
-#                         exp_annotated_vcf,
-#                         "invalid expected output annatated vcf file name")
-#
-#    def tearDown(self):
-#        self.remove_working_dir()
-#
-#    @unittest.skipUnless(FULL_SYSTEM_TEST, "taking too long time to test")
-#    def test_table_annovar_offline_2(self):
-#        """ test offline version (w/o slurm) of table_annovar together with custom cal_stat """
-#
-#        self.init_test(self.current_func_name)
-#        dataset_name = self.current_func_name
-#        input_file = join_path(self.data_dir,
-#                               "input.vcf.gz")
-#        annovar_db_names = DFLT_ANNOVAR_TEST_DB_NAMES
-#        annovar_db_names += ",test_pyCMM"
-#        annovar_db_ops = DFLT_ANNOVAR_TEST_DB_OPS
-#        annovar_db_ops += ",f"
-#        data_out_folder = self.working_dir
-#        av = Annovar(dataset_name=dataset_name,
-#                     input_file=input_file,
-#                     db_folder=DFLT_ANNOVAR_TEST_DB_FOLDER,
-#                     buildver="hg19",
-#                     protocols=annovar_db_names,
-#                     operations=annovar_db_ops,
-#                     nastring=".",
-#                     data_out_folder=data_out_folder,
-#                     )
-#        av.run_table_annovar()
-#        self.assertEqual(count_lines(av.out_annotated_vcf),
-#                         158,
-#                         "table annoar result is incorrect ")
-#
-#class TestPredictionTranslator(SafeTester):
-#
-#    def __init__(self, test_name):
-#        SafeTester.__init__(self,
-#                            test_name,
-#                            dirname(__file__),
-#                            test_module_name=__name__,
-#                            )
-#
-#    def setUp(self):
-#        pass
-#
-#    def test_description_1(self):
-#        """ to test if normal description of effect predictor can be shown correctly """
-#
-#        self.init_test(self.current_func_name)
-#        pred = PredictionTranslator()
-#        self.assertEqual(pred.get_prediction_info(SIFT_PRED_COL, "D").description,
-#                         "Deleterious",
-#                         "PredictionTranslator cannot describe "+SIFT_PRED_COL)
-#        self.assertEqual(pred.get_prediction_info(SIFT_PRED_COL, "T").description,
-#                         "Tolerated",
-#                         "PredictionTranslator cannot describe "+SIFT_PRED_COL)
-#        self.assertEqual(pred.get_prediction_info(POLYPHEN2_HDIV_PRED_COL, "D").description,
-#                         "Probably damaging",
-#                         "PredictionTranslator cannot describe "+POLYPHEN2_HDIV_PRED_COL)
-#        self.assertEqual(pred.get_prediction_info(POLYPHEN2_HDIV_PRED_COL, "P").description,
-#                         "Possibly damaging",
-#                         "PredictionTranslator cannot describe "+POLYPHEN2_HDIV_PRED_COL)
-#        self.assertEqual(pred.get_prediction_info(POLYPHEN2_HDIV_PRED_COL, "B").description,
-#                         "Benign",
-#                         "PredictionTranslator cannot describe "+POLYPHEN2_HDIV_PRED_COL)
-#        self.assertEqual(pred.get_prediction_info(POLYPHEN2_HVAR_PRED_COL, "D").description,
-#                         "Probably damaging",
-#                         "PredictionTranslator cannot describe "+POLYPHEN2_HVAR_PRED_COL)
-#        self.assertEqual(pred.get_prediction_info(POLYPHEN2_HVAR_PRED_COL, "P").description,
-#                         "Possibly damaging",
-#                         "PredictionTranslator cannot describe "+POLYPHEN2_HVAR_PRED_COL)
-#        self.assertEqual(pred.get_prediction_info(POLYPHEN2_HVAR_PRED_COL, "B").description,
-#                         "Benign",
-#                         "PredictionTranslator cannot describe "+POLYPHEN2_HVAR_PRED_COL)
-#        self.assertEqual(pred.get_prediction_info(LRT_PRED_COL, "D").description,
-#                         "Deleterious",
-#                         "PredictionTranslator cannot describe "+LRT_PRED_COL)
-#        self.assertEqual(pred.get_prediction_info(LRT_PRED_COL, "N").description,
-#                         "Neutral",
-#                         "PredictionTranslator cannot describe "+LRT_PRED_COL)
-#        self.assertEqual(pred.get_prediction_info(LRT_PRED_COL, "U").description,
-#                         "Unknown",
-#                         "PredictionTranslator cannot describe "+LRT_PRED_COL)
-#        self.assertEqual(pred.get_prediction_info(MUTATIONTASTER_PRED_COL, "A").description,
-#                         "Disease causing automatic",
-#                         "PredictionTranslator cannot describe "+MUTATIONTASTER_PRED_COL)
-#        self.assertEqual(pred.get_prediction_info(MUTATIONTASTER_PRED_COL, "D").description,
-#                         "Disease causing",
-#                         "PredictionTranslator cannot describe "+MUTATIONTASTER_PRED_COL)
-#        self.assertEqual(pred.get_prediction_info(MUTATIONTASTER_PRED_COL, "N").description,
-#                         "Polymorphism",
-#                         "PredictionTranslator cannot describe "+MUTATIONTASTER_PRED_COL)
-#        self.assertEqual(pred.get_prediction_info(MUTATIONTASTER_PRED_COL, "P").description,
-#                         "Polymorphism automatic",
-#                         "PredictionTranslator cannot describe "+MUTATIONTASTER_PRED_COL)
-#        self.assertEqual(pred.get_prediction_info(MUTATIONASSESSOR_PRED_COL, "H").description,
-#                         "High",
-#                         "PredictionTranslator cannot describe "+MUTATIONASSESSOR_PRED_COL)
-#        self.assertEqual(pred.get_prediction_info(MUTATIONASSESSOR_PRED_COL, "M").description,
-#                         "Medium",
-#                         "PredictionTranslator cannot describe "+MUTATIONASSESSOR_PRED_COL)
-#        self.assertEqual(pred.get_prediction_info(MUTATIONASSESSOR_PRED_COL, "L").description,
-#                         "Low",
-#                         "PredictionTranslator cannot describe "+MUTATIONASSESSOR_PRED_COL)
-#        self.assertEqual(pred.get_prediction_info(MUTATIONASSESSOR_PRED_COL, "N").description,
-#                         "Neutral",
-#                         "PredictionTranslator cannot describe "+MUTATIONASSESSOR_PRED_COL)
-#        self.assertEqual(pred.get_prediction_info(MUTATIONASSESSOR_PRED_COL, "H/M").description,
-#                         "Functional",
-#                         "PredictionTranslator cannot describe "+MUTATIONASSESSOR_PRED_COL)
-#        self.assertEqual(pred.get_prediction_info(MUTATIONASSESSOR_PRED_COL, "L/N").description,
-#                         "Non-functional",
-#                         "PredictionTranslator cannot describe "+MUTATIONASSESSOR_PRED_COL)
-#        self.assertEqual(pred.get_prediction_info(FATHMM_PRED_COL, "D").description,
-#                         "Deleterious",
-#                         "PredictionTranslator cannot describe "+FATHMM_PRED_COL)
-#        self.assertEqual(pred.get_prediction_info(FATHMM_PRED_COL, "T").description,
-#                         "Tolerated",
-#                         "PredictionTranslator cannot describe "+FATHMM_PRED_COL)
-#        self.assertEqual(pred.get_prediction_info(RADIALSVM_PRED_COL, "D").description,
-#                         "Deleterious",
-#                         "PredictionTranslator cannot describe "+RADIALSVM_PRED_COL)
-#        self.assertEqual(pred.get_prediction_info(RADIALSVM_PRED_COL, "T").description,
-#                         "Tolerated",
-#                         "PredictionTranslator cannot describe "+RADIALSVM_PRED_COL)
-#        self.assertEqual(pred.get_prediction_info(LR_PRED_COL, "D").description,
-#                         "Deleterious",
-#                         "PredictionTranslator cannot describe "+LR_PRED_COL)
-#        self.assertEqual(pred.get_prediction_info(LR_PRED_COL, "T").description,
-#                         "Tolerated",
-#                         "PredictionTranslator cannot describe "+LR_PRED_COL)
-#
-#    def test_description_2(self):
-#        """ to test specials case of the description of effect predictor code """
-#        self.init_test(self.current_func_name)
-#        pred = PredictionTranslator()
-#        self.assertEqual(pred.get_prediction_info('ABC predictor', "K").description,
-#                         "NA(K)",
-#                         "PredictionTranslator cannot work correctly if the predictor is unknown")
-#        self.assertEqual(pred.get_prediction_info(LR_PRED_COL, "J").description,
-#                         "NA(J)",
-#                         "PredictionTranslator cannot work correctly if the prediction code is unknown")
-#        self.assertEqual(pred.get_prediction_info(LR_PRED_COL, ".").description,
-#                         ".",
-#                         "PredictionTranslator cannot work correctly if there is no prediction code")
-#
-#    def test_is_harmful_1(self):
-#        """ to if the predictor can normally tell the harmfulness """
-#
-#        self.init_test(self.current_func_name)
-#        pred = PredictionTranslator()
-#        self.assertEqual(pred.get_prediction_info(SIFT_PRED_COL, "D").harmful,
-#                         True,
-#                         "PredictionTranslator cannot tell harmfulness of "+SIFT_PRED_COL)
-#        self.assertEqual(pred.get_prediction_info(SIFT_PRED_COL, "T").harmful,
-#                         False,
-#                         "PredictionTranslator cannot tell harmfulness of "+SIFT_PRED_COL)
-#        self.assertEqual(pred.get_prediction_info(POLYPHEN2_HDIV_PRED_COL, "D").harmful,
-#                         True,
-#                         "PredictionTranslator cannot tell harmfulness of "+POLYPHEN2_HDIV_PRED_COL)
-#        self.assertEqual(pred.get_prediction_info(POLYPHEN2_HDIV_PRED_COL, "P").harmful,
-#                         True,
-#                         "PredictionTranslator cannot tell harmfulness of "+POLYPHEN2_HDIV_PRED_COL)
-#        self.assertEqual(pred.get_prediction_info(POLYPHEN2_HDIV_PRED_COL, "B").harmful,
-#                         False,
-#                         "PredictionTranslator cannot tell harmfulness of "+POLYPHEN2_HDIV_PRED_COL)
-#        self.assertEqual(pred.get_prediction_info(POLYPHEN2_HVAR_PRED_COL, "D").harmful,
-#                         True,
-#                         "PredictionTranslator cannot tell harmfulness of "+POLYPHEN2_HVAR_PRED_COL)
-#        self.assertEqual(pred.get_prediction_info(POLYPHEN2_HVAR_PRED_COL, "P").harmful,
-#                         True,
-#                         "PredictionTranslator cannot tell harmfulness of "+POLYPHEN2_HVAR_PRED_COL)
-#        self.assertEqual(pred.get_prediction_info(POLYPHEN2_HVAR_PRED_COL, "B").harmful,
-#                         False,
-#                         "PredictionTranslator cannot tell harmfulness of "+POLYPHEN2_HVAR_PRED_COL)
-#        self.assertEqual(pred.get_prediction_info(LRT_PRED_COL, "D").harmful,
-#                         True,
-#                         "PredictionTranslator cannot tell harmfulness of "+LRT_PRED_COL)
-#        self.assertEqual(pred.get_prediction_info(LRT_PRED_COL, "N").harmful,
-#                         False,
-#                         "PredictionTranslator cannot tell harmfulness of "+LRT_PRED_COL)
-#        self.assertEqual(pred.get_prediction_info(LRT_PRED_COL, "U").harmful,
-#                         False,
-#                         "PredictionTranslator cannot tell harmfulness of "+LRT_PRED_COL)
-#        self.assertEqual(pred.get_prediction_info(MUTATIONTASTER_PRED_COL, "A").harmful,
-#                         True,
-#                         "PredictionTranslator cannot tell harmfulness of "+MUTATIONTASTER_PRED_COL)
-#        self.assertEqual(pred.get_prediction_info(MUTATIONTASTER_PRED_COL, "D").harmful,
-#                         True,
-#                         "PredictionTranslator cannot tell harmfulness of "+MUTATIONTASTER_PRED_COL)
-#        self.assertEqual(pred.get_prediction_info(MUTATIONTASTER_PRED_COL, "N").harmful,
-#                         False,
-#                         "PredictionTranslator cannot tell harmfulness of "+MUTATIONTASTER_PRED_COL)
-#        self.assertEqual(pred.get_prediction_info(MUTATIONTASTER_PRED_COL, "P").harmful,
-#                         False,
-#                         "PredictionTranslator cannot tell harmfulness of "+MUTATIONTASTER_PRED_COL)
-#        self.assertEqual(pred.get_prediction_info(MUTATIONASSESSOR_PRED_COL, "H").harmful,
-#                         True,
-#                         "PredictionTranslator cannot tell harmfulness of "+MUTATIONASSESSOR_PRED_COL)
-#        self.assertEqual(pred.get_prediction_info(MUTATIONASSESSOR_PRED_COL, "M").harmful,
-#                         True,
-#                         "PredictionTranslator cannot tell harmfulness of "+MUTATIONASSESSOR_PRED_COL)
-#        self.assertEqual(pred.get_prediction_info(MUTATIONASSESSOR_PRED_COL, "L").harmful,
-#                         False,
-#                         "PredictionTranslator cannot tell harmfulness of "+MUTATIONASSESSOR_PRED_COL)
-#        self.assertEqual(pred.get_prediction_info(MUTATIONASSESSOR_PRED_COL, "N").harmful,
-#                         False,
-#                         "PredictionTranslator cannot tell harmfulness of "+MUTATIONASSESSOR_PRED_COL)
-#        self.assertEqual(pred.get_prediction_info(MUTATIONASSESSOR_PRED_COL, "H/M").harmful,
-#                         True,
-#                         "PredictionTranslator cannot tell harmfulness of "+MUTATIONASSESSOR_PRED_COL)
-#        self.assertEqual(pred.get_prediction_info(MUTATIONASSESSOR_PRED_COL, "L/N").harmful,
-#                         False,
-#                         "PredictionTranslator cannot tell harmfulness of "+MUTATIONASSESSOR_PRED_COL)
-#        self.assertEqual(pred.get_prediction_info(FATHMM_PRED_COL, "D").harmful,
-#                         True,
-#                         "PredictionTranslator cannot tell harmfulness of "+FATHMM_PRED_COL)
-#        self.assertEqual(pred.get_prediction_info(FATHMM_PRED_COL, "T").harmful,
-#                         False,
-#                         "PredictionTranslator cannot tell harmfulness of "+FATHMM_PRED_COL)
-#        self.assertEqual(pred.get_prediction_info(RADIALSVM_PRED_COL, "D").harmful,
-#                         True,
-#                         "PredictionTranslator cannot tell harmfulness of "+RADIALSVM_PRED_COL)
-#        self.assertEqual(pred.get_prediction_info(RADIALSVM_PRED_COL, "T").harmful,
-#                         False,
-#                         "PredictionTranslator cannot tell harmfulness of "+RADIALSVM_PRED_COL)
-#        self.assertEqual(pred.get_prediction_info(LR_PRED_COL, "D").harmful,
-#                         True,
-#                         "PredictionTranslator cannot tell harmfulness of "+LR_PRED_COL)
-#        self.assertEqual(pred.get_prediction_info(LR_PRED_COL, "T").harmful,
-#                         False,
-#                         "PredictionTranslator cannot tell harmfulness of "+LR_PRED_COL)
-#        self.assertEqual(pred.get_prediction_info(LR_PRED_COL, "K").harmful,
-#                         False,
-#                         "PredictionTranslator cannot tell harmfulness of "+LR_PRED_COL)
-#
-#    def test_is_harmful_1(self):
-#        """ to if the predictor can tell the harmfulness in special scenarios"""
-#        self.init_test(self.current_func_name)
-#        pred = PredictionTranslator()
-#        self.assertEqual(pred.get_prediction_info('ABC predictor', "K").harmful,
-#                         False,
-#                         "PredictionTranslator cannot work correctly if the predictor is unknown")
-#        self.assertEqual(pred.get_prediction_info(LR_PRED_COL, "J").harmful,
-#                         False,
-#                         "PredictionTranslator cannot work correctly if the prediction code is unknown")
-#        self.assertEqual(pred.get_prediction_info(LR_PRED_COL, ".").harmful,
-#                         False,
-#                         "PredictionTranslator cannot work correctly if there is no prediction code")
-#
-#    def tearDown(self):
-#        self.remove_working_dir()
+    def __init__(self, methodName):
+        super(TestFastqReader, self).__init__(methodName=methodName,
+                                              test_module_name=__name__,
+                                              )
+
+    def setUp(self):
+        pass
+
+    def test_reader_1(self):
+        """ test basic reading without any other parameters """
+
+        self.init_test(self.current_func_name)
+        # Ill_Br concatted fastq (problem fixed in previous GATKBP run)
+        input_file1 = join_path(self.data_dir,
+                                "input1.fastq.gz")
+        fastq_reader = FastqReader(file_name=input_file1)
+        self.assertEqual(fastq_reader.next_phred_score().phred_score,
+                         "@<@A=DDEAFFGFIJ@;FEHJJJIJJIJ<BFFG@FHH8DB=3BG@3*?B;B09*.8=@4C><@CGGGG;C>GGEEEE;=@3?BC;?A9?;@>C3@A@C::>",
+                         "FastqReader doesn't work correctly")
+        self.assertEqual(fastq_reader.next_phred_score().phred_score,
+                         "@@?DFFADHFHH?GBA@F<EEE;ADCHHC>BAG?FDFGAFHGGGCFAB@<7@B7F3;<DH>)782A>B>?B>1(55:<@>>55@@44:(+2<CCA>:ACB?",
+                         "FastqReader doesn't work correctly")
+        # Ill_Br raw fastq (problematic in previous GATKBP run)
+        input_file2 = join_path(self.data_dir,
+                                "input2.fastq.gz")
+        fastq_reader = FastqReader(file_name=input_file2)
+        self.assertEqual(fastq_reader.next_phred_score().phred_score,
+                         "_[_`\ccd`eefehi_Zedgiiihiihi[aeef_eggWca\Raf_RI^aZaOXIMW\_Sb][_bffffZb]ffddddZ\_R^abZ^`X^Z_]bR_`_bYY]",
+                         "FastqReader doesn't work correctly")
+        self.assertEqual(fastq_reader.next_phred_score().phred_score,
+                         "__^cee`cgegg^fa`_e[dddZ`cbggb]a`f^ecef`egfffbe`a_[V_aVeRZ[cg]HVWQ`]a]^a]PGTTY[_]]TT__SSYGJQ[bb`]Y`ba^",
+                         "FastqReader doesn't work correctly")
+        # Ill_Br raw fastq (supposed to be good)
+        input_file3 = join_path(self.data_dir,
+                                "input3.fastq.gz")
+        fastq_reader = FastqReader(file_name=input_file3)
+        self.assertEqual(fastq_reader.next_phred_score().phred_score,
+                         "#0;?#2@@?@@@@?@@@@???@?@????@@??@=@@@@????????????????????@@@@@@@>##--#######,,9==????>???##########",
+                         "FastqReader doesn't work correctly")
+        self.assertEqual(fastq_reader.next_phred_score().phred_score,
+                         "BCBF#2ADHHFHHJJJJJIJJJJJJJJIJJJJJJJJJJIEHIJIIJIJJJJJJJJJJIJJJJIJJJJJJGHHHHHFFFFFDFEEEDEDDDDDDDDFDEDD",
+                         "FastqReader doesn't work correctly")
+        # Axeq chr3_6_14_18
+        input_file4 = join_path(self.data_dir,
+                                "input4.fastq.gz")
+        fastq_reader = FastqReader(file_name=input_file4)
+        self.assertEqual(fastq_reader.next_phred_score().phred_score,
+                         "@@@DDA+A:ADA<ED@ABE>F43CFEE<<CAC@+AFCAEFCEFCE7??D*00?FF@:((88ACACG7.8=@@@D@)7@EA)7?7=?;?BDCCCAACBB;5;",
+                         "FastqReader doesn't work correctly")
+        self.assertEqual(fastq_reader.next_phred_score().phred_score,
+                         "??@D=D:B:A<<CFEGEEBHGGCHIBHHHA>EG;CGGCHHFDCD@HHGI>CGGIIICGAHGCDGCECGH).@DC>>C;?;==@@CD<A=BC55(5@@8?##",
+                         "FastqReader doesn't work correctly")
+
+class TestFastq(SafeTester):
+
+    def __init__(self, methodName):
+        super(TestFastq, self).__init__(methodName=methodName,
+                                        test_module_name=__name__,
+                                        )
+
+    def setUp(self):
+        pass
+
+    def test_encoding_1(self):
+        """ to check if Phred score encoding version can be identified """
+
+        self.init_test(self.current_func_name)
+        # Ill_Br concatted fastq (problem fixed in previous GATKBP run)
+        input_file1 = join_path(self.data_dir,
+                                "input1.fastq.gz")
+        fastq = Fastq(file_name=input_file1)
+        self.assertEqual(fastq.encoding,
+                         ENCODING_ILLUMINA_1_8,
+                         "Encoding of fastq file cannot be guessed correctly")
+        # Ill_Br raw fastq (problematic in previous GATKBP run)
+        input_file2 = join_path(self.data_dir,
+                                "input2.fastq.gz")
+        fastq = Fastq(file_name=input_file2)
+        self.assertEqual(fastq.encoding,
+                         ENCODING_ILLUMINA_1_5,
+                         "Encoding of fastq file cannot be guessed correctly")
+        # Ill_Br raw fastq (supposed to be good)
+        input_file3 = join_path(self.data_dir,
+                                "input3.fastq.gz")
+        fastq = Fastq(file_name=input_file3)
+        self.assertEqual(fastq.encoding,
+                         ENCODING_ILLUMINA_1_8,
+                         "Encoding of fastq file cannot be guessed correctly")
+        # Axeq chr3_6_14_18
+        input_file4 = join_path(self.data_dir,
+                                "input4.fastq.gz")
+        fastq = Fastq(file_name=input_file4)
+        self.assertEqual(fastq.encoding,
+                         ENCODING_ILLUMINA_1_8,
+                         "Encoding of fastq file cannot be guessed correctly")

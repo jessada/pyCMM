@@ -161,7 +161,7 @@ function count_frequency {
         IFS=',' read -ra alt <<< "$alt_list"
         for (( i=0; i<$((${#alt[@]})); i++ ))
         do
-            rec_out=$( printf "%s\t%s\t%s\t%s\t%s" $chr $pos $pos $ref ${alt[$i]} )
+            rec_out=$( printf "%s\t%s\t%s\t%s\t%s" $chr $pos $pos $ref "${alt[$i]}" )
             # for all GT fields
             wt_count=0
             het_count=0

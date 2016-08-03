@@ -4,6 +4,9 @@ from os.path import join as join_path
 from os.path import dirname
 from os.path import basename
 from pycmm.settings import FULL_SYSTEM_TEST
+from pycmm.settings import DFLT_ANV_DB_DIR
+from pycmm.settings import DFLT_ANV_DB_NAMES
+from pycmm.settings import DFLT_ANV_DB_OPS
 from pycmm.template import SafeTester
 from pycmm.utils import count_lines
 from pycmm.flow.mutrep import MutRepPipeline
@@ -18,9 +21,14 @@ from pycmm.cmmlib.annovarlib import MUTATIONASSESSOR_PRED_COL
 from pycmm.cmmlib.annovarlib import FATHMM_PRED_COL
 from pycmm.cmmlib.annovarlib import RADIALSVM_PRED_COL
 from pycmm.cmmlib.annovarlib import LR_PRED_COL
-from pycmm.flow.test.test_cmmdb import DFLT_ANNOVAR_TEST_DB_FOLDER
-from pycmm.flow.test.test_cmmdb import DFLT_ANNOVAR_TEST_DB_NAMES
-from pycmm.flow.test.test_cmmdb import DFLT_ANNOVAR_TEST_DB_OPS
+
+DFLT_ANV_TEST_DB_DIR = DFLT_ANV_DB_DIR
+DFLT_ANV_TEST_DB_NAMES = "refGene"
+DFLT_ANV_TEST_DB_OPS = "g"
+DFLT_ANV_TEST_DB_NAMES += ",cytoBand"
+DFLT_ANV_TEST_DB_OPS += ",r"
+DFLT_ANV_TEST_DB_NAMES += ",genomicSuperDups"
+DFLT_ANV_TEST_DB_OPS += ",r"
 
 
 class TestAnnovar(SafeTester):
@@ -43,14 +51,14 @@ class TestAnnovar(SafeTester):
                                "input.vcf.gz")
         data_out_folder = self.working_dir
         av = Annovar(dataset_name=dataset_name,
-                     input_file=input_file,
-                     db_folder=DFLT_ANNOVAR_TEST_DB_FOLDER,
-                     buildver="hg19",
-                     protocols=DFLT_ANNOVAR_TEST_DB_NAMES,
-                     operations=DFLT_ANNOVAR_TEST_DB_OPS,
-                     nastring=".",
-                     data_out_folder=data_out_folder,
-                     )
+                        input_file=input_file,
+                        db_dir=DFLT_ANV_TEST_DB_DIR,
+                        buildver="hg19",
+                        protocols=DFLT_ANV_TEST_DB_NAMES,
+                        operations=DFLT_ANV_TEST_DB_OPS,
+                        nastring=".",
+                        data_out_folder=data_out_folder,
+                        )
         av.run_table_annovar()
         self.assertEqual(count_lines(av.out_annotated_vcf),
                          151,
@@ -71,20 +79,20 @@ class TestAnnovar(SafeTester):
         dataset_name = self.current_func_name
         input_file = join_path(self.data_dir,
                                "input.vcf.gz")
-        annovar_db_names = DFLT_ANNOVAR_TEST_DB_NAMES
+        annovar_db_names = DFLT_ANV_TEST_DB_NAMES
         annovar_db_names += ",test_pyCMM"
-        annovar_db_ops = DFLT_ANNOVAR_TEST_DB_OPS
+        annovar_db_ops = DFLT_ANV_TEST_DB_OPS
         annovar_db_ops += ",f"
         data_out_folder = self.working_dir
         av = Annovar(dataset_name=dataset_name,
-                     input_file=input_file,
-                     db_folder=DFLT_ANNOVAR_TEST_DB_FOLDER,
-                     buildver="hg19",
-                     protocols=annovar_db_names,
-                     operations=annovar_db_ops,
-                     nastring=".",
-                     data_out_folder=data_out_folder,
-                     )
+                        input_file=input_file,
+                        db_dir=DFLT_ANV_TEST_DB_DIR,
+                        buildver="hg19",
+                        protocols=annovar_db_names,
+                        operations=annovar_db_ops,
+                        nastring=".",
+                        data_out_folder=data_out_folder,
+                        )
         av.run_table_annovar()
         self.assertEqual(count_lines(av.out_annotated_vcf),
                          158,

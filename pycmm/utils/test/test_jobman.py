@@ -49,8 +49,8 @@ class TestJobManager(SafeTester):
 
         self.init_test(self.current_func_name)
         job_name = self.test_function
-        slurm_log_file = join_path(self.working_dir,
-                                   self.test_function+'.log')
+        slurm_log_prefix = join_path(self.working_dir,
+                                     self.test_function)
         job_script = join_path(self.data_dir,
                                'test_job_script.sh')
         tmp_file = join_path(self.working_dir,
@@ -62,7 +62,7 @@ class TestJobManager(SafeTester):
                           TEST_PARTITION_TYPE,
                           TEST_NTASKS,
                           TEST_ALLOC_TIME,
-                          slurm_log_file,
+                          slurm_log_prefix,
                           job_script,
                           job_params,
                           )
@@ -77,8 +77,8 @@ class TestJobManager(SafeTester):
 
         self.init_test(self.current_func_name)
         job_name = self.test_function
-        slurm_log_file = join_path(self.working_dir,
-                                   self.test_function+'.log')
+        slurm_log_prefix = join_path(self.working_dir,
+                                     self.test_function)
         job_script = join_path(self.data_dir,
                                'test_job_script.sh')
         tmp_file = join_path(self.working_dir,
@@ -90,7 +90,7 @@ class TestJobManager(SafeTester):
                           TEST_PARTITION_TYPE,
                           TEST_NTASKS,
                           TEST_ALLOC_TIME,
-                          slurm_log_file,
+                          slurm_log_prefix,
                           job_script,
                           job_params,
                           )
@@ -111,8 +111,8 @@ class TestJobManager(SafeTester):
         self.individual_debug = True
         self.init_test(self.current_func_name)
         job_name = self.test_function
-        slurm_log_file = join_path(self.working_dir,
-                                   self.test_function+'.log')
+        slurm_log_prefix = join_path(self.working_dir,
+                                     self.test_function)
         job_script = join_path(self.data_dir,
                                'test_job_script.sh')
         tmp_file = join_path(self.working_dir,
@@ -125,7 +125,7 @@ class TestJobManager(SafeTester):
                           TEST_PARTITION_TYPE,
                           TEST_NTASKS,
                           TEST_ALLOC_TIME,
-                          slurm_log_file,
+                          slurm_log_prefix,
                           job_script,
                           job_params,
                           email=True,
@@ -141,8 +141,8 @@ class TestJobManager(SafeTester):
         self.individual_debug = True
         self.init_test(self.current_func_name)
         job_name_1 = self.test_function + "_1"
-        slurm_log_file = join_path(self.working_dir,
-                                   self.test_function+'.log')
+        slurm_log_prefix = join_path(self.working_dir,
+                                     self.test_function)
         job_script = join_path(self.data_dir,
                                'test_job_script.sh')
         fail_script = join_path(self.data_dir,
@@ -159,7 +159,7 @@ class TestJobManager(SafeTester):
                           TEST_PARTITION_TYPE,
                           TEST_NTASKS,
                           TEST_ALLOC_TIME,
-                          slurm_log_file,
+                          slurm_log_prefix,
                           fail_script,
                           job_params,
                           )
@@ -170,7 +170,7 @@ class TestJobManager(SafeTester):
                           TEST_PARTITION_TYPE,
                           TEST_NTASKS,
                           TEST_ALLOC_TIME,
-                          slurm_log_file,
+                          slurm_log_prefix,
                           job_script,
                           job_params,
                           prereq=[job_name_1],
@@ -182,7 +182,7 @@ class TestJobManager(SafeTester):
                           TEST_PARTITION_TYPE,
                           TEST_NTASKS,
                           TEST_ALLOC_TIME,
-                          slurm_log_file,
+                          slurm_log_prefix,
                           fail_script,
                           job_params,
                           prereq=[job_name_1, job_name_2],
@@ -199,8 +199,6 @@ class TestJobManager(SafeTester):
         self.individual_debug = True
         self.init_test(self.current_func_name)
         job_name_1 = self.test_function + "_1"
-        slurm_log_file = join_path(self.working_dir,
-                                   self.test_function+'.log')
         job_script = join_path(self.data_dir,
                                'test_job_script.sh')
         tmp_file = join_path(self.working_dir,
@@ -208,35 +206,41 @@ class TestJobManager(SafeTester):
         job_params = '3 20000 ' + tmp_file
         self.delete_file(tmp_file)
         jobman = JobManager()
+        slurm_log_prefix = join_path(self.working_dir,
+                                     job_name_1)
         jobman.submit_job(job_name_1,
                           TEST_PROJECT_CODE,
                           TEST_PARTITION_TYPE,
                           TEST_NTASKS,
                           TEST_ALLOC_TIME,
-                          slurm_log_file,
+                          slurm_log_prefix,
                           job_script,
                           job_params,
                           )
         job_name_2 = self.test_function + "_2"
         job_params = '100 12000 ' + tmp_file
+        slurm_log_prefix = join_path(self.working_dir,
+                                     job_name_2)
         jobman.submit_job(job_name_2,
                           TEST_PROJECT_CODE,
                           TEST_PARTITION_TYPE,
                           TEST_NTASKS,
                           TEST_ALLOC_TIME,
-                          slurm_log_file,
+                          slurm_log_prefix,
                           job_script,
                           job_params,
                           prereq=[job_name_1],
                           )
         job_name_3 = self.test_function + "_3"
         job_params = '410 420 ' + tmp_file
+        slurm_log_prefix = join_path(self.working_dir,
+                                     job_name_3)
         jobman.submit_job(job_name_3,
                           TEST_PROJECT_CODE,
                           TEST_PARTITION_TYPE,
                           TEST_NTASKS,
                           TEST_ALLOC_TIME,
-                          slurm_log_file,
+                          slurm_log_prefix,
                           job_script,
                           job_params,
                           prereq=[job_name_1, job_name_2],
@@ -244,6 +248,33 @@ class TestJobManager(SafeTester):
         jobman.cancel_job(job_name_3)
         jobman.cancel_job(job_name_2)
         jobman.cancel_job(job_name_1)
+
+    @unittest.skipUnless(SLURM_TEST, "taking too long time to test")
+    def test_nodelist(self):
+        """ test sbatch '--nodelist' feature """
+
+        self.individual_debug = True
+        self.init_test(self.current_func_name)
+        job_name = self.test_function
+        job_script = join_path(self.data_dir,
+                               'test_job_script.sh')
+        tmp_file = join_path(self.working_dir,
+                             self.test_function+'.txt')
+        job_params = '3 20000 ' + tmp_file
+        self.delete_file(tmp_file)
+        jobman = JobManager()
+        slurm_log_prefix = join_path(self.working_dir,
+                                     job_name)
+        jobman.submit_job(job_name,
+                          TEST_PROJECT_CODE,
+                          TEST_PARTITION_TYPE,
+                          TEST_NTASKS,
+                          TEST_ALLOC_TIME,
+                          slurm_log_prefix,
+                          job_script,
+                          job_params,
+                          nodelist="m[159]",
+                          )
 
     def tearDown(self):
         self.remove_working_dir()

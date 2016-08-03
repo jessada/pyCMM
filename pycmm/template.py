@@ -7,10 +7,13 @@ import inspect
 import fileinput
 import gc
 import string
+import tempfile
+import datetime
 from random import choice
 from os.path import join as join_path
 from os.path import dirname
 from pycmm.utils import mylogger
+from pycmm.utils import exec_sh
 from pycmm.settings import ENV_TEST_DIR
 from pycmm.settings import DEBUG_MODE
 
@@ -21,8 +24,10 @@ class pyCMMBase(object):
     """ pyCMM base class """
 
     def __init__(self, **kwargs):
+        self.__time_stamp = datetime.datetime.now()
         self.pkg_root_dir = dirname(dirname(__file__))
         super(pyCMMBase, self).__init__(**kwargs)
+        self.__local_scratch_dir = None
 
     def __str__(self):
         return self.__repr__()
@@ -33,13 +38,27 @@ class pyCMMBase(object):
     def get_raw_repr(self):
         return "Not yet implemented"
 
+    @property
+    def time_stamp(self):
+        return self.__time_stamp
+
     def get_tmp_file_name(self):
         chars = string.ascii_letters
         return "tmp_" + ''.join([choice(chars) for i in range(6)])
 
+    @property
+    def local_scratch_dir(self):
+        if self.__local_scratch_dir is None:
+            self.__local_scratch_dir = tempfile.mkdtemp()
+        return self.__local_scratch_dir
+
+    def new_local_tmp_file(self):
+        return join_path(self.local_scratch_dir,
+                         self.get_tmp_file_name())
+
     def remove_dir(self, dir_name):
         if os.path.exists(dir_name):
-            shutil.rmtree(dir_name)
+            shutil.rmtree(dir_name, ignore_errors=True)
 
     def create_dir(self, dir_name):
         if not os.path.exists(dir_name):
@@ -66,30 +85,46 @@ class pyCMMBase(object):
         else:
             shutil.copy(src, dst)
 
-    def dbg(self, dbg_msg):
+    def copytree(src, dst, symlinks=False, ignore=None):
+        for item in os.listdir(src):
+            src_item = os.path.join(src, item)
+            dst_item = os.path.join(dst, item)
+            if os.path.isdir(s):
+                shutil.copytree(src_item, dst_item, symlinks, ignore)
+            else:
+                shutil.copy2(src_item, dst_item)
+
+    def dbg(self, dbg_msg=""):
         if DEBUG_MODE:
             frm = inspect.stack()[1]
             mod = inspect.getmodule(frm[0])
             mylogger.getLogger(mod.__name__)
             mylogger.debug(dbg_msg)
 
-    def info(self, info_msg):
+    def info(self, info_msg=""):
         frm = inspect.stack()[1]
         mod = inspect.getmodule(frm[0])
         mylogger.getLogger(mod.__name__)
         mylogger.info(info_msg)
 
-    def warning(self, warning_msg):
+    def warning(self, warning_msg=""):
         frm = inspect.stack()[1]
         mod = inspect.getmodule(frm[0])
         mylogger.getLogger(mod.__name__)
         mylogger.warning(warning_msg)
 
-    def throw(self, err_msg):
+    def throw(self, err_msg=""):
         frm = inspect.stack()[1]
         mod = inspect.getmodule(frm[0])
         mylogger.getLogger(mod.__name__)
         mylogger.throw(err_msg)
+
+    # having this function built-in for only informative logging purpose
+    def exec_sh(self, cmd, silent=False):
+        frm = inspect.stack()[1]
+        mod = inspect.getmodule(frm[0])
+        mylogger.getLogger(mod.__name__)
+        return exec_sh(cmd, silent)
 
     @property
     def current_func_name(self):

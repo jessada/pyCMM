@@ -865,8 +865,8 @@ class TestTAVcfRecord(SafeTester):
         pass
 
     def __create_jobs_setup_file(self,
-                                 dataset_name=None,
-                                 sample_infos=None,
+                                 project_name=None,
+                                 sample_info=None,
                                  anno_cols=DFLT_TEST_MUTREP_COLS,
                                  anno_excl_tags=None,
                                  annotated_vcf_tabix=None,
@@ -876,11 +876,11 @@ class TestTAVcfRecord(SafeTester):
                                  ):
         jobs_setup_file = join_path(self.working_dir,
                                     self.test_function+'_jobs_setup.txt')
-        if dataset_name is None:
-            dataset_name = self.test_function
-        create_jobs_setup_file(dataset_name=dataset_name,
+        if project_name is None:
+            project_name = self.test_function
+        create_jobs_setup_file(project_name=project_name,
                                project_out_dir=self.working_dir,
-                               sample_infos=sample_infos,
+                               sample_info=sample_info,
                                anno_cols=",".join(anno_cols),
                                anno_excl_tags=anno_excl_tags,
                                annotated_vcf_tabix=annotated_vcf_tabix,
@@ -1643,12 +1643,12 @@ class TestTAVcfRecord(SafeTester):
         sample_infos.append("fam3:Al-36:Al-47:Al-65")
         sample_infos.append("fam4:Al-73:Al-77:Al-92")
         sample_infos.append("fam5:Br-466")
-        jobs_setup_file = self.__create_jobs_setup_file(sample_infos=",".join(sample_infos),
+        jobs_setup_file = self.__create_jobs_setup_file(sample_info=",".join(sample_infos),
                                                         )
-        pl = MutRepPipeline(jobs_setup_file)
+        pl = MutRepPipeline(jobs_setup_file=jobs_setup_file)
         in_file = join_path(self.data_dir,
-                               'input.vcf.gz')
-        vcf_reader = TAVcfReader(filename=in_file, family_infos=pl.family_infos)
+                            'input.vcf.gz')
+        vcf_reader = TAVcfReader(filename=in_file, family_infos=pl.families_info)
         vcf_record = vcf_reader.next()
         self.assertEqual(vcf_record.has_shared(1),
                          False,
@@ -1756,12 +1756,12 @@ class TestTAVcfRecord(SafeTester):
         sample_infos.append("fam3:Al-36:Al-47:Al-65")
         sample_infos.append("fam4:Al-73:Al-77:Al-92")
         sample_infos.append("fam5:Br-466")
-        jobs_setup_file = self.__create_jobs_setup_file(sample_infos=",".join(sample_infos),
+        jobs_setup_file = self.__create_jobs_setup_file(sample_info=",".join(sample_infos),
                                                         )
-        pl = MutRepPipeline(jobs_setup_file)
+        pl = MutRepPipeline(jobs_setup_file=jobs_setup_file)
         in_file = join_path(self.data_dir,
                                'input.vcf.gz')
-        vcf_reader = TAVcfReader(filename=in_file, family_infos=pl.family_infos)
+        vcf_reader = TAVcfReader(filename=in_file, family_infos=pl.families_info)
         vcf_record = vcf_reader.next()
         self.assertEqual(vcf_record.has_shared(1, min_share_count=1),
                          False,
@@ -1869,12 +1869,12 @@ class TestTAVcfRecord(SafeTester):
         sample_infos.append("fam3:Al-36:Al-47:Al-65")
         sample_infos.append("fam4:Al-73:Al-77:Al-92")
         sample_infos.append("fam5:Br-466")
-        jobs_setup_file = self.__create_jobs_setup_file(sample_infos=",".join(sample_infos),
+        jobs_setup_file = self.__create_jobs_setup_file(sample_info=",".join(sample_infos),
                                                         )
-        pl = MutRepPipeline(jobs_setup_file)
+        pl = MutRepPipeline(jobs_setup_file=jobs_setup_file)
         in_file = join_path(self.data_dir,
                                'input.vcf.gz')
-        vcf_reader = TAVcfReader(filename=in_file, family_infos=pl.family_infos)
+        vcf_reader = TAVcfReader(filename=in_file, family_infos=pl.families_info)
         vcf_record = vcf_reader.next()
         self.assertEqual(vcf_record.has_shared(1, min_share_count=2),
                          False,
@@ -1982,12 +1982,12 @@ class TestTAVcfRecord(SafeTester):
         sample_infos.append("fam3:Al-36:Al-47:Al-65")
         sample_infos.append("fam4:Al-73:Al-77:Al-92")
         sample_infos.append("fam5:Br-466")
-        jobs_setup_file = self.__create_jobs_setup_file(sample_infos=",".join(sample_infos),
+        jobs_setup_file = self.__create_jobs_setup_file(sample_info=",".join(sample_infos),
                                                         )
-        pl = MutRepPipeline(jobs_setup_file)
+        pl = MutRepPipeline(jobs_setup_file=jobs_setup_file)
         in_file = join_path(self.data_dir,
                                'input.vcf.gz')
-        vcf_reader = TAVcfReader(filename=in_file, family_infos=pl.family_infos)
+        vcf_reader = TAVcfReader(filename=in_file, family_infos=pl.families_info)
         vcf_record = vcf_reader.next()
         self.assertEqual(vcf_record.has_shared(1, min_share_count=3),
                          False,
@@ -2399,6 +2399,3 @@ class TestTAVcfRecord(SafeTester):
                         "cannot perform vcf expression evaluation correctly")
         self.assertFalse(vcf_record.vcf_eval(expr4),
                         "cannot perform vcf expression evaluation correctly")
-
-    def tearDown(self):
-        self.remove_working_dir()

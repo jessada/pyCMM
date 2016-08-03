@@ -2,20 +2,20 @@
 import operator
 from os.path import join as join_path
 from pycmm.template import pyCMMBase
+from pycmm.cmmlib import CMMParams
 from pycmm.cmmlib.xlslib import CMMWorkbook as Workbook
 from pycmm.cmmlib.xlslib import NO_COLOR
+from pycmm.cmmlib.plinklib import SnpInfoReader
+from pycmm.cmmlib.plinklib import HapAssocReader
+from pycmm.cmmlib.plinklib import FamReader
+from pycmm.cmmlib.plinklib import TPedReader
 from pycmm.flow import CMMPipeline
-from pycmm.flow.plink import CMMPipeline
 from pycmm.flow.plink import JOBS_SETUP_REPORT_PARAMS_SECTION
 from pycmm.flow.plink import JOBS_SETUP_CUTOFF_PVALUE_KEY
 from pycmm.flow.plink import JOBS_SETUP_CUTOFF_ORS_KEY
 from pycmm.flow.plink import JOBS_SETUP_FAMLIY_HAPLOTYPE_PREFIX_KEY
 from pycmm.flow.plink import DFLT_CUTOFF_PVALUE
 from pycmm.flow.plink import DFLT_CUTOFF_ORS
-from pycmm.cmmlib.plinklib import SnpInfoReader
-from pycmm.cmmlib.plinklib import HapAssocReader
-from pycmm.cmmlib.plinklib import FamReader
-from pycmm.cmmlib.plinklib import TPedReader
 
 HAPLO_INFO_SIZE = 4
 SNP_INFO_SIZE = 5
@@ -36,35 +36,32 @@ BEST_PVALUE_COLOR = "GOLD"
 HAPLO_COUNT_LOG_INTERVAL = 1000
 
 
-class RptParams(pyCMMBase):
+class RptParams(CMMParams):
     """  To handle and parse PLINK parameters  """
 
-    def __init__(self, params, **kwargs):
-        self.__params = params
+    def __init__(self, **kwargs):
         super(RptParams, self).__init__(**kwargs)
 
     def get_raw_repr(self):
         raw_repr = OrderedDict()
         raw_repr["cutoff p-value"] = self.cutoff_pvalue
+        raw_repr["cutoff ORS"] = self.cutoff_ors
+        raw_repr["cutoff family haplotype prefix"] = self.fam_hap_prefix
         return raw_repr
 
     @property
     def cutoff_pvalue(self):
-        if JOBS_SETUP_CUTOFF_PVALUE_KEY in self.__params:
-            return self.__params[JOBS_SETUP_CUTOFF_PVALUE_KEY]
-        return DFLT_CUTOFF_PVALUE
+        return self._get_job_config(JOBS_SETUP_CUTOFF_PVALUE_KEY,
+                                    default_val=DFLT_CUTOFF_PVALUE)
 
     @property
     def cutoff_ors(self):
-        if JOBS_SETUP_CUTOFF_ORS_KEY in self.__params:
-            return self.__params[JOBS_SETUP_CUTOFF_ORS_KEY]
-        return DFLT_CUTOFF_ORS
+        return self._get_job_config(JOBS_SETUP_CUTOFF_ORS_KEY,
+                                    default_val=DFLT_CUTOFF_ORS)
 
     @property
     def fam_hap_prefix(self):
-        if JOBS_SETUP_FAMLIY_HAPLOTYPE_PREFIX_KEY in self.__params:
-            return self.__params[JOBS_SETUP_FAMLIY_HAPLOTYPE_PREFIX_KEY]
-        return None
+        return self._get_job_config(JOBS_SETUP_FAMLIY_HAPLOTYPE_PREFIX_KEY)
 
 class HapAssocRepPipeline(CMMPipeline):
     """ To control production of haplotype association study reports """
@@ -94,7 +91,8 @@ class HapAssocRepPipeline(CMMPipeline):
     @property
     def rpt_params(self):
         if self.__rpt_params is None:
-            self.__rpt_params = RptParams(self._jobs_info[JOBS_SETUP_REPORT_PARAMS_SECTION])
+            self.__rpt_params = RptParams(entries=self._get_job_config(JOBS_SETUP_REPORT_PARAMS_SECTION,
+                                                                       required=True))
         return self.__rpt_params
 
     @property
@@ -210,6 +208,7 @@ class HapAssocRepPipeline(CMMPipeline):
     def __get_best_pvalue_hap_idx(self, fam_id):
         return self.__get_best_hap_idx(fam_id, attr="pvalue")
 
+# *********************************************************************************************** Might need refactoring ***********************************************************************************************
     def __compare_fam_gts_with_hap_assocs(self):
         # compare all haplotypes from the results with all haplotypes from
         # the families
@@ -217,13 +216,15 @@ class HapAssocRepPipeline(CMMPipeline):
             hap_assoc_rec.matched_families = {}
             for fam_id in self.families_info:
                 fam_info = self.families_info[fam_id]
-                for member_info in fam_info.members_info:
+                for member_info in fam_info.members:
                     if member_info.gts is None:
                         continue
                     matched_allele = self.__compare_haplotypes(hap_assoc_rec,
                                                                member_info.gts)
                     hap_assoc_rec.matched_families[fam_id] = matched_allele
+# *********************************************************************************************** Might need refactoring ***********************************************************************************************
 
+# *********************************************************************************************** Might need refactoring ***********************************************************************************************
     def __load_families_haplotypes(self):
         # load genotyping information from tped and tfam files and add them 
         # to FamilyInfo object
@@ -247,7 +248,7 @@ class HapAssocRepPipeline(CMMPipeline):
             # specified in 'sample_info' parameters
             for fam_id in self.families_info:
                 fam_info = self.families_info[fam_id]
-                for member_info in fam_info.members_info:
+                for member_info in fam_info.members:
                     fam_hap_key = fam_id + "_" + member_info.sample_id
                     if fam_hap_key not in self.__fam_hap_idxs:
                         msg = "Member '" + member_info.sample_id + "' of"
@@ -266,6 +267,7 @@ class HapAssocRepPipeline(CMMPipeline):
                             continue
                         gts[tped_rec.snp] = tped_rec.gts[fam_hap_idx].split()
                     member_info.gts = gts
+# *********************************************************************************************** Might need refactoring ***********************************************************************************************
 
     def __add_sheet(self, sheet_name):
         ws = self.__wb.add_worksheet(sheet_name)
@@ -507,10 +509,11 @@ class HapAssocRepPipeline(CMMPipeline):
                                     )
         ws.freeze_panes(HAPLO_INFO_SIZE+2, SNP_INFO_SIZE)
 
+# *********************************************************************************************** Might need refactoring ***********************************************************************************************
     def __add_fams_haps_sheet(self):
         for fam_id in self.families_info:
             fam_info = self.families_info[fam_id]
-            for member_info in fam_info.members_info:
+            for member_info in fam_info.members:
                 if member_info.gts is None:
                     continue
                 best_ors_hap_idx = self.__get_best_ors_hap_idx(fam_id)
@@ -521,6 +524,7 @@ class HapAssocRepPipeline(CMMPipeline):
                                           best_ors_hap_idx=best_ors_hap_idx,
                                           best_pvalue_hap_idx=best_pvalue_hap_idx,
                                           )
+# *********************************************************************************************** Might need refactoring ***********************************************************************************************
 
     def __add_legend_sheet(self):
         ws = self.__wb.add_worksheet("legend")

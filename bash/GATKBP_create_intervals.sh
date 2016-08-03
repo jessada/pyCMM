@@ -42,7 +42,6 @@ while getopts ":I:k:R:o:h" OPTION; do
 done
 
 [ ! -z $bam_file ] || die "a bam file to be re-aligned is required (-I)"
-[ ! -z $known_indels ] || die "list of known indels in vcf format is required (-k)"
 [ ! -z $out_target_intervals ] || die "a file to keep list of target intervals is required (-o)"
 [ ! -z $ref ] || die "reference file is required (-R)"
 [ -f "$bam_file" ] || die "$bam_file is not found"

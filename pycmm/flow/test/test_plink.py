@@ -248,7 +248,6 @@ class TestPlinkPipeline(SafeTester):
         - with all other default features
         """
 
-        self.individual_debug = True
         self.init_test(self.current_func_name)
         jobs_setup_file = self.__create_jobs_setup_file(input_dna_regions="9:100911000-100946000",
                                                         hap_window_sizes="1,3",
@@ -348,7 +347,6 @@ class TestPlinkPipeline(SafeTester):
     def test_merge_hap_assocs_2(self):
         """ test merging assoc.hap files with filtering criteria """
 
-        self.individual_debug = True
         self.init_test(self.current_func_name)
         filter_criteria = JOBS_SETUP_HAP_ASSOC_FILTER_PVALUE005
         filter_criteria += "," + JOBS_SETUP_HAP_ASSOC_FILTER_DISEASE_SNP

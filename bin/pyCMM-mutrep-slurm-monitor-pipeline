@@ -1,0 +1,24 @@
+from pycmm.settings import MUTREP_PIPELINE_DESCRIPTION
+from pycmm.flow.mutrep import MutRepPipeline
+from pycmm.app import app_pycmm_slurm_monitor_pipeline
+import argparse
+
+argp = argparse.ArgumentParser(description=MUTREP_PIPELINE_DESCRIPTION)
+required_group = argp.add_argument_group('required arguments')
+required_group.add_argument('-j',
+                            dest='jobs_setup_file',
+                            metavar="JOBS SETUP FILE",
+                            help='a file containing jobs configuration',
+                            required=True,
+                            )
+argp.add_argument('-l',
+                  dest='log_file',
+                  metavar='FILE',
+                  help='log file',
+                  default=None)
+args = argp.parse_args()
+app_pycmm_slurm_monitor_pipeline(jobs_setup_file=args.jobs_setup_file,
+                                 log_file=args.log_file,
+                                 pipeline=MutRepPipeline,
+                                 pipeline_description=MUTREP_PIPELINE_DESCRIPTION,
+                                 )

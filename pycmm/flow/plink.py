@@ -2,17 +2,18 @@
 import pyaml
 from collections import defaultdict
 from os.path import join as join_path
-from pycmm.settings import PLINK_HAP_ASSOCS_SLURM_BIN
+from pycmm.settings import PLINK_SLURM_MONITOR_PIPELINE_BIN
 from pycmm.settings import PLINK_MERGE_HAP_ASSOCS_BIN
 from pycmm.settings import PLINK_HAP_ASSOCS_REPORT_BIN
 from pycmm.template import pyCMMBase
-from pycmm.utils import exec_sh
-from pycmm.flow import CMMPipeline
-from pycmm.flow import init_jobs_setup_file
+from pycmm.cmmlib import CMMParams
 from pycmm.cmmlib.dnalib import ALL_CHROMS
 from pycmm.cmmlib.dnalib import DNARegion
 from pycmm.cmmlib.plinklib import merge_hap_assocs
 from pycmm.cmmlib.plinklib import merge_lmiss_map
+from pycmm.utils import exec_sh
+from pycmm.flow import CMMPipeline
+from pycmm.flow import init_jobs_setup_file
 
 PLINK_DUMMY_SCRIPT = "$PYCMM/bash/plink_dummy.sh"
 
@@ -37,6 +38,7 @@ JOBS_SETUP_CUTOFF_PVALUE_KEY = "CUTOFF_PVALUE"
 JOBS_SETUP_CUTOFF_ORS_KEY = "CUTOFF_ORS"
 JOBS_SETUP_FAMLIY_HAPLOTYPE_PREFIX_KEY = "FAMILY_HAPLOTYPE_PREFIX"
 
+# *********************************************************************************************** Need refactoring ***********************************************************************************************
 class FilterCriteria(pyCMMBase):
     """  To handle and parse PLINK parameters  """
 
@@ -57,12 +59,12 @@ class FilterCriteria(pyCMMBase):
     @property
     def filter_disease_snp(self):
         return JOBS_SETUP_HAP_ASSOC_FILTER_DISEASE_SNP in self.__criterias
+# *********************************************************************************************** Need refactoring ***********************************************************************************************
 
-class PlinkParams(pyCMMBase):
+class PlinkParams(CMMParams):
     """  To handle and parse PLINK parameters  """
 
-    def __init__(self, params, **kwargs):
-        self.__params = params
+    def __init__(self, **kwargs):
         super(PlinkParams, self).__init__(**kwargs)
 
     def get_raw_repr(self):
@@ -76,52 +78,58 @@ class PlinkParams(pyCMMBase):
 
     @property
     def input_file_prefix(self):
-        return self.__params[JOBS_SETUP_INPUT_FILE_PREFIX_KEY]
+        return self._get_job_config(JOBS_SETUP_INPUT_FILE_PREFIX_KEY, required=True)
 
     @property
     def input_binary(self):
-        return self.__params[JOBS_SETUP_INPUT_BINARY_KEY]
+        return self._get_job_config(JOBS_SETUP_INPUT_BINARY_KEY, required=True)
 
     @property
     def input_dna_regions(self):
-        if JOBS_SETUP_INPUT_DNA_REGIONS_KEY in self.__params:
-            input_dna_regions = map(lambda x: str(x),
-                              self.__params[JOBS_SETUP_INPUT_DNA_REGIONS_KEY])
-        else:
-            input_dna_regions = ALL_CHROMS
-        return map(lambda x: DNARegion(x), input_dna_regions)
+        dna_regions = self._get_job_config(JOBS_SETUP_INPUT_DNA_REGIONS_KEY,
+                                           default_val=ALL_CHROMS)
+        dna_regions = map(lambda x: str(x),
+                          dna_regions)
+        return map(lambda x: DNARegion(x), dna_regions)
 
     @property
     def phenotype_file(self):
-        return self.__params[JOBS_SETUP_PHENOTYPE_FILE_KEY]
+        return self._get_job_config(JOBS_SETUP_PHENOTYPE_FILE_KEY, required=True)
 
     @property
     def hap_window_sizes(self):
-        if JOBS_SETUP_HAP_WINDOW_SIZES_KEY in self.__params:
-            return self.__params[JOBS_SETUP_HAP_WINDOW_SIZES_KEY]
-        return DFLT_HAP_WINDOW_SIZES
+        return self._get_job_config(JOBS_SETUP_HAP_WINDOW_SIZES_KEY,
+                                    default_val=DFLT_HAP_WINDOW_SIZES)
 
+# *********************************************************************************************** Need refactoring ***********************************************************************************************
     @property
     def filter_criteria(self):
-        if JOBS_SETUP_HAP_ASSOC_FILTER_CRITERIA_KEY in self.__params:
-            return FilterCriteria(self.__params[JOBS_SETUP_HAP_ASSOC_FILTER_CRITERIA_KEY])
+        criteria = self._get_job_config(JOBS_SETUP_HAP_ASSOC_FILTER_CRITERIA_KEY)
+        if criteria is not None:
+            criteria = FilterCriteria(criteria)
+        return criteria
+# *********************************************************************************************** Need refactoring ***********************************************************************************************
 
 class PlinkPipeline(CMMPipeline):
     """ To control PLINK execution pipeline """
 
     def __init__(self, **kwargs):
+        self.__init_properties()
+        super(PlinkPipeline, self).__init__(**kwargs)
+
+    def __init_properties(self):
         self.__plink_params = None
         self.__scratch_file_prefix = None
         self.__hap_assocs_out = None
         self.__snp_info_files = None
         self.__merged_hap_assoc_files = None
         self.__submitted_jobs = {}
-        super(PlinkPipeline, self).__init__(**kwargs)
 
     @property
     def plink_params(self):
         if self.__plink_params is None:
-            self.__plink_params = PlinkParams(self._jobs_info[JOBS_SETUP_PLINK_PARAMS_SECTION])
+            self.__plink_params = PlinkParams(entries=self._get_job_config(JOBS_SETUP_PLINK_PARAMS_SECTION,
+                                                                           required=True))
         return self.__plink_params
 
     @property
@@ -203,6 +211,7 @@ class PlinkPipeline(CMMPipeline):
             slurm_log_file = join_path(self.slurm_log_dir,
                                        job_name+".log")
             job_script = PLINK_DUMMY_SCRIPT
+# *********************************************************************************************** Need refactoring ***********************************************************************************************
             self.submit_job(job_name,
                             self.project_code,
                             "core",
@@ -212,6 +221,7 @@ class PlinkPipeline(CMMPipeline):
                             job_script,
                             params,
                             )
+# *********************************************************************************************** Need refactoring ***********************************************************************************************
             submitted_hap_assoc_jobs[region_key].append(job_name)
         self.__submitted_jobs['hap_assoc'] = submitted_hap_assoc_jobs
 
@@ -234,6 +244,7 @@ class PlinkPipeline(CMMPipeline):
                                        job_name+".log")
             job_script = PLINK_MERGE_HAP_ASSOCS_BIN
             prereq = self.__submitted_jobs['hap_assoc'][region_key]
+# *********************************************************************************************** Need refactoring ***********************************************************************************************
             self.submit_job(job_name,
                             self.project_code,
                             "core",
@@ -244,6 +255,7 @@ class PlinkPipeline(CMMPipeline):
                             params,
                             prereq=prereq,
                             )
+# *********************************************************************************************** Need refactoring ***********************************************************************************************
             merge_hap_assocs_jobs[region_key] = [job_name]
         self.__submitted_jobs['merge_hap_assocs'] = merge_hap_assocs_jobs
 
@@ -268,6 +280,7 @@ class PlinkPipeline(CMMPipeline):
                                        job_name+".log")
             job_script = PLINK_HAP_ASSOCS_REPORT_BIN
             prereq = self.__submitted_jobs['merge_hap_assocs'][region_key]
+# *********************************************************************************************** Need refactoring ***********************************************************************************************
             self.submit_job(job_name,
                             self.project_code,
                             "core",
@@ -278,6 +291,7 @@ class PlinkPipeline(CMMPipeline):
                             params,
                             prereq=prereq,
                             )
+# *********************************************************************************************** Need refactoring ***********************************************************************************************
             hap_assocs_report_jobs[region_key] = [job_name]
         self.__submitted_jobs['hap_assocs_report'] = hap_assocs_report_jobs
 
@@ -289,6 +303,7 @@ class PlinkPipeline(CMMPipeline):
         self.__submit_hap_assocs_report_jobs()
 
 ## *************************************************************** keep this part of code until I'm certain that there is no way to specify nodelist *************************************************************** 
+# The method is work at Jobman level with the condition that the file might be deleted after leaving the nodes
 #    def copy_plink_file_to_scratch(self, suffix):
 #        src_file = self.plink_params.input_file_prefix + "." + suffix
 #        dst_file = self.scratch_file_prefix + "." + suffix
@@ -327,6 +342,8 @@ class PlinkPipeline(CMMPipeline):
 #                            )
 ## *************************************************************** keep this part of code until I'm certain that there is no way to specify nodelist *************************************************************** 
 
+# *********************************************************************************************** Need refactoring ***********************************************************************************************
+# need to replace with similar function from parent
     def run_hap_assocs_slurm(self,
                              jobs_setup_file,
                              log_file=None,
@@ -334,7 +351,7 @@ class PlinkPipeline(CMMPipeline):
         job_name = self.project_name + "_mgr"
         slurm_log_file = join_path(self.slurm_log_dir,
                                    job_name+".log")
-        job_script = PLINK_HAP_ASSOCS_SLURM_BIN
+        job_script = PLINK_SLURM_MONITOR_PIPELINE_BIN
         job_params = " -j " + jobs_setup_file
         if log_file is not None:
             job_params += " -l " + log_file
@@ -347,6 +364,7 @@ class PlinkPipeline(CMMPipeline):
                         job_script,
                         job_params,
                         )
+# *********************************************************************************************** Need refactoring ***********************************************************************************************
 
     def extract_snps_stat(self, input_dna_region, input_file_prefix=None):
         params = " --noweb"

@@ -1,125 +1,157 @@
 import sys
 from collections import OrderedDict
-from pycmm import settings
+from pycmm.settings import MUTREP_CREATE_JOB_SETUP_FILE_DESCRIPTION
+from pycmm.settings import MUTREP_FAMILY_REPORT_DESCRIPTION
+from pycmm.settings import MUTREP_SUMMARY_REPORT_DESCRIPTION
 from pycmm.utils import mylogger
 from pycmm.utils import disp
-from pycmm.utils import set_log_file
 from pycmm.flow.mutrep import MutRepPipeline
 from pycmm.flow.mutrep import ReportRegion
-
-def __display_report_config(func_name,
-                            kwargs,
-                            pl,
-                            ):
-    log_file = set_log_file(kwargs['log_file'])
-    disp.new_section_txt("S T A R T <" + func_name + ">")
-    required_params = OrderedDict()
-    required_params['jobs setup file (-j)'] = kwargs['jobs_setup_file']
-    if 'fam_id' in kwargs:
-        required_params['family id (-f)'] = kwargs['fam_id']
-    if 'report_regions' in kwargs:
-        raw_report_regions = kwargs['report_regions']
-        if raw_report_regions is None:
-            required_params['report regions (-r)'] = "All" 
-        else:
-            required_params['report regions (-r)'] = raw_report_regions 
-    if 'out_file' in kwargs:
-        required_params['output file (-o)'] = kwargs['out_file']
-    optional_params = None
-    if log_file is not None:
-        optional_params = OrderedDict()
-        optional_params['log file (-l)'] = log_file
-    disp.show_config(app_description=settings.MUTREP_FAMILY_REPORT_DESCRIPTION,
-                     required_params=required_params,
-                     optional_params=optional_params,
-                     )
-    layout_params = OrderedDict()
-    layout_params['annotated columns'] = pl.report_layout.anno_cols
-    layout_params['annoated vcf tabix file'] = pl.annotated_vcf_tabix
-    report_regions = pl.report_layout.report_regions
-    if report_regions is not None:
-        report_region_outs = []
-        for report_region in report_regions:
-            report_region_out = report_region.chrom
-            if report_region.start_pos is not None:
-                report_region_out += ":" + report_region.start_pos
-                report_region_out += "-" + report_region.end_pos
-            report_region_outs.append(report_region_out)
-        layout_params['report regions'] = report_region_outs
-    else:
-        layout_params['report regions'] = "all"
-    layout_params['frequency ratios'] = pl.report_layout.freq_ratios
-    layout_params['reports output folder'] = pl.rpts_out_dir
-    layout_params['split chromosome'] = pl.report_layout.split_chrom
-    layout_params['summary_families sheet'] = pl.report_layout.summary_families_sheet
-    layout_params['call detail'] = pl.report_layout.call_detail
-    if pl.report_layout.anno_excl_tags:
-        layout_params['columns exclusion tags'] = pl.report_layout.anno_excl_tags
-    filter_actions_out = OrderedDict()
-    filter_actions_out['Rare'] = pl.report_layout.filter_rare
-    filter_actions_out['Non-Intergenic'] = pl.report_layout.filter_non_intergenic
-    filter_actions_out['Non-Intronic'] = pl.report_layout.filter_non_intronic
-    filter_actions_out['Non-Upstream'] = pl.report_layout.filter_non_upstream
-    filter_actions_out['Non-Downstream'] = pl.report_layout.filter_non_downtream
-    filter_actions_out['Non-UTR'] = pl.report_layout.filter_non_utr
-    filter_actions_out['Non-Synonymous'] = pl.report_layout.filter_non_synonymous
-    filter_actions_out['Has-mutation'] = pl.report_layout.filter_has_mutation
-    filter_actions_out['Has-shared'] = pl.report_layout.filter_has_shared
-    layout_params['filter actions'] = filter_actions_out
-    report_exclusion_out = {}
-    layout_params['report exclusion'] = report_exclusion_out
-    report_exclusion_out['only summary'] = pl.report_layout.only_summary
-    report_exclusion_out['only families'] = pl.report_layout.only_families
-    disp.disp_params_set("Report layout parameters", layout_params)
-    disp.new_section_txt(" . . . G E N E R A T I N G   R E P O R T S . . . ")
+from pycmm.flow.mutrep import create_jobs_setup_file
+from pycmm.app import display_configs
 
 def app_pycmm_family_report(*args, **kwargs):
     mylogger.getLogger(__name__)
 
     func_name = sys._getframe().f_code.co_name
-    pl = MutRepPipeline(kwargs['jobs_setup_file'])
-    mylogger.getLogger(__name__)
-    __display_report_config(func_name, kwargs, pl)
+    pl = MutRepPipeline(jobs_setup_file=kwargs['jobs_setup_file'])
     fam_id = kwargs['fam_id']
     raw_report_regions = kwargs['report_regions']
-    out_file = kwargs['out_file']
     if raw_report_regions is None:
         report_regions = None
     else:
-        report_regions = map(lambda x: ReportRegion(x), raw_report_regions.split(","))
+        report_regions = map(lambda x: ReportRegion(x),
+                             raw_report_regions.split(","))
+    out_file = kwargs['out_file']
+
+    custom_params = OrderedDict()
+    custom_params['family id'] = fam_id
+    if report_regions is None:
+        custom_params['report region(s)'] = report_regions
+    else:
+        custom_params['report region(s)'] = map(lambda x: x.get_raw_repr(),
+                                                report_regions)
+    custom_params['output file'] = out_file
+    mylogger.getLogger(__name__)
+    display_configs(func_name,
+                    MUTREP_FAMILY_REPORT_DESCRIPTION,
+                    kwargs,
+                    pl,
+                    custom_params=custom_params,
+                    )
     pl.gen_family_report(fam_id, report_regions, out_file=out_file)
     mylogger.getLogger(__name__)
     disp.new_section_txt("F I N I S H <" + func_name + ">")
 
 def app_pycmm_summary_report(*args, **kwargs):
     mylogger.getLogger(__name__)
+
     func_name = sys._getframe().f_code.co_name
-    pl = MutRepPipeline(kwargs['jobs_setup_file'])
-    mylogger.getLogger(__name__)
-    __display_report_config(func_name, kwargs, pl)
+    pl = MutRepPipeline(jobs_setup_file=kwargs['jobs_setup_file'])
     raw_report_regions = kwargs['report_regions']
-    out_file = kwargs['out_file']
     if raw_report_regions is None:
         report_regions = None
     else:
-        report_regions = map(lambda x: ReportRegion(x), raw_report_regions.split(","))
+        report_regions = map(lambda x: ReportRegion(x),
+                             raw_report_regions.split(","))
+    out_file = kwargs['out_file']
+
+    custom_params = OrderedDict()
+    if report_regions is None:
+        custom_params['report region(s)'] = report_regions
+    else:
+        custom_params['report region(s)'] = map(lambda x: x.get_raw_repr(),
+                                                report_regions)
+    custom_params['output file'] = out_file
+    mylogger.getLogger(__name__)
+    display_configs(func_name,
+                    MUTREP_FAMILY_REPORT_DESCRIPTION,
+                    kwargs,
+                    pl,
+                    custom_params=custom_params,
+                    )
     pl.gen_summary_report(report_regions, out_file=out_file)
     mylogger.getLogger(__name__)
     disp.new_section_txt("F I N I S H <" + func_name + ">")
 
 def app_pycmm_mutation_reports(*args, **kwargs):
     mylogger.getLogger(__name__)
+
     func_name = sys._getframe().f_code.co_name
-    pl = MutRepPipeline(kwargs['jobs_setup_file'])
+    pl = MutRepPipeline(jobs_setup_file=kwargs['jobs_setup_file'])
     mylogger.getLogger(__name__)
-    __display_report_config(func_name, kwargs, pl)
-    if pl.report_layout.only_summary:
-        pl.gen_summary_reports()
-    elif pl.report_layout.only_families:
-        pl.gen_families_reports()
-    else:
-        pl.gen_families_reports()
-        pl.gen_summary_reports()
+    display_configs(func_name,
+                    MUTREP_FAMILY_REPORT_DESCRIPTION,
+                    kwargs,
+                    pl,
+                    )
     pl.monitor_jobs()
+    mylogger.getLogger(__name__)
+    disp.new_section_txt("F I N I S H <" + func_name + ">")
+
+def app_pycmm_mutrep_create_jobs_setup_file(*args, **kwargs):
+    mylogger.getLogger(__name__)
+    func_name = sys._getframe().f_code.co_name
+
+    disp.new_section_txt("S T A R T <" + func_name + ">")
+    required_params = OrderedDict()
+    required_params['dataset name (-d)'] = kwargs['dataset_name']
+    required_params['project output directory (-O)'] = kwargs['project_out_dir']
+    optional_params = OrderedDict()
+    if kwargs['sample_info'] is not None:
+        optional_params['sample information (-s)'] = kwargs['sample_info']
+    if kwargs['project_code'] is not None:
+        optional_params['project code (-p)'] = kwargs['project_code']
+    if kwargs['job_alloc_time'] is not None:
+        optional_params['job allocation time (--job_alloc_time)'] = kwargs['job_alloc_time']
+    optional_params['output jobs setup file (-o)'] = kwargs['out_jobs_setup_file']
+    disp.show_config(app_description=MUTREP_CREATE_JOB_SETUP_FILE_DESCRIPTION,
+                     third_party_software_version=None,
+                     required_params=required_params,
+                     optional_params=optional_params,
+                     )
+    layout_params = OrderedDict()
+    if kwargs['anno_cols'] is not None:
+        layout_params['annotation columns (-a)'] = kwargs['anno_cols']
+    else:
+        layout_params['annotation columns (-a)'] = "all"
+    if kwargs['anno_excl_tags'] is not None:
+        layout_params['annotation excluded tags (-E)'] = kwargs['anno_excl_tags'].split(",")
+    if kwargs['rows_filter_actions'] is not None:
+        layout_params['rows filtering criteria (--filter_actions)'] = kwargs['rows_filter_actions'].split(",")
+    if kwargs['annotated_vcf_tabix'] is not None:
+        layout_params['annotated vcf tablx file (-A)'] = kwargs['annotated_vcf_tabix']
+    if kwargs['report_regions'] is not None:
+        layout_params['report regions (-R)'] = kwargs['report_regions'].split(",")
+    else:
+        layout_params['report regions (-R)'] = "all"
+    if kwargs['frequency_ratios'] is not None:
+        layout_params['rare frequency ratios (-f)'] = OrderedDict(item.split(":") for item in kwargs['frequency_ratios'].split(","))
+    layout_params['split chromosome (--split_chrom)'] = kwargs['split_chrom']
+    layout_params['summary_families sheet (--summary_families)'] = kwargs['summary_families_sheet']
+    extra_anno_cols = {}
+    extra_anno_cols['call detail (--call_detail)'] = kwargs['call_detail']
+    layout_params['extra annotation columns'] = extra_anno_cols
+    layout_params['only summary report (--only_summary)'] = kwargs['only_summary']
+    layout_params['only families report (--only_families)'] = kwargs['only_families']
+    disp.disp_params_set("Report layout parameters", layout_params)
+    create_jobs_setup_file(project_name=kwargs['dataset_name'],
+                           project_out_dir=kwargs['project_out_dir'],
+                           sample_info=kwargs['sample_info'],
+                           project_code=kwargs['project_code'],
+                           job_alloc_time=kwargs['job_alloc_time'],
+                           anno_cols=kwargs['anno_cols'],
+                           rows_filter_actions=kwargs['rows_filter_actions'],
+                           anno_excl_tags=kwargs['anno_excl_tags'],
+                           annotated_vcf_tabix=kwargs['annotated_vcf_tabix'],
+                           report_regions=kwargs['report_regions'],
+                           frequency_ratios=kwargs['frequency_ratios'],
+                           split_chrom=kwargs['split_chrom'],
+                           summary_families_sheet=kwargs['summary_families_sheet'],
+                           call_detail=kwargs['call_detail'],
+                           only_summary=kwargs['only_summary'],
+                           only_families=kwargs['only_families'],
+                           out_jobs_setup_file=kwargs['out_jobs_setup_file'],
+                           )
     mylogger.getLogger(__name__)
     disp.new_section_txt("F I N I S H <" + func_name + ">")

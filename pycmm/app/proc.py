@@ -4,7 +4,7 @@ from pycmm.settings import CMMDB_TABLEANNOVAR_DESCRIPTION
 from pycmm.utils import mylogger
 from pycmm.utils import disp
 from pycmm.utils import set_log_file
-from pycmm.proc.annovarlib import Annovar
+from pycmm.cmmlib.annovarlib import Annovar
 
 
 def app_pycmm_dummy_table_annovar(*args, **kwargs):
@@ -37,12 +37,13 @@ def app_pycmm_dummy_table_annovar(*args, **kwargs):
     if log_file is not None:
         optional_params['log file (-l)'] = log_file
     disp.show_config(app_description=CMMDB_TABLEANNOVAR_DESCRIPTION,
+                     third_party_software_version=None,
                      required_params=required_params,
                      optional_params=optional_params,
                      )
     av = Annovar(dataset_name=dataset_name,
                  input_file=input_file,
-                 db_folder=db_folder,
+                 db_dir=db_folder,
                  buildver=buildver,
                  protocols=protocols,
                  operations=operations,

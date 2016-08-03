@@ -147,17 +147,17 @@ class TestHapAssocRepPipeline(SafeTester):
         self.assertEqual(pl.n_snps,
                          10,
                          "HapAssocRepPipeline cannot correctly identify 'number of snps'")
-        self.assertEqual(pl.families_info["3"].members_info[0].gts["rs3780457"][0],
+        self.assertEqual(pl.families_info["3"].members[0].gts["rs3780457"][0],
                          "G",
                          "HapAssocRepPipeline cannot correctly load family haplotype information")
-        self.assertEqual(pl.families_info["3"].members_info[0].gts["rs1544205"][0],
+        self.assertEqual(pl.families_info["3"].members[0].gts["rs1544205"][0],
                          "A",
                          "HapAssocRepPipeline cannot correctly load family haplotype information")
-        self.assertEqual(pl.families_info["3"].members_info[0].gts["rs2417733"][0],
+        self.assertEqual(pl.families_info["3"].members[0].gts["rs2417733"][0],
                          "A",
                          "HapAssocRepPipeline cannot correctly load family haplotype information")
         rpt_file = pl.gen_report(out_file)
-        self.dbg("************** report has not yet tested *****************")
+        self.warning("************** report has not yet tested *****************")
 
     def tearDown(self):
         self.remove_working_dir()

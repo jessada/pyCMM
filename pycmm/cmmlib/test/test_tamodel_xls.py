@@ -9,18 +9,18 @@ from pycmm.settings import EXAC_ALL_COL_NAME
 from pycmm.settings import FULL_SYSTEM_TEST
 from pycmm.utils.xlsutils import XlsUtils
 from pycmm.flow.mutrep import MutRepPipeline
+from pycmm.flow.mutrep import create_jobs_setup_file
+from pycmm.flow.mutrep import JOBS_SETUP_RPT_FILTER_RARE
+from pycmm.flow.mutrep import JOBS_SETUP_RPT_FILTER_NON_INTRONIC
+from pycmm.flow.mutrep import JOBS_SETUP_RPT_FILTER_NON_INTERGENIC
+from pycmm.flow.mutrep import JOBS_SETUP_RPT_FILTER_NON_UPSTREAM
+from pycmm.flow.mutrep import JOBS_SETUP_RPT_FILTER_NON_DOWNSTREAM
+from pycmm.flow.mutrep import JOBS_SETUP_RPT_FILTER_NON_UTR
+from pycmm.flow.mutrep import JOBS_SETUP_RPT_FILTER_NON_SYNONYMOUS
+from pycmm.flow.mutrep import JOBS_SETUP_RPT_FILTER_HAS_MUTATION
+from pycmm.flow.mutrep import JOBS_SETUP_RPT_FILTER_HAS_SHARED
 from pycmm.flow.test.test_mutrep import DFLT_TEST_MUTREP_COLS
 from pycmm.flow.test.test_mutrep import DFLT_TEST_ANNO_EXCL_TAGS
-from pycmm.flow.cmmdb import create_jobs_setup_file
-from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_RARE
-from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_NON_INTRONIC
-from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_NON_INTERGENIC
-from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_NON_UPSTREAM
-from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_NON_DOWNSTREAM
-from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_NON_UTR
-from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_NON_SYNONYMOUS
-from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_HAS_MUTATION
-from pycmm.flow.cmmdb import JOBS_SETUP_RPT_FILTER_HAS_SHARED
 
 
 class TestTAVcfCallXls(SafeTester):
