@@ -33,14 +33,28 @@ class CMMPipeline(JobManager):
 
     def get_raw_repr(self):
         raw_repr = OrderedDict()
-        raw_repr["project name"] = self.project_name,
-        raw_repr["project out dir"] = self.project_out_dir,
-        raw_repr["data out dir"] = self.data_out_dir,
-        raw_repr["reports out dir"] = self.rpts_out_dir,
-        raw_repr["project code"] = self.project_code,
-        raw_repr["flow allocation time"] = self.job_alloc_time,
-        raw_repr["report allocation time"] = self.rpt_alloc_time,
-        raw_repr["jobs report file"] = self.jobs_report_file,
+        raw_repr["project name"] = self.project_name
+        raw_repr["project out dir"] = self.project_out_dir
+        raw_repr["data out dir"] = self.data_out_dir
+        if self.families_info is None:
+            samples_info = None
+        elif ((len(self.families_info) == 1) and
+              (NO_FAMILY in self.families_info)
+              ):
+            samples_info = self.samples_id
+        else:
+            samples_info = OrderedDict()
+            for fam_id in self.families_info:
+                fam_info = self.families_info[fam_id]
+                fam_info_dict = {}
+                members_id = map(lambda x: x.sample_id,
+                                 fam_info.members)
+                samples_info["family "+fam_id+" - members"] = members_id
+        raw_repr['sample information'] = samples_info
+        raw_repr["reports out dir"] = self.rpts_out_dir
+        raw_repr["project code"] = self.project_code
+        raw_repr["job allocation time"] = self.job_alloc_time
+        raw_repr["jobs report file"] = self.jobs_report_file
         return raw_repr
 
     def __load_jobs_info(self, jobs_setup_file):
@@ -145,13 +159,9 @@ class CMMPipeline(JobManager):
                                              fam_info.members))
                 samples_info[fam_id] = fam_info_txt
         params['sample information'] = samples_info
-        params['flow allocation time'] = self.job_alloc_time
+        params['job allocation time'] = self.job_alloc_time
         params['project output directory'] = self.project_out_dir
         return params
-
-    @property
-    def time_stamp(self):
-        return self.__time_stamp
 
     @property
     def jobs_setup_file(self):

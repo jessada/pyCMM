@@ -3,6 +3,7 @@ from os.path import isfile
 from collections import OrderedDict
 from pycmm.template import pyCMMBase
 from pycmm.cmmlib import CMMParams
+from pycmm.utils import mylogger
 
 JOBS_SETUP_SAMPLES_INFOS_KEY = "SAMPLES_INFOS"
 JOBS_SETUP_FAMILY_ID_KEY = "FAMILY_ID"
@@ -120,8 +121,9 @@ class SamplesInfo(pyCMMBase):
     def samples_id_w_fam_pref(self):
         if self.samples_list is None:
             return None
-        return map(lambda x: x.fam_id+"-"+x.sample_id,
-                   self.samples_list)
+        return map(lambda x: x.replace(NO_FAMILY+"-", ""),
+                   map(lambda x: x.fam_id+"-"+x.sample_id,
+                       self.samples_list))
 
 def params_to_yaml_doc(**kwargs):
     yaml_doc = {}
@@ -133,7 +135,14 @@ def params_to_yaml_doc(**kwargs):
     if isfile(sample_info):
         s_stream = file(sample_info, "r")
         document = yaml.safe_load(s_stream)
-        yaml_doc[JOBS_SETUP_SAMPLES_INFOS_KEY] = document[JOBS_SETUP_SAMPLES_INFOS_KEY]
+        samples_infos = document[JOBS_SETUP_SAMPLES_INFOS_KEY]
+        for family_info in samples_infos:
+            fam_id = family_info[JOBS_SETUP_FAMILY_ID_KEY]
+            family_info[JOBS_SETUP_FAMILY_ID_KEY] = '"' + str(fam_id) + '"'
+            for member_info in family_info[JOBS_SETUP_MEMBERS_LIST_KEY]:
+                sample_id = member_info[JOBS_SETUP_SAMPLE_ID_KEY]
+                member_info[JOBS_SETUP_SAMPLE_ID_KEY] = '"' + sample_id + '"'
+        yaml_doc[JOBS_SETUP_SAMPLES_INFOS_KEY] = samples_infos
         return yaml_doc
     families = []
     samples_w_no_fam = []

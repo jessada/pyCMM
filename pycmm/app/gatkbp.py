@@ -1,6 +1,6 @@
 import sys
 from collections import OrderedDict
-from pycmm.settings import DNASEQ_PIPELINE_DESCRIPTION
+from pycmm.settings import DNASEQ_CREATE_JOB_SETUP_FILE_DESCRIPTION
 from pycmm.utils import mylogger
 from pycmm.utils import disp
 from pycmm.flow.gatkbp import create_jobs_setup_file
@@ -32,7 +32,7 @@ def app_pycmm_gatkbp_create_jobs_setup_file(*args, **kwargs):
     if kwargs['split_regions_file'] is not None:
         optional_params['split chromosome regions (--split_regions_file)'] = kwargs['split_regions_file']
     optional_params['output jobs setup file (-o)'] = kwargs['out_jobs_setup_file']
-    disp.show_config(app_description=DNASEQ_PIPELINE_DESCRIPTION,
+    disp.show_config(app_description=DNASEQ_CREATE_JOB_SETUP_FILE_DESCRIPTION,
                      third_party_software_version=None,
                      required_params=required_params,
                      optional_params=optional_params,

@@ -4,6 +4,7 @@ from os.path import join as join_path
 from os.path import isdir
 from os.path import isfile
 from collections import OrderedDict
+from pycmm.utils.ver import VersionManager
 from pycmm.cmmlib import CMMParams
 from pycmm.cmmlib.familylib import JOBS_SETUP_SAMPLES_INFOS_KEY
 from pycmm.cmmlib.familylib import JOBS_SETUP_SAMPLE_ID_KEY
@@ -15,16 +16,7 @@ from pycmm.cmmlib.familylib import Family
 from pycmm.cmmlib.fastqlib import Fastq
 from pycmm.flow import CMMPipeline
 from pycmm.flow import init_jobs_setup_file
-#from pycmm.utils.jobman import JOB_STATUS_COMPLETED
-from pycmm.utils.ver import VersionManager
 
-#BWA_MEM_SCRIPT = "$PYCMM/bash/GATKBP_bwa_mem.sh"
-#SORT_SAM_SCRIPT = "$PYCMM/bash/GATKBP_sort_sam.sh"
-#MARK_DUP_SCRIPT = "$PYCMM/bash/GATKBP_mark_dup.sh"
-#INDELS_TARGET_INTERVALS_SCRIPT = "$PYCMM/bash/GATKBP_create_intervals.sh"
-#INDELS_REALIGN_SCRIPT = "$PYCMM/bash/GATKBP_indels_realign.sh"
-#BASE_RECAL_SCRIPT = "$PYCMM/bash/GATKBP_base_recal.sh"
-#HAPLOTYPE_CALLER_SCRIPT = "$PYCMM/bash/GATKBP_haplotype_caller.sh"
 PREPROCESS_SAMPLE_SCRIPT = "$PYCMM/bash/GATKBP_preprocess_sample.sh"
 SPLIT_GVCFS_SCRIPT = "$PYCMM/bash/split_gvcfs.sh"
 COMBINE_GVCFS_SCRIPT = "$PYCMM/bash/GATKBP_combine_gvcfs.sh"
@@ -111,22 +103,6 @@ class GATKSample(Sample):
         return self._get_job_config(JOBS_SETUP_SAMPLE_USAGE_MAIL_KEY,
                                     required=True)
 
-#    @property
-#    def working_dir(self):
-#        return self.__working_dir
-#
-#    @working_dir.setter
-#    def working_dir(self, value):
-#        self.__working_dir = value
-#
-#    @property
-#    def pdf_out_dir(self):
-#        return self.__pdf_out_dir
-#
-#    @pdf_out_dir.setter
-#    def pdf_out_dir(self, value):
-#        self.__pdf_out_dir = value
-#
     @property
     def bam_out_dir(self):
         return self.__bam_out_dir
@@ -143,56 +119,11 @@ class GATKSample(Sample):
     def gvcf_out_dir(self, value):
         self.__gvcf_out_dir = value
 
-#    @property
-#    def raw_aligned_reads_file(self):
-#        return join_path(self.working_dir,
-#                         self.sample_id+"_raw_aligned_reads.sam")
-#
-#    @property
-#    def sorted_reads_file(self):
-#        return join_path(self.working_dir,
-#                         self.sample_id+"_sorted_reads.bam")
-#
-#    @property
-#    def dedup_reads_file(self):
-#        return join_path(self.working_dir,
-#                         self.sample_id+"_dedup_reads.bam")
-#
-#    @property
-#    def metrics_file(self):
-#        return join_path(self.working_dir,
-#                         self.sample_id+"_metrics.txt")
-#
-#    @property
-#    def indels_target_intervals_file(self):
-#        return join_path(self.working_dir,
-#                         self.sample_id+"_indels_target_intervals.list")
-#
-#    @property
-#    def realigned_reads_file(self):
-#        return join_path(self.working_dir,
-#                         self.sample_id+"_realigned_reads.bam")
-#
-#    @property
-#    def recal_table_file(self):
-#        return join_path(self.working_dir,
-#                         self.sample_id+"_recal_data.table")
-#
-#    @property
-#    def post_recal_table_file(self):
-#        return join_path(self.working_dir,
-#                         self.sample_id+"_post_recal_data.table")
-#
     @property
     def recal_bam_file(self):
         return join_path(self.bam_out_dir,
                          self.sample_id+".dedup.realigned.recal.bam")
 
-#    @property
-#    def recalibration_plots(self):
-#        return join_path(self.pdf_out_dir,
-#                         self.sample_id+"_recalibration_plots.pdf")
-#
     @property
     def gvcf_file(self):
         return join_path(self.gvcf_out_dir,
@@ -309,10 +240,6 @@ class GATKBPPipeline(CMMPipeline):
     def bam_out_dir(self):
         return self._get_sub_project_dir("bam")
 
-#    @property
-#    def pdf_out_dir(self):
-#        return self._get_sub_project_dir("pdf")
-#
     @property
     def gvcf_out_dir(self):
         return self._get_sub_project_dir("gvcf")
@@ -347,230 +274,6 @@ class GATKBPPipeline(CMMPipeline):
         versions = OrderedDict()
         versions['GATK'] = vm.gatk_version
         return versions
-
-#    def bwa_mem(self,
-#                sample_id,
-#                ):
-#        """ To generate a SAM file containing aligned reads """
-#
-#        sample_rec = self.samples[sample_id]
-#        job_script = BWA_MEM_SCRIPT
-#        job_params = " -I " + sample_rec.fastq_pairs[0]['R1'] 
-#        job_params += "," + sample_rec.fastq_pairs[0]['R2']
-#        job_params += " -g " + sample_rec.sample_group
-#        job_params += " -R " + self.gatk_params.reference
-#        job_params += " -n " + sample_id
-#        job_params += " -o " + sample_rec.raw_aligned_reads_file
-#        if self.project_code is None:
-#            self.exec_sh(job_script + job_params)
-#            return sample_rec.raw_aligned_reads_file
-#        else:
-#            job_name = sample_id + "_bwa_mem"
-#            self._submit_slurm_job(job_name,
-#                                   "1",
-#                                   job_script,
-#                                   job_params,
-#                                   email=sample_rec.usage_mail,
-#                                   )
-#            return job_name
-#
-#    def sort_sam(self,
-#                 sample_id,
-#                 sam_file=None,
-#                 prereq=None,
-#                 ):
-#        """ Use picard command to sort the SAM file and convert it to BAM """
-#
-#        sample_rec = self.samples[sample_id]
-#        job_script = SORT_SAM_SCRIPT
-#        if sam_file is None:
-#            job_params = " -I " + sample_rec.raw_aligned_reads_file 
-#        else:
-#            job_params = " -I " + sam_file 
-#        job_params += " -o " + sample_rec.sorted_reads_file
-#        if self.project_code is None:
-#            self.exec_sh(job_script + job_params)
-#            return sample_rec.sorted_reads_file
-#        else:
-#            job_name = sample_id + "_sort_sam"
-#            self._submit_slurm_job(job_name,
-#                                   "2",
-#                                   job_script,
-#                                   job_params,
-#                                   email=sample_rec.usage_mail,
-#                                   prereq=prereq,
-#                                   )
-#            return job_name
-#
-#    def mark_dup(self,
-#                 sample_id,
-#                 bam_file=None,
-#                 prereq=None,
-#                 ):
-#        """ Use picard command to mark duplicates """
-#
-#        sample_rec = self.samples[sample_id]
-#        job_script = MARK_DUP_SCRIPT
-#        if bam_file is None:
-#            job_params = " -I " + sample_rec.sorted_reads_file
-#        else:
-#            job_params = " -I " + bam_file
-#        job_params += " -o " + sample_rec.dedup_reads_file
-#        job_params += " -m " + sample_rec.metrics_file
-#        if self.project_code is None:
-#            self.exec_sh(job_script + job_params)
-#            return sample_rec.dedup_reads_file
-#        else:
-#            job_name = sample_id + "_mark_dup"
-#            self._submit_slurm_job(job_name,
-#                                   "4",
-#                                   job_script,
-#                                   job_params,
-#                                   email=sample_rec.usage_mail,
-#                                   prereq=prereq,
-#                                   )
-#            return job_name
-#
-#    def create_intervals(self,
-#                         sample_id,
-#                         bam_file=None,
-#                         prereq=None,
-#                         ):
-#        """ Create a target list of intervals to be realigned """
-#        sample_rec = self.samples[sample_id]
-#        job_script = INDELS_TARGET_INTERVALS_SCRIPT
-#        if bam_file is None:
-#            job_params = " -I " + sample_rec.dedup_reads_file
-#        else:
-#            job_params = " -I " + bam_file
-#        if ((self.gatk_params.known_indels is not None) and
-#            (len(self.gatk_params.known_indels) > 0)
-#            ):
-#            job_params += " -k " + ",".join(self.gatk_params.known_indels)
-#        job_params += " -R " + self.gatk_params.reference
-#        job_params += " -o " + sample_rec.indels_target_intervals_file
-#        if self.project_code is None:
-#            self.exec_sh(job_script + job_params)
-#            return sample_rec.indels_target_intervals_file
-#        else:
-#            job_name = sample_id + "_create_intervals"
-#            self._submit_slurm_job(job_name,
-#                                   "2",
-#                                   job_script,
-#                                   job_params,
-#                                   email=sample_rec.usage_mail,
-#                                   prereq=prereq,
-#                                   )
-#            return job_name
-#
-#    def indels_realign(self,
-#                       sample_id,
-#                       bam_file=None,
-#                       indels_target_intervals_file=None,
-#                       prereq=None,
-#                       ):
-#        """ Local Realignment around Indels """
-#        sample_rec = self.samples[sample_id]
-#        job_script = INDELS_REALIGN_SCRIPT
-#        if bam_file is None:
-#            job_params = " -I " + sample_rec.dedup_reads_file
-#        else:
-#            job_params = " -I " + bam_file
-#        if ((self.gatk_params.known_indels is not None) and
-#            (len(self.gatk_params.known_indels) > 0)
-#            ):
-#            job_params += " -k " + ",".join(self.gatk_params.known_indels)
-#        job_params += " -R " + self.gatk_params.reference
-#        if indels_target_intervals_file is None:
-#            job_params += " -t " + sample_rec.indels_target_intervals_file
-#        else:
-#            job_params += " -t " + indels_target_intervals_file
-#        job_params += " -o " + sample_rec.realigned_reads_file
-#        if self.project_code is None:
-#            self.exec_sh(job_script + job_params)
-#            return sample_rec.realigned_reads_file
-#        else:
-#            job_name = sample_id + "_indels_realign"
-#            self._submit_slurm_job(job_name,
-#                                   "2",
-#                                   job_script,
-#                                   job_params,
-#                                   email=sample_rec.usage_mail,
-#                                   prereq=prereq,
-#                                   )
-#            return job_name
-#
-#    def base_recal(self,
-#                   sample_id,
-#                   bam_file=None,
-#                   prereq=None,
-#                   ):
-#        """ Base Quality Score Recalibration """
-#        sample_rec = self.samples[sample_id]
-#        job_script = BASE_RECAL_SCRIPT
-#        if bam_file is None:
-#            job_params = " -I " + sample_rec.realigned_reads_file
-#        else:
-#            job_params = " -I " + bam_file
-#        job_params += " -R " + self.gatk_params.reference
-#        if ((self.gatk_params.known_indels is not None) and
-#            (len(self.gatk_params.known_indels) > 0)
-#            ):
-#            job_params += " -k " + ",".join(self.gatk_params.known_indels)
-#        job_params += "," + self.gatk_params.dbsnp
-#        job_params += " -t " + sample_rec.recal_table_file
-#        job_params += " -a " + sample_rec.post_recal_table_file
-#        job_params += " -p " + sample_rec.recalibration_plots
-#        job_params += " -o " + sample_rec.recal_bam_file
-#        if self.project_code is None:
-#            self.exec_sh(job_script + job_params)
-#            return sample_rec.recal_bam_file
-#        else:
-#            job_name = sample_id + "_base_recal"
-#            self._submit_slurm_job(job_name,
-#                                   "3",
-#                                   job_script,
-#                                   job_params,
-#                                   email=sample_rec.usage_mail,
-#                                   prereq=prereq,
-#                                   )
-#            return job_name
-#
-#    def hap_cal(self,
-#                sample_id,
-#                bam_file=None,
-#                prereq=None,
-#                ):
-#        """
-#        Call SNPs and indels simultaneously via local re-assembly of haplotypes
-#        in an active region
-#        """
-#
-#        sample_rec = self.samples[sample_id]
-#        job_script = HAPLOTYPE_CALLER_SCRIPT
-#        if bam_file is None:
-#            job_params = " -I " + sample_rec.recal_bam_file
-#        else:
-#            job_params = " -I " + bam_file
-#        job_params += " -R " + self.gatk_params.reference
-#        if self.gatk_params.targets_interval_list is not None:
-#            job_params += " -L " + self.gatk_params.targets_interval_list
-#        if self.gatk_params.dbsnp is not None:
-#            job_params += " -d " + self.gatk_params.dbsnp
-#        job_params += " -o " + sample_rec.gvcf_file
-#        if self.project_code is None:
-#            self.exec_sh(job_script + job_params)
-#            return sample_rec.gvcf_file
-#        else:
-#            job_name = sample_id + "_hap_cal"
-#            self._submit_slurm_job(job_name,
-#                                   "2",
-#                                   job_script,
-#                                   job_params,
-#                                   email=sample_rec.usage_mail,
-#                                   prereq=prereq,
-#                                   )
-#            return job_name
 
     def preprocess_sample(self,
                           sample_id,
@@ -613,38 +316,10 @@ class GATKBPPipeline(CMMPipeline):
                                    email=sample_rec.usage_mail,
                                    )
             return job_name
-#        job_name_bwa_mem = self.bwa_mem(sample_id)
-#        job_name_sort_sam = self.sort_sam(sample_id,
-#                                          prereq=[job_name_bwa_mem])
-#        job_name_mark_dup = self.mark_dup(sample_id,
-#                                          prereq=[job_name_sort_sam])
-#        job_name_create_intervals = self.create_intervals(sample_id,
-#                                                          prereq=[job_name_mark_dup])
-#        job_name_indels_realign = self.indels_realign(sample_id,
-#                                                      prereq=[job_name_create_intervals])
-#        job_name_base_recal = self.base_recal(sample_id,
-#                                              prereq=[job_name_indels_realign])
-#        job_name_hap_cal = self.hap_cal(sample_id,
-#                                        prereq=[job_name_base_recal])
         return job_name_hap_cal
 
     def __garbage_collecting(self):
         pass
-#        for job_name in self.job_dict:
-#            job_rec = self.job_dict[job_name]
-#            if ((job_name.endswith("_base_recal")) and
-#                (job_rec.job_status == JOB_STATUS_COMPLETED)
-#                ):
-#                sample_id = job_name.strip("_base_recal")
-#                sample_rec = self.samples[sample_id]
-#                self.info("deleting " + sample_rec.raw_aligned_reads_file)
-#                self.delete_file(sample_rec.raw_aligned_reads_file)
-#                self.info("deleting " + sample_rec.sorted_reads_file)
-#                self.delete_file(sample_rec.sorted_reads_file)
-#                self.info("deleting " + sample_rec.dedup_reads_file)
-#                self.delete_file(sample_rec.dedup_reads_file)
-#                self.info("deleting " + sample_rec.realigned_reads_file)
-#                self.delete_file(sample_rec.realigned_reads_file)
 
     def monitor_init(self, **kwargs):
         super(GATKBPPipeline, self).monitor_init(**kwargs)
@@ -659,8 +334,7 @@ class GATKBPPipeline(CMMPipeline):
                     prereq=None,
                     ):
         """
-        Combines any number of gVCF files that were produced by
-        the Haplotype Caller into a single joint gVCF file
+        Split gvcf files by region
         """
 
         job_name = self.dataset_name + "_split_gvcfs"
@@ -738,7 +412,7 @@ class GATKBPPipeline(CMMPipeline):
         the Haplotype Caller into a single joint gVCF file
         """
 
-        job_name = self.dataset_name + "_genotype_gvcfs" + region_txt
+        job_name = self.dataset_name + "_gnt_gvcfs_" + region_txt
         job_script = GENOTYPE_GVCFS_SCRIPT
         gvcf_list_file = join_path(self.working_dir,
                                    job_name+"_gvcf.list")

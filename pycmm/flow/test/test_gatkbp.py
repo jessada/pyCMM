@@ -335,14 +335,13 @@ class TestGATKBPPipeline(SafeTester):
         self.assertTrue(file_size(out_file) > 5000,
                         "genotype gvcfs doesn't function correctly")
 
-#    @unittest.skipUnless(FULL_SYSTEM_TEST or GATKBP_TEST, "taking too long time to test")
+    @unittest.skipUnless(FULL_SYSTEM_TEST or GATKBP_TEST, "taking too long time to test")
     def test_preprocess_dataset_01(self):
         """
         test dataset processing without sample preprocessing steps.
         Input are result from normal pairs of small fastq files
         """
 
-        self.individual_debug = True
         self.init_test(self.current_func_name)
         split_regions_file = join_path(self.data_dir,
                                        "split.regions_file") 
@@ -363,16 +362,6 @@ class TestGATKBPPipeline(SafeTester):
             pl.copy_file(tbi_file,
                          pl.gvcf_out_dir)
         pl.preprocess_dataset()
-#        src_dir = join_path(self.data_dir,
-#                            'tmp')
-#        cmd = "cp -r"
-#        cmd += " " + src_dir
-#        cmd += " " + pl.project_out_dir
-#        self.exec_sh(cmd)
-#        region_txt = pl.gatk_params.split_regions_txt_list[2]
-#        out_file = pl.genotype_gvcfs(region_txt=region_txt)
-#        self.assertTrue(file_size(out_file) > 5000,
-#                        "genotype gvcfs doesn't function correctly")
 
 ## ************************************** test very small sequence w/o indel **************************************
 #    @unittest.skipUnless(FULL_SYSTEM_TEST or GATKBP_TEST, "taking too long time to test")

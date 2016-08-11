@@ -8,6 +8,7 @@ def display_configs(func_name,
                     app_description,
                     kwargs,
                     pl,
+                    custom_params=None,
                     ):
     log_file = set_log_file(kwargs['log_file'])
     disp.new_section_txt("S T A R T <" + func_name + ">")
@@ -22,9 +23,10 @@ def display_configs(func_name,
                      required_params=required_params,
                      optional_params=optional_params,
                      )
-    disp.disp_params_set("Pipeline parameters", pl.get_params())
+    disp.disp_params_set("Pipeline parameters", pl.get_raw_repr())
 
     if hasattr(pl, "gatk_params"):
+## *********************************************************************************************** Need refactoring ***********************************************************************************************
         gatk_params = OrderedDict()
         gatk_params['reference file'] = pl.gatk_params.reference
         gatk_params['known indels'] = pl.gatk_params.known_indels
@@ -34,6 +36,20 @@ def display_configs(func_name,
         gatk_params['split chromosome regions'] = pl.gatk_params.split_regions_file
         gatk_params['dataset usage mail'] = pl.gatk_params.dataset_usage_mail
         disp.disp_params_set("GATK DNA-Seq Best Practice parameters", gatk_params)
+## *********************************************************************************************** Need refactoring ***********************************************************************************************
+    if hasattr(pl, "plink_params"):
+        disp.disp_params_set("Plink parameters", pl.plink_params.get_raw_repr())
+    if hasattr(pl, "mutstat_params"):
+        disp.disp_params_set("Mutation statistics database parameters", pl.mutstat_params.get_raw_repr())
+    if hasattr(pl, "annovar_params"):
+        disp.disp_params_set("Annovar parameters", pl.annovar_params.get_raw_repr())
+    if hasattr(pl, "report_layout"):
+        disp.disp_params_set("report layout parameters", pl.report_layout.get_raw_repr())
+    if hasattr(pl, "rpt_params"):
+        disp.disp_params_set("report parameters", pl.rpt_params.get_raw_repr())
+    if custom_params is not None:
+        disp.disp_params_set("custom parameters", custom_params)
+
     disp.new_section_txt(" . . . E X E C U T I N G . . . ")
 
 def app_pycmm_slurm_monitor_pipeline(*args, **kwargs):
@@ -49,6 +65,7 @@ def app_pycmm_slurm_monitor_pipeline(*args, **kwargs):
                     kwargs,
                     pl,
                     )
+    pl.monitor_jobs()
     # check if itself is in job mode 
     if len(pl.job_nodelist) != 0:
         pl.monitor_jobs()

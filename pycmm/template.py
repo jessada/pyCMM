@@ -7,6 +7,8 @@ import inspect
 import fileinput
 import gc
 import string
+import tempfile
+import datetime
 from random import choice
 from os.path import join as join_path
 from os.path import dirname
@@ -22,8 +24,10 @@ class pyCMMBase(object):
     """ pyCMM base class """
 
     def __init__(self, **kwargs):
+        self.__time_stamp = datetime.datetime.now()
         self.pkg_root_dir = dirname(dirname(__file__))
         super(pyCMMBase, self).__init__(**kwargs)
+        self.__local_scratch_dir = None
 
     def __str__(self):
         return self.__repr__()
@@ -34,9 +38,23 @@ class pyCMMBase(object):
     def get_raw_repr(self):
         return "Not yet implemented"
 
+    @property
+    def time_stamp(self):
+        return self.__time_stamp
+
     def get_tmp_file_name(self):
         chars = string.ascii_letters
         return "tmp_" + ''.join([choice(chars) for i in range(6)])
+
+    @property
+    def local_scratch_dir(self):
+        if self.__local_scratch_dir is None:
+            self.__local_scratch_dir = tempfile.mkdtemp()
+        return self.__local_scratch_dir
+
+    def new_local_tmp_file(self):
+        return join_path(self.local_scratch_dir,
+                         self.get_tmp_file_name())
 
     def remove_dir(self, dir_name):
         if os.path.exists(dir_name):

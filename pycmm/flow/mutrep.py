@@ -8,12 +8,13 @@ from pycmm.settings import ALL_MUTREP_ANNO_COLS
 from pycmm.settings import DFLT_MUTREP_FREQ_RATIOS
 from pycmm.settings import PREDICTION_COLS
 from pycmm.template import pyCMMBase
+from pycmm.utils.ver import VersionManager
 from pycmm.cmmlib import CMMParams
 from pycmm.cmmlib.taparser import TAVcfReader as VcfReader
 from pycmm.cmmlib.xlslib import CMMWorkbook as Workbook
 from pycmm.cmmlib.xlslib import NO_COLOR
 from pycmm.flow import get_func_arg
-from pycmm.flow.cmmdb import CMMDBPipeline
+from pycmm.flow.cmmdb import CMMPipeline
 from pycmm.flow import init_jobs_setup_file
 #from pycmm.flow.cmmdb import create_cmmdb_jobs_setup_file
 #import sys
@@ -23,10 +24,10 @@ from pycmm.flow import init_jobs_setup_file
 #from os import listdir
 #from os.path import isdir
 #from os.path import isfile
-#from pycmm.settings import MUTREP_FAMILY_REPORT_BIN
-#from pycmm.settings import MUTREP_SUMMARY_REPORT_BIN
+from pycmm.settings import MUTREP_FAMILY_REPORT_BIN
+from pycmm.settings import MUTREP_SUMMARY_REPORT_BIN
 #from pycmm.utils import exec_sh
-#from pycmm.cmmlib.dnalib import ALL_CHROMS
+from pycmm.cmmlib.dnalib import ALL_CHROMS
 from pycmm.cmmlib.tamodel import CMMGT_HOMOZYGOTE
 from pycmm.cmmlib.tamodel import CMMGT_HETEROZYGOTE
 
@@ -88,14 +89,12 @@ class ReportRegion(pyCMMBase):
         self.__raw_region = raw_region
 
     def get_raw_repr(self):
+        raw_repr = OrderedDict()
+        raw_repr["chrom"] = self.chrom
         if self.start_pos is not None:
-            return {"chrom": self.chrom,
-                    "start position": self.start_pos,
-                    "end_pos": self.end_pos,
-                    }
-        else:
-            return {"chrom": self.chrom,
-                    }
+            raw_repr["start position"] = self.start_pos
+            raw_repr["end position"] = self.end_pos
+        return raw_repr
 
     @property
     def chrom(self):
@@ -261,6 +260,33 @@ class ReportLayout(CMMParams):
 
     def get_raw_repr(self, **kwargs):
         raw_repr = super(ReportLayout, self).get_raw_repr(**kwargs)
+        raw_repr["annotated tabix file"] = self.annotated_vcf_tabix
+        raw_repr["annotated columns"] = self.anno_cols
+        if self.anno_excl_tags is not None and len(self.anno_excl_tags) > 0:
+            raw_repr["annotation exclusion tags"] = self.anno_excl_tags
+        raw_repr["genotyping calling detail"] = self.call_detail
+        raw_repr["frequency ratio(s)"] = self.freq_ratios
+        if self.report_regions is None:
+            raw_repr["report region(s)"] = "ALL"
+        else:
+            raw_repr["report region(s)"] = self.report_regions
+        raw_repr["split chromosome"] = self.split_chrom
+        filter_actions = OrderedDict()
+        filter_actions['Rare'] = self.filter_rare
+        filter_actions['Non-Intergenic'] = self.filter_non_intergenic
+        filter_actions['Non-Intronic'] = self.filter_non_intronic
+        filter_actions['Non-Upstream'] = self.filter_non_upstream
+        filter_actions['Non-Downstream'] = self.filter_non_downtream
+        filter_actions['Non-UTR'] = self.filter_non_utr
+        filter_actions['Non-Synonymous'] = self.filter_non_synonymous
+        filter_actions['Has-mutation'] = self.filter_has_mutation
+        filter_actions['Has-shared'] = self.filter_has_shared
+        raw_repr['filter actions'] = filter_actions
+        report_exclusion = {}
+        report_exclusion['only summary'] = self.only_summary
+        report_exclusion['only families'] = self.only_families
+        raw_repr['report exclusion'] = report_exclusion
+        raw_repr["summary_families sheet"] = self.summary_families_sheet
         return raw_repr
 
     def __init_properties(self):
@@ -425,7 +451,7 @@ class ReportLayout(CMMParams):
     def cell_color_hom_shared(self):
         return self.__cell_colors[CELL_TYPE_HOM_SHARED]
 
-class MutRepPipeline(CMMDBPipeline):
+class MutRepPipeline(CMMPipeline):
     """ A class to control CMMDB best practice pipeline """
 
     def __init__(self, **kwargs):
@@ -435,6 +461,14 @@ class MutRepPipeline(CMMDBPipeline):
     def get_raw_repr(self, **kwargs):
         raw_repr = super(MutRepPipeline, self).get_raw_repr(**kwargs)
         return raw_repr
+
+    def get_third_party_software_version(self):
+        vm = VersionManager()
+        versions = OrderedDict()
+        versions['pyvcf'] = vm.pyvcf_version
+        versions['pyaml'] = vm.pyaml_version
+        versions['xlsxwriter'] = vm.xlsxwriter_version
+        return versions
 
     def __init_properties(self):
         pass
@@ -621,6 +655,8 @@ class MutRepPipeline(CMMDBPipeline):
                 if (self.report_layout.filter_has_shared and
                     not vcf_record.has_shared(allele_idx)):
                     continue
+                if vcf_record.alleles[allele_idx] == "*":
+                    continue
                 delete_row = False
                 if self.report_layout.exprs is not None:
                     del_row_actions = self.report_layout.exprs.actions[ACTION_DELETE_ROW]
@@ -716,17 +752,93 @@ class MutRepPipeline(CMMDBPipeline):
         self.info(" >> add 'summary_all' sheet")
         self.__add_muts_sheet("summary_all",
                               report_regions,
+                              samples_id=self.samples_id,
+                              samples_header=self.samples_id_w_fam_pref,
                               )
-        if (self.report_layout.summary_families_sheet and
-            self.families_info is not None):
-            self.info("")
-            self.info(" >> add 'summary_families' sheet")
-            self.__add_muts_sheet("summary_families",
-                                  report_regions,
-                                  samples_id=self.samples_id,
-                                  samples_header=self.samples_id_w_fam_pref,
-                                  )
+#        if (self.report_layout.summary_families_sheet and
+#            self.families_info is not None):
+#            self.info("")
+#            self.info(" >> add 'summary_families' sheet")
+#            self.__add_muts_sheet("summary_families",
+#                                  report_regions,
+#                                  samples_id=self.samples_id,
+#                                  samples_header=self.samples_id_w_fam_pref,
+#                                  )
         self.__wb.close()
+
+    def __submit_report_jobs(self,
+                             job_script,
+                             job_params_prefix,
+                             job_name_prefix,
+                             slurm_log_prefix,
+                             out_file_prefix,
+                             report_regions,
+                             ):
+        if self.report_layout.split_chrom:
+            if report_regions is None:
+                region_params = ALL_CHROMS
+            else:
+                region_params = map(lambda x: x.raw_region,
+                                    report_regions)
+            for region_param in region_params:
+                chr_slurm_log_prefix = slurm_log_prefix
+                chr_slurm_log_prefix += "_chr" + region_param.split(":")[0]
+                job_name = job_name_prefix
+                job_name += "_chr" + region_param.split(":")[0]
+                out_file = out_file_prefix
+                out_file += "_chr" + region_param.split(":")[0]
+                out_file += ".xlsx"
+                job_params = job_params_prefix
+                job_params += " -r " + region_param
+                job_params += " -o " + out_file
+                self.dbg(job_script + job_params)
+                self.submit_job(job_name,
+                                self.project_code,
+                                "core",
+                                "4",
+                                self.job_alloc_time,
+                                chr_slurm_log_prefix,
+                                job_script,
+                                job_params,
+                                )
+        else:
+            job_name = job_name_prefix
+            out_file = out_file_prefix + ".xlsx"
+            job_params = job_params_prefix
+            if report_regions is not None:
+                job_params += " -r " + ",".join(map(lambda x: x.raw_region,
+                                                    report_regions))
+            job_params += " -o " + out_file
+            self.submit_job(job_name,
+                            self.project_code,
+                            "core",
+                            "4",
+                            self.job_alloc_time,
+                            slurm_log_prefix,
+                            job_script,
+                            job_params,
+                            )
+
+    def gen_summary_reports(self):
+        report_regions = self.report_layout.report_regions
+        if self.project_code is None:
+            self.gen_summary_report(report_regions)
+        else:
+            slurm_log_prefix = join_path(self.slurm_log_dir,
+                                         self.dataset_name)
+            slurm_log_prefix += '_rpts_smy'
+            job_name_prefix = self.dataset_name + '_rpts_smy'
+            job_script = MUTREP_SUMMARY_REPORT_BIN
+            job_params_prefix = " -j " + self.jobs_setup_file
+            out_file_prefix = join_path(self.rpts_out_dir,
+                                        self.dataset_name+"_summary")
+            self.__submit_report_jobs(job_script,
+                                      job_params_prefix,
+                                      job_name_prefix,
+                                      slurm_log_prefix,
+                                      out_file_prefix,
+                                      report_regions,
+                                      )
 
     def gen_family_report(self,
                           fam_id,
@@ -772,7 +884,6 @@ class MutRepPipeline(CMMDBPipeline):
         if self.project_code is None:
             self.gen_family_report(fam_id, report_regions)
         else:
-# *********************************************************************************************** Need refactoring ***********************************************************************************************
             slurm_log_prefix = join_path(self.slurm_log_dir,
                                          self.dataset_name)
             slurm_log_prefix += '_rpts_fam'
@@ -790,13 +901,22 @@ class MutRepPipeline(CMMDBPipeline):
                                       out_file_prefix,
                                       report_regions,
                                       )
-# *********************************************************************************************** Need refactoring ***********************************************************************************************
 
     def gen_families_reports(self):
         if self.families_info is None:
             return
         for fam_id in self.families_info:
             self.__gen_family_reports(fam_id)
+
+    def monitor_init(self, **kwargs):
+        if self.report_layout.only_summary:
+            self.gen_summary_reports()
+        elif self.report_layout.only_families:
+            self.gen_families_reports()
+        else:
+            self.gen_families_reports()
+            self.gen_summary_reports()
+        super(MutRepPipeline, self).monitor_init(**kwargs)
 
 #class MutRepPipeline(CMMDBPipeline):
 #    """ A class to control mutation report pipeline """
@@ -819,7 +939,7 @@ class MutRepPipeline(CMMDBPipeline):
 #        self.__report_layout = ReportLayout(self._jobs_info[JOBS_SETUP_RPT_LAYOUT_SECTION])
 #
 #    @property
-#    def rpt_alloc_time(self):
+#    def job_alloc_time(self):
 #        return self._jobs_info[JOBS_SETUP_RPT_ALLOC_TIME_KEY]
 #
 #    @property
@@ -852,88 +972,6 @@ class MutRepPipeline(CMMDBPipeline):
 #    def __init_cells_format(self, wb):
 #        self.__cell_fmt_mgr = CellFormatManager(wb, COLOR_RGB)
 #
-#    def __submit_report_jobs(self,
-#                             job_script,
-#                             job_params_prefix,
-#                             job_name_prefix,
-#                             slurm_log_prefix,
-#                             out_file_prefix,
-#                             report_regions,
-#                             ):
-#        if self.report_layout.split_chrom:
-#            if report_regions is None:
-#                region_params = ALL_CHROMS
-#            else:
-#                region_params = map(lambda x: x.raw_region,
-#                                    report_regions)
-#            for region_param in region_params:
-#                slurm_log_file = slurm_log_prefix
-#                slurm_log_file += "_chr" + region_param.split(":")[0]
-#                slurm_log_file += "_" + self.time_stamp.strftime("%Y%m%d%H%M%S")
-#                slurm_log_file += ".log"
-#                job_name = job_name_prefix
-#                job_name += "_chr" + region_param.split(":")[0]
-#                out_file = out_file_prefix
-#                out_file += "_chr" + region_param.split(":")[0]
-#                out_file += ".xlsx"
-#                job_params = job_params_prefix
-#                job_params += " -r " + region_param
-#                job_params += " -o " + out_file
-#                self.dbg(job_script + job_params)
-## *********************************************************************************************** Need refactoring ***********************************************************************************************
-#                self.submit_job(job_name,
-#                                self.project_code,
-#                                "core",
-#                                "1",
-#                                self.rpt_alloc_time,
-#                                slurm_log_file,
-#                                job_script,
-#                                job_params,
-#                                )
-## *********************************************************************************************** Need refactoring ***********************************************************************************************
-#        else:
-#            slurm_log_file = slurm_log_prefix
-#            slurm_log_file += "_" + self.time_stamp.strftime("%Y%m%d%H%M%S")
-#            slurm_log_file += ".log"
-#            job_name = job_name_prefix
-#            out_file = out_file_prefix + ".xlsx"
-#            job_params = job_params_prefix
-#            if report_regions is not None:
-#                job_params += " -r " + ",".join(map(lambda x: x.raw_region,
-#                                                    report_regions))
-#            job_params += " -o " + out_file
-## *********************************************************************************************** Need refactoring ***********************************************************************************************
-#            self.submit_job(job_name,
-#                            self.project_code,
-#                            "core",
-#                            "1",
-#                            self.rpt_alloc_time,
-#                            slurm_log_file,
-#                            job_script,
-#                            job_params,
-#                            )
-## *********************************************************************************************** Need refactoring ***********************************************************************************************
-#
-#    def gen_summary_reports(self):
-#        report_regions = self.report_layout.report_regions
-#        if self.project_code is None:
-#            self.gen_summary_report(report_regions)
-#        else:
-#            slurm_log_prefix = join_path(self.slurm_log_dir,
-#                                         self.dataset_name)
-#            slurm_log_prefix += '_rpts_smy'
-#            job_name_prefix = self.dataset_name + '_rpts_smy'
-#            job_script = MUTREP_SUMMARY_REPORT_BIN
-#            job_params_prefix = " -j " + self.jobs_setup_file
-#            out_file_prefix = join_path(self.rpts_out_dir,
-#                                        self.dataset_name+"_summary")
-#            self.__submit_report_jobs(job_script,
-#                                      job_params_prefix,
-#                                      job_name_prefix,
-#                                      slurm_log_prefix,
-#                                      out_file_prefix,
-#                                      report_regions,
-#                                      )
 #
 #    def gen_reports(self):
 #        pass

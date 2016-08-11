@@ -1,7 +1,9 @@
 # This Python file uses the following encoding: utf-8
 import operator
 from os.path import join as join_path
+from collections import OrderedDict
 from pycmm.template import pyCMMBase
+from pycmm.utils.ver import VersionManager
 from pycmm.cmmlib import CMMParams
 from pycmm.cmmlib.xlslib import CMMWorkbook as Workbook
 from pycmm.cmmlib.xlslib import NO_COLOR
@@ -94,6 +96,13 @@ class HapAssocRepPipeline(CMMPipeline):
             self.__rpt_params = RptParams(entries=self._get_job_config(JOBS_SETUP_REPORT_PARAMS_SECTION,
                                                                        required=True))
         return self.__rpt_params
+
+    def get_third_party_software_version(self):
+        vm = VersionManager()
+        versions = OrderedDict()
+        versions['pyaml'] = vm.pyaml_version
+        versions['xlsxwriter'] = vm.xlsxwriter_version
+        return versions
 
     @property
     def plain_fmts(self):
