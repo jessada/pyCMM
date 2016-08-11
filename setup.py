@@ -74,7 +74,7 @@ setup(
              'bin/'+MUTREP_SUMMARY_REPORT_BIN,
              'bin/pyCMM-mutrep-create-job-setup-file',
              'bin/pyCMM-plink-create-job-setup-file',
-             'bin/pyCMM-plink-hap-assocs',
+             'bin/pyCMM-plink-pipeline',
              'bin/'+PLINK_SLURM_MONITOR_PIPELINE_BIN,
              'bin/'+PLINK_HAP_ASSOCS_REPORT_BIN,
              'bin/'+PLINK_MERGE_HAP_ASSOCS_BIN,

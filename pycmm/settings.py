@@ -60,12 +60,12 @@ MUTREP_SUMMARY_REPORT_DESCRIPTION = "An appliation to generate summary report at
 MUTREP_CREATE_JOB_SETUP_FILE_DESCRIPTION = "An application to generate job setup file to process mutations report"
 
 ## *********************************************************************************************** PLINK *************************************************************************************************
-PLINK_SLURM_MONITOR_PIPELINE_BIN = 'pyCMM-plink-slurm'
+PLINK_SLURM_MONITOR_PIPELINE_BIN = 'pyCMM-plink-slurm-monitor-pipeline'
+PLINK_PIPELINE_DESCRIPTION = "A flow to control a PLINK haplotype association study"
 PLINK_MERGE_HAP_ASSOCS_BIN = 'pyCMM-plink-merge-hap-assocs'
 PLINK_HAP_ASSOCS_REPORT_BIN = 'pyCMM-plink-hap-assocs-report'
 
-PLINK_HAP_ASSOCS_DESCRIPTION = "A flow to control a PLINK haplotype association study"
-PLIN_SLURM_DESCRIPTION = "A flow to control a PLINK haplotype association study in SLURM (UPPMAX)"
+PLINK_PIPELINE_DESCRIPTION = "A flow to control a PLINK haplotype association study"
 PLINK_MERGE_HAP_ASSOCS_DESCRIPTION = "An applciation to merge raw Plink haplotype association study results"
 PLINK_HAP_ASSOCS_REPORT_DESCRIPTION = "A flow to generate haplotype association study report"
 #PLINK_PIPELINE_DESCRIPTION = "A flow to control a PLINK pipeline"
