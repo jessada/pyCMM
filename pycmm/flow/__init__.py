@@ -89,6 +89,7 @@ class CMMPipeline(JobManager):
 
     def run_slurm_monitor_pipeline(self,
                                    class_slurm_bin,
+                                   alloc_time,
                                    log_file=None,
                                    ):
         job_name = self.project_name + "_mgr"
@@ -100,7 +101,7 @@ class CMMPipeline(JobManager):
                                "1",
                                job_script,
                                job_params,
-                               alloc_time="10-00:00:00",
+                               alloc_time=alloc_time,
                                )
 
     def run_offline_pipeline(self):

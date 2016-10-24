@@ -4,6 +4,9 @@ from pycmm.utils import mylogger
 from pycmm.utils import disp
 from pycmm.utils import set_log_file
 
+PIPELINE_ALLOC_TIME_VAR = "pipeline_alloc_time"
+PIPELINE_ALLOC_TIME_DFLT = "10-00:00:00"
+
 def display_configs(func_name,
                     app_description,
                     kwargs,
@@ -86,9 +89,14 @@ def app_pycmm_pipeline(*args, **kwargs):
                     pl,
                     )
     pipeline_bin = kwargs['pipeline_bin']
+    if PIPELINE_ALLOC_TIME_VAR in kwargs:
+        pipeline_alloc_time = kwargs[PIPELINE_ALLOC_TIME_VAR]
+    else:
+        pipeline_alloc_time = PIPELINE_ALLOC_TIME_DFLT
     if pl.project_code is not None:
         pl.run_slurm_monitor_pipeline(class_slurm_bin=pipeline_bin,
-                                      log_file=kwargs['log_file']
+                                      alloc_time=pipeline_alloc_time,
+                                      log_file=kwargs['log_file'],
                                       )
     else:
         pl.run_offline_pipeline()
