@@ -4,7 +4,6 @@ from os.path import dirname
 from pycmm.template import SafeTester
 from pycmm.settings import ALL_MUTREP_ANNO_COLS
 from pycmm.settings import PRIMARY_MAF_VAR
-from pycmm.settings import ILL_BR_PF_COL_NAME
 from pycmm.settings import EXAC_ALL_COL_NAME
 from pycmm.settings import FULL_SYSTEM_TEST
 from pycmm.utils.xlsutils import XlsUtils

@@ -6,15 +6,9 @@ from pycmm.settings import MUTREP_CREATE_JOB_SETUP_FILE_DESCRIPTION
 from pycmm.settings import AXEQ_CHR3_6_14_18_COLS_TAG
 from pycmm.settings import AXEQ_CHR5_19_COLS_TAG
 from pycmm.settings import AXEQ_CHR9_COLS_TAG
-from pycmm.settings import CRC_101_COLS_TAG
-from pycmm.settings import CRC_CAFAM_COLS_TAG
-from pycmm.settings import CRC_COLON_COLS_TAG
-from pycmm.settings import CRC_RECTAL_COLS_TAG
-from pycmm.settings import CRC_CRC_COLS_TAG
-from pycmm.settings import ILL_BR_COLS_TAG
-from pycmm.settings import NK64_COLS_TAG
+from pycmm.settings import WES294_OAF_CHEK2_COLS_TAG 
+from pycmm.settings import WES294_OAF_EARLYONSET_COLS_TAG
 from pycmm.settings import MUTSTAT_DETAILS_COLS_TAG
-from pycmm.settings import ASSOC_COLS_TAG
 from pycmm.settings import LJB_SCORE_COLS_TAG
 from pycmm.settings import EXAC_OTH_COLS_TAG
 from pycmm.settings import UNKNOWN_COLS_TAG
@@ -79,15 +73,9 @@ help_txt += '\n'
 help_txt += '\t' + AXEQ_CHR3_6_14_18_COLS_TAG + ': columns that are related to mutations statistics generated from dataset Axeq chr3, 6, 14, 18\n'
 help_txt += '\t' + AXEQ_CHR5_19_COLS_TAG + ': columns that are related to dataset Axeq chr5, 19\n'
 help_txt += '\t' + AXEQ_CHR9_COLS_TAG + ': columns that are related to dataset Axeq chr9\n'
-help_txt += '\t' + CRC_101_COLS_TAG + ': columns that are related to mutations statistics generated from all 101 CRC samples\n'
-help_txt += '\t' + CRC_CAFAM_COLS_TAG + ': columns that are related to mutations statistics generated from cancer-family subdataset of CRC dataset\n'
-help_txt += '\t' + CRC_COLON_COLS_TAG + ': columns that are related to mutations statistics generated from colon-cancer subdataset of CRC dataset\n'
-help_txt += '\t' + CRC_RECTAL_COLS_TAG + ': columns that are related to mutations statistics generated from rectal-cancer subdataset of CRC dataset\n'
-help_txt += '\t' + CRC_CRC_COLS_TAG + ': columns that are related to mutations statistics generated from colorectal-cancer subdataset of CRC dataset\n'
-help_txt += '\t' + ILL_BR_COLS_TAG + ': columns that are related to mutations statistics generated from a dataset consisting of 30 breast-cancer samples from Illumina\n'
-help_txt += '\t' + NK64_COLS_TAG + ': columns that are related to mutations statistics generated from a dataset consisting of PMS2-, early onset- and famliy 24 samples\n'
+help_txt += '\t' + WES294_OAF_CHEK2_COLS_TAG  + ': columns that are related to mutations statistics generated from CHEK2 samples\n'
+help_txt += '\t' + WES294_OAF_EARLYONSET_COLS_TAG + ': columns that are related to mutations statistics generated from early-oneset colorectal samples\n'
 help_txt += '\t' + MUTSTAT_DETAILS_COLS_TAG + ': detailed information of mutations statistics\n'
-help_txt += '\t' + ASSOC_COLS_TAG + ': result from association studies\n'
 help_txt += '\t' + LJB_SCORE_COLS_TAG + ': prediction score from LJB\n'
 help_txt += '\t' + EXAC_OTH_COLS_TAG + ': other columns from ExAC database beside ExAC_ALL and ExAC_NFE\n'
 help_txt += '\t' + UNKNOWN_COLS_TAG + ": columns that I don't know that they are about\n"

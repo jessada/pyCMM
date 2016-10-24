@@ -577,9 +577,13 @@ class MutRepPipeline(CMMPipeline):
             if anno_col_name in PREDICTION_COLS:
                 info = info.description
             if info is None:
-                info = ""
+                continue
+#                info = ""
             if info == [None]:
-                info = ""
+                continue
+            if info == ".":
+                continue
+#                info = ""
             # determine cell format
             info_cell_fmt = dflt_cell_fmt
             if anno_col_name in color_col_names:

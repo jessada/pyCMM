@@ -10,7 +10,6 @@ from pycmm.settings import ALL_MUTREP_ANNO_COLS
 from pycmm.settings import MT_COLS_TAG
 from pycmm.settings import AXEQ_CHR9_COLS_TAG
 #from pycmm.settings import CRC_CRC_COLS_TAG
-from pycmm.settings import NK64_COLS_TAG
 from pycmm.settings import MUTSTAT_DETAILS_COLS_TAG
 from pycmm.settings import EXAC_OTH_COLS_TAG
 from pycmm.settings import UNKNOWN_COLS_TAG
@@ -26,7 +25,6 @@ from pycmm.settings import AXEQ_CHR3_6_14_18_PF_COL_NAME
 from pycmm.settings import AXEQ_CHR5_19_GF_COL_NAME
 #from pycmm.settings import CRC_CRC_PF_COL_NAME
 from pycmm.settings import PRIMARY_MAF_VAR
-from pycmm.settings import ILL_BR_PF_COL_NAME
 from pycmm.settings import EXAC_ALL_COL_NAME
 from pycmm.settings import FULL_SYSTEM_TEST
 from pycmm.flow.mutrep import MutRepPipeline
@@ -59,7 +57,6 @@ DFLT_TEST_FREQ_RATIOS = DFLT_MUTREP_FREQ_RATIOS
 DFLT_TEST_ANNO_EXCL_TAGS = MT_COLS_TAG
 DFLT_TEST_ANNO_EXCL_TAGS += "," + AXEQ_CHR9_COLS_TAG
 #FLT_TEST_ANNO_EXCL_TAGS += "," + CRC_CRC_COLS_TAG
-DFLT_TEST_ANNO_EXCL_TAGS += "," + NK64_COLS_TAG
 DFLT_TEST_ANNO_EXCL_TAGS += "," + MUTSTAT_DETAILS_COLS_TAG
 DFLT_TEST_ANNO_EXCL_TAGS += "," + EXAC_OTH_COLS_TAG
 DFLT_TEST_ANNO_EXCL_TAGS += "," + UNKNOWN_COLS_TAG
@@ -201,7 +198,7 @@ class TestMutRepPipeline(SafeTester):
                          8,
                          "MutRepPipeline cannot correctly read report layout info 'layout columns' from jobs setup file")
         self.assertEqual(len(pl.report_layout.anno_excl_tags),
-                         6,
+                         5,
                          "MutRepPipeline cannot correctly read report layout info 'annotation excluded tags' from jobs setup file")
         self.assertEqual(pl.report_layout.report_regions[1].end_pos,
                          "14542551",
@@ -370,7 +367,7 @@ class TestMutRepPipeline(SafeTester):
                          "information of mutations with more than one alternate alleles are incorrect"
                          )
 
-    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST, "taking too long time to test")
+#    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST, "taking too long time to test")
     def test_summary_report_4(self):
         """ test summary with multiple report_regions and many sample infos """
 
@@ -594,7 +591,7 @@ class TestMutRepPipeline(SafeTester):
                                         "input.vcf.gz")
         project_name = self.test_function
         frequency_ratios = PRIMARY_MAF_VAR + ":0.2"
-        frequency_ratios += "," + ILL_BR_PF_COL_NAME + ":0.3"
+        frequency_ratios += "," + AXEQ_CHR5_19_GF_COL_NAME + ":0.3"
         frequency_ratios += "," + EXAC_ALL_COL_NAME + ":0.3"
         jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
                                                         annotated_vcf_tabix=annotated_vcf_tabix,
@@ -975,12 +972,13 @@ class TestMutRepPipeline(SafeTester):
                          "Incorrect color"
                          )
 
-    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST, "taking too long time to test")
+#    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST, "taking too long time to test")
     def test_color_shared_mutations_1(self):
         """
         test if shared mutation can be colored correctly
         """
 
+        self.individual_debug = True
         self.init_test(self.current_func_name)
         annotated_vcf_tabix = join_path(self.data_dir,
                                         "input.vcf.gz")
