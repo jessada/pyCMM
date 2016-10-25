@@ -16,17 +16,8 @@ from pycmm.cmmlib.xlslib import NO_COLOR
 from pycmm.flow import get_func_arg
 from pycmm.flow.cmmdb import CMMPipeline
 from pycmm.flow import init_jobs_setup_file
-#from pycmm.flow.cmmdb import create_cmmdb_jobs_setup_file
-#import sys
-#import datetime
-#import yaml
-#import vcf
-#from os import listdir
-#from os.path import isdir
-#from os.path import isfile
 from pycmm.settings import MUTREP_FAMILY_REPORT_BIN
 from pycmm.settings import MUTREP_SUMMARY_REPORT_BIN
-#from pycmm.utils import exec_sh
 from pycmm.cmmlib.dnalib import ALL_CHROMS
 from pycmm.cmmlib.tamodel import CMMGT_HOMOZYGOTE
 from pycmm.cmmlib.tamodel import CMMGT_HETEROZYGOTE

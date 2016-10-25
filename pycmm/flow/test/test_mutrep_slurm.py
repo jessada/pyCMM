@@ -4,7 +4,7 @@ from os.path import join as join_path
 from os.path import dirname
 from collections import OrderedDict
 from pycmm.template import SafeTester
-from pycmm.utils.xlsutils import XlsUtils
+from pycmm.cmmlib.xlslib import XlsUtils
 from pycmm.settings import SLURM_MUTREP_TEST
 from pycmm.settings import FAST_PROJECT_CODE
 from pycmm.settings import SLOW_PROJECT_CODE

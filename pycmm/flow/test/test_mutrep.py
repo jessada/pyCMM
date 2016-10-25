@@ -4,7 +4,7 @@ from os.path import join as join_path
 from os.path import dirname
 from collections import OrderedDict
 from pycmm.template import SafeTester
-from pycmm.utils.xlsutils import XlsUtils
+from pycmm.cmmlib.xlslib import XlsUtils
 from pycmm.settings import DFLT_MUTREP_FREQ_RATIOS
 from pycmm.settings import ALL_MUTREP_ANNO_COLS
 from pycmm.settings import MT_COLS_TAG
@@ -191,11 +191,12 @@ class TestMutRepPipeline(SafeTester):
         self.assertEqual(pl.report_layout.anno_cols[4],
                          "cytoBand",
                          "MutRepPipeline cannot correctly read report layout info 'layout columns' from jobs setup file")
-        self.assertEqual(pl.report_layout.anno_cols[7],
+        self.dbg(pl.report_layout.anno_cols)
+        self.assertEqual(pl.report_layout.anno_cols[6],
                          AXEQ_CHR5_19_GF_COL_NAME,
                          "MutRepPipeline cannot correctly read report layout info 'layout columns' from jobs setup file")
         self.assertEqual(len(pl.report_layout.anno_cols),
-                         8,
+                         7,
                          "MutRepPipeline cannot correctly read report layout info 'layout columns' from jobs setup file")
         self.assertEqual(len(pl.report_layout.anno_excl_tags),
                          5,
@@ -389,18 +390,18 @@ class TestMutRepPipeline(SafeTester):
                              "rpts",
                              project_name+"_summary.xlsx")
         xu = XlsUtils(xls_file)
-        self.assertEqual(xu.count_rows(sheet_idx=1),
+        self.assertEqual(xu.count_rows(sheet_idx=0),
                          10,
                          "Incorrect number of rows"
                          )
         self.assertEqual(xu.count_cols(col_name1="1234-Alb-31",
                                        col_name2="6789-Al-65",
-                                       sheet_idx=1),
+                                       sheet_idx=0),
                          11,
                          "Incorrect number of columns"
                          )
         self.assertEqual(xu.nsheets,
-                         2,
+                         1,
                          "Incorrect number of sheets"
                          )
 
@@ -995,12 +996,12 @@ class TestMutRepPipeline(SafeTester):
                              "rpts",
                              project_name+"_summary.xlsx")
         xu = XlsUtils(xls_file)
-        col_idx = xu.get_col_idx(col_name="275-Co-1262", sheet_idx=1)
-        self.assertEqual(xu.get_cell_value(5, col_idx, sheet_idx=1),
+        col_idx = xu.get_col_idx(col_name="275-Co-1262", sheet_idx=0)
+        self.assertEqual(xu.get_cell_value(5, col_idx, sheet_idx=0),
                          "het",
                          "Incorrect cell value"
                          )
-        self.assertEqual(xu.get_cell_rgb(5, col_idx, sheet_idx=1),
+        self.assertEqual(xu.get_cell_rgb(5, col_idx, sheet_idx=0),
                          "FFC0C0C0",
                          "Incorrect color"
                          )

@@ -6,7 +6,7 @@ from pycmm.settings import ALL_MUTREP_ANNO_COLS
 from pycmm.settings import PRIMARY_MAF_VAR
 from pycmm.settings import EXAC_ALL_COL_NAME
 from pycmm.settings import FULL_SYSTEM_TEST
-from pycmm.utils.xlsutils import XlsUtils
+from pycmm.cmmlib.xlslib import XlsUtils
 from pycmm.flow.mutrep import MutRepPipeline
 from pycmm.flow.mutrep import create_jobs_setup_file
 from pycmm.flow.mutrep import JOBS_SETUP_RPT_FILTER_RARE
