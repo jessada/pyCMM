@@ -1,6 +1,7 @@
 from os.path import join as join_path
 from os.path import dirname
 from pycmm.template import SafeTester
+from pycmm.settings import KG2014OCT_ALL_COL_NAME
 from pycmm.cmmlib.taparser import TAVcfReader
 from pycmm.flow.mutrep import MutRepPipeline
 from pycmm.flow.test.test_mutrep import DFLT_TEST_MUTREP_COLS
@@ -465,7 +466,9 @@ class TestTAVcfCall(SafeTester):
         self.init_test(self.current_func_name)
         in_file = join_path(self.data_dir,
                                'input.vcf.gz')
-        vcf_reader = TAVcfReader(filename=in_file)
+        vcf_reader = TAVcfReader(filename=in_file,
+                                 freq_ratios={KG2014OCT_ALL_COL_NAME:0.2},
+                                )
         vcf_reader.next()
         vcf_reader.next()
         vcf_reader.next()
@@ -732,7 +735,9 @@ class TestTAVcfCall(SafeTester):
         self.init_test(self.current_func_name)
         in_file = join_path(self.data_dir,
                                'input.vcf.gz')
-        vcf_reader = TAVcfReader(filename=in_file)
+        vcf_reader = TAVcfReader(filename=in_file,
+                                 freq_ratios={KG2014OCT_ALL_COL_NAME:0.2},
+                                )
         vcf_reader.next()
         vcf_reader.next()
         vcf_reader.next()

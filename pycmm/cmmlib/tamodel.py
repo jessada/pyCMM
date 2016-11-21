@@ -99,7 +99,6 @@ class _TAVcfCall(_VcfCall, pyCMMBase):
         But it'll be a very rare case
         """
         actual_gts = []
-        afs = self.site.afss[0]
         for gt_idx in xrange(len(self.cmm_gts)):
             cmm_gt = self.cmm_gts[gt_idx]
             # Other than the problematic wild type and homozygote,
@@ -107,8 +106,8 @@ class _TAVcfCall(_VcfCall, pyCMMBase):
             if cmm_gt != CMMGT_HOMOZYGOTE and cmm_gt != CMMGT_WILDTYPE:
                 actual_gts.append(cmm_gt)
                 continue
-            # if allele frequency less than 0.5 the actual gt remain the same
-            if (afs[gt_idx] == ".") or (float(afs[gt_idx]) < 0.5):
+            # if reference is not mutated the actual gt remain the same
+            if not self.site.ref_is_mutated[gt_idx]:
                 actual_gts.append(cmm_gt)
                 continue
             # below should be only hom and wild type with allele freq >= 0.5
@@ -202,6 +201,7 @@ class _TAVcfRecord(_VcfRecord, pyCMMBase):
         self.__is_upstream = None
         self.__is_downstream = None
         self.__is_utr = None
+        self.__ref_is_mutated = None
         self.__family_infos = copy.deepcopy(family_infos)
         self.__shared_cal = False
 
@@ -255,6 +255,21 @@ class _TAVcfRecord(_VcfRecord, pyCMMBase):
                                                         EXONICFUNC_SYNONYMOUS,
                                                         compare=check_equal)
         return self.__is_synonymous
+
+    @property
+    def ref_is_mutated(self):
+        if self.__ref_is_mutated is None:
+            afs = self.afss[0]
+            self.__ref_is_mutated = []
+            for gt_idx in xrange(len(afs)):
+                if ((afs[gt_idx] == ".") or
+                    (afs[gt_idx] == CMM_DUMMY) or
+                    (float(afs[gt_idx]) < 0.5)
+                    ):
+                    self.__ref_is_mutated.append(False)
+                else:
+                    self.__ref_is_mutated.append(True)
+        return self.__ref_is_mutated
 
     def __get_info(self, var_name):
         """

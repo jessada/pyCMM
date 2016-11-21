@@ -315,6 +315,29 @@ class TestCMMDBPipeline(SafeTester):
                         "cal_mut_stat doesn't function correctly")
 
     @unittest.skipUnless(FULL_SYSTEM_TEST or CMMDB_TEST, "taking too long time to test")
+    def test_cal_mut_stat_offline_5(self):
+        """ to test if AF can be calculated if GF = 0 """
+
+        self.individual_debug = True
+        self.init_test(self.current_func_name)
+        vcf_tabix_file = join_path(self.data_dir,
+                                   "input.vcf.gz")
+        exp_result = join_path(self.data_dir,
+                               "exp_stat")
+        sample_info = join_path(self.data_dir,
+                                "sample.list")
+        jobs_setup_file = self.__create_jobs_setup_file(vcf_tabix_file=vcf_tabix_file,
+                                                        project_code=None,
+                                                        db_region=None,
+                                                        sample_info=sample_info,
+                                                        )
+        pl = CMMDBPipeline(jobs_setup_file=jobs_setup_file)
+        pl.cal_mut_stat()
+        self.assertTrue(filecmp.cmp(pl.out_stat_files,
+                                    exp_result),
+                        "cal_mut_stat doesn't function correctly")
+
+    @unittest.skipUnless(FULL_SYSTEM_TEST or CMMDB_TEST, "taking too long time to test")
     def test_table_annovar_offline_1(self):
         """ test offline version (w/o slurm) of table_annovar """
 

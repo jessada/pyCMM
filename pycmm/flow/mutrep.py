@@ -5,10 +5,22 @@ from os.path import join as join_path
 from collections import defaultdict
 from collections import OrderedDict
 from pycmm.settings import ALL_MUTREP_ANNO_COLS
+from pycmm.settings import EST_ORS_COLS
 from pycmm.settings import DFLT_MUTREP_FREQ_RATIOS
 from pycmm.settings import PREDICTION_COLS
+from pycmm.settings import MUTREP_FAMILY_REPORT_BIN
+from pycmm.settings import MUTREP_SUMMARY_REPORT_BIN
+from pycmm.settings import EST_ORS_EARLYONSET_VS_BRC_COL_NAME
+from pycmm.settings import EST_ORS_EARLYONSET_VS_EXAC_NFE_COL_NAME
+from pycmm.settings import EST_ORS_EARLYONSET_VS_KG_EUR_COL_NAME
+#from pycmm.settings import EST_ORS_EARLYONSET_VS_SWEGEN_COL_NAME
+from pycmm.settings import WES294_OAF_EARLYONSET_AF_COL_NAME
+from pycmm.settings import WES294_OAF_BRCS_AF_COL_NAME
+from pycmm.settings import EXAC_NFE_COL_NAME
+from pycmm.settings import KG2014OCT_EUR_COL_NAME
 from pycmm.template import pyCMMBase
 from pycmm.utils.ver import VersionManager
+from pycmm.utils import is_number
 from pycmm.cmmlib import CMMParams
 from pycmm.cmmlib.taparser import TAVcfReader as VcfReader
 from pycmm.cmmlib.xlslib import CMMWorkbook as Workbook
@@ -16,8 +28,6 @@ from pycmm.cmmlib.xlslib import NO_COLOR
 from pycmm.flow import get_func_arg
 from pycmm.flow.cmmdb import CMMPipeline
 from pycmm.flow import init_jobs_setup_file
-from pycmm.settings import MUTREP_FAMILY_REPORT_BIN
-from pycmm.settings import MUTREP_SUMMARY_REPORT_BIN
 from pycmm.cmmlib.dnalib import ALL_CHROMS
 from pycmm.cmmlib.tamodel import CMMGT_HOMOZYGOTE
 from pycmm.cmmlib.tamodel import CMMGT_HETEROZYGOTE
@@ -305,7 +315,10 @@ class ReportLayout(CMMParams):
             if excluded:
                 continue
             # exclude columns that are not actually in the annotated tabix file
-            if col_name not in vcf_record.INFO.keys():
+            # the underlying assumption is that all the variants must have the 
+            # same number of fields annotated by ANNOVAR
+            if (col_name not in vcf_record.INFO.keys() and
+                col_name not in EST_ORS_COLS):
                 self.warning("Columns " + col_name + " is missing")
                 continue
             # here are the columns that can be shown without errors
@@ -462,12 +475,14 @@ class MutRepPipeline(CMMPipeline):
         return versions
 
     def __init_properties(self):
-        pass
+        self.__report_layout = None
 
     @property
     def report_layout(self):
-        return ReportLayout(entries=self._get_job_config(JOBS_SETUP_RPT_LAYOUT_SECTION,
-                                                         required=True))
+        if self.__report_layout is None:
+            self.__report_layout = ReportLayout(entries=self._get_job_config(JOBS_SETUP_RPT_LAYOUT_SECTION,
+                                                                             required=True))
+        return self.__report_layout
 
     @property
     def summary_rpt_file(self):
@@ -531,6 +546,40 @@ class MutRepPipeline(CMMPipeline):
                         allele_idx,
                         samples_id,
                         ):
+        def get_info_val(info_name):
+            info = vcf_record.INFO[info_name]
+            if (type(info) is list) and (len(info) == 1):
+                info = info[0]
+            elif (type(info) is list) and (len(info) > 1):
+                info = info[allele_idx-1]
+            return info
+
+        def cal_est_ors(cases_freq,
+                        ctrls_freq,
+                        ref_is_mutated,
+                        ):
+            # filter out none number
+            if cases_freq == "NA":
+                return "NA"
+            if (cases_freq is None or
+                cases_freq == "" or
+                not is_number(cases_freq)
+                ):
+                return ""
+            if (ctrls_freq is None or
+                ctrls_freq == "" or
+                not is_number(ctrls_freq)
+                ):
+                return ""
+            # filter "divide by 0"
+            if float(ctrls_freq) == 0:
+                return "INF"
+            if ref_is_mutated and (float(ctrls_freq) == 1):
+                return "INF"
+            if ref_is_mutated:
+                return "{:.4f}".format((1-float(cases_freq))/(1-float(ctrls_freq)))
+            return "{:.4f}".format(float(cases_freq)/float(ctrls_freq))
+
         anno_cols = self.report_layout.anno_cols
         # use input expression to determine if row will have background color
         row_color = None
@@ -560,21 +609,33 @@ class MutRepPipeline(CMMPipeline):
         # for each INFO column
         for anno_idx in xrange(len_anno_cols):
             anno_col_name = anno_cols[anno_idx]
-            info = vcf_record.INFO[anno_col_name]
-            if (type(info) is list) and (len(info) == 1):
-                info = info[0]
-            elif (type(info) is list) and (len(info) > 1):
-                info = info[allele_idx-1]
+            if anno_col_name == EST_ORS_EARLYONSET_VS_BRC_COL_NAME:
+                info = cal_est_ors(cases_freq=get_info_val(WES294_OAF_EARLYONSET_AF_COL_NAME),
+                                   ctrls_freq=get_info_val(WES294_OAF_BRCS_AF_COL_NAME),
+                                   ref_is_mutated=vcf_record.ref_is_mutated[allele_idx],
+                                   )
+            elif anno_col_name == EST_ORS_EARLYONSET_VS_EXAC_NFE_COL_NAME:
+                info = cal_est_ors(cases_freq=get_info_val(WES294_OAF_EARLYONSET_AF_COL_NAME),
+                                   ctrls_freq=get_info_val(EXAC_NFE_COL_NAME),
+                                   ref_is_mutated=vcf_record.ref_is_mutated[allele_idx],
+                                   )
+            elif anno_col_name == EST_ORS_EARLYONSET_VS_KG_EUR_COL_NAME:
+                info = cal_est_ors(cases_freq=get_info_val(WES294_OAF_EARLYONSET_AF_COL_NAME),
+                                   ctrls_freq=get_info_val(KG2014OCT_EUR_COL_NAME),
+                                   ref_is_mutated=vcf_record.ref_is_mutated[allele_idx],
+                                   )
+            else:
+                info = get_info_val(anno_col_name)
             if anno_col_name in PREDICTION_COLS:
                 info = info.description
+            if info == "":
+                continue
             if info is None:
                 continue
-#                info = ""
             if info == [None]:
                 continue
             if info == ".":
                 continue
-#                info = ""
             # determine cell format
             info_cell_fmt = dflt_cell_fmt
             if anno_col_name in color_col_names:
@@ -912,71 +973,6 @@ class MutRepPipeline(CMMPipeline):
             self.gen_families_reports()
             self.gen_summary_reports()
         super(MutRepPipeline, self).monitor_init(**kwargs)
-
-#class MutRepPipeline(CMMDBPipeline):
-#    """ A class to control mutation report pipeline """
-#
-#    def __init__(self,
-#                 jobs_setup_file,
-#                 ):
-#        CMMDBPipeline.__init__(self,
-#                               jobs_setup_file=jobs_setup_file
-#                               )
-#        self.__parse_report_layout()
-#
-#    def get_raw_repr(self):
-#        return {"dataset name": self.dataset_name,
-#                "project code": self.project_code,
-#                "jobs report file": self.jobs_report_file,
-#                }
-#
-#    def __parse_report_layout(self):
-#        self.__report_layout = ReportLayout(self._jobs_info[JOBS_SETUP_RPT_LAYOUT_SECTION])
-#
-#    @property
-#    def job_alloc_time(self):
-#        return self._jobs_info[JOBS_SETUP_RPT_ALLOC_TIME_KEY]
-#
-#    @property
-#    def annotated_vcf_tabix(self):
-#        return self.report_layout.annotated_vcf_tabix
-#
-#    @property
-#    def report_layout(self):
-#        return self.__report_layout
-#
-#    @property
-#    def cell_fmt_mgr(self):
-#        return self.__cell_fmt_mgr
-#
-#    def __cal_gt(self, gt, allele_idx):
-#        if gt == ".":
-#            return "."
-#        if gt == "./.":
-#            return "."
-#        gts = gt.split("/")
-#        if (gts[0] == "0") and (gts[1] == "0"):
-#            return "wt"
-#        if (gts[0] == str(allele_idx)) or (gts[1] == str(allele_idx)):
-#            if gts[0] == gts[1]:
-#                return "hom"
-#            else:
-#                return "het"
-#        return "."
-#
-#    def __init_cells_format(self, wb):
-#        self.__cell_fmt_mgr = CellFormatManager(wb, COLOR_RGB)
-#
-#
-#    def gen_reports(self):
-#        pass
-#
-#    def __garbage_collecting(self):
-#        pass
-#
-#    def monitor_action(self):
-#        CMMDBPipeline.monitor_action(self)
-#        self.__garbage_collecting()
 
 def create_jobs_setup_file(*args, **kwargs):
     job_setup_document, stream = init_jobs_setup_file(*args, **kwargs)

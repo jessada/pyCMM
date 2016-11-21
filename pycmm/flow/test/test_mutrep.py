@@ -9,7 +9,6 @@ from pycmm.settings import DFLT_MUTREP_FREQ_RATIOS
 from pycmm.settings import ALL_MUTREP_ANNO_COLS
 from pycmm.settings import MT_COLS_TAG
 from pycmm.settings import AXEQ_CHR9_COLS_TAG
-#from pycmm.settings import CRC_CRC_COLS_TAG
 from pycmm.settings import MUTSTAT_DETAILS_COLS_TAG
 from pycmm.settings import EXAC_OTH_COLS_TAG
 from pycmm.settings import UNKNOWN_COLS_TAG
@@ -19,14 +18,17 @@ from pycmm.settings import GENE_REFGENE_COL_NAME
 from pycmm.settings import GENEDETAIL_REFGENE_COL_NAME
 from pycmm.settings import CYTOBAND_COL_NAME
 from pycmm.settings import KG2014OCT_ALL_COL_NAME
+from pycmm.settings import KG2014OCT_EUR_COL_NAME
 from pycmm.settings import AXEQ_CHR9_HET_COL_NAME
 from pycmm.settings import AXEQ_CHR3_6_14_18_PF_COL_NAME
-#from pycmm.settings import CRC_CAFAM_WT_COL_NAME
 from pycmm.settings import AXEQ_CHR5_19_GF_COL_NAME
-#from pycmm.settings import CRC_CRC_PF_COL_NAME
 from pycmm.settings import PRIMARY_MAF_VAR
 from pycmm.settings import EXAC_ALL_COL_NAME
 from pycmm.settings import FULL_SYSTEM_TEST
+from pycmm.settings import WES294_OAF_EARLYONSET_AF_COL_NAME
+from pycmm.settings import WES294_OAF_EARLYONSET_GF_COL_NAME
+from pycmm.settings import EST_ORS_EARLYONSET_VS_BRC_COL_NAME
+from pycmm.settings import WES294_OAF_BRCS_AF_COL_NAME
 from pycmm.flow.mutrep import MutRepPipeline
 from pycmm.flow.mutrep import create_jobs_setup_file
 from pycmm.flow.mutrep import JOBS_SETUP_RPT_FILTER_RARE
@@ -47,16 +49,13 @@ DFLT_TEST_MUTREP_COLS[CYTOBAND_COL_NAME] = ALL_MUTREP_ANNO_COLS[CYTOBAND_COL_NAM
 DFLT_TEST_MUTREP_COLS[KG2014OCT_ALL_COL_NAME] = ALL_MUTREP_ANNO_COLS[KG2014OCT_ALL_COL_NAME]
 DFLT_TEST_MUTREP_COLS[AXEQ_CHR9_HET_COL_NAME] = ALL_MUTREP_ANNO_COLS[AXEQ_CHR9_HET_COL_NAME]
 DFLT_TEST_MUTREP_COLS[AXEQ_CHR3_6_14_18_PF_COL_NAME] = ALL_MUTREP_ANNO_COLS[AXEQ_CHR3_6_14_18_PF_COL_NAME]
-#DFLT_TEST_MUTREP_COLS[CRC_CAFAM_WT_COL_NAME] = ALL_MUTREP_ANNO_COLS[CRC_CAFAM_WT_COL_NAME]
 DFLT_TEST_MUTREP_COLS[AXEQ_CHR5_19_GF_COL_NAME] = ALL_MUTREP_ANNO_COLS[AXEQ_CHR5_19_GF_COL_NAME]
-#DFLT_TEST_MUTREP_COLS[CRC_CRC_PF_COL_NAME] = ALL_MUTREP_ANNO_COLS[CRC_CRC_PF_COL_NAME]
 
 DFLT_TEST_REPORT_REGIONS = "18:12512255-14542551"
 DFLT_TEST_FREQ_RATIOS = DFLT_MUTREP_FREQ_RATIOS
 
 DFLT_TEST_ANNO_EXCL_TAGS = MT_COLS_TAG
 DFLT_TEST_ANNO_EXCL_TAGS += "," + AXEQ_CHR9_COLS_TAG
-#FLT_TEST_ANNO_EXCL_TAGS += "," + CRC_CRC_COLS_TAG
 DFLT_TEST_ANNO_EXCL_TAGS += "," + MUTSTAT_DETAILS_COLS_TAG
 DFLT_TEST_ANNO_EXCL_TAGS += "," + EXAC_OTH_COLS_TAG
 DFLT_TEST_ANNO_EXCL_TAGS += "," + UNKNOWN_COLS_TAG
@@ -973,7 +972,7 @@ class TestMutRepPipeline(SafeTester):
                          "Incorrect color"
                          )
 
-#    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST, "taking too long time to test")
+    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST, "taking too long time to test")
     def test_color_shared_mutations_1(self):
         """
         test if shared mutation can be colored correctly
@@ -1005,3 +1004,101 @@ class TestMutRepPipeline(SafeTester):
                          "FFC0C0C0",
                          "Incorrect color"
                          )
+
+    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST, "taking too long time to test")
+    def test_expression_action_del_row_1(self):
+        """
+        test if expreesion patterns and expression actions can be used
+        for deleting rows with a given pattern
+        """
+
+        self.init_test(self.current_func_name)
+        annotated_vcf_tabix = join_path(self.data_dir,
+                                        "input.vcf.gz")
+        project_name = self.test_function
+        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
+                                                        annotated_vcf_tabix=annotated_vcf_tabix,
+                                                        report_regions="6:78171940-78172992,18:28610987-28611790",
+                                                        expression_patterns='exp_ns_snv:"ExonicFunc.refGene" == \'synonymous_SNV\'',
+                                                        expression_usages="exp_ns_snv:del_row",
+                                                        call_detail="YES",
+                                                        )
+        pl = MutRepPipeline(jobs_setup_file=jobs_setup_file)
+        pl.gen_summary_report(pl.report_layout.report_regions)
+        xls_file = join_path(self.working_dir,
+                             "rpts",
+                             project_name+"_summary.xlsx")
+        xu = XlsUtils(xls_file)
+        self.assertEqual(xu.count_rows(sheet_idx=0),
+                         8,
+                         "Incorrect number of rows"
+                         )
+
+    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST, "taking too long time to test")
+    def test_cal_est_ors_1(self):
+        """
+        test variable type handling in test_cal_ors
+        """
+
+        self.init_test(self.current_func_name)
+        annotated_vcf_tabix = join_path(self.data_dir,
+                                        "input.vcf.gz")
+        project_name = self.test_function
+        anno_cols = list(DFLT_TEST_MUTREP_COLS)
+        anno_cols.append(KG2014OCT_EUR_COL_NAME)
+        anno_cols.append(EST_ORS_EARLYONSET_VS_BRC_COL_NAME)
+        anno_cols.append(WES294_OAF_EARLYONSET_AF_COL_NAME)
+        anno_cols.append(WES294_OAF_BRCS_AF_COL_NAME)
+        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
+                                                        annotated_vcf_tabix=annotated_vcf_tabix,
+                                                        report_regions="22",
+                                                        anno_cols=anno_cols,
+                                                        )
+        pl = MutRepPipeline(jobs_setup_file=jobs_setup_file)
+        pl.gen_summary_report(pl.report_layout.report_regions)
+        xls_file = join_path(self.working_dir,
+                             "rpts",
+                             project_name+"_summary.xlsx")
+        xu = XlsUtils(xls_file)
+        self.assertEqual(xu.count_rows(sheet_idx=0),
+                         23,
+                         "Incorrect number of rows"
+                         )
+
+#    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST, "taking too long time to test")
+    def test_cal_est_ors_2(self):
+        """
+        test if there is mutation in reference for cal_est_ors
+        """
+
+        self.individual_debug = True
+        self.init_test(self.current_func_name)
+        annotated_vcf_tabix = join_path(self.data_dir,
+                                        "input.vcf.gz")
+        sample_info = join_path(self.data_dir,
+                                "sample.info")
+        project_name = self.test_function
+        anno_cols = list(DFLT_TEST_MUTREP_COLS)
+        anno_cols.append(KG2014OCT_EUR_COL_NAME)
+        anno_cols.append(EST_ORS_EARLYONSET_VS_BRC_COL_NAME)
+        anno_cols.append(WES294_OAF_EARLYONSET_AF_COL_NAME)
+        anno_cols.append(WES294_OAF_EARLYONSET_GF_COL_NAME)
+        anno_cols.append(WES294_OAF_BRCS_AF_COL_NAME)
+        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
+                                                        annotated_vcf_tabix=annotated_vcf_tabix,
+                                                        report_regions="22",
+                                                        sample_info=sample_info,
+                                                        anno_cols=anno_cols,
+                                                        summary_families_sheet=True,
+                                                        )
+        pl = MutRepPipeline(jobs_setup_file=jobs_setup_file)
+        pl.gen_summary_report(pl.report_layout.report_regions)
+        xls_file = join_path(self.working_dir,
+                             "rpts",
+                             project_name+"_summary.xlsx")
+        xu = XlsUtils(xls_file)
+#        self.assertEqual(xu.count_rows(sheet_idx=0),
+#                         23,
+#                         "Incorrect number of rows"
+#                         )
+

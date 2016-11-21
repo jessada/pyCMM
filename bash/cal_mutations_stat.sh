@@ -208,16 +208,17 @@ function count_frequency {
             done
             if [ $gt_count -eq 0 ]
             then
-                af=0
+                af="NA"
             else
                 cmd="echo \"$al_count / ($gt_count * 2 ) \" | bc -l"
-                af=` eval "$cmd" `
+                aff=` eval "$cmd" `
+                af=` printf "%6.4f" "$aff" `
             fi
             cmd="echo \"$gt_count / ($col_count ) \" | bc -l"
             gf=` eval "$cmd" `
             cmd="echo \"$al_count / ($col_count *2 ) \" | bc -l"
             pf=` eval "$cmd" `
-            printf "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%6.4f\t%6.4f\t%6.4f\n" "$rec_out" "$wt_count" "$het_count" "$hom_count" "$oth_count" "$na_count" "$gt_count" "$gf" "$af" "$pf"
+            printf "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%6.4f\t%s\t%6.4f\n" "$rec_out" "$wt_count" "$het_count" "$hom_count" "$oth_count" "$na_count" "$gt_count" "$gf" "$af" "$pf"
         done
     done
 }
