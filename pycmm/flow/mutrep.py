@@ -964,7 +964,7 @@ class MutRepPipeline(CMMPipeline):
         for fam_id in self.families_info:
             self.__gen_family_reports(fam_id)
 
-    def monitor_init(self, **kwargs):
+    def __gen_reports(self):
         if self.report_layout.only_summary:
             self.gen_summary_reports()
         elif self.report_layout.only_families:
@@ -972,7 +972,13 @@ class MutRepPipeline(CMMPipeline):
         else:
             self.gen_families_reports()
             self.gen_summary_reports()
+
+    def monitor_init(self, **kwargs):
+        self.__gen_reports()
         super(MutRepPipeline, self).monitor_init(**kwargs)
+
+    def run_offline_pipeline(self):
+        self.__gen_reports()
 
 def create_jobs_setup_file(*args, **kwargs):
     job_setup_document, stream = init_jobs_setup_file(*args, **kwargs)
