@@ -29,6 +29,7 @@ from pycmm.settings import WES294_OAF_EARLYONSET_AF_COL_NAME
 from pycmm.settings import WES294_OAF_EARLYONSET_GF_COL_NAME
 from pycmm.settings import EST_ORS_EARLYONSET_VS_BRC_COL_NAME
 from pycmm.settings import WES294_OAF_BRCS_AF_COL_NAME
+from pycmm.settings import EST_ORS_EARLYONSET_VS_BRC_COL_NAME
 from pycmm.flow.mutrep import MutRepPipeline
 from pycmm.flow.mutrep import create_jobs_setup_file
 from pycmm.flow.mutrep import JOBS_SETUP_RPT_FILTER_RARE
@@ -367,21 +368,22 @@ class TestMutRepPipeline(SafeTester):
                          "information of mutations with more than one alternate alleles are incorrect"
                          )
 
-#    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST, "taking too long time to test")
+    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST, "taking too long time to test")
     def test_summary_report_4(self):
         """ test summary with multiple report_regions and many sample infos """
 
-        self.individual_debug = True
         self.init_test(self.current_func_name)
         annotated_vcf_tabix = join_path(self.data_dir,
                                         "chr6_18.vcf.gz")
         project_name = self.test_function
+        rows_filter_actions = JOBS_SETUP_RPT_FILTER_NON_INTRONIC
         jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
                                                         annotated_vcf_tabix=annotated_vcf_tabix,
                                                         report_regions="6:78171940-78172992,18:28610987-28611790",
                                                         sample_info="1234:Alb-31:Br-466,6067:Br-432:Al-161:Br-504,6789:Al-65",
                                                         summary_families_sheet=True,
                                                         call_detail="YES",
+                                                        rows_filter_actions=rows_filter_actions,
                                                         )
         pl = MutRepPipeline(jobs_setup_file=jobs_setup_file)
         pl.gen_summary_report(pl.report_layout.report_regions)
@@ -400,7 +402,7 @@ class TestMutRepPipeline(SafeTester):
                          "Incorrect number of columns"
                          )
         self.assertEqual(xu.nsheets,
-                         1,
+                         2,
                          "Incorrect number of sheets"
                          )
 
@@ -1065,13 +1067,12 @@ class TestMutRepPipeline(SafeTester):
                          "Incorrect number of rows"
                          )
 
-#    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST, "taking too long time to test")
+    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST, "taking too long time to test")
     def test_cal_est_ors_2(self):
         """
         test if there is mutation in reference for cal_est_ors
         """
 
-        self.individual_debug = True
         self.init_test(self.current_func_name)
         annotated_vcf_tabix = join_path(self.data_dir,
                                         "input.vcf.gz")
@@ -1097,8 +1098,58 @@ class TestMutRepPipeline(SafeTester):
                              "rpts",
                              project_name+"_summary.xlsx")
         xu = XlsUtils(xls_file)
-#        self.assertEqual(xu.count_rows(sheet_idx=0),
-#                         23,
-#                         "Incorrect number of rows"
-#                         )
+        ors_col_idx = xu.get_col_idx(EST_ORS_EARLYONSET_VS_BRC_COL_NAME)
+        self.assertEqual(xu.get_cell_value(4, ors_col_idx),
+                         "NA",
+                         "Incorect ORS estimation"
+                         )
+        self.assertEqual(xu.get_cell_value(5, ors_col_idx),
+                         "1.5273",
+                         "Incorect ORS estimation"
+                         )
+        self.assertEqual(xu.get_cell_value(6, ors_col_idx),
+                         "INF",
+                         "Incorect ORS estimation"
+                         )
 
+    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST, "taking too long time to test")
+    def test_criteria_sheet_1(self):
+        """ test summary with multiple report_regions and many sample infos """
+
+        self.init_test(self.current_func_name)
+        annotated_vcf_tabix = join_path(self.data_dir,
+                                        "chr6_18.vcf.gz")
+        project_name = self.test_function
+        rows_filter_actions = JOBS_SETUP_RPT_FILTER_NON_INTRONIC
+        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
+                                                        annotated_vcf_tabix=annotated_vcf_tabix,
+                                                        report_regions="6:78171940-78172992,18:28610987-28611790",
+                                                        sample_info="1234:Alb-31:Br-466,6067:Br-432:Al-161:Br-504,6789:Al-65",
+                                                        summary_families_sheet=True,
+                                                        call_detail="YES",
+                                                        rows_filter_actions=rows_filter_actions,
+                                                        )
+        pl = MutRepPipeline(jobs_setup_file=jobs_setup_file)
+        pl.gen_summary_report(pl.report_layout.report_regions)
+        xls_file = join_path(self.working_dir,
+                             "rpts",
+                             project_name+"_summary.xlsx")
+        xu = XlsUtils(xls_file)
+        self.assertEqual(xu.count_rows(sheet_idx=0),
+                         8,
+                         "Incorrect number of rows in the variatns sheet"
+                         )
+        self.assertEqual(xu.count_cols(col_name1="1234-Alb-31",
+                                       col_name2="6789-Al-65",
+                                       sheet_idx=0),
+                         11,
+                         "Incorrect number of columns"
+                         )
+        self.assertEqual(xu.nsheets,
+                         2,
+                         "Incorrect number of sheets"
+                         )
+        self.assertEqual(xu.count_rows(sheet_idx=1),
+                         6,
+                         "Incorrect number of rows the criteria sheet"
+                         )

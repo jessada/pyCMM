@@ -78,6 +78,21 @@ JOBS_SETUP_RPT_FILTER_HAS_SHARED = "Has-Shared"
 JOBS_SETUP_RPT_ONLY_SUMMARY_KEY = "ONLY_SUMMARY"
 JOBS_SETUP_RPT_ONLY_FAMILIES_KEY = "ONLY_FAMILIES"
 
+RPT_LAYOUT_CAPTION_ANNOATED_COLS = "annotated columns"
+RPT_LAYOUT_CAPTION_FREQ_RATIOS = "frequency ratio(s)"
+RPT_LAYOUT_CAPTION_RPT_REGIONS = "report region(s)"
+RPT_LAYOUT_CAPTION_FILTER_ACTIONS = "filter actions"
+
+FILTER_RARE = JOBS_SETUP_RPT_FILTER_RARE
+FILTER_NON_INTERGENIC = JOBS_SETUP_RPT_FILTER_NON_INTERGENIC
+FILTER_NON_INTRONIC = JOBS_SETUP_RPT_FILTER_NON_INTRONIC
+FILTER_NON_UPSTREAM = JOBS_SETUP_RPT_FILTER_NON_UPSTREAM
+FILTER_NON_DOWNSTREAM = JOBS_SETUP_RPT_FILTER_NON_DOWNSTREAM
+FILTER_NON_UTR = JOBS_SETUP_RPT_FILTER_NON_UTR
+FILTER_NON_SYNONYMOUS = JOBS_SETUP_RPT_FILTER_NON_SYNONYMOUS
+FILTER_HAS_MUTATION = JOBS_SETUP_RPT_FILTER_HAS_MUTATION
+FILTER_HAS_SHARED = JOBS_SETUP_RPT_FILTER_HAS_SHARED
+
 class ReportRegion(pyCMMBase):
     """ A structure to parse and keep mutation report region """
 
@@ -89,12 +104,14 @@ class ReportRegion(pyCMMBase):
         self.__parse_region(raw_region)
         self.__raw_region = raw_region
 
+    def __repr__(self):
+        return str(self.get_raw_repr())
+
     def get_raw_repr(self):
-        raw_repr = OrderedDict()
-        raw_repr["chrom"] = self.chrom
+        raw_repr = self.chrom
         if self.start_pos is not None:
-            raw_repr["start position"] = self.start_pos
-            raw_repr["end position"] = self.end_pos
+            raw_repr += ":" + self.start_pos
+            raw_repr += "-" + self.end_pos
         return raw_repr
 
     @property
@@ -262,27 +279,27 @@ class ReportLayout(CMMParams):
     def get_raw_repr(self, **kwargs):
         raw_repr = super(ReportLayout, self).get_raw_repr(**kwargs)
         raw_repr["annotated tabix file"] = self.annotated_vcf_tabix
-        raw_repr["annotated columns"] = self.anno_cols
+        raw_repr[RPT_LAYOUT_CAPTION_ANNOATED_COLS] = self.anno_cols
         if self.anno_excl_tags is not None and len(self.anno_excl_tags) > 0:
             raw_repr["annotation exclusion tags"] = self.anno_excl_tags
         raw_repr["genotyping calling detail"] = self.call_detail
-        raw_repr["frequency ratio(s)"] = self.freq_ratios
+        raw_repr[RPT_LAYOUT_CAPTION_FREQ_RATIOS] = self.freq_ratios
         if self.report_regions is None:
-            raw_repr["report region(s)"] = "ALL"
+            raw_repr[RPT_LAYOUT_CAPTION_RPT_REGIONS] = "ALL"
         else:
-            raw_repr["report region(s)"] = self.report_regions
+            raw_repr[RPT_LAYOUT_CAPTION_RPT_REGIONS] = self.report_regions
         raw_repr["split chromosome"] = self.split_chrom
         filter_actions = OrderedDict()
-        filter_actions['Rare'] = self.filter_rare
-        filter_actions['Non-Intergenic'] = self.filter_non_intergenic
-        filter_actions['Non-Intronic'] = self.filter_non_intronic
-        filter_actions['Non-Upstream'] = self.filter_non_upstream
-        filter_actions['Non-Downstream'] = self.filter_non_downtream
-        filter_actions['Non-UTR'] = self.filter_non_utr
-        filter_actions['Non-Synonymous'] = self.filter_non_synonymous
-        filter_actions['Has-mutation'] = self.filter_has_mutation
-        filter_actions['Has-shared'] = self.filter_has_shared
-        raw_repr['filter actions'] = filter_actions
+        filter_actions[FILTER_RARE] = self.filter_rare
+        filter_actions[FILTER_NON_INTERGENIC] = self.filter_non_intergenic
+        filter_actions[FILTER_NON_INTRONIC] = self.filter_non_intronic
+        filter_actions[FILTER_NON_UPSTREAM] = self.filter_non_upstream
+        filter_actions[FILTER_NON_DOWNSTREAM] = self.filter_non_downtream
+        filter_actions[FILTER_NON_UTR] = self.filter_non_utr
+        filter_actions[FILTER_NON_SYNONYMOUS] = self.filter_non_synonymous
+        filter_actions[FILTER_HAS_MUTATION] = self.filter_has_mutation
+        filter_actions[FILTER_HAS_SHARED] = self.filter_has_shared
+        raw_repr[RPT_LAYOUT_CAPTION_FILTER_ACTIONS] = filter_actions
         report_exclusion = {}
         report_exclusion['only summary'] = self.only_summary
         report_exclusion['only families'] = self.only_families
@@ -793,6 +810,62 @@ class MutRepPipeline(CMMPipeline):
         self.__set_layout(ws, ncol)
         ws.freeze_panes(1, 0)
 
+    def __add_criteria_sheet(self,
+                             ):
+        def write_filter(row_idx,
+                         filter_text,
+                         ):
+            ws.write(row_idx, 0, filter_text)
+            return row_idx + 1
+        
+        row_idx = 0
+        ws = self.__add_sheet('criteria')
+        rpt_layout = self.report_layout.get_raw_repr()
+        row_idx = write_filter(row_idx, "Criteria applied")
+        caption_indent = " " * 5
+        criteria_indent = " " * 10
+        for rpt_caption in rpt_layout:
+            if rpt_caption == RPT_LAYOUT_CAPTION_RPT_REGIONS:
+                row_idx = write_filter(row_idx, caption_indent+"DNA region(s)")
+                rpt_regions = rpt_layout[rpt_caption]
+                if type(rpt_regions) is list:
+                    for rpt_region in rpt_regions:
+                        row_idx = write_filter(row_idx, criteria_indent+"- "+str(rpt_region))
+                else:
+                    row_idx = write_filter(row_idx, criteria_indent+"- "+rpt_regions)
+            if rpt_caption == RPT_LAYOUT_CAPTION_FILTER_ACTIONS:
+                filter_actions = rpt_layout[rpt_caption]
+                # check if there is any filter action applied
+                has_action = False
+                for filter_action in filter_actions:
+                    if filter_actions[filter_action] is True:
+                        has_action = True
+                        break
+                # if there is any action, then log the info
+                if has_action:
+                    row_idx = write_filter(row_idx, caption_indent+"filter")
+                    for filter_action in filter_actions:
+                        if filter_actions[filter_action] is False:
+                            continue
+                        if filter_action == FILTER_RARE:
+                            row_idx = write_filter(row_idx, criteria_indent+"- Only rare variants (MAF 1000G EUR < 20%")
+                        if filter_action == FILTER_NON_INTERGENIC:
+                            row_idx = write_filter(row_idx, criteria_indent+"- No intergenic variants")
+                        if filter_action == FILTER_NON_INTRONIC:
+                            row_idx = write_filter(row_idx, criteria_indent+"- No intronic variants")
+                        if filter_action == FILTER_NON_UPSTREAM:
+                            row_idx = write_filter(row_idx, criteria_indent+"- No upstream variants")
+                        if filter_action == FILTER_NON_DOWNSTREAM:
+                            row_idx = write_filter(row_idx, criteria_indent+"- No downstream variants")
+                        if filter_action == FILTER_NON_UTR:
+                            row_idx = write_filter(row_idx, criteria_indent+"- No UTR3 and UTR5 variants")
+                        if filter_action == FILTER_NON_SYNONYMOUS:
+                            row_idx = write_filter(row_idx, criteria_indent+"- No synonymous variants")
+                        if filter_action == FILTER_HAS_MUTATION:
+                            row_idx = write_filter(row_idx, criteria_indent+"- Variants must be present in at least one of the samples in the sheet")
+                        if filter_action == FILTER_HAS_SHARED:
+                            row_idx = write_filter(row_idx, criteria_indent+"- Variants must be shared by all of the samples in the sheet")
+                    
     def gen_summary_report(self,
                            report_regions,
                            out_file=None,
@@ -811,6 +884,7 @@ class MutRepPipeline(CMMPipeline):
                               samples_id=self.samples_id,
                               samples_header=self.samples_id_w_fam_pref,
                               )
+        self.__add_criteria_sheet()
 #        if (self.report_layout.summary_families_sheet and
 #            self.families_info is not None):
 #            self.info("")
