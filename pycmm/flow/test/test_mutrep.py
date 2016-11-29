@@ -376,14 +376,12 @@ class TestMutRepPipeline(SafeTester):
         annotated_vcf_tabix = join_path(self.data_dir,
                                         "chr6_18.vcf.gz")
         project_name = self.test_function
-        rows_filter_actions = JOBS_SETUP_RPT_FILTER_NON_INTRONIC
         jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
                                                         annotated_vcf_tabix=annotated_vcf_tabix,
                                                         report_regions="6:78171940-78172992,18:28610987-28611790",
                                                         sample_info="1234:Alb-31:Br-466,6067:Br-432:Al-161:Br-504,6789:Al-65",
                                                         summary_families_sheet=True,
                                                         call_detail="YES",
-                                                        rows_filter_actions=rows_filter_actions,
                                                         )
         pl = MutRepPipeline(jobs_setup_file=jobs_setup_file)
         pl.gen_summary_report(pl.report_layout.report_regions)
@@ -980,7 +978,6 @@ class TestMutRepPipeline(SafeTester):
         test if shared mutation can be colored correctly
         """
 
-        self.individual_debug = True
         self.init_test(self.current_func_name)
         annotated_vcf_tabix = join_path(self.data_dir,
                                         "input.vcf.gz")

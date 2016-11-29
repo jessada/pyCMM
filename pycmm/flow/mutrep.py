@@ -338,6 +338,27 @@ class ReportLayout(CMMParams):
                 col_name not in EST_ORS_COLS):
                 self.warning("Columns " + col_name + " is missing")
                 continue
+            if ((col_name == EST_ORS_EARLYONSET_VS_BRC_COL_NAME) and
+                ((WES294_OAF_EARLYONSET_AF_COL_NAME not in vcf_record.INFO.keys()) or
+                 (WES294_OAF_BRCS_AF_COL_NAME not in vcf_record.INFO.keys())
+                 )
+                ):
+                self.warning(col_name + " cannot be calculated")
+                continue
+            if ((col_name == EST_ORS_EARLYONSET_VS_EXAC_NFE_COL_NAME) and
+                ((WES294_OAF_EARLYONSET_AF_COL_NAME not in vcf_record.INFO.keys()) or
+                 (EXAC_NFE_COL_NAME not in vcf_record.INFO.keys())
+                 )
+                ):
+                self.warning(col_name + " cannot be calculated")
+                continue
+            if ((col_name == EST_ORS_EARLYONSET_VS_KG_EUR_COL_NAME) and
+                ((WES294_OAF_EARLYONSET_AF_COL_NAME not in vcf_record.INFO.keys()) or
+                 (KG2014OCT_EUR_COL_NAME not in vcf_record.INFO.keys())
+                 )
+                ):
+                self.warning(col_name + " cannot be calculated")
+                continue
             # here are the columns that can be shown without errors
             anno_cols.append(col_name)
         return anno_cols
