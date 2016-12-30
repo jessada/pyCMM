@@ -68,7 +68,6 @@ def app_pycmm_slurm_monitor_pipeline(*args, **kwargs):
                     kwargs,
                     pl,
                     )
-    pl.monitor_jobs()
     # check if itself is in job mode 
     if len(pl.job_nodelist) != 0:
         pl.monitor_jobs()
