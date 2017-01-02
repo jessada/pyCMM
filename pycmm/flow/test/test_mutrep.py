@@ -176,7 +176,7 @@ class TestMutRepPipeline(SafeTester):
                                                         report_regions="6:78161823-78164117,"+DFLT_TEST_REPORT_REGIONS+",22",
                                                         frequency_ratios=None,
                                                         expression_patterns="test1:1>0",
-                                                        expression_usages="test1:del_row;test1:color_col:cytoBand:yellow",
+                                                        expression_usages="test1:del_row,test1:color_col:cytoBand:yellow",
                                                         split_chrom=True,
                                                         summary_families_sheet=True,
                                                         call_detail=True,
@@ -253,8 +253,8 @@ class TestMutRepPipeline(SafeTester):
         self.init_test(self.current_func_name)
         jobs_setup_file = self.__create_jobs_setup_file(report_regions=None,
                                                         frequency_ratios="ExAC:0.5",
-                                                        expression_patterns='expr_with_key:"abc" < 4;expr_wo:jkl>5; expr78 : 2>3',
-                                                        expression_usages="expr_with_key:del_row;expr_wo:color_col:F_U_8:red;expr_wo:color_row:green;expr78:color_row:orange",
+                                                        expression_patterns='expr_with_key:"abc" < 4,expr_wo:jkl>5, expr78 : 2>3',
+                                                        expression_usages="expr_with_key:del_row,expr_wo:color_col:F_U_8:red,expr_wo:color_row:green,expr78:color_row:orange",
                                                         )
         pl = MutRepPipeline(jobs_setup_file=jobs_setup_file)
         self.assertEqual(pl.report_layout.report_regions,
@@ -264,13 +264,13 @@ class TestMutRepPipeline(SafeTester):
                          0.5,
                          "MutRepPipeline cannot correctly read report layout info 'frequency ratios' from jobs setup file")
         self.assertEqual(pl.report_layout.exprs.patterns["expr_with_key"],
-                         '"abc" < 4',
+                         '\'"abc" < 4\'',
                          "MutRepPipeline cannot correctly read report layout info 'expressions' from jobs setup file")
         self.assertEqual(pl.report_layout.exprs.patterns["expr_wo"],
                          'jkl>5',
                          "MutRepPipeline cannot correctly read report layout info 'expressions' from jobs setup file")
         self.assertEqual(pl.report_layout.exprs.actions[ACTION_DELETE_ROW][0].pattern,
-                         '"abc" < 4',
+                         '\'"abc" < 4\'',
                          "MutRepPipeline cannot correctly read report layout info 'expression actions' from jobs setup file")
         self.assertEqual(pl.report_layout.exprs.actions[ACTION_COLOR_COL][0].pattern,
                          'jkl>5',
@@ -879,6 +879,34 @@ class TestMutRepPipeline(SafeTester):
                          )
 
     @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST, "taking too long time to test")
+    def test_expression_action_del_row_2(self):
+        """
+        test if expreesion patterns and expression actions can be used
+        for deleting rows by numeric condition(s)
+        """
+
+        self.init_test(self.current_func_name)
+        annotated_vcf_tabix = join_path(self.data_dir,
+                                        "input.vcf.gz")
+        project_name = self.test_function
+        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
+                                                        annotated_vcf_tabix=annotated_vcf_tabix,
+                                                        report_regions="6:78171940-78172992,18:28610987-28611790",
+                                                        expression_patterns='exp_OAF1:"AXEQ_CHR3_6_14_18_PF"==\'1.0000\'',
+                                                        expression_usages="exp_OAF1:del_row",
+                                                        )
+        pl = MutRepPipeline(jobs_setup_file=jobs_setup_file)
+        pl.gen_summary_report(pl.report_layout.report_regions)
+        xls_file = join_path(self.working_dir,
+                             "rpts",
+                             project_name+"_summary.xlsx")
+        xu = XlsUtils(xls_file)
+        self.assertEqual(xu.count_rows(sheet_idx=0),
+                         9,
+                         "Incorrect number of rows"
+                         )
+
+    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST, "taking too long time to test")
     def test_expression_action_color_row_1(self):
         """
         test if expreesion patterns and expression actions can be used
@@ -934,8 +962,8 @@ class TestMutRepPipeline(SafeTester):
         jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
                                                         annotated_vcf_tabix=annotated_vcf_tabix,
                                                         report_regions="6:78171940-78172992,18:28610987-28611790",
-                                                        expression_patterns='exp_exonic:"Func.refGene" == \'exonic\';exp_ns_snv:"ExonicFunc.refGene" == \'nonsynonymous_SNV\'',
-                                                        expression_usages="exp_exonic:color_row:ROSY_BROWN;exp_ns_snv:color_col:cytoBand:TEAL;exp_exonic:color_col:Gene.refGene:YELLOW",
+                                                        expression_patterns='exp_exonic:"Func.refGene"==\'exonic\',exp_ns_snv:"ExonicFunc.refGene"==\'nonsynonymous_SNV\'',
+                                                        expression_usages="exp_exonic:color_row:ROSY_BROWN,exp_ns_snv:color_col:cytoBand:TEAL,exp_exonic:color_col:Gene.refGene:YELLOW",
                                                         call_detail="YES",
                                                         )
         pl = MutRepPipeline(jobs_setup_file=jobs_setup_file)

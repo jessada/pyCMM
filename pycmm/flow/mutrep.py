@@ -1094,15 +1094,15 @@ def create_jobs_setup_file(*args, **kwargs):
     expression_patterns = get_func_arg('expression_patterns', kwargs)
     if expression_patterns is not None:
         exprs = []
-        for raw_pattern in  expression_patterns.split(";"):
+        for raw_pattern in  expression_patterns.split(","):
             name, pattern = raw_pattern.split(":")
             expr = defaultdict(list)
             expr[JOBS_SETUP_RPT_EXPRESSIONS_NAME_KEY] = name.strip()
-            expr[JOBS_SETUP_RPT_EXPRESSIONS_PATTERN_KEY] = pattern.strip()
+            expr[JOBS_SETUP_RPT_EXPRESSIONS_PATTERN_KEY] = "'" + pattern.strip().replace("'", "''") + "'"
             exprs.append(expr)
         expression_usages = get_func_arg('expression_usages', kwargs)
         if expression_usages is not None:
-            for raw_usage in expression_usages.split(";"):
+            for raw_usage in expression_usages.split(","):
                 usage = {}
                 usage_expr_name = raw_usage.split(":")[0]
                 usage[JOBS_SETUP_RPT_EXPRESSIONS_ACTION_KEY] = raw_usage.split(":")[1]

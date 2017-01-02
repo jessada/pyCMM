@@ -119,6 +119,10 @@ def app_pycmm_mutrep_create_jobs_setup_file(*args, **kwargs):
         layout_params['annotation excluded tags (-E)'] = kwargs['anno_excl_tags'].split(",")
     if kwargs['rows_filter_actions'] is not None:
         layout_params['rows filtering criteria (--filter_actions)'] = kwargs['rows_filter_actions'].split(",")
+    if kwargs['expression_patterns'] is not None:
+        layout_params['expression_patterns (--expression_patterns)'] = kwargs['expression_patterns'].split(",")
+    if kwargs['expression_usages'] is not None:
+        layout_params['expression_usages (--expression_usages)'] = kwargs['expression_usages'].split(",")
     if kwargs['annotated_vcf_tabix'] is not None:
         layout_params['annotated vcf tablx file (-A)'] = kwargs['annotated_vcf_tabix']
     if kwargs['report_regions'] is not None:
@@ -142,6 +146,8 @@ def app_pycmm_mutrep_create_jobs_setup_file(*args, **kwargs):
                            job_alloc_time=kwargs['job_alloc_time'],
                            anno_cols=kwargs['anno_cols'],
                            rows_filter_actions=kwargs['rows_filter_actions'],
+                           expression_patterns=kwargs['expression_patterns'],
+                           expression_usages=kwargs['expression_usages'],
                            anno_excl_tags=kwargs['anno_excl_tags'],
                            annotated_vcf_tabix=kwargs['annotated_vcf_tabix'],
                            report_regions=kwargs['report_regions'],
