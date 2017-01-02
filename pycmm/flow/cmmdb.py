@@ -13,6 +13,7 @@ from pycmm.cmmlib.dnalib import ALL_CHROMS
 from pycmm.settings import DUMMY_TABLE_ANNOVAR_BIN
 
 CAL_MUTATIONS_STAT_SCRIPT = "$PYCMM/bash/cal_mutations_stat.sh"
+VCF_AF_TO_ANNOVAR_SCRIPT = "$PYCMM/bash/vcf_AF_to_annovar.sh"
 
 # *************** mustat db section ***************
 JOBS_SETUP_MUTSTAT_PARAMS_SECTION = "MUTSTAT_PARAMS"
@@ -99,7 +100,7 @@ class CMMDBPipeline(CMMPipeline):
         params += " -o " + out_stat_file
         return params
 
-    def cal_mut_stat(self):
+    def __run_stat_cal(self, script_name):
         if self.project_code is None:
             self.__out_stat_files = join_path(self.data_out_dir,
                                               self.dataset_name + ".stat")
@@ -108,7 +109,7 @@ class CMMDBPipeline(CMMPipeline):
                                                     db_region=self.mutstat_params.db_region,
                                                     samples_id=self.samples_id,
                                                     )
-            cmd = CAL_MUTATIONS_STAT_SCRIPT + params
+            cmd = script_name + params
             exec_sh(cmd)
         elif self.mutstat_params.db_region is None:
             self.__out_stat_files = []
@@ -125,7 +126,7 @@ class CMMDBPipeline(CMMPipeline):
                 job_name = dataset_name + "_cal_stat"
                 self._submit_slurm_job(job_name,
                                        "1",
-                                       CAL_MUTATIONS_STAT_SCRIPT,
+                                       script_name,
                                        params,
                                        )
         else:
@@ -139,9 +140,15 @@ class CMMDBPipeline(CMMPipeline):
             job_name = self.dataset_name + "_cal_stat"
             self._submit_slurm_job(job_name,
                                    "1",
-                                   CAL_MUTATIONS_STAT_SCRIPT,
+                                   script_name,
                                    params,
                                    )
+
+    def cal_mut_stat(self):
+        self.__run_stat_cal(CAL_MUTATIONS_STAT_SCRIPT)
+
+    def vcfaf_to_annovar(self):
+        self.__run_stat_cal(VCF_AF_TO_ANNOVAR_SCRIPT)
 
     def table_annovar(self):
         # calling dummy table_annovar mainly because to clariy the configurations and for logging

@@ -64,6 +64,7 @@ setup(
              'bin/pyCMM-dnaseq-pipeline',
              'bin/pyCMM-dnaseq-create-job-setup-file',
              'bin/pyCMM-cmmdb-cal-mut-stat',
+             'bin/pyCMM-cmmdb-vcf-AF-to-annovar',
              'bin/pyCMM-cmmdb-table-annovar',
              'bin/pyCMM-cmmdb-create-job-setup-file',
              'bin/'+DUMMY_TABLE_ANNOVAR_BIN,

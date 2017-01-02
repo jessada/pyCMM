@@ -1,6 +1,7 @@
 import sys
 from collections import OrderedDict
 from pycmm.settings import CMMDB_MUTSTAT_DESCRIPTION
+from pycmm.settings import CMMDB_VCFAF2ANNOVAR_DESCRIPTION
 from pycmm.settings import CMMDB_TABLEANNOVAR_DESCRIPTION
 from pycmm.settings import CMMDB_CREATE_JOB_SETUP_FILE_DESCRIPTION
 from pycmm.utils import mylogger
@@ -23,6 +24,21 @@ def app_pycmm_cmmdb_cal_mut_stat(*args, **kwargs):
                     pl,
                     )
     pl.cal_mut_stat()
+    mylogger.getLogger(__name__)
+    disp.new_section_txt("F I N I S H <" + func_name + ">")
+
+def app_pycmm_vcfaf_to_annovar(*args, **kwargs):
+    mylogger.getLogger(__name__)
+
+    func_name = sys._getframe().f_code.co_name
+    pl = CMMDBPipeline(jobs_setup_file=kwargs['jobs_setup_file'])
+    mylogger.getLogger(__name__)
+    display_configs(func_name,
+                    CMMDB_VCFAF2ANNOVAR_DESCRIPTION,
+                    kwargs,
+                    pl,
+                    )
+    pl.vcfaf_to_annovar()
     mylogger.getLogger(__name__)
     disp.new_section_txt("F I N I S H <" + func_name + ">")
 

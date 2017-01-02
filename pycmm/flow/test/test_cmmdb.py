@@ -247,7 +247,6 @@ class TestCMMDBPipeline(SafeTester):
                                     exp_result),
                         "cal_mut_stat doesn't function correctly")
 
-
     @unittest.skipUnless(FULL_SYSTEM_TEST or CMMDB_TEST, "taking too long time to test")
     def test_cal_mut_stat_offline_2(self):
         """ test a little advance offline version (w/o slurm) of cal_mut_stat (all chroms) """
@@ -336,6 +335,25 @@ class TestCMMDBPipeline(SafeTester):
         self.assertTrue(filecmp.cmp(pl.out_stat_files,
                                     exp_result),
                         "cal_mut_stat doesn't function correctly")
+
+    @unittest.skipUnless(FULL_SYSTEM_TEST or CMMDB_TEST, "taking too long time to test")
+    def test_vcfaf_to_annovar_offline_1(self):
+        """ test basic offline version (w/o slurm) of vcfaf_to_annovar (one chrom)"""
+
+        self.init_test(self.current_func_name)
+        vcf_tabix_file = join_path(self.data_dir,
+                                   "input.vcf.gz")
+        exp_result = join_path(self.data_dir,
+                               "exp_stat")
+        jobs_setup_file = self.__create_jobs_setup_file(vcf_tabix_file=vcf_tabix_file,
+                                                        project_code=None,
+                                                        db_region="22",
+                                                        )
+        pl = CMMDBPipeline(jobs_setup_file=jobs_setup_file)
+        pl.vcfaf_to_annovar()
+        self.assertTrue(filecmp.cmp(pl.out_stat_files,
+                                    exp_result),
+                        "vcfaf_to_annovar doesn't function correctly")
 
     @unittest.skipUnless(FULL_SYSTEM_TEST or CMMDB_TEST, "taking too long time to test")
     def test_table_annovar_offline_1(self):
