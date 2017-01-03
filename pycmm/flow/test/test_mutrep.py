@@ -78,6 +78,7 @@ class TestMutRepPipeline(SafeTester):
                                  sample_info=None,
                                  anno_cols=DFLT_TEST_MUTREP_COLS,
                                  anno_excl_tags=None,
+                                 header_corrections=None,
                                  annotated_vcf_tabix=None,
                                  report_regions=DFLT_TEST_REPORT_REGIONS,
                                  frequency_ratios=DFLT_TEST_FREQ_RATIOS,
@@ -99,6 +100,7 @@ class TestMutRepPipeline(SafeTester):
                                sample_info=sample_info,
                                anno_cols=",".join(anno_cols),
                                anno_excl_tags=anno_excl_tags,
+                               header_corrections=header_corrections,
                                annotated_vcf_tabix=annotated_vcf_tabix,
                                report_regions=report_regions,
                                frequency_ratios=frequency_ratios,
@@ -115,7 +117,7 @@ class TestMutRepPipeline(SafeTester):
         return jobs_setup_file
 
     def test_load_jobs_info_1(self):
-        """ test if layout configurations are loaded correctly """
+        """ test if default layout configurations are loaded correctly """
 
         self.init_test(self.current_func_name)
         annotated_vcf_tabix = join_path(self.data_dir,
@@ -164,6 +166,7 @@ class TestMutRepPipeline(SafeTester):
     def test_load_jobs_info_2(self):
         """ test if non-default layout configurations are loaded correctly """
 
+        self.individual_debug = True
         self.init_test(self.current_func_name)
         dummy_annotated_vcf_tabix = join_path(self.data_dir,
                                               "input.vcf.gz")
@@ -172,6 +175,7 @@ class TestMutRepPipeline(SafeTester):
         rows_filter_actions += ',' + JOBS_SETUP_RPT_FILTER_NON_INTRONIC
         rows_filter_actions += ',' + JOBS_SETUP_RPT_FILTER_HAS_MUTATION
         jobs_setup_file = self.__create_jobs_setup_file(anno_excl_tags=DFLT_TEST_ANNO_EXCL_TAGS,
+                                                        header_corrections="old_header:new_header",
                                                         annotated_vcf_tabix=dummy_annotated_vcf_tabix,
                                                         report_regions="6:78161823-78164117,"+DFLT_TEST_REPORT_REGIONS+",22",
                                                         frequency_ratios=None,
@@ -250,8 +254,10 @@ class TestMutRepPipeline(SafeTester):
     def test_load_jobs_info_3(self):
         """ test if non-default (None) layout configurations are loaded correctly """
 
+        self.individual_debug = True
         self.init_test(self.current_func_name)
         jobs_setup_file = self.__create_jobs_setup_file(report_regions=None,
+                                                        header_corrections="old_header1:new_header1,old_header2:new_header2",
                                                         frequency_ratios="ExAC:0.5",
                                                         expression_patterns='expr_with_key:"abc" < 4,expr_wo:jkl>5, expr78 : 2>3',
                                                         expression_usages="expr_with_key:del_row,expr_wo:color_col:F_U_8:red,expr_wo:color_row:green,expr78:color_row:orange",
@@ -907,6 +913,37 @@ class TestMutRepPipeline(SafeTester):
                          )
 
     @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST, "taking too long time to test")
+    def test_expression_action_del_row_3(self):
+        """
+        test if expreesion patterns and expression actions can be used
+        for deleting rows with multiallelic
+        """
+
+        self.init_test(self.current_func_name)
+        annotated_vcf_tabix = join_path(self.data_dir,
+                                        "input.vcf.gz")
+        project_name = self.test_function
+        anno_cols = list(DFLT_TEST_MUTREP_COLS)
+        anno_cols.append("OAF_EARLYONSET_AF")
+        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
+                                                        annotated_vcf_tabix=annotated_vcf_tabix,
+                                                        report_regions="22",
+                                                        expression_patterns='exp_OAF0:"OAF_EARLYONSET_AF"==\'0.0000\',exp_OAF1:"OAF_EARLYONSET_AF"==\'1.0000\',exp_OAF_empty:"OAF_EARLYONSET_AF"==\'\',exp_OAF_NA:"OAF_EARLYONSET_AF"==\'NA\'',
+                                                        expression_usages="exp_OAF0:del_row,exp_OAF1:del_row,exp_OAF_empty:del_row,exp_OAF_NA:del_row",
+                                                        anno_cols=anno_cols,
+                                                        )
+        pl = MutRepPipeline(jobs_setup_file=jobs_setup_file)
+        pl.gen_summary_report(pl.report_layout.report_regions)
+        xls_file = join_path(self.working_dir,
+                             "rpts",
+                             project_name+"_summary.xlsx")
+        xu = XlsUtils(xls_file)
+        self.assertEqual(xu.count_rows(sheet_idx=0),
+                         4,
+                         "Incorrect number of rows"
+                         )
+
+    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST, "taking too long time to test")
     def test_expression_action_color_row_1(self):
         """
         test if expreesion patterns and expression actions can be used
@@ -920,7 +957,7 @@ class TestMutRepPipeline(SafeTester):
         jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
                                                         annotated_vcf_tabix=annotated_vcf_tabix,
                                                         report_regions="6:78171940-78172992,18:28610987-28611790",
-                                                        expression_patterns='exp_splicing:"Func.refGene" == \'splicing\'',
+                                                        expression_patterns='exp_splicing:"Func.refGene"==\'splicing\'',
                                                         expression_usages="exp_splicing:color_row:ROSY_BROWN",
                                                         call_detail="YES",
                                                         )
@@ -1177,4 +1214,44 @@ class TestMutRepPipeline(SafeTester):
         self.assertEqual(xu.count_rows(sheet_idx=1),
                          6,
                          "Incorrect number of rows the criteria sheet"
+                         )
+
+#    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST, "taking too long time to test")
+    def test_header_corrections_1(self):
+        """ test summary with multiple report_regions and many sample infos """
+
+        self.individual_debug = True
+        self.init_test(self.current_func_name)
+        annotated_vcf_tabix = join_path(self.data_dir,
+                                        "input.vcf.gz")
+        project_name = self.test_function
+        anno_cols = list(DFLT_TEST_MUTREP_COLS)
+        anno_cols.append("OAF_EARLYONSET_AF")
+        anno_cols.append("OAF_BRC_CRC_PROSTATE_AF")
+        header_corrections = "OAF_EARLYONSET_AF:EARLYONSET_AF"
+        header_corrections += ",OAF_BRC_CRC_PROSTATE_AF:ALL_EXOME_AF"
+        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
+                                                        annotated_vcf_tabix=annotated_vcf_tabix,
+                                                        header_corrections=header_corrections,
+                                                        report_regions="22",
+                                                        anno_cols=anno_cols,
+                                                        )
+        pl = MutRepPipeline(jobs_setup_file=jobs_setup_file)
+        pl.gen_summary_report(pl.report_layout.report_regions)
+        xls_file = join_path(self.working_dir,
+                             "rpts",
+                             project_name+"_summary.xlsx")
+        xu = XlsUtils(xls_file)
+        ors_col_idx = xu.get_col_idx(EST_ORS_EARLYONSET_VS_BRC_COL_NAME)
+        self.assertEqual(xu.get_cell_value(4, ors_col_idx),
+                         "NA",
+                         "Incorect ORS estimation"
+                         )
+        self.assertEqual(xu.get_cell_value(5, ors_col_idx),
+                         "1.5273",
+                         "Incorect ORS estimation"
+                         )
+        self.assertEqual(xu.get_cell_value(6, ors_col_idx),
+                         "INF",
+                         "Incorect ORS estimation"
                          )

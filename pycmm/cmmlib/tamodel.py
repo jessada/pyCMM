@@ -437,7 +437,15 @@ class _TAVcfRecord(_VcfRecord, pyCMMBase):
         repl_txt += "]"
         return repl_txt
 
-    def vcf_eval(self, expr):
+    def vcf_eval(self, expr, allele_idx):
+        info_field = re.search(r'(\".+?\")', expr).group(0)
+        info_vals = eval(re.sub(r'(\".+?\")',
+                                self.__info_repl,
+                                info_field)) 
+        if type(info_vals) is list:
+            info_val = info_vals[allele_idx-1]
+        else:
+            info_val = info_vals
         return eval(re.sub(r'(\".+?\")',
-                           self.__info_repl,
+                           "info_val",
                            expr))

@@ -2378,29 +2378,29 @@ class TestTAVcfRecord(SafeTester):
         expr4 = '("P-value_8" != \'.\') and (float("P-value_8") < 1e-020)'
         vcf_reader = TAVcfReader(filename=in_file)
         vcf_record = vcf_reader.next()
-        self.assertTrue(vcf_record.vcf_eval(expr1),
+        self.assertTrue(vcf_record.vcf_eval(expr1, 0),
                         "cannot perform vcf expression evaluation correctly")
-        self.assertTrue(vcf_record.vcf_eval(expr2),
+        self.assertTrue(vcf_record.vcf_eval(expr2, 0),
                         "cannot perform vcf expression evaluation correctly")
-        self.assertTrue(vcf_record.vcf_eval(expr3),
+        self.assertTrue(vcf_record.vcf_eval(expr3, 0),
                         "cannot perform vcf expression evaluation correctly")
-        self.assertFalse(vcf_record.vcf_eval(expr4),
-                        "cannot perform vcf expression evaluation correctly")
-        vcf_record = vcf_reader.next()
-        self.assertFalse(vcf_record.vcf_eval(expr1),
-                        "cannot perform vcf expression evaluation correctly")
-        self.assertTrue(vcf_record.vcf_eval(expr2),
-                        "cannot perform vcf expression evaluation correctly")
-        self.assertFalse(vcf_record.vcf_eval(expr3),
-                        "cannot perform vcf expression evaluation correctly")
-        self.assertFalse(vcf_record.vcf_eval(expr4),
+        self.assertFalse(vcf_record.vcf_eval(expr4, 0),
                         "cannot perform vcf expression evaluation correctly")
         vcf_record = vcf_reader.next()
-        self.assertFalse(vcf_record.vcf_eval(expr1),
+        self.assertFalse(vcf_record.vcf_eval(expr1, 0),
                         "cannot perform vcf expression evaluation correctly")
-        self.assertFalse(vcf_record.vcf_eval(expr2),
+        self.assertTrue(vcf_record.vcf_eval(expr2, 0),
                         "cannot perform vcf expression evaluation correctly")
-        self.assertFalse(vcf_record.vcf_eval(expr3),
+        self.assertFalse(vcf_record.vcf_eval(expr3, 0),
                         "cannot perform vcf expression evaluation correctly")
-        self.assertFalse(vcf_record.vcf_eval(expr4),
+        self.assertFalse(vcf_record.vcf_eval(expr4, 0),
+                        "cannot perform vcf expression evaluation correctly")
+        vcf_record = vcf_reader.next()
+        self.assertFalse(vcf_record.vcf_eval(expr1, 0),
+                        "cannot perform vcf expression evaluation correctly")
+        self.assertFalse(vcf_record.vcf_eval(expr2, 0),
+                        "cannot perform vcf expression evaluation correctly")
+        self.assertFalse(vcf_record.vcf_eval(expr3, 0),
+                        "cannot perform vcf expression evaluation correctly")
+        self.assertFalse(vcf_record.vcf_eval(expr4, 0),
                         "cannot perform vcf expression evaluation correctly")

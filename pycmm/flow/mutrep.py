@@ -18,6 +18,7 @@ from pycmm.settings import WES294_OAF_EARLYONSET_AF_COL_NAME
 from pycmm.settings import WES294_OAF_BRCS_AF_COL_NAME
 from pycmm.settings import EXAC_NFE_COL_NAME
 from pycmm.settings import KG2014OCT_EUR_COL_NAME
+from pycmm.settings import DFLT_HEADER_CORRECTIONS
 from pycmm.template import pyCMMBase
 from pycmm.utils.ver import VersionManager
 from pycmm.utils import is_number
@@ -50,6 +51,9 @@ JOBS_SETUP_RPT_LAYOUT_SECTION = "REPORT_LAYOUT"
 JOBS_SETUP_RPT_ANNOTATED_VCF_TABIX = "ANNOTATED_VCF_TABIX"
 JOBS_SETUP_RPT_ANNO_COLS_KEY = "COLUMNS"
 JOBS_SETUP_RPT_ANNO_EXCL_TAGS_KEY = "ANNOTATION_EXCLUSION_TAGS"
+JOBS_SETUP_RPT_HEADER_CORRECTIONS_KEY = "HEADER_CORRECTIONS"
+JOBS_SETUP_RPT_OLD_HEADER_KEY = "OLD_HEADER"
+JOBS_SETUP_RPT_NEW_HEADER_KEY = "NEW_HEADER"
 JOBS_SETUP_RPT_REGIONS_KEY = "REGIONS"
 JOBS_SETUP_RPT_FREQ_RATIOS_KEY = "FREQUENCY_RATIOS"
 JOBS_SETUP_RPT_FREQ_RATIOS_COL_KEY = "COLUMN"
@@ -310,9 +314,20 @@ class ReportLayout(CMMParams):
     def __init_properties(self):
         self.__anno_cols = None
         self.__freq_ratios = None
+        self.__heder_corrections = self.__get_header_corrections()
         self.__exprs = self._get_job_config(JOBS_SETUP_RPT_EXPRESSIONS_KEY)
         if self.__exprs is not None:
             self.__exprs = VcfExpressions(self.__exprs)
+
+    def __get_header_corrections(self):
+        raw_header_corrections = self._get_job_config(JOBS_SETUP_RPT_HEADER_CORRECTIONS_KEY)
+        header_corrections = {}
+        if raw_header_corrections is not None:
+            for header_correction in raw_header_corrections:
+                old_header = header_correction[JOBS_SETUP_RPT_OLD_HEADER_KEY]
+                new_header = header_correction[JOBS_SETUP_RPT_NEW_HEADER_KEY]
+                header_corrections[old_header] = new_header
+        return header_corrections
 
     def __cal_anno_cols(self):
         # open the annotated vcf tabix file for checking
@@ -465,6 +480,10 @@ class ReportLayout(CMMParams):
                                     default_val=False)
 
     @property
+    def header_corrections(self):
+        return self.__heder_corrections
+
+    @property
     def freq_ratios(self):
         freq_ratios = self._get_job_config(JOBS_SETUP_RPT_FREQ_RATIOS_KEY)
         if ((self.__freq_ratios is None) and
@@ -539,6 +558,11 @@ class MutRepPipeline(CMMPipeline):
         ws.set_default_row(12)
         return ws
 
+    def __correct_header(self, old_header):
+        if old_header in self.report_layout.header_corrections:
+            return self.report_layout.header_corrections[old_header]
+        return old_header
+
     def __write_header(self, ws, samples_id):
         anno_cols = self.report_layout.anno_cols
         cell_fmt = self.plain_fmts[NO_COLOR]
@@ -548,7 +572,8 @@ class MutRepPipeline(CMMPipeline):
         ws.write(0, 3, "ALT", cell_fmt)
         len_anno_cols = len(anno_cols)
         for anno_idx in xrange(len_anno_cols):
-            ws.write(0, anno_idx+LAYOUT_VCF_COLS, anno_cols[anno_idx], cell_fmt)
+            col_name = self.__correct_header(anno_cols[anno_idx])
+            ws.write(0, anno_idx+LAYOUT_VCF_COLS, col_name, cell_fmt)
         sample_start_idx = LAYOUT_VCF_COLS + len_anno_cols
         ncol = sample_start_idx
         for sample_idx in xrange(len(samples_id)):
@@ -624,7 +649,7 @@ class MutRepPipeline(CMMPipeline):
         if self.report_layout.exprs is not None:
             color_row_actions = self.report_layout.exprs.actions[ACTION_COLOR_ROW]
             for cra in color_row_actions:
-                if vcf_record.vcf_eval(cra.pattern):
+                if vcf_record.vcf_eval(cra.pattern, allele_idx):
                     row_color = cra.color
                     break
         if row_color is not None:
@@ -680,7 +705,7 @@ class MutRepPipeline(CMMPipeline):
                 color_col_actions = self.report_layout.exprs.actions[ACTION_COLOR_COL]
                 for cca in color_col_actions:
                     if ((anno_col_name == cca.col_name) and
-                        vcf_record.vcf_eval(cca.pattern)
+                        vcf_record.vcf_eval(cca.pattern, allele_idx)
                         ):
                         info_cell_fmt = self.plain_fmts[cca.color]
                         break
@@ -755,7 +780,7 @@ class MutRepPipeline(CMMPipeline):
                 if self.report_layout.exprs is not None:
                     del_row_actions = self.report_layout.exprs.actions[ACTION_DELETE_ROW]
                     for dra in del_row_actions:
-                        if vcf_record.vcf_eval(dra.pattern):
+                        if vcf_record.vcf_eval(dra.pattern, allele_idx):
                             delete_row = True
                             break
                 if delete_row:
@@ -905,7 +930,7 @@ class MutRepPipeline(CMMPipeline):
                               samples_id=self.samples_id,
                               samples_header=self.samples_id_w_fam_pref,
                               )
-        self.__add_criteria_sheet()
+#        self.__add_criteria_sheet()
 #        if (self.report_layout.summary_families_sheet and
 #            self.families_info is not None):
 #            self.info("")
@@ -1088,6 +1113,16 @@ def create_jobs_setup_file(*args, **kwargs):
     anno_excl_tags = get_func_arg('anno_excl_tags', kwargs)
     if anno_excl_tags is not None:
         rpt_cfg[JOBS_SETUP_RPT_ANNO_EXCL_TAGS_KEY] = anno_excl_tags.split(",")
+    header_corrections = get_func_arg('header_corrections', kwargs, default_val=DFLT_HEADER_CORRECTIONS)
+    if header_corrections is not None:
+        hcs = []
+        for raw_header_correction in header_corrections.split(","):
+            header_correction = {} 
+            old_header, new_header = raw_header_correction.split(":")
+            header_correction[JOBS_SETUP_RPT_OLD_HEADER_KEY] = old_header
+            header_correction[JOBS_SETUP_RPT_NEW_HEADER_KEY] = new_header
+            hcs.append(header_correction)
+        rpt_cfg[JOBS_SETUP_RPT_HEADER_CORRECTIONS_KEY] = hcs
     report_regions = get_func_arg('report_regions', kwargs)
     if report_regions is not None:
         rpt_cfg[JOBS_SETUP_RPT_REGIONS_KEY] = report_regions.split(",")
