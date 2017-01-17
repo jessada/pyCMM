@@ -1242,16 +1242,16 @@ class TestMutRepPipeline(SafeTester):
                              "rpts",
                              project_name+"_summary.xlsx")
         xu = XlsUtils(xls_file)
-        ors_col_idx = xu.get_col_idx(EST_ORS_EARLYONSET_VS_BRC_COL_NAME)
+        ors_col_idx = xu.get_col_idx("ALL_EXOME_AF")
         self.assertEqual(xu.get_cell_value(4, ors_col_idx),
-                         "NA",
+                         "0.1250",
                          "Incorect ORS estimation"
                          )
         self.assertEqual(xu.get_cell_value(5, ors_col_idx),
-                         "1.5273",
+                         "0.0244",
                          "Incorect ORS estimation"
                          )
         self.assertEqual(xu.get_cell_value(6, ors_col_idx),
-                         "INF",
+                         "0.0375",
                          "Incorect ORS estimation"
                          )
