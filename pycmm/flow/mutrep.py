@@ -17,6 +17,7 @@ from pycmm.settings import EST_ORS_EARLYONSET_VS_KG_EUR_COL_NAME
 from pycmm.settings import WES294_OAF_EARLYONSET_AF_COL_NAME
 from pycmm.settings import WES294_OAF_BRCS_AF_COL_NAME
 from pycmm.settings import EXAC_NFE_COL_NAME
+from pycmm.settings import GENE_REFGENE_COL_NAME
 from pycmm.settings import KG2014OCT_EUR_COL_NAME
 from pycmm.settings import DFLT_HEADER_CORRECTIONS
 from pycmm.template import pyCMMBase
@@ -68,6 +69,7 @@ JOBS_SETUP_RPT_SPLIT_CHROM_KEY = "SPLIT_CHROM"
 JOBS_SETUP_RPT_SUMMARY_FAMILIES_KEY = "SUMMARY_FAMILIES"
 JOBS_SETUP_RPT_EXTRA_ANNO_COLS_KEY = "EXTRA_ANNOTATION_COLUMNS"
 JOBS_SETUP_RPT_CALL_DETAIL_KEY = "Calling_detail"
+JOBS_SETUP_RPT_CALL_GQ_KEY = "Calling_GQ"
 JOBS_SETUP_RPT_MT_KEY = "Mitochondria"
 JOBS_SETUP_RPT_ROWS_FILTER_ACTIONS_CRITERIA_KEY = "ROWS_FILTER_ACTIONS_CRITERIA"
 JOBS_SETUP_RPT_FILTER_RARE = "Rare"
@@ -86,6 +88,11 @@ RPT_LAYOUT_CAPTION_ANNOATED_COLS = "annotated columns"
 RPT_LAYOUT_CAPTION_FREQ_RATIOS = "frequency ratio(s)"
 RPT_LAYOUT_CAPTION_RPT_REGIONS = "report region(s)"
 RPT_LAYOUT_CAPTION_FILTER_ACTIONS = "filter actions"
+
+XLS_CHROM_COL_IDX = 0
+XLS_POS_COL_IDX = 1
+XLS_REF_COL_IDX = 2
+XLS_ALT_COL_IDX = 3
 
 FILTER_RARE = JOBS_SETUP_RPT_FILTER_RARE
 FILTER_NON_INTERGENIC = JOBS_SETUP_RPT_FILTER_NON_INTERGENIC
@@ -287,6 +294,7 @@ class ReportLayout(CMMParams):
         if self.anno_excl_tags is not None and len(self.anno_excl_tags) > 0:
             raw_repr["annotation exclusion tags"] = self.anno_excl_tags
         raw_repr["genotyping calling detail"] = self.call_detail
+        raw_repr["genotyping calling quality"] = self.call_gq
         raw_repr[RPT_LAYOUT_CAPTION_FREQ_RATIOS] = self.freq_ratios
         if self.report_regions is None:
             raw_repr[RPT_LAYOUT_CAPTION_RPT_REGIONS] = "ALL"
@@ -420,6 +428,11 @@ class ReportLayout(CMMParams):
     def call_detail(self):
         return JOBS_SETUP_RPT_CALL_DETAIL_KEY in self._get_job_config(JOBS_SETUP_RPT_EXTRA_ANNO_COLS_KEY,
                                                                       default_val=[])
+
+    @property
+    def call_gq(self):
+        return JOBS_SETUP_RPT_CALL_GQ_KEY in self._get_job_config(JOBS_SETUP_RPT_EXTRA_ANNO_COLS_KEY,
+                                                                  default_val=[])
 
     @property
     def filter_rare(self):
@@ -578,15 +591,15 @@ class MutRepPipeline(CMMPipeline):
         ncol = sample_start_idx
         for sample_idx in xrange(len(samples_id)):
             sample_id = samples_id[sample_idx]
-            if self.report_layout.call_detail:
-                col_idx = (2*sample_idx) + (sample_start_idx)
-                ws.write(0, col_idx, sample_id, cell_fmt)
-                ws.write(0, col_idx+1, sample_id+"(detail)", cell_fmt)
-                ncol += 2
-            else:
-                ws.write(0, sample_idx+sample_start_idx, sample_id, cell_fmt)
+            ws.write(0, ncol, sample_id, cell_fmt)
+            ncol += 1
+            if self.report_layout.call_gq:
+                ws.write(0, ncol, sample_id+"_GQ", cell_fmt)
                 ncol += 1
-        return ncol
+            if self.report_layout.call_detail:
+                ws.write(0, ncol, sample_id+"(detail)", cell_fmt)
+                ncol += 1
+        return sample_start_idx, ncol
 
     def __format_call_detail(self, call, call_fmt):
         call_detail = []
@@ -711,7 +724,7 @@ class MutRepPipeline(CMMPipeline):
                         break
             ws.write(row, anno_idx+LAYOUT_VCF_COLS, str(info).decode('utf-8'), info_cell_fmt)
         # annotate samples information
-        sample_start_idx = LAYOUT_VCF_COLS + len_anno_cols
+        ncol = LAYOUT_VCF_COLS + len_anno_cols
         for sample_idx in xrange(len(samples_id)):
             call = vcf_record.genotype(samples_id[sample_idx])
             zygo = call.cmm_gts[allele_idx]
@@ -727,13 +740,18 @@ class MutRepPipeline(CMMPipeline):
                 het_shared_color = self.report_layout.cell_color_het_shared
                 zygo_fmt = self.plain_fmts[het_shared_color]
             # write content to cell(s)
+            ws.write(row, ncol, zygo, zygo_fmt)
+            ncol += 1
+            if self.report_layout.call_gq:
+                zygo_gq = call.data.GQ
+                if zygo_gq is None:
+                    zygo_gq = "."
+                ws.write(row, ncol, zygo_gq, zygo_fmt)
+                ncol += 1
             if self.report_layout.call_detail:
-                col_idx = (2*sample_idx) + (sample_start_idx)
-                ws.write(row, col_idx, zygo, zygo_fmt)
                 formatted_call = self.__format_call_detail(call, vcf_record.FORMAT.split(":"))
-                ws.write(row, col_idx+1, formatted_call, zygo_fmt)
-            else:
-                ws.write(row, sample_idx+sample_start_idx, zygo, zygo_fmt)
+                ws.write(row, ncol, formatted_call, zygo_fmt)
+                ncol += 1
 
     def __write_contents(self,
                          ws,
@@ -797,8 +815,20 @@ class MutRepPipeline(CMMPipeline):
                 row += 1
         return row
 
-    def __set_layout(self, ws, record_size):
-        ws.autofilter(0, 0, 0, record_size-1)
+    def __set_layout(self, ws, sample_start_idx, record_size):
+        ws.autofilter(0, 0, 0, sample_start_idx-1)
+        ws.set_column(XLS_CHROM_COL_IDX, XLS_CHROM_COL_IDX, 2.5)
+        ws.set_column(XLS_POS_COL_IDX, XLS_POS_COL_IDX, 9)
+        ws.set_column(XLS_REF_COL_IDX, XLS_REF_COL_IDX, 3.5)
+        ws.set_column(XLS_ALT_COL_IDX, XLS_ALT_COL_IDX, 3.5)
+        ws.set_column(sample_start_idx, record_size-1, 3)
+        row_freeze_idx = 1
+        anno_cols = self.report_layout.anno_cols
+        if GENE_REFGENE_COL_NAME in anno_cols:
+            col_freeze_idx = anno_cols.index(GENE_REFGENE_COL_NAME) + XLS_ALT_COL_IDX + 2
+        else:
+            col_freeze_idx = 0
+        ws.freeze_panes(row_freeze_idx, col_freeze_idx)
 
     def __add_muts_sheet(self,
                          sheet_name,
@@ -823,9 +853,9 @@ class MutRepPipeline(CMMPipeline):
             samples = samples_id
         ws = self.__add_sheet(sheet_name)
         if samples_header is not None:
-            ncol = self.__write_header(ws, samples_header)
+            sample_start_idx, ncol = self.__write_header(ws, samples_header)
         else:
-            ncol = self.__write_header(ws, samples)
+            sample_start_idx, ncol = self.__write_header(ws, samples)
         if report_regions is None:
             row = self.__write_contents(ws,
                                         row,
@@ -848,13 +878,11 @@ class MutRepPipeline(CMMPipeline):
                                             vcf_records,
                                             samples,
                                             check_shared)
-        # freeze panes
         log_msg = "Finish .. "
         log_msg += " total of " + str(row-1)
         log_msg += " records were written to the sheet"
         self.info(log_msg)
-        self.__set_layout(ws, ncol)
-        ws.freeze_panes(1, 0)
+        self.__set_layout(ws, sample_start_idx, ncol)
 
     def __add_criteria_sheet(self,
                              ):
@@ -1164,10 +1192,13 @@ def create_jobs_setup_file(*args, **kwargs):
                                                              default_val=False,
                                                              )
     call_detail = get_func_arg('call_detail', kwargs, default_val=False)
-    if call_detail:
+    call_gq = get_func_arg('call_gq', kwargs, default_val=False)
+    if call_detail or call_gq:
         extra_anno_cols = []
         if call_detail:
             extra_anno_cols.append(JOBS_SETUP_RPT_CALL_DETAIL_KEY)
+        if call_gq:
+            extra_anno_cols.append(JOBS_SETUP_RPT_CALL_GQ_KEY)
         rpt_cfg[JOBS_SETUP_RPT_EXTRA_ANNO_COLS_KEY] = extra_anno_cols
     rows_filter_actions = get_func_arg('rows_filter_actions', kwargs)
     if rows_filter_actions is not None:

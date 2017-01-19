@@ -35,6 +35,10 @@ from pycmm.flow.mutrep import create_jobs_setup_file
 from pycmm.flow.mutrep import JOBS_SETUP_RPT_FILTER_RARE
 from pycmm.flow.mutrep import JOBS_SETUP_RPT_FILTER_NON_INTERGENIC
 from pycmm.flow.mutrep import JOBS_SETUP_RPT_FILTER_NON_INTRONIC
+from pycmm.flow.mutrep import JOBS_SETUP_RPT_FILTER_NON_UPSTREAM
+from pycmm.flow.mutrep import JOBS_SETUP_RPT_FILTER_NON_DOWNSTREAM
+from pycmm.flow.mutrep import JOBS_SETUP_RPT_FILTER_NON_UTR
+from pycmm.flow.mutrep import JOBS_SETUP_RPT_FILTER_NON_SYNONYMOUS
 from pycmm.flow.mutrep import JOBS_SETUP_RPT_FILTER_HAS_MUTATION
 from pycmm.flow.mutrep import JOBS_SETUP_RPT_FILTER_HAS_SHARED
 from pycmm.flow.mutrep import ACTION_DELETE_ROW
@@ -87,6 +91,7 @@ class TestMutRepPipeline(SafeTester):
                                  split_chrom=False,
                                  summary_families_sheet=False,
                                  call_detail=False,
+                                 call_gq=False,
                                  rows_filter_actions=None,
                                  only_summary=False,
                                  only_families=False,
@@ -109,6 +114,7 @@ class TestMutRepPipeline(SafeTester):
                                split_chrom=split_chrom,
                                summary_families_sheet=summary_families_sheet,
                                call_detail=call_detail,
+                               call_gq=call_gq,
                                rows_filter_actions=rows_filter_actions,
                                only_summary=only_summary,
                                only_families=only_families,
@@ -150,6 +156,8 @@ class TestMutRepPipeline(SafeTester):
                          "MutRepPipeline cannot correctly read report layout info 'summary families sheet' from jobs setup file")
         self.assertFalse(pl.report_layout.call_detail,
                          "MutRepPipeline cannot correctly read report layout info 'call info' from jobs setup file")
+        self.assertFalse(pl.report_layout.call_gq,
+                         "MutRepPipeline cannot correctly read report layout info 'call info' from jobs setup file")
         self.assertFalse(pl.report_layout.filter_rare,
                          "MutRepPipeline cannot correctly read report layout info 'filter rare' from jobs setup file")
         self.assertFalse(pl.report_layout.filter_non_intergenic,
@@ -184,6 +192,7 @@ class TestMutRepPipeline(SafeTester):
                                                         split_chrom=True,
                                                         summary_families_sheet=True,
                                                         call_detail=True,
+                                                        call_gq=True,
                                                         rows_filter_actions=rows_filter_actions,
                                                         only_summary=True,
                                                         only_families=True,
@@ -195,7 +204,6 @@ class TestMutRepPipeline(SafeTester):
         self.assertEqual(pl.report_layout.anno_cols[4],
                          "cytoBand",
                          "MutRepPipeline cannot correctly read report layout info 'layout columns' from jobs setup file")
-        self.dbg(pl.report_layout.anno_cols)
         self.assertEqual(pl.report_layout.anno_cols[6],
                          AXEQ_CHR5_19_GF_COL_NAME,
                          "MutRepPipeline cannot correctly read report layout info 'layout columns' from jobs setup file")
@@ -237,6 +245,8 @@ class TestMutRepPipeline(SafeTester):
         self.assertTrue(pl.report_layout.summary_families_sheet,
                         "MutRepPipeline cannot correctly read report layout info 'summary families sheet' from jobs setup file")
         self.assertTrue(pl.report_layout.call_detail,
+                        "MutRepPipeline cannot correctly read report layout info 'call info' from jobs setup file")
+        self.assertTrue(pl.report_layout.call_gq,
                         "MutRepPipeline cannot correctly read report layout info 'call info' from jobs setup file")
         self.assertTrue(pl.report_layout.filter_rare,
                         "MutRepPipeline cannot correctly read report layout info 'filter rare' from jobs setup file")
@@ -1216,11 +1226,10 @@ class TestMutRepPipeline(SafeTester):
                          "Incorrect number of rows the criteria sheet"
                          )
 
-#    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST, "taking too long time to test")
+    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST, "taking too long time to test")
     def test_header_corrections_1(self):
-        """ test summary with multiple report_regions and many sample infos """
+        """ test if column headers can be replaced with better names  """
 
-        self.individual_debug = True
         self.init_test(self.current_func_name)
         annotated_vcf_tabix = join_path(self.data_dir,
                                         "input.vcf.gz")
@@ -1254,4 +1263,58 @@ class TestMutRepPipeline(SafeTester):
         self.assertEqual(xu.get_cell_value(6, ors_col_idx),
                          "0.0375",
                          "Incorect ORS estimation"
+                         )
+    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST, "taking too long time to test")
+    def test_calling_gq_1(self):
+        """ test if calling genotyping quality can be displayed correctly in general cases """
+
+        self.init_test(self.current_func_name)
+        annotated_vcf_tabix = join_path(self.data_dir,
+                                        "input.vcf.gz")
+        project_name = self.test_function
+        rows_filter_actions = JOBS_SETUP_RPT_FILTER_NON_INTERGENIC
+        rows_filter_actions += ',' + JOBS_SETUP_RPT_FILTER_NON_INTRONIC
+        rows_filter_actions += ',' + JOBS_SETUP_RPT_FILTER_NON_UPSTREAM
+        rows_filter_actions += ',' + JOBS_SETUP_RPT_FILTER_NON_DOWNSTREAM
+        rows_filter_actions += ',' + JOBS_SETUP_RPT_FILTER_NON_UTR
+        rows_filter_actions += ',' + JOBS_SETUP_RPT_FILTER_NON_SYNONYMOUS
+        rows_filter_actions += ',' + JOBS_SETUP_RPT_FILTER_HAS_MUTATION
+        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
+                                                        annotated_vcf_tabix=annotated_vcf_tabix,
+                                                        sample_info="/proj/b2011117/private/databases/samples_list/Exome_all_CRCs.list",
+                                                        report_regions="7",
+                                                        rows_filter_actions=rows_filter_actions,
+                                                        call_gq=True,
+                                                        call_detail=False,
+                                                        )
+        pl = MutRepPipeline(jobs_setup_file=jobs_setup_file)
+        pl.gen_summary_report(pl.report_layout.report_regions)
+        xls_file = join_path(self.working_dir,
+                             "rpts",
+                             project_name+"_summary.xlsx")
+        xu = XlsUtils(xls_file)
+        sample_col_idx = xu.get_col_idx("1213-Co-1666")
+        self.assertEqual(xu.get_cell_value(4, sample_col_idx),
+                         "wt",
+                         "Incorect zygosity"
+                         )
+        self.assertEqual(xu.get_cell_value(4, sample_col_idx+1),
+                         0,
+                         "Incorect GQ value"
+                         )
+        self.assertEqual(xu.get_cell_value(5, sample_col_idx),
+                         "het",
+                         "Incorect zygosity"
+                         )
+        self.assertEqual(xu.get_cell_value(5, sample_col_idx+1),
+                         99,
+                         "Incorect GQ value"
+                         )
+        self.assertEqual(xu.get_cell_value(7, sample_col_idx),
+                         "het",
+                         "Incorect zygosity"
+                         )
+        self.assertEqual(xu.get_cell_value(7, sample_col_idx+1),
+                         27,
+                         "Incorect GQ value"
                          )

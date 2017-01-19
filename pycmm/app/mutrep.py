@@ -135,29 +135,12 @@ def app_pycmm_mutrep_create_jobs_setup_file(*args, **kwargs):
     layout_params['summary_families sheet (--summary_families)'] = kwargs['summary_families_sheet']
     extra_anno_cols = {}
     extra_anno_cols['call detail (--call_detail)'] = kwargs['call_detail']
+    extra_anno_cols['genotype quality (--call_gq)'] = kwargs['call_gq']
     layout_params['extra annotation columns'] = extra_anno_cols
     layout_params['only summary report (--only_summary)'] = kwargs['only_summary']
     layout_params['only families report (--only_families)'] = kwargs['only_families']
     disp.disp_params_set("Report layout parameters", layout_params)
-    create_jobs_setup_file(project_name=kwargs['dataset_name'],
-                           project_out_dir=kwargs['project_out_dir'],
-                           sample_info=kwargs['sample_info'],
-                           project_code=kwargs['project_code'],
-                           job_alloc_time=kwargs['job_alloc_time'],
-                           anno_cols=kwargs['anno_cols'],
-                           rows_filter_actions=kwargs['rows_filter_actions'],
-                           expression_patterns=kwargs['expression_patterns'],
-                           expression_usages=kwargs['expression_usages'],
-                           anno_excl_tags=kwargs['anno_excl_tags'],
-                           annotated_vcf_tabix=kwargs['annotated_vcf_tabix'],
-                           report_regions=kwargs['report_regions'],
-                           frequency_ratios=kwargs['frequency_ratios'],
-                           split_chrom=kwargs['split_chrom'],
-                           summary_families_sheet=kwargs['summary_families_sheet'],
-                           call_detail=kwargs['call_detail'],
-                           only_summary=kwargs['only_summary'],
-                           only_families=kwargs['only_families'],
-                           out_jobs_setup_file=kwargs['out_jobs_setup_file'],
-                           )
+    kwargs['project_name'] = kwargs['dataset_name']
+    create_jobs_setup_file(**kwargs)
     mylogger.getLogger(__name__)
     disp.new_section_txt("F I N I S H <" + func_name + ">")
