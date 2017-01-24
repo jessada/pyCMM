@@ -33,8 +33,8 @@ class TestTAVcfCallXls(SafeTester):
         pass
 
     def __create_jobs_setup_file(self,
-                                 dataset_name=None,
-                                 sample_infos=None,
+                                 project_name=None,
+                                 sample_info=None,
                                  anno_cols=DFLT_TEST_MUTREP_COLS,
                                  anno_excl_tags=None,
                                  annotated_vcf_tabix=None,
@@ -44,11 +44,11 @@ class TestTAVcfCallXls(SafeTester):
                                  ):
         jobs_setup_file = join_path(self.working_dir,
                                     self.test_function+'_jobs_setup.txt')
-        if dataset_name is None:
-            dataset_name = self.test_function
-        create_jobs_setup_file(dataset_name=dataset_name,
+        if project_name is None:
+            project_name = self.test_function
+        create_jobs_setup_file(project_name=project_name,
                                project_out_dir=self.working_dir,
-                               sample_infos=sample_infos,
+                               sample_info=sample_info,
                                anno_cols=",".join(anno_cols),
                                anno_excl_tags=anno_excl_tags,
                                annotated_vcf_tabix=annotated_vcf_tabix,
@@ -67,28 +67,27 @@ class TestTAVcfCallXls(SafeTester):
         - this test is corresponding to 'test_parse_mutated_3_2' in 'test_tamodel'
         """
 
-        self.individual_debug = True
         self.init_test(self.current_func_name)
         annotated_vcf_tabix = join_path(self.data_dir,
                                         "input.vcf.gz")
-        dataset_name = self.test_function
-        sample_infos = []
-        sample_infos.append("24:Co-166:Co-213")
+        project_name = self.test_function
+        sample_info = []
+        sample_info.append("24:Co-166:Co-213")
         frequency_ratios = PRIMARY_MAF_VAR + ":0.2"
         frequency_ratios += "," + ILL_BR_PF_COL_NAME + ":0.3"
         frequency_ratios += "," + EXAC_ALL_COL_NAME + ":0.3"
-        jobs_setup_file = self.__create_jobs_setup_file(dataset_name=dataset_name,
+        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
                                                         annotated_vcf_tabix=annotated_vcf_tabix,
                                                         anno_cols=DFLT_TEST_MUTREP_COLS,
                                                         anno_excl_tags=DFLT_TEST_ANNO_EXCL_TAGS,
                                                         frequency_ratios=frequency_ratios,
-                                                        sample_infos=",".join(sample_infos),
+                                                        sample_info=",".join(sample_info),
                                                         )
         pl = MutRepPipeline(jobs_setup_file)
         pl.gen_family_report('24', pl.report_layout.report_regions)
         xls_file = join_path(self.working_dir,
                              "rpts",
-                             dataset_name+"_fam24.xlsx")
+                             project_name+"_fam24.xlsx")
         xu = XlsUtils(xls_file)
         self.assertEqual(xu.count_rows(),
                          1,
@@ -105,8 +104,8 @@ class TestTAVcfRecordXls(SafeTester):
         pass
 
     def __create_jobs_setup_file(self,
-                                 dataset_name=None,
-                                 sample_infos=None,
+                                 project_name=None,
+                                 sample_info=None,
                                  anno_cols=DFLT_TEST_MUTREP_COLS,
                                  anno_excl_tags=None,
                                  annotated_vcf_tabix=None,
@@ -116,11 +115,11 @@ class TestTAVcfRecordXls(SafeTester):
                                  ):
         jobs_setup_file = join_path(self.working_dir,
                                     self.test_function+'_jobs_setup.txt')
-        if dataset_name is None:
-            dataset_name = self.test_function
-        create_jobs_setup_file(dataset_name=dataset_name,
+        if project_name is None:
+            project_name = self.test_function
+        create_jobs_setup_file(project_name=project_name,
                                project_out_dir=self.working_dir,
-                               sample_infos=sample_infos,
+                               sample_info=sample_info,
                                anno_cols=",".join(anno_cols),
                                anno_excl_tags=anno_excl_tags,
                                annotated_vcf_tabix=annotated_vcf_tabix,
@@ -138,14 +137,13 @@ class TestTAVcfRecordXls(SafeTester):
         - this test doesn't corresponding to any other tests
         """
 
-        self.individual_debug = True
         self.init_test(self.current_func_name)
         annotated_vcf_tabix = join_path(self.data_dir,
                                         "input.vcf.gz")
-        dataset_name = self.test_function+'_has_no_mutation'
-        jobs_setup_file = self.__create_jobs_setup_file(dataset_name=dataset_name,
+        project_name = self.test_function+'_has_no_mutation'
+        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
                                                         annotated_vcf_tabix=annotated_vcf_tabix,
-                                                        sample_infos="24:Co-166:Co-213:Co-648,8:Co-37,275:Co-618,478:Co-1274",
+                                                        sample_info="24:Co-166:Co-213:Co-648,8:Co-37,275:Co-618,478:Co-1274",
                                                         anno_cols=DFLT_TEST_MUTREP_COLS,
                                                         anno_excl_tags=DFLT_TEST_ANNO_EXCL_TAGS,
                                                         summary_families_sheet=True,
@@ -154,16 +152,16 @@ class TestTAVcfRecordXls(SafeTester):
         pl.gen_summary_report(pl.report_layout.report_regions)
         xls_file = join_path(self.working_dir,
                              "rpts",
-                             dataset_name+"_summary.xlsx")
+                             project_name+"_summary.xlsx")
         xu = XlsUtils(xls_file)
         self.assertEqual(xu.count_rows(sheet_idx=1),
                          34,
                          "shared mutation cannot be correctly determined")
         rows_filter_actions = JOBS_SETUP_RPT_FILTER_HAS_MUTATION
-        dataset_name = self.test_function
-        jobs_setup_file = self.__create_jobs_setup_file(dataset_name=dataset_name,
+        project_name = self.test_function
+        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
                                                         annotated_vcf_tabix=annotated_vcf_tabix,
-                                                        sample_infos="24:Co-166:Co-213:Co-648,8:Co-37,275:Co-618,478:Co-1274",
+                                                        sample_info="24:Co-166:Co-213:Co-648,8:Co-37,275:Co-618,478:Co-1274",
                                                         anno_cols=DFLT_TEST_MUTREP_COLS,
                                                         anno_excl_tags=DFLT_TEST_ANNO_EXCL_TAGS,
                                                         summary_families_sheet=True,
@@ -173,7 +171,7 @@ class TestTAVcfRecordXls(SafeTester):
         pl.gen_summary_report(pl.report_layout.report_regions)
         xls_file = join_path(self.working_dir,
                              "rpts",
-                             dataset_name+"_summary.xlsx")
+                             project_name+"_summary.xlsx")
         xu = XlsUtils(xls_file)
         self.assertEqual(xu.count_rows(sheet_idx=1),
                          13,
@@ -187,11 +185,10 @@ class TestTAVcfRecordXls(SafeTester):
         - this test doesn't corresponding to any other tests
         """
 
-        self.individual_debug = True
         self.init_test(self.current_func_name)
         annotated_vcf_tabix = join_path(self.data_dir,
                                         "input.vcf.gz")
-        dataset_name = self.test_function
+        project_name = self.test_function
         rows_filter_actions = JOBS_SETUP_RPT_FILTER_RARE
         rows_filter_actions += "," + JOBS_SETUP_RPT_FILTER_NON_INTRONIC
         rows_filter_actions += "," + JOBS_SETUP_RPT_FILTER_NON_INTERGENIC
@@ -200,25 +197,25 @@ class TestTAVcfRecordXls(SafeTester):
         rows_filter_actions += "," + JOBS_SETUP_RPT_FILTER_NON_UTR
         rows_filter_actions += "," + JOBS_SETUP_RPT_FILTER_NON_SYNONYMOUS
         rows_filter_actions += "," + JOBS_SETUP_RPT_FILTER_HAS_MUTATION
-        sample_infos = []
-        sample_infos.append("24:Co-166:Co-213")
+        sample_info = []
+        sample_info.append("24:Co-166:Co-213")
         frequency_ratios = PRIMARY_MAF_VAR + ":0.2"
         frequency_ratios += "," + ILL_BR_PF_COL_NAME + ":0.3"
         frequency_ratios += "," + EXAC_ALL_COL_NAME + ":0.3"
-        jobs_setup_file = self.__create_jobs_setup_file(dataset_name=dataset_name,
+        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
                                                         annotated_vcf_tabix=annotated_vcf_tabix,
                                                         anno_cols=DFLT_TEST_MUTREP_COLS,
                                                         anno_excl_tags=DFLT_TEST_ANNO_EXCL_TAGS,
                                                         rows_filter_actions=rows_filter_actions,
                                                         frequency_ratios=frequency_ratios,
-                                                        sample_infos=",".join(sample_infos),
+                                                        sample_info=",".join(sample_info),
                                                         summary_families_sheet=True,
                                                         )
         pl = MutRepPipeline(jobs_setup_file)
         pl.gen_family_report('24', pl.report_layout.report_regions)
         xls_file = join_path(self.working_dir,
                              "rpts",
-                             dataset_name+"_fam24.xlsx")
+                             project_name+"_fam24.xlsx")
         xu = XlsUtils(xls_file)
         self.assertEqual(xu.count_rows(),
                          5,
@@ -232,12 +229,11 @@ class TestTAVcfRecordXls(SafeTester):
         - this test doesn't corresponding to any other tests
         """
 
-        self.individual_debug = True
         self.init_test(self.current_func_name)
         annotated_vcf_tabix = join_path(self.data_dir,
                                         "input.vcf.gz")
-        dataset_name = self.test_function + '_with_common'
-        jobs_setup_file = self.__create_jobs_setup_file(dataset_name=dataset_name,
+        project_name = self.test_function + '_with_common'
+        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
                                                         anno_cols=ALL_MUTREP_ANNO_COLS,
                                                         annotated_vcf_tabix=annotated_vcf_tabix,
                                                         )
@@ -245,17 +241,17 @@ class TestTAVcfRecordXls(SafeTester):
         pl.gen_summary_report(pl.report_layout.report_regions)
         xls_file = join_path(self.working_dir,
                              "rpts",
-                             dataset_name+"_summary.xlsx")
+                             project_name+"_summary.xlsx")
         xu = XlsUtils(xls_file)
         self.assertEqual(xu.count_rows(),
                          88,
                          "rare mutations cannot be correctly determined")
-        dataset_name = self.test_function
+        project_name = self.test_function
         frequency_ratios = PRIMARY_MAF_VAR + ":0.2"
         frequency_ratios += "," + ILL_BR_PF_COL_NAME + ":0.3"
         frequency_ratios += "," + EXAC_ALL_COL_NAME + ":0.3"
         rows_filter_actions = JOBS_SETUP_RPT_FILTER_RARE
-        jobs_setup_file = self.__create_jobs_setup_file(dataset_name=dataset_name,
+        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
                                                         annotated_vcf_tabix=annotated_vcf_tabix,
                                                         anno_cols=ALL_MUTREP_ANNO_COLS,
                                                         frequency_ratios=frequency_ratios,
@@ -265,7 +261,7 @@ class TestTAVcfRecordXls(SafeTester):
         pl.gen_summary_report(pl.report_layout.report_regions)
         xls_file = join_path(self.working_dir,
                              "rpts",
-                             dataset_name+"_summary.xlsx")
+                             project_name+"_summary.xlsx")
         xu = XlsUtils(xls_file)
         self.assertEqual(xu.count_rows(),
                          54,
@@ -278,26 +274,25 @@ class TestTAVcfRecordXls(SafeTester):
         - this test doesn't corresponding to any other tests
         """
 
-        self.individual_debug = True
         self.init_test(self.current_func_name)
         annotated_vcf_tabix = join_path(self.data_dir,
                                         "input.vcf.gz")
-        dataset_name = self.test_function + '_with_intergenic'
-        jobs_setup_file = self.__create_jobs_setup_file(dataset_name=dataset_name,
+        project_name = self.test_function + '_with_intergenic'
+        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
                                                         annotated_vcf_tabix=annotated_vcf_tabix,
                                                         )
         pl = MutRepPipeline(jobs_setup_file)
         pl.gen_summary_report(pl.report_layout.report_regions)
         xls_file = join_path(self.working_dir,
                              "rpts",
-                             dataset_name+"_summary.xlsx")
+                             project_name+"_summary.xlsx")
         xu = XlsUtils(xls_file)
         self.assertEqual(xu.count_rows(),
                          22,
                          "intergenic mutations cannot be correctly determined")
-        dataset_name = self.test_function
+        project_name = self.test_function
         rows_filter_actions = JOBS_SETUP_RPT_FILTER_NON_INTERGENIC
-        jobs_setup_file = self.__create_jobs_setup_file(dataset_name=dataset_name,
+        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
                                                         annotated_vcf_tabix=annotated_vcf_tabix,
                                                         rows_filter_actions=rows_filter_actions,
                                                         )
@@ -305,7 +300,7 @@ class TestTAVcfRecordXls(SafeTester):
         pl.gen_summary_report(pl.report_layout.report_regions)
         xls_file = join_path(self.working_dir,
                              "rpts",
-                             dataset_name+"_summary.xlsx")
+                             project_name+"_summary.xlsx")
         xu = XlsUtils(xls_file)
         self.assertEqual(xu.count_rows(),
                          11,
@@ -318,12 +313,11 @@ class TestTAVcfRecordXls(SafeTester):
         - this test doesn't corresponding to any other tests
         """
 
-        self.individual_debug = True
         self.init_test(self.current_func_name)
         annotated_vcf_tabix = join_path(self.data_dir,
                                         "input.vcf.gz")
-        dataset_name = self.test_function + '_with_intronic'
-        jobs_setup_file = self.__create_jobs_setup_file(dataset_name=dataset_name,
+        project_name = self.test_function + '_with_intronic'
+        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
                                                         annotated_vcf_tabix=annotated_vcf_tabix,
                                                         anno_cols=DFLT_TEST_MUTREP_COLS,
                                                         anno_excl_tags=DFLT_TEST_ANNO_EXCL_TAGS,
@@ -332,14 +326,14 @@ class TestTAVcfRecordXls(SafeTester):
         pl.gen_summary_report(pl.report_layout.report_regions)
         xls_file = join_path(self.working_dir,
                              "rpts",
-                             dataset_name+"_summary.xlsx")
+                             project_name+"_summary.xlsx")
         xu = XlsUtils(xls_file)
         self.assertEqual(xu.count_rows(),
                          26,
                          "intronic mutations cannot be correctly determined")
-        dataset_name = self.test_function
+        project_name = self.test_function
         rows_filter_actions = JOBS_SETUP_RPT_FILTER_NON_INTRONIC
-        jobs_setup_file = self.__create_jobs_setup_file(dataset_name=dataset_name,
+        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
                                                         annotated_vcf_tabix=annotated_vcf_tabix,
                                                         anno_cols=DFLT_TEST_MUTREP_COLS,
                                                         anno_excl_tags=DFLT_TEST_ANNO_EXCL_TAGS,
@@ -349,7 +343,7 @@ class TestTAVcfRecordXls(SafeTester):
         pl.gen_summary_report(pl.report_layout.report_regions)
         xls_file = join_path(self.working_dir,
                              "rpts",
-                             dataset_name+"_summary.xlsx")
+                             project_name+"_summary.xlsx")
         xu = XlsUtils(xls_file)
         self.assertEqual(xu.count_rows(),
                          9,
@@ -362,12 +356,11 @@ class TestTAVcfRecordXls(SafeTester):
         - this test doesn't corresponding to any other tests
         """
 
-        self.individual_debug = True
         self.init_test(self.current_func_name)
         annotated_vcf_tabix = join_path(self.data_dir,
                                         "input.vcf.gz")
-        dataset_name = self.test_function + '_with_upstream'
-        jobs_setup_file = self.__create_jobs_setup_file(dataset_name=dataset_name,
+        project_name = self.test_function + '_with_upstream'
+        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
                                                         annotated_vcf_tabix=annotated_vcf_tabix,
                                                         anno_cols=DFLT_TEST_MUTREP_COLS,
                                                         anno_excl_tags=DFLT_TEST_ANNO_EXCL_TAGS,
@@ -376,14 +369,14 @@ class TestTAVcfRecordXls(SafeTester):
         pl.gen_summary_report(pl.report_layout.report_regions)
         xls_file = join_path(self.working_dir,
                              "rpts",
-                             dataset_name+"_summary.xlsx")
+                             project_name+"_summary.xlsx")
         xu = XlsUtils(xls_file)
         self.assertEqual(xu.count_rows(),
                          32,
                          "upstream mutations cannot be correctly determined")
-        dataset_name = self.test_function
+        project_name = self.test_function
         rows_filter_actions = JOBS_SETUP_RPT_FILTER_NON_UPSTREAM
-        jobs_setup_file = self.__create_jobs_setup_file(dataset_name=dataset_name,
+        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
                                                         annotated_vcf_tabix=annotated_vcf_tabix,
                                                         anno_cols=DFLT_TEST_MUTREP_COLS,
                                                         anno_excl_tags=DFLT_TEST_ANNO_EXCL_TAGS,
@@ -393,7 +386,7 @@ class TestTAVcfRecordXls(SafeTester):
         pl.gen_summary_report(pl.report_layout.report_regions)
         xls_file = join_path(self.working_dir,
                              "rpts",
-                             dataset_name+"_summary.xlsx")
+                             project_name+"_summary.xlsx")
         xu = XlsUtils(xls_file)
         self.assertEqual(xu.count_rows(),
                          28,
@@ -406,12 +399,11 @@ class TestTAVcfRecordXls(SafeTester):
         - this test doesn't corresponding to any other tests
         """
 
-        self.individual_debug = True
         self.init_test(self.current_func_name)
         annotated_vcf_tabix = join_path(self.data_dir,
                                         "input.vcf.gz")
-        dataset_name = self.test_function + '_with_downstream'
-        jobs_setup_file = self.__create_jobs_setup_file(dataset_name=dataset_name,
+        project_name = self.test_function + '_with_downstream'
+        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
                                                         annotated_vcf_tabix=annotated_vcf_tabix,
                                                         anno_cols=DFLT_TEST_MUTREP_COLS,
                                                         anno_excl_tags=DFLT_TEST_ANNO_EXCL_TAGS,
@@ -420,14 +412,14 @@ class TestTAVcfRecordXls(SafeTester):
         pl.gen_summary_report(pl.report_layout.report_regions)
         xls_file = join_path(self.working_dir,
                              "rpts",
-                             dataset_name+"_summary.xlsx")
+                             project_name+"_summary.xlsx")
         xu = XlsUtils(xls_file)
         self.assertEqual(xu.count_rows(),
                          32,
                          "downstream mutations cannot be correctly determined")
-        dataset_name = self.test_function
+        project_name = self.test_function
         rows_filter_actions = JOBS_SETUP_RPT_FILTER_NON_DOWNSTREAM
-        jobs_setup_file = self.__create_jobs_setup_file(dataset_name=dataset_name,
+        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
                                                         annotated_vcf_tabix=annotated_vcf_tabix,
                                                         anno_cols=DFLT_TEST_MUTREP_COLS,
                                                         anno_excl_tags=DFLT_TEST_ANNO_EXCL_TAGS,
@@ -437,7 +429,7 @@ class TestTAVcfRecordXls(SafeTester):
         pl.gen_summary_report(pl.report_layout.report_regions)
         xls_file = join_path(self.working_dir,
                              "rpts",
-                             dataset_name+"_summary.xlsx")
+                             project_name+"_summary.xlsx")
         xu = XlsUtils(xls_file)
         self.assertEqual(xu.count_rows(),
                          31,
@@ -450,12 +442,11 @@ class TestTAVcfRecordXls(SafeTester):
         - this test doesn't corresponding to any other tests
         """
 
-        self.individual_debug = True
         self.init_test(self.current_func_name)
         annotated_vcf_tabix = join_path(self.data_dir,
                                         "input.vcf.gz")
-        dataset_name = self.test_function + '_with_utr'
-        jobs_setup_file = self.__create_jobs_setup_file(dataset_name=dataset_name,
+        project_name = self.test_function + '_with_utr'
+        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
                                                         annotated_vcf_tabix=annotated_vcf_tabix,
                                                         anno_cols=DFLT_TEST_MUTREP_COLS,
                                                         anno_excl_tags=DFLT_TEST_ANNO_EXCL_TAGS,
@@ -464,14 +455,14 @@ class TestTAVcfRecordXls(SafeTester):
         pl.gen_summary_report(pl.report_layout.report_regions)
         xls_file = join_path(self.working_dir,
                              "rpts",
-                             dataset_name+"_summary.xlsx")
+                             project_name+"_summary.xlsx")
         xu = XlsUtils(xls_file)
         self.assertEqual(xu.count_rows(),
                          32,
                          "UTR mutations cannot be correctly determined")
-        dataset_name = self.test_function
+        project_name = self.test_function
         rows_filter_actions = JOBS_SETUP_RPT_FILTER_NON_UTR
-        jobs_setup_file = self.__create_jobs_setup_file(dataset_name=dataset_name,
+        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
                                                         annotated_vcf_tabix=annotated_vcf_tabix,
                                                         anno_cols=DFLT_TEST_MUTREP_COLS,
                                                         anno_excl_tags=DFLT_TEST_ANNO_EXCL_TAGS,
@@ -481,7 +472,7 @@ class TestTAVcfRecordXls(SafeTester):
         pl.gen_summary_report(pl.report_layout.report_regions)
         xls_file = join_path(self.working_dir,
                              "rpts",
-                             dataset_name+"_summary.xlsx")
+                             project_name+"_summary.xlsx")
         xu = XlsUtils(xls_file)
         self.assertEqual(xu.count_rows(),
                          20,
@@ -494,12 +485,11 @@ class TestTAVcfRecordXls(SafeTester):
         - this test doesn't corresponding to any other tests
         """
 
-        self.individual_debug = True
         self.init_test(self.current_func_name)
         annotated_vcf_tabix = join_path(self.data_dir,
                                         "input.vcf.gz")
-        dataset_name = self.test_function + '_with_synonymous'
-        jobs_setup_file = self.__create_jobs_setup_file(dataset_name=dataset_name,
+        project_name = self.test_function + '_with_synonymous'
+        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
                                                         annotated_vcf_tabix=annotated_vcf_tabix,
                                                         anno_cols=DFLT_TEST_MUTREP_COLS,
                                                         anno_excl_tags=DFLT_TEST_ANNO_EXCL_TAGS,
@@ -508,14 +498,14 @@ class TestTAVcfRecordXls(SafeTester):
         pl.gen_summary_report(pl.report_layout.report_regions)
         xls_file = join_path(self.working_dir,
                              "rpts",
-                             dataset_name+"_summary.xlsx")
+                             project_name+"_summary.xlsx")
         xu = XlsUtils(xls_file)
         self.assertEqual(xu.count_rows(),
                          32,
                          "synonymous mutations cannot be correctly determined")
-        dataset_name = self.test_function
+        project_name = self.test_function
         rows_filter_actions = JOBS_SETUP_RPT_FILTER_NON_SYNONYMOUS
-        jobs_setup_file = self.__create_jobs_setup_file(dataset_name=dataset_name,
+        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
                                                         annotated_vcf_tabix=annotated_vcf_tabix,
                                                         anno_cols=DFLT_TEST_MUTREP_COLS,
                                                         anno_excl_tags=DFLT_TEST_ANNO_EXCL_TAGS,
@@ -525,7 +515,7 @@ class TestTAVcfRecordXls(SafeTester):
         pl.gen_summary_report(pl.report_layout.report_regions)
         xls_file = join_path(self.working_dir,
                              "rpts",
-                             dataset_name+"_summary.xlsx")
+                             project_name+"_summary.xlsx")
         xu = XlsUtils(xls_file)
         self.assertEqual(xu.count_rows(),
                          28,

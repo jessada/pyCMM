@@ -21,7 +21,6 @@ class TestTAVcfCall(SafeTester):
     def test_parse_cmm_gts(self):
         """ test if zygosity can be correctly determined """
 
-        self.individual_debug = True
         self.init_test(self.current_func_name)
         in_file = join_path(self.data_dir,
                                'input.vcf.gz')
@@ -90,7 +89,6 @@ class TestTAVcfCall(SafeTester):
         - very random cases
         """
 
-        self.individual_debug = True
         self.init_test(self.current_func_name)
         in_file = join_path(self.data_dir,
                                'input.vcf.gz')
@@ -161,7 +159,6 @@ class TestTAVcfCall(SafeTester):
         - allele frequency is an array of None, like [None, None, None, None]
         """
 
-        self.individual_debug = True
         self.init_test(self.current_func_name)
         in_file = join_path(self.data_dir,
                                'input.vcf.gz')
@@ -230,7 +227,6 @@ class TestTAVcfCall(SafeTester):
         - only one alternate allele and no allele frequency
         """
 
-        self.individual_debug = True
         self.init_test(self.current_func_name)
         in_file = join_path(self.data_dir,
                                'input.vcf.gz')
@@ -266,7 +262,6 @@ class TestTAVcfCall(SafeTester):
         - allele frequency is a floating point scalar less than 0.5
         """
 
-        self.individual_debug = True
         self.init_test(self.current_func_name)
         in_file = join_path(self.data_dir,
                                'input.vcf.gz')
@@ -301,7 +296,6 @@ class TestTAVcfCall(SafeTester):
         - allele frequency is a floating point scalar more than 0.5
         """
 
-        self.individual_debug = True
         self.init_test(self.current_func_name)
         in_file = join_path(self.data_dir,
                                'input.vcf.gz')
@@ -332,7 +326,6 @@ class TestTAVcfCall(SafeTester):
           like [None, 0.02, 0.03, None]
         """
 
-        self.individual_debug = True
         self.init_test(self.current_func_name)
         in_file = join_path(self.data_dir,
                                'input.vcf.gz')
@@ -462,7 +455,6 @@ class TestTAVcfCall(SafeTester):
           like [0.79, 0.02, 0.03, None]
         """
 
-        self.individual_debug = True
         self.init_test(self.current_func_name)
         in_file = join_path(self.data_dir,
                                'input.vcf.gz')
@@ -606,7 +598,6 @@ class TestTAVcfCall(SafeTester):
         - only one alternate allele and no allele frequency
         """
 
-        self.individual_debug = True
         self.init_test(self.current_func_name)
         in_file = join_path(self.data_dir,
                                'input.vcf.gz')
@@ -642,7 +633,6 @@ class TestTAVcfCall(SafeTester):
         - allele frequency is a floating point scalar less than 0.5
         """
 
-        self.individual_debug = True
         self.init_test(self.current_func_name)
         in_file = join_path(self.data_dir,
                                'input.vcf.gz')
@@ -678,7 +668,6 @@ class TestTAVcfCall(SafeTester):
         - test data
         """
 
-        self.individual_debug = True
         self.init_test(self.current_func_name)
         in_file = join_path(self.data_dir,
                                'input.vcf.gz')
@@ -709,7 +698,6 @@ class TestTAVcfCall(SafeTester):
         - true data
         """
 
-        self.individual_debug = True
         self.init_test(self.current_func_name)
         in_file = join_path(self.data_dir,
                                'input.vcf.gz')
@@ -731,7 +719,6 @@ class TestTAVcfCall(SafeTester):
           like [0.79, 0.02, 0.03, None]
         """
 
-        self.individual_debug = True
         self.init_test(self.current_func_name)
         in_file = join_path(self.data_dir,
                                'input.vcf.gz')
@@ -899,7 +886,6 @@ class TestTAVcfRecord(SafeTester):
     def test_is_shared_1(self):
         """ test shared mutation can be correctly identified in one sample """
 
-        self.individual_debug = True
         self.init_test(self.current_func_name)
         in_file = join_path(self.data_dir,
                                'input.vcf.gz')
@@ -1001,7 +987,6 @@ class TestTAVcfRecord(SafeTester):
     def test_is_shared_2(self):
         """ test shared mutation between two samples can be identified """
 
-        self.individual_debug = True
         self.init_test(self.current_func_name)
         in_file = join_path(self.data_dir,
                                'input.vcf.gz')
@@ -1063,7 +1048,6 @@ class TestTAVcfRecord(SafeTester):
     def test_is_shared_3(self):
         """ test shared mutation between three samples can be identified """
 
-        self.individual_debug = True
         self.init_test(self.current_func_name)
         in_file = join_path(self.data_dir,
                                'input.vcf.gz')
@@ -1169,7 +1153,6 @@ class TestTAVcfRecord(SafeTester):
         min_share_count=1
         """
 
-        self.individual_debug = True
         self.init_test(self.current_func_name)
         in_file = join_path(self.data_dir,
                                'input.vcf.gz')
@@ -1206,7 +1189,6 @@ class TestTAVcfRecord(SafeTester):
         min_share_count=2
         """
 
-        self.individual_debug = True
         self.init_test(self.current_func_name)
         in_file = join_path(self.data_dir,
                                'input.vcf.gz')
@@ -1243,7 +1225,6 @@ class TestTAVcfRecord(SafeTester):
         min_share_count=2
         """
 
-        self.individual_debug = True
         self.init_test(self.current_func_name)
         in_file = join_path(self.data_dir,
                                'input.vcf.gz')
@@ -1309,7 +1290,6 @@ class TestTAVcfRecord(SafeTester):
         min_share_count=3
         """
 
-        self.individual_debug = True
         self.init_test(self.current_func_name)
         in_file = join_path(self.data_dir,
                                'input.vcf.gz')
@@ -1371,7 +1351,6 @@ class TestTAVcfRecord(SafeTester):
     def test_has_mutation_1(self):
         """ test a mutation can be correctly identified in one sample """
 
-        self.individual_debug = True
         self.init_test(self.current_func_name)
         in_file = join_path(self.data_dir,
                                'input.vcf.gz')
@@ -1473,7 +1452,6 @@ class TestTAVcfRecord(SafeTester):
     def test_has_mutation_2(self):
         """ test shared mutation between two samples can be identified """
 
-        self.individual_debug = True
         self.init_test(self.current_func_name)
         in_file = join_path(self.data_dir,
                                'input.vcf.gz')
@@ -1535,7 +1513,6 @@ class TestTAVcfRecord(SafeTester):
     def test_has_mutation_3(self):
         """ test shared mutation between three samples can be identified """
 
-        self.individual_debug = True
         self.init_test(self.current_func_name)
         in_file = join_path(self.data_dir,
                                'input.vcf.gz')
@@ -1640,7 +1617,6 @@ class TestTAVcfRecord(SafeTester):
         without min_share_count parameter
         """
 
-        self.individual_debug = True
         self.init_test(self.current_func_name)
         sample_infos = []
         sample_infos.append("fam1:Al-17")
@@ -1753,7 +1729,6 @@ class TestTAVcfRecord(SafeTester):
         with min_share_count = 1
         """
 
-        self.individual_debug = True
         self.init_test(self.current_func_name)
         sample_infos = []
         sample_infos.append("fam1:Al-17")
@@ -1866,7 +1841,6 @@ class TestTAVcfRecord(SafeTester):
         with min_share_count = 2
         """
 
-        self.individual_debug = True
         self.init_test(self.current_func_name)
         sample_infos = []
         sample_infos.append("fam1:Al-17")
@@ -1979,7 +1953,6 @@ class TestTAVcfRecord(SafeTester):
         with min_share_count = 3
         """
 
-        self.individual_debug = True
         self.init_test(self.current_func_name)
         sample_infos = []
         sample_infos.append("fam1:Al-17")
@@ -2092,7 +2065,6 @@ class TestTAVcfRecord(SafeTester):
           - 0.1
         """
 
-        self.individual_debug = True
         self.init_test(self.current_func_name)
         in_file = join_path(self.data_dir,
                                'input.vcf.gz')
@@ -2197,7 +2169,6 @@ class TestTAVcfRecord(SafeTester):
           - 0.2
         """
 
-        self.individual_debug = True
         self.init_test(self.current_func_name)
         in_file = join_path(self.data_dir,
                                'input.vcf.gz')
@@ -2301,7 +2272,6 @@ class TestTAVcfRecord(SafeTester):
         test counting intergenic mutations can be identified (all are intergenics)
         """
 
-        self.individual_debug = True
         self.init_test(self.current_func_name)
         in_file = join_path(self.data_dir,
                                'input.vcf.gz')
@@ -2318,7 +2288,6 @@ class TestTAVcfRecord(SafeTester):
         test counting intergenic mutations can be identified (10 are intergenics)
         """
 
-        self.individual_debug = True
         self.init_test(self.current_func_name)
         in_file = join_path(self.data_dir,
                                'input.vcf.gz')
@@ -2335,7 +2304,6 @@ class TestTAVcfRecord(SafeTester):
         test counting intronic mutations can be identified (96 are intronics)
         """
 
-        self.individual_debug = True
         self.init_test(self.current_func_name)
         in_file = join_path(self.data_dir,
                                'input.vcf.gz')
@@ -2352,7 +2320,6 @@ class TestTAVcfRecord(SafeTester):
         test counting intronic and ncr_intronic mutations can be identified (17 are intronics)
         """
 
-        self.individual_debug = True
         self.init_test(self.current_func_name)
         in_file = join_path(self.data_dir,
                                'input.vcf.gz')

@@ -44,7 +44,6 @@ CELL_TYPE_HET_SHARED = 'HET_SHARED'
 CELL_TYPE_HOM_SHARED = 'HOM_SHARED'
 
 CHROM_POS_PATTERN = re.compile(r'''(?P<chrom>.+?):(?P<start_pos>.+?)-(?P<end_pos>.+)''')
-LAYOUT_VCF_COLS = 4
 RECORDS_LOG_INTERVAL = 1000
 
 # *************** report layout section ***************
@@ -93,6 +92,8 @@ XLS_CHROM_COL_IDX = 0
 XLS_POS_COL_IDX = 1
 XLS_REF_COL_IDX = 2
 XLS_ALT_COL_IDX = 3
+XLS_FILTER_COL_IDX = 4
+LAYOUT_VCF_COLS = XLS_FILTER_COL_IDX + 1
 
 FILTER_RARE = JOBS_SETUP_RPT_FILTER_RARE
 FILTER_NON_INTERGENIC = JOBS_SETUP_RPT_FILTER_NON_INTERGENIC
@@ -579,10 +580,11 @@ class MutRepPipeline(CMMPipeline):
     def __write_header(self, ws, samples_id):
         anno_cols = self.report_layout.anno_cols
         cell_fmt = self.plain_fmts[NO_COLOR]
-        ws.write(0, 0, "CHROM", cell_fmt)
-        ws.write(0, 1, "POS", cell_fmt)
-        ws.write(0, 2, "REF", cell_fmt)
-        ws.write(0, 3, "ALT", cell_fmt)
+        ws.write(0, XLS_CHROM_COL_IDX, "CHROM", cell_fmt)
+        ws.write(0, XLS_POS_COL_IDX, "POS", cell_fmt)
+        ws.write(0, XLS_REF_COL_IDX, "REF", cell_fmt)
+        ws.write(0, XLS_ALT_COL_IDX, "ALT", cell_fmt)
+        ws.write(0, XLS_FILTER_COL_IDX, "FILTER", cell_fmt)
         len_anno_cols = len(anno_cols)
         for anno_idx in xrange(len_anno_cols):
             col_name = self.__correct_header(anno_cols[anno_idx])
@@ -671,10 +673,16 @@ class MutRepPipeline(CMMPipeline):
             dflt_cell_fmt = self.plain_fmts[NO_COLOR]
         # start writing content
         alt_allele = vcf_record.alleles[allele_idx]
-        ws.write(row, 0, vcf_record.CHROM, dflt_cell_fmt)
-        ws.write(row, 1, str(vcf_record.POS), dflt_cell_fmt)
-        ws.write(row, 2, vcf_record.REF, dflt_cell_fmt)
-        ws.write(row, 3, str(alt_allele), dflt_cell_fmt)
+        ws.write(row, XLS_CHROM_COL_IDX, vcf_record.CHROM, dflt_cell_fmt)
+        ws.write(row, XLS_POS_COL_IDX, str(vcf_record.POS), dflt_cell_fmt)
+        ws.write(row, XLS_REF_COL_IDX, vcf_record.REF, dflt_cell_fmt)
+        ws.write(row, XLS_ALT_COL_IDX, str(alt_allele), dflt_cell_fmt)
+        if (type(vcf_record.FILTER) is list) and (len(vcf_record.FILTER) == 0):
+            ws.write(row, XLS_FILTER_COL_IDX, "PASS", dflt_cell_fmt)
+        elif type(vcf_record.FILTER) is list:
+            ws.write(row, XLS_FILTER_COL_IDX, ";".join(vcf_record.FILTER), dflt_cell_fmt)
+        else:
+            ws.write(row, XLS_FILTER_COL_IDX, ".", dflt_cell_fmt)
         len_anno_cols = len(anno_cols)
         # annotate INFO columns
         if self.report_layout.exprs is not None:
@@ -821,11 +829,12 @@ class MutRepPipeline(CMMPipeline):
         ws.set_column(XLS_POS_COL_IDX, XLS_POS_COL_IDX, 9)
         ws.set_column(XLS_REF_COL_IDX, XLS_REF_COL_IDX, 3.5)
         ws.set_column(XLS_ALT_COL_IDX, XLS_ALT_COL_IDX, 3.5)
+        ws.set_column(XLS_FILTER_COL_IDX, XLS_FILTER_COL_IDX, 3.5)
         ws.set_column(sample_start_idx, record_size-1, 3)
         row_freeze_idx = 1
         anno_cols = self.report_layout.anno_cols
         if GENE_REFGENE_COL_NAME in anno_cols:
-            col_freeze_idx = anno_cols.index(GENE_REFGENE_COL_NAME) + XLS_ALT_COL_IDX + 2
+            col_freeze_idx = anno_cols.index(GENE_REFGENE_COL_NAME) + LAYOUT_VCF_COLS + 1
         else:
             col_freeze_idx = 0
         ws.freeze_panes(row_freeze_idx, col_freeze_idx)
