@@ -82,6 +82,7 @@ JOBS_SETUP_RPT_FILTER_HAS_MUTATION = "Has-Mutation"
 JOBS_SETUP_RPT_FILTER_HAS_SHARED = "Has-Shared"
 JOBS_SETUP_RPT_ONLY_SUMMARY_KEY = "ONLY_SUMMARY"
 JOBS_SETUP_RPT_ONLY_FAMILIES_KEY = "ONLY_FAMILIES"
+JOBS_SETUP_RPT_FILTER_GENES_KEY = "FILTER_GENES"
 
 RPT_LAYOUT_CAPTION_ANNOATED_COLS = "annotated columns"
 RPT_LAYOUT_CAPTION_FREQ_RATIOS = "frequency ratio(s)"
@@ -421,11 +422,6 @@ class ReportLayout(CMMParams):
                                     default_val=False)
 
     @property
-    def summary_families_sheet(self):
-        return self._get_job_config(JOBS_SETUP_RPT_SUMMARY_FAMILIES_KEY,
-                                    default_val=False)
-
-    @property
     def call_detail(self):
         return JOBS_SETUP_RPT_CALL_DETAIL_KEY in self._get_job_config(JOBS_SETUP_RPT_EXTRA_ANNO_COLS_KEY,
                                                                       default_val=[])
@@ -480,9 +476,11 @@ class ReportLayout(CMMParams):
         return JOBS_SETUP_RPT_FILTER_HAS_SHARED in self._get_job_config(JOBS_SETUP_RPT_ROWS_FILTER_ACTIONS_CRITERIA_KEY,
                                                                         default_val=[])
 
-
+    @property
+    def summary_families_sheet(self):
         return self._get_job_config(JOBS_SETUP_RPT_SUMMARY_FAMILIES_KEY,
                                     default_val=False)
+
     @property
     def only_summary(self):
         return self._get_job_config(JOBS_SETUP_RPT_ONLY_SUMMARY_KEY,
@@ -512,6 +510,10 @@ class ReportLayout(CMMParams):
         elif self.__freq_ratios is None:
             self.__freq_ratios = []
         return self.__freq_ratios
+
+    @property
+    def filter_genes(self):
+        return self._get_job_config(JOBS_SETUP_RPT_FILTER_GENES_KEY)
 
     def __init_cell_colors(self):
         self.__cell_colors = {}
@@ -617,6 +619,14 @@ class MutRepPipeline(CMMPipeline):
                 call_detail.append(fmt + "=" + str(data))
         return ":".join(call_detail)
 
+    def __get_info_val(self, vcf_record, info_name, allele_idx):
+        info = vcf_record.INFO[info_name]
+        if (type(info) is list) and (len(info) == 1):
+            info = info[0]
+        elif (type(info) is list) and (len(info) > 1):
+            info = info[allele_idx-1]
+        return info
+
     def __write_content(self,
                         ws,
                         row,
@@ -624,14 +634,6 @@ class MutRepPipeline(CMMPipeline):
                         allele_idx,
                         samples_id,
                         ):
-        def get_info_val(info_name):
-            info = vcf_record.INFO[info_name]
-            if (type(info) is list) and (len(info) == 1):
-                info = info[0]
-            elif (type(info) is list) and (len(info) > 1):
-                info = info[allele_idx-1]
-            return info
-
         def cal_est_ors(cases_freq,
                         ctrls_freq,
                         ref_is_mutated,
@@ -694,22 +696,34 @@ class MutRepPipeline(CMMPipeline):
         for anno_idx in xrange(len_anno_cols):
             anno_col_name = anno_cols[anno_idx]
             if anno_col_name == EST_ORS_EARLYONSET_VS_BRC_COL_NAME:
-                info = cal_est_ors(cases_freq=get_info_val(WES294_OAF_EARLYONSET_AF_COL_NAME),
-                                   ctrls_freq=get_info_val(WES294_OAF_BRCS_AF_COL_NAME),
+                info = cal_est_ors(cases_freq=self.__get_info_val(vcf_record,
+                                                                  WES294_OAF_EARLYONSET_AF_COL_NAME,
+                                                                  allele_idx),
+                                   ctrls_freq=self.__get_info_val(vcf_record,
+                                                                  WES294_OAF_BRCS_AF_COL_NAME,
+                                                                  allele_idx),
                                    ref_is_mutated=vcf_record.ref_is_mutated[allele_idx],
                                    )
             elif anno_col_name == EST_ORS_EARLYONSET_VS_EXAC_NFE_COL_NAME:
-                info = cal_est_ors(cases_freq=get_info_val(WES294_OAF_EARLYONSET_AF_COL_NAME),
-                                   ctrls_freq=get_info_val(EXAC_NFE_COL_NAME),
+                info = cal_est_ors(cases_freq=self.__get_info_val(vcf_record,
+                                                                  WES294_OAF_EARLYONSET_AF_COL_NAME,
+                                                                  allele_idx),
+                                   ctrls_freq=self.__get_info_val(vcf_record,
+                                                                  EXAC_NFE_COL_NAME,
+                                                                  allele_idx),
                                    ref_is_mutated=vcf_record.ref_is_mutated[allele_idx],
                                    )
             elif anno_col_name == EST_ORS_EARLYONSET_VS_KG_EUR_COL_NAME:
-                info = cal_est_ors(cases_freq=get_info_val(WES294_OAF_EARLYONSET_AF_COL_NAME),
-                                   ctrls_freq=get_info_val(KG2014OCT_EUR_COL_NAME),
+                info = cal_est_ors(cases_freq=self.__get_info_val(vcf_record,
+                                                                  WES294_OAF_EARLYONSET_AF_COL_NAME,
+                                                                  allele_idx),
+                                   ctrls_freq=self.__get_info_val(vcf_record,
+                                                                  KG2014OCT_EUR_COL_NAME,
+                                                                  allele_idx),
                                    ref_is_mutated=vcf_record.ref_is_mutated[allele_idx],
                                    )
             else:
-                info = get_info_val(anno_col_name)
+                info = self.__get_info_val(vcf_record, anno_col_name, allele_idx)
             if anno_col_name in PREDICTION_COLS:
                 info = info.description
             if info == "":
@@ -811,6 +825,19 @@ class MutRepPipeline(CMMPipeline):
                             break
                 if delete_row:
                     continue
+                # If filter_genes is defined, only the filter_genes can be
+                # in the report. Otherwise, no filtering applied
+                if self.report_layout.filter_genes is not None: 
+                    gene_found = False
+                    gene_refgenes = self.__get_info_val(vcf_record,
+                                                        GENE_REFGENE_COL_NAME,
+                                                        allele_idx).split(',')
+                    for filter_gene in self.report_layout.filter_genes:
+                        if filter_gene in gene_refgenes:
+                            gene_found = True
+                            break
+                    if not gene_found:
+                        continue
                 self.__write_content(ws,
                                      row,
                                      vcf_record,
@@ -1243,5 +1270,8 @@ def create_jobs_setup_file(*args, **kwargs):
                                 JOBS_SETUP_RPT_FREQ_RATIOS_FREQ_KEY: freq,
                                 })
     rpt_cfg[JOBS_SETUP_RPT_FREQ_RATIOS_KEY] = job_freq_ratios
+    filter_genes = get_func_arg('filter_genes', kwargs)
+    if filter_genes is not None:
+        rpt_cfg[JOBS_SETUP_RPT_FILTER_GENES_KEY] = filter_genes.split(",")
     job_setup_document[JOBS_SETUP_RPT_LAYOUT_SECTION] = rpt_cfg
     pyaml.dump(job_setup_document, stream)
