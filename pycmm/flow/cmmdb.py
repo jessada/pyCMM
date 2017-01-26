@@ -123,7 +123,7 @@ class CMMDBPipeline(CMMPipeline):
                                                         samples_id=self.samples_id,
                                                         )
                 self.__out_stat_files.append(out_stat_file)
-                job_name = dataset_name + "_cal_stat"
+                job_name = dataset_name + "_get_freq"
                 self._submit_slurm_job(job_name,
                                        "1",
                                        script_name,

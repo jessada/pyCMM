@@ -298,6 +298,7 @@ class ReportLayout(CMMParams):
         raw_repr["genotyping calling detail"] = self.call_detail
         raw_repr["genotyping calling quality"] = self.call_gq
         raw_repr[RPT_LAYOUT_CAPTION_FREQ_RATIOS] = self.freq_ratios
+        raw_repr["genes list"] = self.filter_genes
         if self.report_regions is None:
             raw_repr[RPT_LAYOUT_CAPTION_RPT_REGIONS] = "ALL"
         else:
