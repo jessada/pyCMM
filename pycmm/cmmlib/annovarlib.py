@@ -138,7 +138,7 @@ class Annovar(pyCMMBase):
         self.info("The result is at "+self.out_annotated_vcf)
 
 
-class PredictionInfo(pyCMMBase):
+class PredictionInfo(CMMParams):
     """
     To encapsulate the effect prediction information
     """
@@ -151,6 +151,13 @@ class PredictionInfo(pyCMMBase):
         self.__code = code
         self.__description = description
         self.__harmful = harmful
+
+    def get_raw_repr(self, **kwargs):
+        raw_repr = super(PredictionInfo, self).get_raw_repr(**kwargs)
+        raw_repr["code"] = self.code
+        raw_repr["description"] = self.description
+        raw_repr["harmful"] = self.harmful
+        return raw_repr
 
     @property
     def code(self):
@@ -169,7 +176,7 @@ class PredictionInfo(pyCMMBase):
         return self.__harmful
 
 
-class PredictionTranslator(pyCMMBase):
+class PredictionTranslator(CMMParams):
     """
     A class to translate codes from effect predictors by using informaiton
     from http://annovar.openbioinformatics.org/en/latest/user-guide/filter/
@@ -193,7 +200,7 @@ class PredictionTranslator(pyCMMBase):
         self.__set_prediction_info()
         self.__null_prediction = PredictionInfo(code='.',
                                                 description='.',
-                                                harmful=False,
+                                                harmful=True,
                                                 )
 
     def __set_prediction_info(self):
@@ -219,7 +226,7 @@ class PredictionTranslator(pyCMMBase):
         self.__pred_info[POLYPHEN2_HDIV_PRED_COL]['D'] = pred_info
         pred_info = PredictionInfo(code='P',
                                    description='Possibly damaging',
-                                   harmful=True,
+                                   harmful=False,
                                    )
         self.__pred_info[POLYPHEN2_HDIV_PRED_COL]['P'] = pred_info
         pred_info = PredictionInfo(code='B',
@@ -236,7 +243,7 @@ class PredictionTranslator(pyCMMBase):
         self.__pred_info[POLYPHEN2_HVAR_PRED_COL]['D'] = pred_info
         pred_info = PredictionInfo(code='P',
                                    description='Possibly damaging',
-                                   harmful=True,
+                                   harmful=False,
                                    )
         self.__pred_info[POLYPHEN2_HVAR_PRED_COL]['P'] = pred_info
         pred_info = PredictionInfo(code='B',
@@ -258,7 +265,7 @@ class PredictionTranslator(pyCMMBase):
         self.__pred_info[LRT_PRED_COL]['N'] = pred_info
         pred_info = PredictionInfo(code='U',
                                    description='Unknown',
-                                   harmful=False,
+                                   harmful=True,
                                    )
         self.__pred_info[LRT_PRED_COL]['U'] = pred_info
 

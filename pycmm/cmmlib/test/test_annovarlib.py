@@ -224,7 +224,7 @@ class TestPredictionTranslator(SafeTester):
                          True,
                          "PredictionTranslator cannot tell harmfulness of "+POLYPHEN2_HDIV_PRED_COL)
         self.assertEqual(pred.get_prediction_info(POLYPHEN2_HDIV_PRED_COL, "P").harmful,
-                         True,
+                         False,
                          "PredictionTranslator cannot tell harmfulness of "+POLYPHEN2_HDIV_PRED_COL)
         self.assertEqual(pred.get_prediction_info(POLYPHEN2_HDIV_PRED_COL, "B").harmful,
                          False,
@@ -233,7 +233,7 @@ class TestPredictionTranslator(SafeTester):
                          True,
                          "PredictionTranslator cannot tell harmfulness of "+POLYPHEN2_HVAR_PRED_COL)
         self.assertEqual(pred.get_prediction_info(POLYPHEN2_HVAR_PRED_COL, "P").harmful,
-                         True,
+                         False,
                          "PredictionTranslator cannot tell harmfulness of "+POLYPHEN2_HVAR_PRED_COL)
         self.assertEqual(pred.get_prediction_info(POLYPHEN2_HVAR_PRED_COL, "B").harmful,
                          False,
@@ -245,7 +245,7 @@ class TestPredictionTranslator(SafeTester):
                          False,
                          "PredictionTranslator cannot tell harmfulness of "+LRT_PRED_COL)
         self.assertEqual(pred.get_prediction_info(LRT_PRED_COL, "U").harmful,
-                         False,
+                         True,
                          "PredictionTranslator cannot tell harmfulness of "+LRT_PRED_COL)
         self.assertEqual(pred.get_prediction_info(MUTATIONTASTER_PRED_COL, "A").harmful,
                          True,
@@ -299,7 +299,7 @@ class TestPredictionTranslator(SafeTester):
                          False,
                          "PredictionTranslator cannot tell harmfulness of "+LR_PRED_COL)
 
-    def test_is_harmful_1(self):
+    def test_is_harmful_2(self):
         """ to if the predictor can tell the harmfulness in special scenarios"""
         self.init_test(self.current_func_name)
         pred = PredictionTranslator()
@@ -310,7 +310,7 @@ class TestPredictionTranslator(SafeTester):
                          False,
                          "PredictionTranslator cannot work correctly if the prediction code is unknown")
         self.assertEqual(pred.get_prediction_info(LR_PRED_COL, ".").harmful,
-                         False,
+                         True,
                          "PredictionTranslator cannot work correctly if there is no prediction code")
 
     def tearDown(self):

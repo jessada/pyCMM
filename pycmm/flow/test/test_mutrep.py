@@ -5,12 +5,16 @@ from os.path import dirname
 from collections import OrderedDict
 from pycmm.template import SafeTester
 from pycmm.cmmlib.xlslib import XlsUtils
+from pycmm.cmmlib.colorlib import COLORS_RGB
 from pycmm.settings import DFLT_MUTREP_FREQ_RATIOS
 from pycmm.settings import ALL_MUTREP_ANNO_COLS
 from pycmm.settings import MT_COLS_TAG
 from pycmm.settings import AXEQ_CHR9_COLS_TAG
+from pycmm.settings import AXEQ_CHR3_6_14_18_COLS_TAG
+from pycmm.settings import AXEQ_CHR5_19_COLS_TAG
 from pycmm.settings import MUTSTAT_DETAILS_COLS_TAG
 from pycmm.settings import EXAC_OTH_COLS_TAG
+from pycmm.settings import LJB_SCORE_COLS_TAG
 from pycmm.settings import UNKNOWN_COLS_TAG
 from pycmm.settings import FUNC_REFGENE_COL_NAME
 from pycmm.settings import EXONICFUNC_REFGENE_COL_NAME
@@ -24,15 +28,18 @@ from pycmm.settings import AXEQ_CHR3_6_14_18_PF_COL_NAME
 from pycmm.settings import AXEQ_CHR5_19_GF_COL_NAME
 from pycmm.settings import PRIMARY_MAF_VAR
 from pycmm.settings import EXAC_ALL_COL_NAME
+from pycmm.settings import PATHOGENIC_COUNT_COL_NAME
 from pycmm.settings import FULL_SYSTEM_TEST
 from pycmm.settings import WES294_OAF_EARLYONSET_AF_COL_NAME
 from pycmm.settings import WES294_OAF_EARLYONSET_GF_COL_NAME
-from pycmm.settings import EST_ORS_EARLYONSET_VS_BRC_COL_NAME
+from pycmm.settings import EST_KVOT_EARLYONSET_VS_BRC_COL_NAME
+from pycmm.settings import EST_KVOT_EARLYONSET_VS_EXAC_NFE_COL_NAME
+from pycmm.settings import EST_KVOT_EARLYONSET_VS_KG_EUR_COL_NAME
 from pycmm.settings import WES294_OAF_BRCS_AF_COL_NAME
-from pycmm.settings import EST_ORS_EARLYONSET_VS_BRC_COL_NAME
 from pycmm.flow.mutrep import MutRepPipeline
 from pycmm.flow.mutrep import create_jobs_setup_file
 from pycmm.flow.mutrep import JOBS_SETUP_RPT_FILTER_RARE
+from pycmm.flow.mutrep import JOBS_SETUP_RPT_FILTER_PASS_VQSR
 from pycmm.flow.mutrep import JOBS_SETUP_RPT_FILTER_NON_INTERGENIC
 from pycmm.flow.mutrep import JOBS_SETUP_RPT_FILTER_NON_INTRONIC
 from pycmm.flow.mutrep import JOBS_SETUP_RPT_FILTER_NON_UPSTREAM
@@ -41,9 +48,14 @@ from pycmm.flow.mutrep import JOBS_SETUP_RPT_FILTER_NON_UTR
 from pycmm.flow.mutrep import JOBS_SETUP_RPT_FILTER_NON_SYNONYMOUS
 from pycmm.flow.mutrep import JOBS_SETUP_RPT_FILTER_HAS_MUTATION
 from pycmm.flow.mutrep import JOBS_SETUP_RPT_FILTER_HAS_SHARED
+from pycmm.flow.mutrep import JOBS_SETUP_RPT_FILTER_NON_RECESSIVE_GENE
 from pycmm.flow.mutrep import ACTION_DELETE_ROW
 from pycmm.flow.mutrep import ACTION_COLOR_ROW
 from pycmm.flow.mutrep import ACTION_COLOR_COL
+from pycmm.flow.mutrep import TXT_COMPOUND_HETEROZYGOTE_CASES_COUNT
+from pycmm.flow.mutrep import TXT_COMPOUND_HETEROZYGOTE_FREQ_RATIO
+from pycmm.flow.mutrep import TXT_HOMOZYGOTE_CASES_COUNT
+from pycmm.flow.mutrep import TXT_HOMOZYGOTE_FREQ_RATIO
 
 DFLT_TEST_MUTREP_COLS = OrderedDict()
 DFLT_TEST_MUTREP_COLS[FUNC_REFGENE_COL_NAME] = ALL_MUTREP_ANNO_COLS[FUNC_REFGENE_COL_NAME]
@@ -67,6 +79,8 @@ DFLT_TEST_ANNO_EXCL_TAGS += "," + UNKNOWN_COLS_TAG
 
 MUTREP_TEST = False
 
+RGB_NO_FILL = "00000000"
+
 class TestMutRepPipeline(SafeTester):
 
     def __init__(self, methodName):
@@ -77,52 +91,23 @@ class TestMutRepPipeline(SafeTester):
     def setUp(self):
         pass
 
-    def __create_jobs_setup_file(self,
-                                 project_name=None,
-                                 sample_info=None,
-                                 anno_cols=DFLT_TEST_MUTREP_COLS,
-                                 anno_excl_tags=None,
-                                 header_corrections=None,
-                                 annotated_vcf_tabix=None,
-                                 report_regions=DFLT_TEST_REPORT_REGIONS,
-                                 frequency_ratios=DFLT_TEST_FREQ_RATIOS,
-                                 filter_genes=None,
-                                 expression_patterns=None,
-                                 expression_usages=None,
-                                 split_chrom=False,
-                                 summary_families_sheet=False,
-                                 call_detail=False,
-                                 call_gq=False,
-                                 rows_filter_actions=None,
-                                 only_summary=False,
-                                 only_families=False,
-                                 ):
-        jobs_setup_file = join_path(self.working_dir,
-                                    self.test_function+'_jobs_setup.txt')
-        if project_name is None:
-            project_name = self.test_function
-        create_jobs_setup_file(project_name=project_name,
-                               project_out_dir=self.working_dir,
-                               sample_info=sample_info,
-                               anno_cols=",".join(anno_cols),
-                               anno_excl_tags=anno_excl_tags,
-                               header_corrections=header_corrections,
-                               annotated_vcf_tabix=annotated_vcf_tabix,
-                               report_regions=report_regions,
-                               frequency_ratios=frequency_ratios,
-                               filter_genes=filter_genes,
-                               expression_patterns=expression_patterns,
-                               expression_usages=expression_usages,
-                               split_chrom=split_chrom,
-                               summary_families_sheet=summary_families_sheet,
-                               call_detail=call_detail,
-                               call_gq=call_gq,
-                               rows_filter_actions=rows_filter_actions,
-                               only_summary=only_summary,
-                               only_families=only_families,
-                               out_jobs_setup_file=jobs_setup_file,
-                               )
-        return jobs_setup_file
+    def __create_jobs_setup_file(self, *args, **kwargs):
+        if 'project_name' not in kwargs:
+            kwargs['project_name'] = self.test_function
+        if 'anno_cols' not in kwargs:
+            anno_cols = DFLT_TEST_MUTREP_COLS
+        else:
+            anno_cols = kwargs['anno_cols']
+        if 'report_regions' not in kwargs:
+            kwargs['report_regions'] = DFLT_TEST_REPORT_REGIONS
+        if 'frequency_ratios' not in kwargs:
+            kwargs['frequency_ratios'] = DFLT_TEST_FREQ_RATIOS
+        kwargs['anno_cols'] = ",".join(anno_cols)
+        kwargs['project_out_dir'] = self.working_dir
+        kwargs['jobs_setup_file'] = join_path(self.working_dir,
+                                              self.test_function+'_jobs_setup.txt')
+        create_jobs_setup_file(*args, **kwargs)
+        return kwargs['jobs_setup_file']
 
     def test_load_jobs_info_1(self):
         """ test if default layout configurations are loaded correctly """
@@ -162,30 +147,39 @@ class TestMutRepPipeline(SafeTester):
                          "MutRepPipeline cannot correctly read report layout info 'call info' from jobs setup file")
         self.assertFalse(pl.report_layout.filter_rare,
                          "MutRepPipeline cannot correctly read report layout info 'filter rare' from jobs setup file")
+        self.assertFalse(pl.report_layout.filter_pass_vqsr,
+                         "MutRepPipeline cannot correctly read report layout info 'filter pass vqsr' from jobs setup file")
         self.assertFalse(pl.report_layout.filter_non_intergenic,
                          "MutRepPipeline cannot correctly read report layout info 'filter non-intergenic' from jobs setup file")
         self.assertFalse(pl.report_layout.filter_non_intronic,
                          "MutRepPipeline cannot correctly read report layout info 'filter non-intronic' from jobs setup file")
         self.assertFalse(pl.report_layout.filter_has_mutation,
                          "MutRepPipeline cannot correctly read report layout info 'filter has-mutation' from jobs setup file")
+        self.assertFalse(pl.report_layout.filter_non_recessive_gene,
+                         "MutRepPipeline cannot correctly read report layout info 'filter non-recessive-gene' from jobs setup file")
         self.assertFalse(pl.report_layout.only_summary,
                          "MutRepPipeline cannot correctly read report layout info 'only summary' from jobs setup file")
         self.assertFalse(pl.report_layout.only_families,
                          "MutRepPipeline cannot correctly read report layout info 'only families' from jobs setup file")
         self.assertTrue(pl.report_layout.filter_genes is None,
                         "MutRepPipeline cannot correctly read report layout info 'filter genes' from jobs setup file")
+        self.assertFalse(pl.report_layout.coloring_shared,
+                         "MutRepPipeline cannot correctly read report layout info 'coloring shared' from jobs setup file")
+        self.assertFalse(pl.report_layout.coloring_zygosity,
+                         "MutRepPipeline cannot correctly read report layout info 'coloring zygosity' from jobs setup file")
 
     def test_load_jobs_info_2(self):
         """ test if non-default layout configurations are loaded correctly """
 
-        self.individual_debug = True
         self.init_test(self.current_func_name)
         dummy_annotated_vcf_tabix = join_path(self.data_dir,
                                               "input.vcf.gz")
         rows_filter_actions = JOBS_SETUP_RPT_FILTER_RARE
+        rows_filter_actions += ',' + JOBS_SETUP_RPT_FILTER_PASS_VQSR
         rows_filter_actions += ',' + JOBS_SETUP_RPT_FILTER_NON_INTERGENIC
         rows_filter_actions += ',' + JOBS_SETUP_RPT_FILTER_NON_INTRONIC
         rows_filter_actions += ',' + JOBS_SETUP_RPT_FILTER_HAS_MUTATION
+        rows_filter_actions += ',' + JOBS_SETUP_RPT_FILTER_NON_RECESSIVE_GENE
         jobs_setup_file = self.__create_jobs_setup_file(anno_excl_tags=DFLT_TEST_ANNO_EXCL_TAGS,
                                                         header_corrections="old_header:new_header",
                                                         annotated_vcf_tabix=dummy_annotated_vcf_tabix,
@@ -201,6 +195,8 @@ class TestMutRepPipeline(SafeTester):
                                                         rows_filter_actions=rows_filter_actions,
                                                         only_summary=True,
                                                         only_families=True,
+                                                        coloring_shared=True,
+                                                        coloring_zygosity=True,
                                                         )
         pl = MutRepPipeline(jobs_setup_file=jobs_setup_file)
         self.assertEqual(pl.report_layout.anno_cols[3],
@@ -255,12 +251,16 @@ class TestMutRepPipeline(SafeTester):
                         "MutRepPipeline cannot correctly read report layout info 'call info' from jobs setup file")
         self.assertTrue(pl.report_layout.filter_rare,
                         "MutRepPipeline cannot correctly read report layout info 'filter rare' from jobs setup file")
+        self.assertTrue(pl.report_layout.filter_pass_vqsr,
+                        "MutRepPipeline cannot correctly read report layout info 'filter pass vqsr' from jobs setup file")
         self.assertTrue(pl.report_layout.filter_non_intergenic,
                         "MutRepPipeline cannot correctly read report layout info 'filter non-intergenic' from jobs setup file")
         self.assertTrue(pl.report_layout.filter_non_intronic,
                         "MutRepPipeline cannot correctly read report layout info 'filter non-intronic' from jobs setup file")
         self.assertTrue(pl.report_layout.filter_has_mutation,
                         "MutRepPipeline cannot correctly read report layout info 'filter has-mutation' from jobs setup file")
+        self.assertTrue(pl.report_layout.filter_non_recessive_gene,
+                        "MutRepPipeline cannot correctly read report layout info 'filter non-recessive-gene' from jobs setup file")
         self.assertTrue(pl.report_layout.only_summary,
                         "MutRepPipeline cannot correctly read report layout info 'only summary' from jobs setup file")
         self.assertTrue(pl.report_layout.only_families,
@@ -268,11 +268,14 @@ class TestMutRepPipeline(SafeTester):
         self.assertEqual(pl.report_layout.filter_genes[0],
                          'CHEK2',
                          "MutRepPipeline cannot correctly read report layout info 'filter genes' from jobs setup file")
+        self.assertTrue(pl.report_layout.coloring_shared,
+                        "MutRepPipeline cannot correctly read report layout info 'coloring shared' from jobs setup file")
+        self.assertTrue(pl.report_layout.coloring_zygosity,
+                        "MutRepPipeline cannot correctly read report layout info 'coloring zygosity' from jobs setup file")
 
     def test_load_jobs_info_3(self):
         """ test if non-default (None) layout configurations are loaded correctly """
 
-        self.individual_debug = True
         self.init_test(self.current_func_name)
         jobs_setup_file = self.__create_jobs_setup_file(report_regions=None,
                                                         header_corrections="old_header1:new_header1,old_header2:new_header2",
@@ -894,7 +897,7 @@ class TestMutRepPipeline(SafeTester):
         jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
                                                         annotated_vcf_tabix=annotated_vcf_tabix,
                                                         report_regions="6:78171940-78172992,18:28610987-28611790",
-                                                        expression_patterns='exp_ns_snv:"ExonicFunc.refGene" == \'synonymous_SNV\'',
+                                                        expression_patterns='exp_ns_snv:"ExonicFunc.refGene"==\'synonymous_SNV\'',
                                                         expression_usages="exp_ns_snv:del_row",
                                                         call_detail="YES",
                                                         )
@@ -997,16 +1000,17 @@ class TestMutRepPipeline(SafeTester):
                          "splicing",
                          "Incorrect cell value"
                          )
+        exp_rgb = "FF" + COLORS_RGB["ROSY_BROWN"][-6:]
         self.assertEqual(xu.get_cell_rgb(8, 2, sheet_idx=0),
-                         "FFBC8F8F",
+                         exp_rgb,
                          "Incorrect color"
                          )
         self.assertEqual(xu.get_cell_rgb(8, col_idx, sheet_idx=0),
-                         "FFBC8F8F",
+                         exp_rgb,
                          "Incorrect color"
                          )
         self.assertNotEqual(xu.get_cell_rgb(7, col_idx, sheet_idx=0),
-                            "FFBC8F8F",
+                            exp_rgb,
                             "Incorrect color"
                             )
 
@@ -1039,26 +1043,29 @@ class TestMutRepPipeline(SafeTester):
                          "exonic",
                          "Incorrect cell value"
                          )
-        self.assertEqual(xu.get_cell_rgb(5, 14, sheet_idx=0),
-                         "FFBC8F8F",
+        exp_rgb = "FF" + COLORS_RGB["ROSY_BROWN"][-6:]
+        self.assertEqual(xu.get_cell_rgb(5, col_idx, sheet_idx=0),
+                         exp_rgb,
                          "Incorrect color"
                          )
         self.assertEqual(xu.get_cell_rgb(5, col_idx, sheet_idx=0),
-                         "FFBC8F8F",
+                         exp_rgb,
                          "Incorrect color"
                          )
         self.assertNotEqual(xu.get_cell_rgb(2, col_idx, sheet_idx=0),
-                            "FFBC8F8F",
+                            exp_rgb,
                             "Incorrect color"
                             )
         col_idx = xu.get_col_idx(col_name="cytoBand", sheet_idx=0)
+        exp_rgb = "FF" + COLORS_RGB["TEAL"][-6:]
         self.assertEqual(xu.get_cell_rgb(4, col_idx, sheet_idx=0),
-                         "FF008080",
+                         exp_rgb,
                          "Incorrect color"
                          )
         col_idx = xu.get_col_idx(col_name="Gene.refGene", sheet_idx=0)
+        exp_rgb = "FF" + COLORS_RGB["YELLOW"][-6:]
         self.assertEqual(xu.get_cell_rgb(4, col_idx, sheet_idx=0),
-                         "FFFFFF00",
+                         exp_rgb,
                          "Incorrect color"
                          )
 
@@ -1077,6 +1084,7 @@ class TestMutRepPipeline(SafeTester):
                                                         report_regions="9:99700709-99702632",
                                                         sample_info="8:Co-35:Co-37,13:Co-95,275:Co-1262:Co-618,296:Co-793:Co-876",
                                                         summary_families_sheet=True,
+                                                        coloring_shared=True,
                                                         )
         pl = MutRepPipeline(jobs_setup_file=jobs_setup_file)
         pl.gen_summary_report(pl.report_layout.report_regions)
@@ -1089,42 +1097,14 @@ class TestMutRepPipeline(SafeTester):
                          "het",
                          "Incorrect cell value"
                          )
+        exp_rgb = "FF" + COLORS_RGB["SILVER"][-6:]
         self.assertEqual(xu.get_cell_rgb(5, col_idx, sheet_idx=0),
-                         "FFC0C0C0",
+                         exp_rgb,
                          "Incorrect color"
                          )
 
     @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST, "taking too long time to test")
-    def test_expression_action_del_row_1(self):
-        """
-        test if expreesion patterns and expression actions can be used
-        for deleting rows with a given pattern
-        """
-
-        self.init_test(self.current_func_name)
-        annotated_vcf_tabix = join_path(self.data_dir,
-                                        "input.vcf.gz")
-        project_name = self.test_function
-        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
-                                                        annotated_vcf_tabix=annotated_vcf_tabix,
-                                                        report_regions="6:78171940-78172992,18:28610987-28611790",
-                                                        expression_patterns='exp_ns_snv:"ExonicFunc.refGene" == \'synonymous_SNV\'',
-                                                        expression_usages="exp_ns_snv:del_row",
-                                                        call_detail="YES",
-                                                        )
-        pl = MutRepPipeline(jobs_setup_file=jobs_setup_file)
-        pl.gen_summary_report(pl.report_layout.report_regions)
-        xls_file = join_path(self.working_dir,
-                             "rpts",
-                             project_name+"_summary.xlsx")
-        xu = XlsUtils(xls_file)
-        self.assertEqual(xu.count_rows(sheet_idx=0),
-                         8,
-                         "Incorrect number of rows"
-                         )
-
-    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST, "taking too long time to test")
-    def test_cal_est_ors_1(self):
+    def test_cal_est_kvot_1(self):
         """
         test variable type handling in test_cal_ors
         """
@@ -1135,7 +1115,7 @@ class TestMutRepPipeline(SafeTester):
         project_name = self.test_function
         anno_cols = list(DFLT_TEST_MUTREP_COLS)
         anno_cols.append(KG2014OCT_EUR_COL_NAME)
-        anno_cols.append(EST_ORS_EARLYONSET_VS_BRC_COL_NAME)
+        anno_cols.append(EST_KVOT_EARLYONSET_VS_BRC_COL_NAME)
         anno_cols.append(WES294_OAF_EARLYONSET_AF_COL_NAME)
         anno_cols.append(WES294_OAF_BRCS_AF_COL_NAME)
         jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
@@ -1155,7 +1135,7 @@ class TestMutRepPipeline(SafeTester):
                          )
 
     @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST, "taking too long time to test")
-    def test_cal_est_ors_2(self):
+    def test_cal_est_kvot_2(self):
         """
         test if there is mutation in reference for cal_est_ors
         """
@@ -1168,7 +1148,9 @@ class TestMutRepPipeline(SafeTester):
         project_name = self.test_function
         anno_cols = list(DFLT_TEST_MUTREP_COLS)
         anno_cols.append(KG2014OCT_EUR_COL_NAME)
-        anno_cols.append(EST_ORS_EARLYONSET_VS_BRC_COL_NAME)
+        anno_cols.append(EST_KVOT_EARLYONSET_VS_BRC_COL_NAME)
+        anno_cols.append(EST_KVOT_EARLYONSET_VS_EXAC_NFE_COL_NAME)
+        anno_cols.append(EST_KVOT_EARLYONSET_VS_KG_EUR_COL_NAME)
         anno_cols.append(WES294_OAF_EARLYONSET_AF_COL_NAME)
         anno_cols.append(WES294_OAF_EARLYONSET_GF_COL_NAME)
         anno_cols.append(WES294_OAF_BRCS_AF_COL_NAME)
@@ -1185,7 +1167,7 @@ class TestMutRepPipeline(SafeTester):
                              "rpts",
                              project_name+"_summary.xlsx")
         xu = XlsUtils(xls_file)
-        ors_col_idx = xu.get_col_idx(EST_ORS_EARLYONSET_VS_BRC_COL_NAME)
+        ors_col_idx = xu.get_col_idx(EST_KVOT_EARLYONSET_VS_BRC_COL_NAME)
         self.assertEqual(xu.get_cell_value(4, ors_col_idx),
                          "NA",
                          "Incorect ORS estimation"
@@ -1196,6 +1178,32 @@ class TestMutRepPipeline(SafeTester):
                          )
         self.assertEqual(xu.get_cell_value(6, ors_col_idx),
                          "INF",
+                         "Incorect ORS estimation"
+                         )
+        ors_col_idx = xu.get_col_idx(EST_KVOT_EARLYONSET_VS_EXAC_NFE_COL_NAME)
+        self.assertEqual(xu.get_cell_value(4, ors_col_idx),
+                         "NA",
+                         "Incorect ORS estimation"
+                         )
+        self.assertEqual(xu.get_cell_value(5, ors_col_idx),
+                         "1.3446",
+                         "Incorect ORS estimation"
+                         )
+        self.assertEqual(xu.get_cell_value(6, ors_col_idx),
+                         "0.5681",
+                         "Incorect ORS estimation"
+                         )
+        ors_col_idx = xu.get_col_idx(EST_KVOT_EARLYONSET_VS_KG_EUR_COL_NAME)
+        self.assertEqual(xu.get_cell_value(4, ors_col_idx),
+                         "NA",
+                         "Incorect ORS estimation"
+                         )
+        self.assertEqual(xu.get_cell_value(5, ors_col_idx),
+                         "1.2375",
+                         "Incorect ORS estimation"
+                         )
+        self.assertEqual(xu.get_cell_value(6, ors_col_idx),
+                         "0.9378",
                          "Incorect ORS estimation"
                          )
 
@@ -1392,3 +1400,529 @@ class TestMutRepPipeline(SafeTester):
                          37,
                          "Incorrect number of rows in the variants sheet"
                          )
+
+    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST, "taking too long time to test")
+    def test_coloring_shared_1(self):
+        """ test coloring shared samples when the option is off """
+
+        self.individual_debug = True
+        self.init_test(self.current_func_name)
+        annotated_vcf_tabix = join_path(self.data_dir,
+                                        "input.vcf.gz")
+        project_name = self.test_function
+        custom_excl_tags = DFLT_TEST_ANNO_EXCL_TAGS
+        custom_excl_tags += "," + AXEQ_CHR3_6_14_18_COLS_TAG
+        custom_excl_tags += "," + AXEQ_CHR5_19_COLS_TAG
+        custom_excl_tags += "," + LJB_SCORE_COLS_TAG
+        sample_info = join_path(self.data_dir,
+                                "sample.info")
+        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
+                                                        annotated_vcf_tabix=annotated_vcf_tabix,
+                                                        anno_cols=ALL_MUTREP_ANNO_COLS,
+                                                        anno_excl_tags=custom_excl_tags,
+                                                        sample_info=sample_info,
+                                                        report_regions="9",
+                                                        )
+        pl = MutRepPipeline(jobs_setup_file=jobs_setup_file)
+        pl.gen_summary_report(pl.report_layout.report_regions)
+        xls_file = join_path(self.working_dir,
+                             "rpts",
+                             project_name+"_summary.xlsx")
+        xu = XlsUtils(xls_file)
+        sample_col_idx = xu.get_col_idx("256-Co-388")
+        self.assertEqual(xu.get_cell_value(2, sample_col_idx),
+                         "wt",
+                         "Incorrect cell value"
+                         )
+        self.assertEqual(xu.get_cell_rgb(2, sample_col_idx),
+                         RGB_NO_FILL,
+                         "Incorrect color"
+                         )
+        self.assertEqual(xu.get_cell_value(3, sample_col_idx),
+                         "het",
+                         "Incorrect cell value"
+                         )
+        self.assertEqual(xu.get_cell_rgb(3, sample_col_idx),
+                         RGB_NO_FILL,
+                         "Incorrect color"
+                         )
+        sample_col_idx = xu.get_col_idx("13-Co-95")
+        self.assertEqual(xu.get_cell_value(2, sample_col_idx),
+                         ".",
+                         "Incorrect cell value"
+                         )
+        self.assertEqual(xu.get_cell_rgb(2, sample_col_idx),
+                         RGB_NO_FILL,
+                         "Incorrect color"
+                         )
+        self.assertEqual(xu.get_cell_value(3, sample_col_idx),
+                         "hom",
+                         "Incorrect cell value"
+                         )
+        self.assertEqual(xu.get_cell_rgb(3, sample_col_idx),
+                         RGB_NO_FILL,
+                         "Incorrect color"
+                         )
+        sample_col_idx = xu.get_col_idx("110-Co-1313")
+        self.assertEqual(xu.get_cell_value(2, sample_col_idx),
+                         "wt",
+                         "Incorrect cell value"
+                         )
+        self.assertEqual(xu.get_cell_rgb(2, sample_col_idx),
+                         RGB_NO_FILL,
+                         "Incorrect color"
+                         )
+        self.assertEqual(xu.get_cell_value(17, sample_col_idx),
+                         "het",
+                         "Incorrect cell value"
+                         )
+        self.assertEqual(xu.get_cell_rgb(17, sample_col_idx),
+                         RGB_NO_FILL,
+                         "Incorrect color"
+                         )
+        sample_col_idx = xu.get_col_idx("771-08F")
+        self.assertEqual(xu.get_cell_value(2, sample_col_idx),
+                         ".",
+                         "Incorrect cell value"
+                         )
+        self.assertEqual(xu.get_cell_rgb(2, sample_col_idx),
+                         RGB_NO_FILL,
+                         "Incorrect color"
+                         )
+        self.assertEqual(xu.get_cell_value(3, sample_col_idx),
+                         "hom",
+                         "Incorrect cell value"
+                         )
+        self.assertEqual(xu.get_cell_rgb(3, sample_col_idx),
+                         RGB_NO_FILL,
+                         "Incorrect color"
+                         )
+        self.assertEqual(xu.get_cell_value(15, sample_col_idx),
+                         "het",
+                         "Incorrect cell value"
+                         )
+        self.assertEqual(xu.get_cell_rgb(15, sample_col_idx),
+                         RGB_NO_FILL,
+                         "Incorrect color"
+                         )
+
+    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST, "taking too long time to test")
+    def test_coloring_shared_2(self):
+        """ test coloring shared samples when the option is on """
+
+        self.init_test(self.current_func_name)
+        annotated_vcf_tabix = join_path(self.data_dir,
+                                        "input.vcf.gz")
+        project_name = self.test_function
+        custom_excl_tags = DFLT_TEST_ANNO_EXCL_TAGS
+        custom_excl_tags += "," + AXEQ_CHR3_6_14_18_COLS_TAG
+        custom_excl_tags += "," + AXEQ_CHR5_19_COLS_TAG
+        custom_excl_tags += "," + LJB_SCORE_COLS_TAG
+        sample_info = join_path(self.data_dir,
+                                "sample.info")
+        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
+                                                        annotated_vcf_tabix=annotated_vcf_tabix,
+                                                        anno_cols=ALL_MUTREP_ANNO_COLS,
+                                                        anno_excl_tags=custom_excl_tags,
+                                                        sample_info=sample_info,
+                                                        report_regions="9",
+                                                        coloring_shared=True,
+                                                        )
+        pl = MutRepPipeline(jobs_setup_file=jobs_setup_file)
+        pl.gen_summary_report(pl.report_layout.report_regions)
+        xls_file = join_path(self.working_dir,
+                             "rpts",
+                             project_name+"_summary.xlsx")
+        xu = XlsUtils(xls_file)
+        sample_col_idx = xu.get_col_idx("256-Co-388")
+        exp_rgb = "FF" + COLORS_RGB["SILVER"][-6:]
+        self.assertEqual(xu.get_cell_value(2, sample_col_idx),
+                         "wt",
+                         "Incorrect cell value"
+                         )
+        self.assertEqual(xu.get_cell_rgb(2, sample_col_idx),
+                         RGB_NO_FILL,
+                         "Incorrect color"
+                         )
+        self.assertEqual(xu.get_cell_value(3, sample_col_idx),
+                         "het",
+                         "Incorrect cell value"
+                         )
+        self.assertEqual(xu.get_cell_rgb(3, sample_col_idx),
+                         exp_rgb,
+                         "Incorrect color"
+                         )
+        sample_col_idx = xu.get_col_idx("13-Co-95")
+        exp_rgb = "FF" + COLORS_RGB["GRAY25"][-6:]
+        self.assertEqual(xu.get_cell_value(2, sample_col_idx),
+                         ".",
+                         "Incorrect cell value"
+                         )
+        self.assertEqual(xu.get_cell_rgb(2, sample_col_idx),
+                         RGB_NO_FILL,
+                         "Incorrect color"
+                         )
+        self.assertEqual(xu.get_cell_value(3, sample_col_idx),
+                         "hom",
+                         "Incorrect cell value"
+                         )
+        self.assertEqual(xu.get_cell_rgb(3, sample_col_idx),
+                         exp_rgb,
+                         "Incorrect color"
+                         )
+        sample_col_idx = xu.get_col_idx("110-Co-1313")
+        self.assertEqual(xu.get_cell_value(2, sample_col_idx),
+                         "wt",
+                         "Incorrect cell value"
+                         )
+        self.assertEqual(xu.get_cell_rgb(2, sample_col_idx),
+                         RGB_NO_FILL,
+                         "Incorrect color"
+                         )
+        self.assertEqual(xu.get_cell_value(17, sample_col_idx),
+                         "het",
+                         "Incorrect cell value"
+                         )
+        self.assertEqual(xu.get_cell_rgb(17, sample_col_idx),
+                         RGB_NO_FILL,
+                         "Incorrect color"
+                         )
+        sample_col_idx = xu.get_col_idx("771-08F")
+        self.assertEqual(xu.get_cell_value(2, sample_col_idx),
+                         ".",
+                         "Incorrect cell value"
+                         )
+        self.assertEqual(xu.get_cell_rgb(2, sample_col_idx),
+                         RGB_NO_FILL,
+                         "Incorrect color"
+                         )
+        self.assertEqual(xu.get_cell_value(3, sample_col_idx),
+                         "hom",
+                         "Incorrect cell value"
+                         )
+        self.assertEqual(xu.get_cell_rgb(3, sample_col_idx),
+                         RGB_NO_FILL,
+                         "Incorrect color"
+                         )
+        self.assertEqual(xu.get_cell_value(15, sample_col_idx),
+                         "het",
+                         "Incorrect cell value"
+                         )
+        self.assertEqual(xu.get_cell_rgb(15, sample_col_idx),
+                         RGB_NO_FILL,
+                         "Incorrect color"
+                         )
+
+    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST, "taking too long time to test")
+    def test_coloring_zygosity_1(self):
+        """ test coloring shared samples when the option is off """
+
+        self.init_test(self.current_func_name)
+        annotated_vcf_tabix = join_path(self.data_dir,
+                                        "input.vcf.gz")
+        project_name = self.test_function
+        custom_excl_tags = DFLT_TEST_ANNO_EXCL_TAGS
+        custom_excl_tags += "," + AXEQ_CHR3_6_14_18_COLS_TAG
+        custom_excl_tags += "," + AXEQ_CHR5_19_COLS_TAG
+        custom_excl_tags += "," + LJB_SCORE_COLS_TAG
+        sample_info = join_path(self.data_dir,
+                                "sample.info")
+        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
+                                                        annotated_vcf_tabix=annotated_vcf_tabix,
+                                                        anno_cols=ALL_MUTREP_ANNO_COLS,
+                                                        anno_excl_tags=custom_excl_tags,
+                                                        sample_info=sample_info,
+                                                        report_regions="9",
+                                                        )
+        pl = MutRepPipeline(jobs_setup_file=jobs_setup_file)
+        pl.gen_summary_report(pl.report_layout.report_regions)
+        xls_file = join_path(self.working_dir,
+                             "rpts",
+                             project_name+"_summary.xlsx")
+        xu = XlsUtils(xls_file)
+        xls_file = join_path(self.working_dir,
+                             "rpts",
+                             project_name+"_summary.xlsx")
+        xu = XlsUtils(xls_file)
+        sample_col_idx = xu.get_col_idx("256-Co-388")
+        self.assertEqual(xu.get_cell_value(2, sample_col_idx),
+                         "wt",
+                         "Incorrect cell value"
+                         )
+        self.assertEqual(xu.get_cell_rgb(2, sample_col_idx),
+                         RGB_NO_FILL,
+                         "Incorrect color"
+                         )
+        self.assertEqual(xu.get_cell_value(3, sample_col_idx),
+                         "het",
+                         "Incorrect cell value"
+                         )
+        self.assertEqual(xu.get_cell_rgb(3, sample_col_idx),
+                         RGB_NO_FILL,
+                         "Incorrect color"
+                         )
+        sample_col_idx = xu.get_col_idx("13-Co-95")
+        self.assertEqual(xu.get_cell_value(2, sample_col_idx),
+                         ".",
+                         "Incorrect cell value"
+                         )
+        self.assertEqual(xu.get_cell_rgb(2, sample_col_idx),
+                         RGB_NO_FILL,
+                         "Incorrect color"
+                         )
+        self.assertEqual(xu.get_cell_value(3, sample_col_idx),
+                         "hom",
+                         "Incorrect cell value"
+                         )
+        self.assertEqual(xu.get_cell_rgb(3, sample_col_idx),
+                         RGB_NO_FILL,
+                         "Incorrect color"
+                         )
+        sample_col_idx = xu.get_col_idx("110-Co-1313")
+        self.assertEqual(xu.get_cell_value(2, sample_col_idx),
+                         "wt",
+                         "Incorrect cell value"
+                         )
+        self.assertEqual(xu.get_cell_rgb(2, sample_col_idx),
+                         RGB_NO_FILL,
+                         "Incorrect color"
+                         )
+        self.assertEqual(xu.get_cell_value(17, sample_col_idx),
+                         "het",
+                         "Incorrect cell value"
+                         )
+        self.assertEqual(xu.get_cell_rgb(17, sample_col_idx),
+                         RGB_NO_FILL,
+                         "Incorrect color"
+                         )
+        sample_col_idx = xu.get_col_idx("771-08F")
+        self.assertEqual(xu.get_cell_value(2, sample_col_idx),
+                         ".",
+                         "Incorrect cell value"
+                         )
+        self.assertEqual(xu.get_cell_rgb(2, sample_col_idx),
+                         RGB_NO_FILL,
+                         "Incorrect color"
+                         )
+        self.assertEqual(xu.get_cell_value(3, sample_col_idx),
+                         "hom",
+                         "Incorrect cell value"
+                         )
+        self.assertEqual(xu.get_cell_rgb(3, sample_col_idx),
+                         RGB_NO_FILL,
+                         "Incorrect color"
+                         )
+        self.assertEqual(xu.get_cell_value(15, sample_col_idx),
+                         "het",
+                         "Incorrect cell value"
+                         )
+        self.assertEqual(xu.get_cell_rgb(15, sample_col_idx),
+                         RGB_NO_FILL,
+                         "Incorrect color"
+                         )
+
+    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST, "taking too long time to test")
+    def test_coloring_zygosity_2(self):
+        """ test coloring shared samples when the option is on """
+
+        self.init_test(self.current_func_name)
+        annotated_vcf_tabix = join_path(self.data_dir,
+                                        "input.vcf.gz")
+        project_name = self.test_function
+        custom_excl_tags = DFLT_TEST_ANNO_EXCL_TAGS
+        custom_excl_tags += "," + AXEQ_CHR3_6_14_18_COLS_TAG
+        custom_excl_tags += "," + AXEQ_CHR5_19_COLS_TAG
+        custom_excl_tags += "," + LJB_SCORE_COLS_TAG
+        sample_info = join_path(self.data_dir,
+                                "sample.info")
+        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
+                                                        annotated_vcf_tabix=annotated_vcf_tabix,
+                                                        anno_cols=ALL_MUTREP_ANNO_COLS,
+                                                        anno_excl_tags=custom_excl_tags,
+                                                        sample_info=sample_info,
+                                                        report_regions="9",
+                                                        coloring_zygosity=True,
+                                                        )
+        pl = MutRepPipeline(jobs_setup_file=jobs_setup_file)
+        pl.gen_summary_report(pl.report_layout.report_regions)
+        xls_file = join_path(self.working_dir,
+                             "rpts",
+                             project_name+"_summary.xlsx")
+        xu = XlsUtils(xls_file)
+        sample_col_idx = xu.get_col_idx("256-Co-388")
+        exp_rgb = "FF" + COLORS_RGB["XLS_LIGHT_GREEN"][-6:]
+        self.assertEqual(xu.get_cell_value(2, sample_col_idx),
+                         "wt",
+                         "Incorrect cell value"
+                         )
+        self.assertEqual(xu.get_cell_rgb(2, sample_col_idx),
+                         RGB_NO_FILL,
+                         "Incorrect color"
+                         )
+        self.assertEqual(xu.get_cell_value(3, sample_col_idx),
+                         "het",
+                         "Incorrect cell value"
+                         )
+        self.assertEqual(xu.get_cell_rgb(3, sample_col_idx),
+                         exp_rgb,
+                         "Incorrect color"
+                         )
+        sample_col_idx = xu.get_col_idx("13-Co-95")
+        exp_rgb = "FF" + COLORS_RGB["XLS_DARK_GREEN"][-6:]
+        self.assertEqual(xu.get_cell_value(2, sample_col_idx),
+                         ".",
+                         "Incorrect cell value"
+                         )
+        self.assertEqual(xu.get_cell_rgb(2, sample_col_idx),
+                         RGB_NO_FILL,
+                         "Incorrect color"
+                         )
+        self.assertEqual(xu.get_cell_value(3, sample_col_idx),
+                         "hom",
+                         "Incorrect cell value"
+                         )
+        self.assertEqual(xu.get_cell_rgb(3, sample_col_idx),
+                         exp_rgb,
+                         "Incorrect color"
+                         )
+        sample_col_idx = xu.get_col_idx("1207-2818-07D")
+        exp_rgb = "FF" + COLORS_RGB["XLS_LIGHT_GREEN"][-6:]
+        self.assertEqual(xu.get_cell_value(17, sample_col_idx),
+                         "het",
+                         "Incorrect cell value"
+                         )
+        self.assertEqual(xu.get_cell_rgb(17, sample_col_idx),
+                         exp_rgb,
+                         "Incorrect color"
+                         )
+        sample_col_idx = xu.get_col_idx("771-08F")
+        self.assertEqual(xu.get_cell_value(2, sample_col_idx),
+                         ".",
+                         "Incorrect cell value"
+                         )
+        self.assertEqual(xu.get_cell_rgb(2, sample_col_idx),
+                         RGB_NO_FILL,
+                         "Incorrect color"
+                         )
+        exp_rgb = "FF" + COLORS_RGB["XLS_DARK_GREEN"][-6:]
+        self.assertEqual(xu.get_cell_value(3, sample_col_idx),
+                         "hom",
+                         "Incorrect cell value"
+                         )
+        self.assertEqual(xu.get_cell_rgb(3, sample_col_idx),
+                         exp_rgb,
+                         "Incorrect color"
+                         )
+        exp_rgb = "FF" + COLORS_RGB["XLS_LIGHT_GREEN"][-6:]
+        self.assertEqual(xu.get_cell_value(15, sample_col_idx),
+                         "het",
+                         "Incorrect cell value"
+                         )
+        self.assertEqual(xu.get_cell_rgb(15, sample_col_idx),
+                         exp_rgb,
+                         "Incorrect color"
+                         )
+
+    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST, "taking too long time to test")
+    def test_filter_non_recessive_gene_1(self):
+        """ test basic filtering non-recessive gene """
+
+        self.init_test(self.current_func_name)
+        annotated_vcf_tabix = join_path(self.data_dir,
+                                        "input.vcf.gz")
+        project_name = self.test_function
+        custom_excl_tags = DFLT_TEST_ANNO_EXCL_TAGS
+        custom_excl_tags += "," + AXEQ_CHR3_6_14_18_COLS_TAG
+        custom_excl_tags += "," + AXEQ_CHR5_19_COLS_TAG
+        custom_excl_tags += "," + LJB_SCORE_COLS_TAG
+        rows_filter_actions = JOBS_SETUP_RPT_FILTER_HAS_MUTATION
+        rows_filter_actions += ',' + JOBS_SETUP_RPT_FILTER_PASS_VQSR
+        rows_filter_actions += ',' + JOBS_SETUP_RPT_FILTER_NON_INTERGENIC
+        rows_filter_actions += ',' + JOBS_SETUP_RPT_FILTER_NON_INTRONIC
+        rows_filter_actions += ',' + JOBS_SETUP_RPT_FILTER_NON_UPSTREAM
+        rows_filter_actions += ',' + JOBS_SETUP_RPT_FILTER_NON_DOWNSTREAM
+        rows_filter_actions += ',' + JOBS_SETUP_RPT_FILTER_NON_UTR
+        rows_filter_actions += ',' + JOBS_SETUP_RPT_FILTER_NON_SYNONYMOUS
+        rows_filter_actions += ',' + JOBS_SETUP_RPT_FILTER_NON_RECESSIVE_GENE
+        expression_patterns = OrderedDict()
+        expression_patterns['filter_NA_young'] = '"' + WES294_OAF_EARLYONSET_AF_COL_NAME + '"==\'NA\''
+        expression_patterns['filter_unique_young'] = 'float("' + WES294_OAF_EARLYONSET_AF_COL_NAME + '")<0.0196'
+        expression_patterns['filter_kvot_young_vs_exac'] = '("' + EST_KVOT_EARLYONSET_VS_EXAC_NFE_COL_NAME + '"!=\'INF\')'
+        expression_patterns['filter_kvot_young_vs_exac'] += 'and("' + EST_KVOT_EARLYONSET_VS_EXAC_NFE_COL_NAME + '"!=\'\')'
+        expression_patterns['filter_kvot_young_vs_exac'] += 'and("' + EST_KVOT_EARLYONSET_VS_EXAC_NFE_COL_NAME + '"!=\'NA\')'
+        expression_patterns['filter_kvot_young_vs_exac'] += 'and(float("' + EST_KVOT_EARLYONSET_VS_EXAC_NFE_COL_NAME + '")<1.3)'
+        expression_patterns['filter_kvot_young_vs_brc'] = '("' + EST_KVOT_EARLYONSET_VS_BRC_COL_NAME + '"!=\'INF\')'
+        expression_patterns['filter_kvot_young_vs_brc'] += 'and("' + EST_KVOT_EARLYONSET_VS_BRC_COL_NAME + '"!=\'\')'
+        expression_patterns['filter_kvot_young_vs_brc'] += 'and(float("' + EST_KVOT_EARLYONSET_VS_BRC_COL_NAME + '")<1.3)'
+        expression_patterns['filter_ncRNA_exonic'] = '"' + FUNC_REFGENE_COL_NAME + '"==\'ncRNA_exonic\''
+        sample_info = join_path(self.data_dir,
+                                "sample.info")
+        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
+                                                        annotated_vcf_tabix=annotated_vcf_tabix,
+                                                        anno_cols=ALL_MUTREP_ANNO_COLS,
+                                                        anno_excl_tags=custom_excl_tags,
+                                                        sample_info=sample_info,
+                                                        report_regions="2,6,7,19",
+                                                        rows_filter_actions=rows_filter_actions,
+                                                        expression_patterns=",".join(map(lambda x: x+":"+expression_patterns[x], expression_patterns)),
+                                                        expression_usages=",".join(map(lambda x: x+":del_row", expression_patterns)),
+                                                        )
+        pl = MutRepPipeline(jobs_setup_file=jobs_setup_file)
+        pl.gen_summary_report(pl.report_layout.report_regions)
+        xls_file = join_path(self.working_dir,
+                             "rpts",
+                             project_name+"_summary.xlsx")
+        xu = XlsUtils(xls_file)
+        self.assertEqual(xu.count_rows(sheet_idx=0),
+                         10,
+                         "Incorrect number of rows in the variants sheet"
+                         )
+        info_col_idx = xu.get_col_idx(TXT_COMPOUND_HETEROZYGOTE_CASES_COUNT)
+        self.assertEqual(xu.get_cell_value(2, info_col_idx),
+                         23,
+                         "Incorrect cell value",
+                         )
+        self.assertEqual(xu.get_cell_value(5, info_col_idx),
+                         23,
+                         "Incorrect cell value",
+                         )
+        self.assertEqual(xu.get_cell_value(6, info_col_idx),
+                         1,
+                         "Incorrect cell value",
+                         )
+        info_col_idx = xu.get_col_idx(TXT_COMPOUND_HETEROZYGOTE_FREQ_RATIO)
+        self.assertEqual(xu.get_cell_value(6, info_col_idx),
+                         "0.02 vs 0.00",
+                         "Incorrect cell value",
+                         )
+        info_col_idx = xu.get_col_idx(TXT_HOMOZYGOTE_CASES_COUNT)
+        self.assertEqual(xu.get_cell_value(8, info_col_idx),
+                         9,
+                         "Incorrect cell value",
+                         )
+        info_col_idx = xu.get_col_idx(TXT_HOMOZYGOTE_FREQ_RATIO)
+        self.assertEqual(xu.get_cell_value(8, info_col_idx),
+                         "0.18 vs 0.05",
+                         "Incorrect cell value",
+                         )
+        sample_col_idx = xu.get_col_idx("1199-05o")
+        exp_rgb = "FF" + COLORS_RGB["XLS_GREEN"][-6:]
+        self.assertEqual(xu.get_cell_value(5, sample_col_idx),
+                         "het",
+                         "Incorrect cell value"
+                         )
+        self.assertEqual(xu.get_cell_rgb(5, sample_col_idx),
+                         exp_rgb,
+                         "Incorrect color"
+                         )
+        self.assertEqual(xu.get_cell_value(7, sample_col_idx),
+                         "het",
+                         "Incorrect cell value"
+                         )
+        self.assertEqual(xu.get_cell_rgb(7, sample_col_idx),
+                         RGB_NO_FILL,
+                         "Incorrect color"
+                         )
+
+    def tearDown(self):
+        self.remove_working_dir()

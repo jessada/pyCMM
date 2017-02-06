@@ -5,11 +5,17 @@ from pycmm.template import SafeTester
 from pycmm.settings import ALL_MUTREP_ANNO_COLS
 from pycmm.settings import PRIMARY_MAF_VAR
 from pycmm.settings import EXAC_ALL_COL_NAME
+from pycmm.settings import PATHOGENIC_COUNT_COL_NAME
 from pycmm.settings import FULL_SYSTEM_TEST
+from pycmm.settings import AXEQ_CHR9_COLS_TAG
+from pycmm.settings import AXEQ_CHR3_6_14_18_COLS_TAG
+from pycmm.settings import AXEQ_CHR5_19_COLS_TAG
+from pycmm.settings import LJB_SCORE_COLS_TAG
 from pycmm.cmmlib.xlslib import XlsUtils
 from pycmm.flow.mutrep import MutRepPipeline
 from pycmm.flow.mutrep import create_jobs_setup_file
 from pycmm.flow.mutrep import JOBS_SETUP_RPT_FILTER_RARE
+from pycmm.flow.mutrep import JOBS_SETUP_RPT_FILTER_PASS_VQSR
 from pycmm.flow.mutrep import JOBS_SETUP_RPT_FILTER_NON_INTRONIC
 from pycmm.flow.mutrep import JOBS_SETUP_RPT_FILTER_NON_INTERGENIC
 from pycmm.flow.mutrep import JOBS_SETUP_RPT_FILTER_NON_UPSTREAM
@@ -268,6 +274,46 @@ class TestTAVcfRecordXls(SafeTester):
                          "rare mutations cannot be correctly determined")
 
     @unittest.skipUnless(FULL_SYSTEM_TEST, "taking too long time to test")
+    def test_is_pass_vqsr_xls_2(self):
+        """
+        - test filter SNPs that pass QC (VQSR)
+        """
+
+        self.init_test(self.current_func_name)
+        annotated_vcf_tabix = join_path(self.data_dir,
+                                        "input.vcf.gz")
+        project_name = self.test_function + '_all'
+        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
+                                                        anno_cols=ALL_MUTREP_ANNO_COLS,
+                                                        annotated_vcf_tabix=annotated_vcf_tabix,
+                                                        )
+        pl = MutRepPipeline(jobs_setup_file=jobs_setup_file)
+        pl.gen_summary_report(pl.report_layout.report_regions)
+        xls_file = join_path(self.working_dir,
+                             "rpts",
+                             project_name+"_summary.xlsx")
+        xu = XlsUtils(xls_file)
+        self.assertEqual(xu.count_rows(),
+                         7,
+                         "number of mutations that pass VQSR cannot be correctly determined")
+        project_name = self.test_function + '_pass_vqsr'
+        rows_filter_actions = JOBS_SETUP_RPT_FILTER_PASS_VQSR
+        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
+                                                        annotated_vcf_tabix=annotated_vcf_tabix,
+                                                        anno_cols=ALL_MUTREP_ANNO_COLS,
+                                                        rows_filter_actions=rows_filter_actions,
+                                                        )
+        pl = MutRepPipeline(jobs_setup_file=jobs_setup_file)
+        pl.gen_summary_report(pl.report_layout.report_regions)
+        xls_file = join_path(self.working_dir,
+                             "rpts",
+                             project_name+"_summary.xlsx")
+        xu = XlsUtils(xls_file)
+        self.assertEqual(xu.count_rows(),
+                         5,
+                         "number of mutations that pass VQSR cannot be correctly determined")
+
+    @unittest.skipUnless(FULL_SYSTEM_TEST, "taking too long time to test")
     def test_is_intergenic_xls_3(self):
         """
         - test filter non-intergenic feature with xls record
@@ -520,6 +566,52 @@ class TestTAVcfRecordXls(SafeTester):
         self.assertEqual(xu.count_rows(),
                          28,
                          "synonymous mutations cannot be correctly determined")
+
+    @unittest.skipUnless(FULL_SYSTEM_TEST, "taking too long time to test")
+    def test_pathogenic_count_xls_2(self):
+        """
+        - test if number of pathogenic count can be correctly displayed
+        """
+
+        self.init_test(self.current_func_name)
+        annotated_vcf_tabix = join_path(self.data_dir,
+                                        "input.vcf.gz")
+        project_name = self.test_function
+        custom_excl_tags = DFLT_TEST_ANNO_EXCL_TAGS
+        custom_excl_tags += "," + AXEQ_CHR3_6_14_18_COLS_TAG
+        custom_excl_tags += "," + AXEQ_CHR5_19_COLS_TAG
+        custom_excl_tags += "," + LJB_SCORE_COLS_TAG
+        rows_filter_actions = JOBS_SETUP_RPT_FILTER_NON_INTERGENIC
+        rows_filter_actions += ',' + JOBS_SETUP_RPT_FILTER_NON_INTRONIC
+        rows_filter_actions += ',' + JOBS_SETUP_RPT_FILTER_NON_UPSTREAM
+        rows_filter_actions += ',' + JOBS_SETUP_RPT_FILTER_NON_DOWNSTREAM
+        rows_filter_actions += ',' + JOBS_SETUP_RPT_FILTER_NON_UTR
+        rows_filter_actions += ',' + JOBS_SETUP_RPT_FILTER_NON_SYNONYMOUS
+        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
+                                                        annotated_vcf_tabix=annotated_vcf_tabix,
+                                                        anno_cols=ALL_MUTREP_ANNO_COLS,
+                                                        anno_excl_tags=custom_excl_tags,
+                                                        rows_filter_actions=rows_filter_actions,
+                                                        )
+        pl = MutRepPipeline(jobs_setup_file=jobs_setup_file)
+        pl.gen_summary_report(pl.report_layout.report_regions)
+        xls_file = join_path(self.working_dir,
+                             "rpts",
+                             project_name+"_summary.xlsx")
+        xu = XlsUtils(xls_file)
+        pc_col_idx = xu.get_col_idx(PATHOGENIC_COUNT_COL_NAME)
+        self.assertEqual(xu.get_cell_value(4, pc_col_idx),
+                         1,
+                         "Incorect number of harmful pathogenic predictions"
+                         )
+        self.assertEqual(xu.get_cell_value(5, pc_col_idx),
+                         0,
+                         "Incorect number of harmful pathogenic predictions"
+                         )
+        self.assertEqual(xu.get_cell_value(9, pc_col_idx),
+                         5,
+                         "Incorect number of harmful pathogenic predictions"
+                         )
 
     def tearDown(self):
         self.remove_working_dir()

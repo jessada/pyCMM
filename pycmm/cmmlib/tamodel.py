@@ -7,8 +7,18 @@ from pycmm.template import pyCMMBase
 from pycmm.settings import PRIMARY_MAF_VAR
 from pycmm.settings import FUNC_REFGENE_VAR
 from pycmm.settings import EXONICFUNC_REFGENE_VAR
+from pycmm.settings import EST_KVOT_EARLYONSET_VS_BRC_COL_NAME
+from pycmm.settings import EST_KVOT_EARLYONSET_VS_EXAC_NFE_COL_NAME
+from pycmm.settings import EST_KVOT_EARLYONSET_VS_KG_EUR_COL_NAME
+from pycmm.settings import PATHOGENIC_COUNT_COL_NAME
+from pycmm.settings import WES294_OAF_EARLYONSET_AF_COL_NAME
+from pycmm.settings import WES294_OAF_BRCS_AF_COL_NAME
+from pycmm.settings import EXAC_NFE_COL_NAME
+from pycmm.settings import KG2014OCT_EUR_COL_NAME
+from pycmm.settings import PREDICTION_COLS
 from pycmm.utils import check_equal
 from pycmm.utils import check_in
+from pycmm.utils import is_number
 
 CMMGT_WILDTYPE = 'wt'
 CMMGT_HOMOZYGOTE = 'hom'
@@ -204,6 +214,14 @@ class _TAVcfRecord(_VcfRecord, pyCMMBase):
         self.__ref_is_mutated = None
         self.__family_infos = copy.deepcopy(family_infos)
         self.__shared_cal = False
+        self.__pathogenic_counts = {}
+
+        if (type(self.FILTER) is list) and (len(self.FILTER) == 0):
+            self.FILTER = "PASS"
+        elif type(self.FILTER) is list:
+            self.FILTER = ";".join(self.FILTER)
+        else:
+            self.FILTER = "."
 
     @property
     def freq_ratios(self):
@@ -273,12 +291,75 @@ class _TAVcfRecord(_VcfRecord, pyCMMBase):
 
     def __get_info(self, var_name):
         """
+        for internal call
         - return list of values of table_annovar column "var_name"
         - number of entry in the list = 1 + number of alternate alleles
         """
         if var_name in self.INFO:
             return self.INFO[var_name]
         return None
+
+    def get_info(self, var_name, allele_idx=None):
+        """
+        parsed to be called by high-level function
+        - kvot is included
+        """
+        def cal_est_ors(cases_freq,
+                        ctrls_freq,
+                        ref_is_mutated,
+                        ):
+            # filter out none number
+            if cases_freq == "NA":
+                return "NA"
+            if (cases_freq is None or
+                cases_freq == "" or
+                not is_number(cases_freq)
+                ):
+                return ""
+            if (ctrls_freq is None or
+                ctrls_freq == "" or
+                not is_number(ctrls_freq)
+                ):
+                return ""
+            # filter "divide by 0"
+            if float(ctrls_freq) == 0:
+                return "INF"
+            if ref_is_mutated and (float(ctrls_freq) == 1):
+                return "INF"
+            if ref_is_mutated:
+                return "{:.4f}".format((1-float(cases_freq))/(1-float(ctrls_freq)))
+            return "{:.4f}".format(float(cases_freq)/float(ctrls_freq))
+
+        info = self.__get_info(var_name)
+        if info is not None:
+            if (type(info) is list) and (len(info) == 1):
+                info = info[0]
+            elif (type(info) is list) and (len(info) > 1):
+                info = info[allele_idx-1]
+        elif var_name == PATHOGENIC_COUNT_COL_NAME:
+            info = self.pathogenic_count(allele_idx=allele_idx)
+        elif var_name == EST_KVOT_EARLYONSET_VS_BRC_COL_NAME:
+            info = cal_est_ors(cases_freq=self.get_info(WES294_OAF_EARLYONSET_AF_COL_NAME,
+                                                        allele_idx),
+                               ctrls_freq=self.get_info(WES294_OAF_BRCS_AF_COL_NAME,
+                                                        allele_idx),
+                               ref_is_mutated=self.ref_is_mutated[allele_idx],
+                               )
+        elif var_name == EST_KVOT_EARLYONSET_VS_EXAC_NFE_COL_NAME:
+            info = cal_est_ors(cases_freq=self.get_info(WES294_OAF_EARLYONSET_AF_COL_NAME,
+                                                        allele_idx),
+                               ctrls_freq=self.get_info(EXAC_NFE_COL_NAME,
+                                                        allele_idx),
+                               ref_is_mutated=self.ref_is_mutated[allele_idx],
+                               )
+        elif var_name == EST_KVOT_EARLYONSET_VS_KG_EUR_COL_NAME:
+            info = cal_est_ors(cases_freq=self.get_info(WES294_OAF_EARLYONSET_AF_COL_NAME,
+                                                        allele_idx),
+                               ctrls_freq=self.get_info(KG2014OCT_EUR_COL_NAME,
+                                                        allele_idx),
+                               ref_is_mutated=self.ref_is_mutated[allele_idx],
+                               )
+        return info
 
     def __cal_afss(self):
         """
@@ -431,21 +512,32 @@ class _TAVcfRecord(_VcfRecord, pyCMMBase):
             return False
         return True
 
-    def __info_repl(self, match_obj):
-        repl_txt = "self.INFO["
-        repl_txt += match_obj.group(0)
-        repl_txt += "]"
-        return repl_txt
+    def is_pass_vqsr(self, allele_idx=1):
+        return self.FILTER == "PASS"
+
+    def pathogenic_count(self, allele_idx=1):
+        if allele_idx not in self.__pathogenic_counts:
+            count = 0
+            for col_name in PREDICTION_COLS:
+                info = self.get_info(col_name, allele_idx)
+                if not info.harmful:
+                    continue
+                count += 1
+            self.__pathogenic_counts[allele_idx] = count
+        return self.__pathogenic_counts[allele_idx]
 
     def vcf_eval(self, expr, allele_idx):
+        def info_repl(match_obj):
+            repl_txt = "self.get_info("
+            repl_txt += match_obj.group(0)
+            repl_txt += ", " + str(allele_idx)
+            repl_txt += ")"
+            return repl_txt
+
         info_field = re.search(r'(\".+?\")', expr).group(0)
-        info_vals = eval(re.sub(r'(\".+?\")',
-                                self.__info_repl,
-                                info_field)) 
-        if type(info_vals) is list:
-            info_val = info_vals[allele_idx-1]
-        else:
-            info_val = info_vals
+        info_val = eval(re.sub(r'(\".+?\")',
+                               info_repl,
+                               info_field)) 
         return eval(re.sub(r'(\".+?\")',
                            "info_val",
                            expr))

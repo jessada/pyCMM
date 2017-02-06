@@ -1,0 +1,44 @@
+SAMPLES_INFOS:
+  - FAMILY_ID: "NO_FAMILY"
+    MEMBERS:
+      - SAMPLE_ID: "1003-06o"
+      - SAMPLE_ID: "1068-05o"
+      - SAMPLE_ID: "1094-08F"
+      - SAMPLE_ID: "1199-05o"
+      - SAMPLE_ID: "1205-05o"
+        PHENOTYPE: 2
+      - SAMPLE_ID: "1307-09D"
+      - SAMPLE_ID: "142-09F"
+      - SAMPLE_ID: "153-09F"
+  - FAMILY_ID: "8"
+    MEMBERS:
+      - SAMPLE_ID: "Co-35"
+      - SAMPLE_ID: "Co-36"
+        PHENOTYPE: 1
+      - SAMPLE_ID: "Co-37"
+  - FAMILY_ID: "12"
+    MEMBERS:
+      - SAMPLE_ID: "Co-90"
+      - SAMPLE_ID: "Co-89"
+  - FAMILY_ID: "13"
+    MEMBERS:
+      - SAMPLE_ID: "Co-95"
+      - SAMPLE_ID: "Co-94"
+  - FAMILY_ID: "24"
+    MEMBERS:
+      - SAMPLE_ID: "Co-166"
+      - SAMPLE_ID: "Co-213"
+  - FAMILY_ID: "26"
+    MEMBERS:
+      - SAMPLE_ID: "Co-135"
+      - SAMPLE_ID: "Co-131"
+  - FAMILY_ID: "31"
+    MEMBERS:
+      - SAMPLE_ID: "1793-11D"
+      - SAMPLE_ID: "1322-11D"
+  - FAMILY_ID: "87"
+    MEMBERS:
+      - SAMPLE_ID: "Co-218"
+        PHENOTYPE: 2
+      - SAMPLE_ID: "Co-258"
+      - SAMPLE_ID: "Co-1179"

@@ -1,6 +1,9 @@
 import yaml
 from os.path import isfile
 from collections import OrderedDict
+from pycmm.settings import PHENOTYPE_MISSING
+from pycmm.settings import PHENOTYPE_UNAFFECTED
+from pycmm.settings import PHENOTYPE_AFFECTED
 from pycmm.template import pyCMMBase
 from pycmm.cmmlib import CMMParams
 from pycmm.utils import mylogger
@@ -9,6 +12,7 @@ JOBS_SETUP_SAMPLES_INFOS_KEY = "SAMPLES_INFOS"
 JOBS_SETUP_FAMILY_ID_KEY = "FAMILY_ID"
 JOBS_SETUP_MEMBERS_LIST_KEY = "MEMBERS"
 JOBS_SETUP_SAMPLE_ID_KEY = "SAMPLE_ID"
+JOBS_SETUP_PHENOTYPE_KEY = "PHENOTYPE"
 
 NO_FAMILY = "NO_FAMILY"
 
@@ -30,6 +34,11 @@ class Sample(CMMParams):
     @property
     def sample_id(self):
         return self._get_job_config(JOBS_SETUP_SAMPLE_ID_KEY, required=True)
+
+    @property
+    def phenotype(self):
+        return self._get_job_config(JOBS_SETUP_PHENOTYPE_KEY,
+                                    default_val=PHENOTYPE_MISSING)
 
     @property
     def fam_id(self):
@@ -81,6 +90,7 @@ class SamplesInfo(pyCMMBase):
                  **kwargs):
         super(SamplesInfo, self).__init__(**kwargs)
         self.__parse_families(samples_info, family_template)
+        self.__samples_list = self.__parse_samples_list()
 
     def __parse_families(self, samples_info, family_template):
         if samples_info is None:
@@ -90,6 +100,15 @@ class SamplesInfo(pyCMMBase):
         for entry in samples_info:
             family = family_template(fam_info=entry)
             self.__families[family.fam_id] = family
+
+    def __parse_samples_list(self):
+        if self.families is None:
+            return None
+        return reduce(lambda x, y: x+y, 
+                      map(lambda x: self.__families[x].members,
+                          self.__families
+                          )
+                      )
 
     @property
     def families(self):
@@ -103,13 +122,7 @@ class SamplesInfo(pyCMMBase):
 
     @property
     def samples_list(self):
-        if self.families is None:
-            return None
-        return reduce(lambda x, y: x+y, 
-                      map(lambda x: self.__families[x].members,
-                          self.__families
-                          )
-                      )
+        return self.__samples_list
 
     @property
     def samples_id(self):
@@ -124,6 +137,30 @@ class SamplesInfo(pyCMMBase):
         return map(lambda x: x.replace(NO_FAMILY+"-", ""),
                    map(lambda x: x.fam_id+"-"+x.sample_id,
                        self.samples_list))
+
+    @property
+    def affected_samples(self):
+        if self.samples_list is None:
+            return None
+        return filter(lambda x: x.phenotype==PHENOTYPE_AFFECTED, self.samples_list)
+
+    @property
+    def affected_samples_id(self):
+        if self.samples_list is None:
+            return []
+        return map(lambda x: x.sample_id, self.affected_samples)
+
+    @property
+    def unaffected_samples(self):
+        if self.samples_list is None:
+            return None
+        return filter(lambda x: x.phenotype==PHENOTYPE_UNAFFECTED, self.samples_list)
+
+    @property
+    def unaffected_samples_id(self):
+        if self.samples_list is None:
+            return []
+        return map(lambda x: x.sample_id, self.unaffected_samples)
 
 def params_to_yaml_doc(**kwargs):
     yaml_doc = {}

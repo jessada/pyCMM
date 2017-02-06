@@ -1,5 +1,8 @@
 import unittest
 from os.path import join as join_path
+from pycmm.settings import PHENOTYPE_MISSING
+from pycmm.settings import PHENOTYPE_UNAFFECTED
+from pycmm.settings import PHENOTYPE_AFFECTED
 from pycmm.template import SafeTester
 from pycmm.flow import CMMPipeline
 from pycmm.flow import create_jobs_setup_file
@@ -33,7 +36,6 @@ class TestFamilyLib(SafeTester):
     def test_extract_families_info_1(self):
         """ test if Family objects can be extract from jobs setup data """
 
-        self.individual_debug = True
         self.init_test(self.current_func_name)
         jobs_setup_file = self.__create_jobs_setup_file(sample_info="18:Co-345:Co-37,12:Co-890:Co-290,13:Co-95,266:Co-131:Co-1355,314:1793-11o,987:Co-218:Co-2588,911:Co-1454:Co-4700,prostate:Pro001:Pro002:Pro003")
         pl = CMMPipeline(jobs_setup_file=jobs_setup_file)
@@ -98,7 +100,6 @@ class TestFamilyLib(SafeTester):
     def test_extract_samples_id_3(self):
         """ test if samples list can be extract from jobs setup data without family id"""
 
-        self.individual_debug = True
         self.init_test(self.current_func_name)
         jobs_setup_file = self.__create_jobs_setup_file(sample_info="Co-345,Co-37,Co-890,Co-290,Co-95,Co-131,Co-1355,1793-11o,Co-218,Co-2588,Co-1454,Co-4700,Pro001,Pro002,Pro003")
         pl = CMMPipeline(jobs_setup_file=jobs_setup_file)
@@ -119,7 +120,6 @@ class TestFamilyLib(SafeTester):
         """ 
         test if samples id can be extract from jobs setup data """
 
-        self.individual_debug = True
         self.init_test(self.current_func_name)
         sample_info_list = []
         sample_info_list.append("18:Co-345:Co-37")
@@ -151,6 +151,156 @@ class TestFamilyLib(SafeTester):
         self.assertEqual('1068-05o' in pl.samples_id_w_fam_pref,
                          True,
                          "familiylib can't handle families information")
+
+    def test_phenotype_1(self):
+        """ test if phenotype can be determined if there is no phenotype """
+
+        self.init_test(self.current_func_name)
+        jobs_setup_file = self.__create_jobs_setup_file(sample_info="18:Co-345:Co-37,12:Co-890:Co-290,13:Co-95,266:Co-131:Co-1355,314:1793-11o,987:Co-218:Co-2588,911:Co-1454:Co-4700,prostate:Pro001:Pro002:Pro003")
+        pl = CMMPipeline(jobs_setup_file=jobs_setup_file)
+        self.assertEqual(len(pl.families_info),
+                         8,
+                         "familiylib can't handle families information")
+        self.assertEqual('prostate' in pl.families_info,
+                         True,
+                         "familiylib can't handle families information")
+        self.assertEqual('breast' in pl.families_info,
+                         False,
+                         "familiylib can't handle families information")
+        self.assertEqual(pl.families_info["18"].members[0].sample_id,
+                         "Co-345",
+                         "familiylib can't handle families information")
+        self.assertEqual(pl.families_info["18"].members[0].phenotype,
+                         PHENOTYPE_MISSING,
+                         "sample phenotype cannot be determined")
+        self.assertEqual(pl.families_info["911"].fam_id,
+                         "911",
+                         "familiylib can't handle families information")
+        self.assertEqual(pl.families_info["prostate"].members[0].fam_id,
+                         "prostate",
+                         "familiylib can't handle families information")
+        self.assertEqual(pl.families_info["prostate"].members[0].phenotype,
+                         PHENOTYPE_MISSING,
+                         "sample phenotype cannot be determined")
+
+    def test_phenotype_2(self):
+        """ test backward compatible if loading from file (no phenotype) """
+
+        self.init_test(self.current_func_name)
+        sample_info = join_path(self.data_dir,
+                                "sample.info")
+        jobs_setup_file = self.__create_jobs_setup_file(sample_info=sample_info)
+        pl = CMMPipeline(jobs_setup_file=jobs_setup_file)
+        self.assertEqual('breast' in pl.families_info,
+                         False,
+                         "familiylib can't handle families information")
+        self.assertEqual(pl.families_info["87"].members[0].sample_id,
+                         "Co-218",
+                         "familiylib can't handle families information")
+        self.assertEqual(pl.families_info["87"].members[0].phenotype,
+                         PHENOTYPE_MISSING,
+                         "sample phenotype cannot be determined")
+        self.assertEqual(pl.families_info["8"].members[1].phenotype,
+                         PHENOTYPE_MISSING,
+                         "sample phenotype cannot be determined")
+
+    def test_phenotype_3(self):
+        """ test phenotype can be loaded if they are identified """
+
+        self.init_test(self.current_func_name)
+        sample_info = join_path(self.data_dir,
+                                "sample.info")
+        jobs_setup_file = self.__create_jobs_setup_file(sample_info=sample_info)
+        pl = CMMPipeline(jobs_setup_file=jobs_setup_file)
+        self.assertEqual('breast' in pl.families_info,
+                         False,
+                         "familiylib can't handle families information")
+        self.assertEqual(pl.families_info["87"].members[0].sample_id,
+                         "Co-218",
+                         "familiylib can't handle families information")
+        self.assertEqual(pl.families_info["87"].members[0].phenotype,
+                         PHENOTYPE_AFFECTED,
+                         "sample phenotype cannot be determined")
+        self.assertEqual(pl.families_info["8"].members[1].phenotype,
+                         PHENOTYPE_UNAFFECTED,
+                         "sample phenotype cannot be determined")
+        self.assertEqual(pl.families_info[NO_FAMILY].members[3].sample_id,
+                         "1199-05o",
+                         "familiylib can't handle families information")
+        self.assertEqual(pl.families_info[NO_FAMILY].members[3].phenotype,
+                         PHENOTYPE_MISSING,
+                         "sample phenotype cannot be determined")
+        self.assertEqual(pl.families_info[NO_FAMILY].members[4].phenotype,
+                         PHENOTYPE_AFFECTED,
+                         "sample phenotype cannot be determined")
+
+    def test_affected_samples_1(self):
+        """ test if phenotype can be determined if there is no phenotype """
+
+        self.init_test(self.current_func_name)
+        jobs_setup_file = self.__create_jobs_setup_file(sample_info="18:Co-345:Co-37,12:Co-890:Co-290,13:Co-95,266:Co-131:Co-1355,314:1793-11o,987:Co-218:Co-2588,911:Co-1454:Co-4700,prostate:Pro001:Pro002:Pro003")
+        pl = CMMPipeline(jobs_setup_file=jobs_setup_file)
+        self.assertEqual(len(pl.affected_samples),
+                         0,
+                         "incorrect number of affected samples")
+
+    def test_affected_samples_2(self):
+        """ test backward compatible if loading from file (no phenotype) """
+
+        self.init_test(self.current_func_name)
+        sample_info = join_path(self.data_dir,
+                                "sample.info")
+        jobs_setup_file = self.__create_jobs_setup_file(sample_info=sample_info)
+        pl = CMMPipeline(jobs_setup_file=jobs_setup_file)
+        self.assertEqual(len(pl.affected_samples),
+                         0,
+                         "incorrect number of affected samples")
+
+    def test_affected_samples_3(self):
+        """ test phenotype can be loaded if they are identified """
+
+        self.init_test(self.current_func_name)
+        sample_info = join_path(self.data_dir,
+                                "sample.info")
+        jobs_setup_file = self.__create_jobs_setup_file(sample_info=sample_info)
+        pl = CMMPipeline(jobs_setup_file=jobs_setup_file)
+        self.assertEqual(len(pl.affected_samples),
+                         2,
+                         "incorrect number of affected samples")
+
+    def test_unaffected_samples_1(self):
+        """ test if phenotype can be determined if there is no phenotype """
+
+        self.init_test(self.current_func_name)
+        jobs_setup_file = self.__create_jobs_setup_file(sample_info="18:Co-345:Co-37,12:Co-890:Co-290,13:Co-95,266:Co-131:Co-1355,314:1793-11o,987:Co-218:Co-2588,911:Co-1454:Co-4700,prostate:Pro001:Pro002:Pro003")
+        pl = CMMPipeline(jobs_setup_file=jobs_setup_file)
+        self.assertEqual(len(pl.unaffected_samples),
+                         0,
+                         "incorrect number of affected samples")
+
+    def test_unaffected_samples_2(self):
+        """ test backward compatible if loading from file (no phenotype) """
+
+        self.init_test(self.current_func_name)
+        sample_info = join_path(self.data_dir,
+                                "sample.info")
+        jobs_setup_file = self.__create_jobs_setup_file(sample_info=sample_info)
+        pl = CMMPipeline(jobs_setup_file=jobs_setup_file)
+        self.assertEqual(len(pl.unaffected_samples),
+                         0,
+                         "incorrect number of affected samples")
+
+    def test_unaffected_samples_3(self):
+        """ test phenotype can be loaded if they are identified """
+
+        self.init_test(self.current_func_name)
+        sample_info = join_path(self.data_dir,
+                                "sample.info")
+        jobs_setup_file = self.__create_jobs_setup_file(sample_info=sample_info)
+        pl = CMMPipeline(jobs_setup_file=jobs_setup_file)
+        self.assertEqual(len(pl.unaffected_samples),
+                         4,
+                         "incorrect number of affected samples")
 
     def tearDown(self):
         self.remove_working_dir()

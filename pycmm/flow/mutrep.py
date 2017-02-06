@@ -4,25 +4,28 @@ import pyaml
 from os.path import join as join_path
 from collections import defaultdict
 from collections import OrderedDict
+from collections import namedtuple
 from pycmm.settings import ALL_MUTREP_ANNO_COLS
-from pycmm.settings import EST_ORS_COLS
+from pycmm.settings import EST_KVOT_COLS
 from pycmm.settings import DFLT_MUTREP_FREQ_RATIOS
 from pycmm.settings import PREDICTION_COLS
 from pycmm.settings import MUTREP_FAMILY_REPORT_BIN
 from pycmm.settings import MUTREP_SUMMARY_REPORT_BIN
-from pycmm.settings import EST_ORS_EARLYONSET_VS_BRC_COL_NAME
-from pycmm.settings import EST_ORS_EARLYONSET_VS_EXAC_NFE_COL_NAME
-from pycmm.settings import EST_ORS_EARLYONSET_VS_KG_EUR_COL_NAME
-#from pycmm.settings import EST_ORS_EARLYONSET_VS_SWEGEN_COL_NAME
+from pycmm.settings import EST_KVOT_EARLYONSET_VS_BRC_COL_NAME
+from pycmm.settings import EST_KVOT_EARLYONSET_VS_EXAC_NFE_COL_NAME
+from pycmm.settings import EST_KVOT_EARLYONSET_VS_KG_EUR_COL_NAME
+#from pycmm.settings import EST_KVOT_EARLYONSET_VS_SWEGEN_COL_NAME
 from pycmm.settings import WES294_OAF_EARLYONSET_AF_COL_NAME
 from pycmm.settings import WES294_OAF_BRCS_AF_COL_NAME
 from pycmm.settings import EXAC_NFE_COL_NAME
-from pycmm.settings import GENE_REFGENE_COL_NAME
 from pycmm.settings import KG2014OCT_EUR_COL_NAME
+from pycmm.settings import GENE_REFGENE_COL_NAME
+from pycmm.settings import PATHOGENIC_COUNT_COL_NAME
 from pycmm.settings import DFLT_HEADER_CORRECTIONS
 from pycmm.template import pyCMMBase
-from pycmm.utils.ver import VersionManager
+from pycmm.utils import DefaultOrderedDict
 from pycmm.utils import is_number
+from pycmm.utils.ver import VersionManager
 from pycmm.cmmlib import CMMParams
 from pycmm.cmmlib.taparser import TAVcfReader as VcfReader
 from pycmm.cmmlib.xlslib import CMMWorkbook as Workbook
@@ -42,6 +45,16 @@ DFLT_COLOR_HET_SHARED = 'SILVER'
 DFLT_COLOR_HOM_SHARED = 'GRAY25'
 CELL_TYPE_HET_SHARED = 'HET_SHARED'
 CELL_TYPE_HOM_SHARED = 'HOM_SHARED'
+DFLT_COLOR_HET_ZYGO = 'XLS_LIGHT_GREEN'
+DFLT_COLOR_HOM_ZYGO = 'XLS_DARK_GREEN'
+CELL_TYPE_HET_ZYGO = 'HET_ZYGO'
+CELL_TYPE_HOM_ZYGO = 'HOM_ZYGO'
+DFLT_COLOR_HET_RECESSIVE = 'XLS_GREEN'
+DFLT_COLOR_HOM_RECESSIVE = 'XLS_ORANGE'
+CELL_TYPE_HET_RECESSIVE = 'HET_RECESSIVE'
+CELL_TYPE_HOM_RECESSIVE = 'HOM_RECESSIVE'
+DFLT_COLOR_SEPARATOR = 'XLS_GRAY1_2'
+CELL_TYPE_SEPARATOR = 'SEPARATOR'
 
 CHROM_POS_PATTERN = re.compile(r'''(?P<chrom>.+?):(?P<start_pos>.+?)-(?P<end_pos>.+)''')
 RECORDS_LOG_INTERVAL = 1000
@@ -67,11 +80,12 @@ JOBS_SETUP_RPT_EXPRESSIONS_INFO_KEY = "INFO"
 JOBS_SETUP_RPT_SPLIT_CHROM_KEY = "SPLIT_CHROM"
 JOBS_SETUP_RPT_SUMMARY_FAMILIES_KEY = "SUMMARY_FAMILIES"
 JOBS_SETUP_RPT_EXTRA_ANNO_COLS_KEY = "EXTRA_ANNOTATION_COLUMNS"
-JOBS_SETUP_RPT_CALL_DETAIL_KEY = "Calling_detail"
-JOBS_SETUP_RPT_CALL_GQ_KEY = "Calling_GQ"
+JOBS_SETUP_RPT_EXTRA_ANNO_CALL_DETAIL = "Calling_detail"
+JOBS_SETUP_RPT_EXTRA_ANNO_CALL_GQ = "Calling_GQ"
 JOBS_SETUP_RPT_MT_KEY = "Mitochondria"
 JOBS_SETUP_RPT_ROWS_FILTER_ACTIONS_CRITERIA_KEY = "ROWS_FILTER_ACTIONS_CRITERIA"
 JOBS_SETUP_RPT_FILTER_RARE = "Rare"
+JOBS_SETUP_RPT_FILTER_PASS_VQSR = "PASS-VQSR"
 JOBS_SETUP_RPT_FILTER_NON_INTERGENIC = "Non-Intergenic"
 JOBS_SETUP_RPT_FILTER_NON_INTRONIC = "Non-Intronic"
 JOBS_SETUP_RPT_FILTER_NON_UPSTREAM = "Non-Upstream"
@@ -80,23 +94,21 @@ JOBS_SETUP_RPT_FILTER_NON_UTR = "Non-UTR"
 JOBS_SETUP_RPT_FILTER_NON_SYNONYMOUS = "Non-Synonymous"
 JOBS_SETUP_RPT_FILTER_HAS_MUTATION = "Has-Mutation"
 JOBS_SETUP_RPT_FILTER_HAS_SHARED = "Has-Shared"
+JOBS_SETUP_RPT_FILTER_NON_RECESSIVE_GENE = "Non-Recessive-Gene"
 JOBS_SETUP_RPT_ONLY_SUMMARY_KEY = "ONLY_SUMMARY"
 JOBS_SETUP_RPT_ONLY_FAMILIES_KEY = "ONLY_FAMILIES"
 JOBS_SETUP_RPT_FILTER_GENES_KEY = "FILTER_GENES"
+JOBS_SETUP_RPT_COLORING_SAMPLES_KEY = "COLORING_SAMPLES"
+JOBS_SETUP_RPT_COLORING_SHARED = "Shared"
+JOBS_SETUP_RPT_COLORING_ZYGOSITY = "Zygosity"
 
 RPT_LAYOUT_CAPTION_ANNOATED_COLS = "annotated columns"
 RPT_LAYOUT_CAPTION_FREQ_RATIOS = "frequency ratio(s)"
 RPT_LAYOUT_CAPTION_RPT_REGIONS = "report region(s)"
 RPT_LAYOUT_CAPTION_FILTER_ACTIONS = "filter actions"
 
-XLS_CHROM_COL_IDX = 0
-XLS_POS_COL_IDX = 1
-XLS_REF_COL_IDX = 2
-XLS_ALT_COL_IDX = 3
-XLS_FILTER_COL_IDX = 4
-LAYOUT_VCF_COLS = XLS_FILTER_COL_IDX + 1
-
 FILTER_RARE = JOBS_SETUP_RPT_FILTER_RARE
+FILTER_PASS_VQSR = JOBS_SETUP_RPT_FILTER_PASS_VQSR
 FILTER_NON_INTERGENIC = JOBS_SETUP_RPT_FILTER_NON_INTERGENIC
 FILTER_NON_INTRONIC = JOBS_SETUP_RPT_FILTER_NON_INTRONIC
 FILTER_NON_UPSTREAM = JOBS_SETUP_RPT_FILTER_NON_UPSTREAM
@@ -105,6 +117,36 @@ FILTER_NON_UTR = JOBS_SETUP_RPT_FILTER_NON_UTR
 FILTER_NON_SYNONYMOUS = JOBS_SETUP_RPT_FILTER_NON_SYNONYMOUS
 FILTER_HAS_MUTATION = JOBS_SETUP_RPT_FILTER_HAS_MUTATION
 FILTER_HAS_SHARED = JOBS_SETUP_RPT_FILTER_HAS_SHARED
+FILTER_NON_RECESSIVE_GENE = JOBS_SETUP_RPT_FILTER_NON_RECESSIVE_GENE
+
+XLS_CHROM_COL_IDX = 0
+XLS_POS_COL_IDX = 1
+XLS_REF_COL_IDX = 2
+XLS_ALT_COL_IDX = 3
+XLS_FILTER_COL_IDX = 4
+LAYOUT_VCF_COLS = XLS_FILTER_COL_IDX + 1
+
+RECESSIVE_CPD_HET_CASES_COUNT_COL_IDX = 0
+RECESSIVE_CPD_HET_CTRLS_COUNT_COL_IDX = 1
+RECESSIVE_CPD_HET_FREQ_RATIO_COL_IDX = 2
+RECESSIVE_HOM_CASES_COUNT_COL_IDX = 3
+RECESSIVE_HOM_CTRLS_COUNT_COL_IDX = 4
+RECESSIVE_HOM_FREQ_RATIO_COL_IDX = 5
+RECESSIVE_LAST_COL_IDX = RECESSIVE_HOM_FREQ_RATIO_COL_IDX
+
+CPD_HET_COUNT = 'cpd_het_count'
+HOM_COUNT = 'hom_count'
+RECESSIVE_SAMPLES_ID = 'recessive_samples_id'
+
+TXT_COMPOUND_HETEROZYGOTE_CASES_COUNT = "compound heterozygote cases count"
+TXT_COMPOUND_HETEROZYGOTE_FREQ_RATIO = "compound heterozygote frequency ratio"
+TXT_HOMOZYGOTE_CASES_COUNT = "homozygote cases count"
+TXT_HOMOZYGOTE_FREQ_RATIO = "homozygote frequency ratio"
+
+VcfRecordBuffer = namedtuple('VcfRecordBuffer',
+                             'vcf_record allele_idx')
+RecessiveAnalysisResult = namedtuple('RecessiveAnalysisResult',
+                                     'affected unaffected filtered_buffer_idxs')
 
 class ReportRegion(pyCMMBase):
     """ A structure to parse and keep mutation report region """
@@ -306,6 +348,7 @@ class ReportLayout(CMMParams):
         raw_repr["split chromosome"] = self.split_chrom
         filter_actions = OrderedDict()
         filter_actions[FILTER_RARE] = self.filter_rare
+        filter_actions[FILTER_PASS_VQSR] = self.filter_pass_vqsr
         filter_actions[FILTER_NON_INTERGENIC] = self.filter_non_intergenic
         filter_actions[FILTER_NON_INTRONIC] = self.filter_non_intronic
         filter_actions[FILTER_NON_UPSTREAM] = self.filter_non_upstream
@@ -314,6 +357,7 @@ class ReportLayout(CMMParams):
         filter_actions[FILTER_NON_SYNONYMOUS] = self.filter_non_synonymous
         filter_actions[FILTER_HAS_MUTATION] = self.filter_has_mutation
         filter_actions[FILTER_HAS_SHARED] = self.filter_has_shared
+        filter_actions[FILTER_NON_RECESSIVE_GENE] = self.filter_non_recessive_gene
         raw_repr[RPT_LAYOUT_CAPTION_FILTER_ACTIONS] = filter_actions
         report_exclusion = {}
         report_exclusion['only summary'] = self.only_summary
@@ -361,24 +405,25 @@ class ReportLayout(CMMParams):
             # the underlying assumption is that all the variants must have the 
             # same number of fields annotated by ANNOVAR
             if (col_name not in vcf_record.INFO.keys() and
-                col_name not in EST_ORS_COLS):
+                col_name not in EST_KVOT_COLS and
+                col_name != PATHOGENIC_COUNT_COL_NAME):
                 self.warning("Columns " + col_name + " is missing")
                 continue
-            if ((col_name == EST_ORS_EARLYONSET_VS_BRC_COL_NAME) and
+            if ((col_name == EST_KVOT_EARLYONSET_VS_BRC_COL_NAME) and
                 ((WES294_OAF_EARLYONSET_AF_COL_NAME not in vcf_record.INFO.keys()) or
                  (WES294_OAF_BRCS_AF_COL_NAME not in vcf_record.INFO.keys())
                  )
                 ):
                 self.warning(col_name + " cannot be calculated")
                 continue
-            if ((col_name == EST_ORS_EARLYONSET_VS_EXAC_NFE_COL_NAME) and
+            if ((col_name == EST_KVOT_EARLYONSET_VS_EXAC_NFE_COL_NAME) and
                 ((WES294_OAF_EARLYONSET_AF_COL_NAME not in vcf_record.INFO.keys()) or
                  (EXAC_NFE_COL_NAME not in vcf_record.INFO.keys())
                  )
                 ):
                 self.warning(col_name + " cannot be calculated")
                 continue
-            if ((col_name == EST_ORS_EARLYONSET_VS_KG_EUR_COL_NAME) and
+            if ((col_name == EST_KVOT_EARLYONSET_VS_KG_EUR_COL_NAME) and
                 ((WES294_OAF_EARLYONSET_AF_COL_NAME not in vcf_record.INFO.keys()) or
                  (KG2014OCT_EUR_COL_NAME not in vcf_record.INFO.keys())
                  )
@@ -424,18 +469,23 @@ class ReportLayout(CMMParams):
 
     @property
     def call_detail(self):
-        return JOBS_SETUP_RPT_CALL_DETAIL_KEY in self._get_job_config(JOBS_SETUP_RPT_EXTRA_ANNO_COLS_KEY,
+        return JOBS_SETUP_RPT_EXTRA_ANNO_CALL_DETAIL in self._get_job_config(JOBS_SETUP_RPT_EXTRA_ANNO_COLS_KEY,
                                                                       default_val=[])
 
     @property
     def call_gq(self):
-        return JOBS_SETUP_RPT_CALL_GQ_KEY in self._get_job_config(JOBS_SETUP_RPT_EXTRA_ANNO_COLS_KEY,
+        return JOBS_SETUP_RPT_EXTRA_ANNO_CALL_GQ in self._get_job_config(JOBS_SETUP_RPT_EXTRA_ANNO_COLS_KEY,
                                                                   default_val=[])
 
     @property
     def filter_rare(self):
         return JOBS_SETUP_RPT_FILTER_RARE in self._get_job_config(JOBS_SETUP_RPT_ROWS_FILTER_ACTIONS_CRITERIA_KEY,
                                                                   default_val=[])
+
+    @property
+    def filter_pass_vqsr(self):
+        return JOBS_SETUP_RPT_FILTER_PASS_VQSR in self._get_job_config(JOBS_SETUP_RPT_ROWS_FILTER_ACTIONS_CRITERIA_KEY,
+                                                                       default_val=[])
 
     @property
     def filter_non_intergenic(self):
@@ -478,6 +528,21 @@ class ReportLayout(CMMParams):
                                                                         default_val=[])
 
     @property
+    def filter_non_recessive_gene(self):
+        return JOBS_SETUP_RPT_FILTER_NON_RECESSIVE_GENE in self._get_job_config(JOBS_SETUP_RPT_ROWS_FILTER_ACTIONS_CRITERIA_KEY,
+                                                                                default_val=[])
+
+    @property
+    def coloring_shared(self):
+        return JOBS_SETUP_RPT_COLORING_SHARED in self._get_job_config(JOBS_SETUP_RPT_COLORING_SAMPLES_KEY,
+                                                                      default_val=[])
+
+    @property
+    def coloring_zygosity(self):
+        return JOBS_SETUP_RPT_COLORING_ZYGOSITY in self._get_job_config(JOBS_SETUP_RPT_COLORING_SAMPLES_KEY,
+                                                                        default_val=[])
+
+    @property
     def summary_families_sheet(self):
         return self._get_job_config(JOBS_SETUP_RPT_SUMMARY_FAMILIES_KEY,
                                     default_val=False)
@@ -491,6 +556,10 @@ class ReportLayout(CMMParams):
     def only_families(self):
         return self._get_job_config(JOBS_SETUP_RPT_ONLY_FAMILIES_KEY,
                                     default_val=False)
+
+    @property
+    def recessive_analysis(self):
+        return self.filter_non_recessive_gene
 
     @property
     def header_corrections(self):
@@ -520,6 +589,11 @@ class ReportLayout(CMMParams):
         self.__cell_colors = {}
         self.__cell_colors[CELL_TYPE_HET_SHARED] = DFLT_COLOR_HET_SHARED
         self.__cell_colors[CELL_TYPE_HOM_SHARED] = DFLT_COLOR_HOM_SHARED
+        self.__cell_colors[CELL_TYPE_HET_ZYGO] = DFLT_COLOR_HET_ZYGO
+        self.__cell_colors[CELL_TYPE_HOM_ZYGO] = DFLT_COLOR_HOM_ZYGO
+        self.__cell_colors[CELL_TYPE_HET_RECESSIVE] = DFLT_COLOR_HET_RECESSIVE
+        self.__cell_colors[CELL_TYPE_HOM_RECESSIVE] = DFLT_COLOR_HOM_RECESSIVE
+        self.__cell_colors[CELL_TYPE_SEPARATOR] = DFLT_COLOR_SEPARATOR
 
     @property
     def cell_color_het_shared(self):
@@ -528,6 +602,26 @@ class ReportLayout(CMMParams):
     @property
     def cell_color_hom_shared(self):
         return self.__cell_colors[CELL_TYPE_HOM_SHARED]
+
+    @property
+    def cell_color_het_zygo(self):
+        return self.__cell_colors[CELL_TYPE_HET_ZYGO]
+
+    @property
+    def cell_color_hom_zygo(self):
+        return self.__cell_colors[CELL_TYPE_HOM_ZYGO]
+
+    @property
+    def cell_color_het_recessive(self):
+        return self.__cell_colors[CELL_TYPE_HET_RECESSIVE]
+
+    @property
+    def cell_color_hom_recessive(self):
+        return self.__cell_colors[CELL_TYPE_HOM_RECESSIVE]
+
+    @property
+    def cell_color_separator(self):
+        return self.__cell_colors[CELL_TYPE_SEPARATOR]
 
 class MutRepPipeline(CMMPipeline):
     """ A class to control CMMDB best practice pipeline """
@@ -580,7 +674,29 @@ class MutRepPipeline(CMMPipeline):
             return self.report_layout.header_corrections[old_header]
         return old_header
 
-    def __write_header(self, ws, samples_id):
+    def __write_header(self, ws, samples_id, samples_header):
+        def write_samples_header(start_ncol_idx,
+                                 samples_header,
+                                 cell_fmt,
+                                 coloring_samples_idx=[],
+                                 ):
+            ncol = start_ncol_idx
+            for sample_idx in xrange(len(samples_header)):
+                sample_id = samples_header[sample_idx]
+                if sample_idx in coloring_samples_idx:
+                    unaffected_sample_color = self.report_layout.cell_color_separator
+                    sample_cell_fmt = self.plain_fmts[unaffected_sample_color]
+                else:
+                    sample_cell_fmt = cell_fmt
+                ws.write(0, ncol, sample_id, sample_cell_fmt)
+                ncol += 1
+                if self.report_layout.call_gq:
+                    ws.write(0, ncol, sample_id+"_GQ", cell_fmt)
+                    ncol += 1
+                if self.report_layout.call_detail:
+                    ws.write(0, ncol, sample_id+"(detail)", cell_fmt)
+                    ncol += 1
+            return ncol
         anno_cols = self.report_layout.anno_cols
         cell_fmt = self.plain_fmts[NO_COLOR]
         ws.write(0, XLS_CHROM_COL_IDX, "CHROM", cell_fmt)
@@ -592,18 +708,54 @@ class MutRepPipeline(CMMPipeline):
         for anno_idx in xrange(len_anno_cols):
             col_name = self.__correct_header(anno_cols[anno_idx])
             ws.write(0, anno_idx+LAYOUT_VCF_COLS, col_name, cell_fmt)
-        sample_start_idx = LAYOUT_VCF_COLS + len_anno_cols
-        ncol = sample_start_idx
-        for sample_idx in xrange(len(samples_id)):
-            sample_id = samples_id[sample_idx]
-            ws.write(0, ncol, sample_id, cell_fmt)
-            ncol += 1
-            if self.report_layout.call_gq:
-                ws.write(0, ncol, sample_id+"_GQ", cell_fmt)
-                ncol += 1
-            if self.report_layout.call_detail:
-                ws.write(0, ncol, sample_id+"(detail)", cell_fmt)
-                ncol += 1
+        if self.report_layout.recessive_analysis:
+            recessive_info_start_idx = LAYOUT_VCF_COLS + len_anno_cols
+            ws.write(0,
+                     recessive_info_start_idx+RECESSIVE_CPD_HET_CASES_COUNT_COL_IDX,
+                     "compound heterozygote cases count",
+                     cell_fmt)
+            ws.write(0,
+                     recessive_info_start_idx+RECESSIVE_CPD_HET_FREQ_RATIO_COL_IDX,
+                     "compound heterozygote frequency ratio",
+                     cell_fmt)
+            ws.write(0,
+                     recessive_info_start_idx+RECESSIVE_HOM_CASES_COUNT_COL_IDX,
+                     "homozygote cases count",
+                     cell_fmt)
+            ws.write(0,
+                     recessive_info_start_idx+RECESSIVE_HOM_FREQ_RATIO_COL_IDX,
+                     "homozygote frequency ratio",
+                     cell_fmt)
+            sample_start_idx = recessive_info_start_idx + RECESSIVE_LAST_COL_IDX + 1
+            affected_samples_header = []
+            other_samples_header = []
+            other_samples_id = []
+            for id, header in zip(samples_id, samples_header):
+                if id in self.affected_samples_id:
+                    affected_samples_header.append(header)
+                else:
+                    other_samples_id.append(id)
+                    other_samples_header.append(header)
+            ncol = write_samples_header(sample_start_idx,
+                                        affected_samples_header,
+                                        cell_fmt,
+                                        )
+            coloring_samples_idx = []
+            for sample_idx in xrange(len(other_samples_header)):
+                sample_id = other_samples_id[sample_idx]
+                if sample_id in self.unaffected_samples_id:
+                    coloring_samples_idx.append(sample_idx)
+            ncol = write_samples_header(ncol+1,
+                                        other_samples_header,
+                                        cell_fmt,
+                                        coloring_samples_idx=coloring_samples_idx,
+                                        )
+        else:
+            sample_start_idx = LAYOUT_VCF_COLS + len_anno_cols
+            ncol = write_samples_header(sample_start_idx,
+                                        samples_header,
+                                        cell_fmt,
+                                        )
         return sample_start_idx, ncol
 
     def __format_call_detail(self, call, call_fmt):
@@ -620,13 +772,68 @@ class MutRepPipeline(CMMPipeline):
                 call_detail.append(fmt + "=" + str(data))
         return ":".join(call_detail)
 
-    def __get_info_val(self, vcf_record, info_name, allele_idx):
-        info = vcf_record.INFO[info_name]
-        if (type(info) is list) and (len(info) == 1):
-            info = info[0]
-        elif (type(info) is list) and (len(info) > 1):
-            info = info[allele_idx-1]
-        return info
+    def __write_zygosities(self,
+                           ws,
+                           row,
+                           start_col,
+                           vcf_record,
+                           allele_idx,
+                           samples_id,
+                           dflt_cell_fmt,
+                           recessive_samples_id=None,
+                           ):
+        ncol = start_col
+        for sample_idx in xrange(len(samples_id)):
+            sample_id = samples_id[sample_idx]
+            call = vcf_record.genotype(sample_id)
+            zygo = call.cmm_gts[allele_idx]
+            # determine cell(s) format
+            if self.report_layout.coloring_shared:
+                if type(call.shared_mutations) is not list:
+                    zygo_fmt = dflt_cell_fmt
+                elif not call.shared_mutations[allele_idx]:
+                    zygo_fmt = dflt_cell_fmt
+                # then assuming that they are shared
+                elif call.actual_gts[allele_idx] == CMMGT_HOMOZYGOTE:
+                    hom_shared_color = self.report_layout.cell_color_hom_shared
+                    zygo_fmt = self.plain_fmts[hom_shared_color]
+                else:
+                    het_shared_color = self.report_layout.cell_color_het_shared
+                    zygo_fmt = self.plain_fmts[het_shared_color]
+            elif self.report_layout.coloring_zygosity:
+                if call.actual_gts[allele_idx] == CMMGT_HOMOZYGOTE:
+                    hom_zygo_color = self.report_layout.cell_color_hom_zygo
+                    zygo_fmt = self.plain_fmts[hom_zygo_color]
+                elif call.actual_gts[allele_idx] == CMMGT_HETEROZYGOTE:
+                    het_zygo_color = self.report_layout.cell_color_het_zygo
+                    zygo_fmt = self.plain_fmts[het_zygo_color]
+                else:
+                    zygo_fmt = dflt_cell_fmt
+            else:
+                zygo_fmt = dflt_cell_fmt
+            if (self.report_layout.recessive_analysis and
+                sample_id in recessive_samples_id):
+                if call.actual_gts[allele_idx] == CMMGT_HOMOZYGOTE:
+                    hom_zygo_color = self.report_layout.cell_color_hom_recessive
+                    zygo_fmt = self.plain_fmts[hom_zygo_color]
+                elif call.actual_gts[allele_idx] == CMMGT_HETEROZYGOTE:
+                    het_zygo_color = self.report_layout.cell_color_het_recessive
+                    zygo_fmt = self.plain_fmts[het_zygo_color]
+
+            # write content to cell(s)
+            ws.write(row, ncol, zygo, zygo_fmt)
+            ncol += 1
+            if self.report_layout.call_gq:
+                zygo_gq = call.data.GQ
+                if zygo_gq is None:
+                    zygo_gq = "."
+                ws.write(row, ncol, zygo_gq, zygo_fmt)
+                ncol += 1
+            if self.report_layout.call_detail:
+                formatted_call = self.__format_call_detail(call, vcf_record.FORMAT.split(":"))
+                ws.write(row, ncol, formatted_call, zygo_fmt)
+                ncol += 1
+        return ncol
 
     def __write_content(self,
                         ws,
@@ -634,33 +841,8 @@ class MutRepPipeline(CMMPipeline):
                         vcf_record,
                         allele_idx,
                         samples_id,
+                        recessive_analysis_result=None,
                         ):
-        def cal_est_ors(cases_freq,
-                        ctrls_freq,
-                        ref_is_mutated,
-                        ):
-            # filter out none number
-            if cases_freq == "NA":
-                return "NA"
-            if (cases_freq is None or
-                cases_freq == "" or
-                not is_number(cases_freq)
-                ):
-                return ""
-            if (ctrls_freq is None or
-                ctrls_freq == "" or
-                not is_number(ctrls_freq)
-                ):
-                return ""
-            # filter "divide by 0"
-            if float(ctrls_freq) == 0:
-                return "INF"
-            if ref_is_mutated and (float(ctrls_freq) == 1):
-                return "INF"
-            if ref_is_mutated:
-                return "{:.4f}".format((1-float(cases_freq))/(1-float(ctrls_freq)))
-            return "{:.4f}".format(float(cases_freq)/float(ctrls_freq))
-
         anno_cols = self.report_layout.anno_cols
         # use input expression to determine if row will have background color
         row_color = None
@@ -680,12 +862,7 @@ class MutRepPipeline(CMMPipeline):
         ws.write(row, XLS_POS_COL_IDX, str(vcf_record.POS), dflt_cell_fmt)
         ws.write(row, XLS_REF_COL_IDX, vcf_record.REF, dflt_cell_fmt)
         ws.write(row, XLS_ALT_COL_IDX, str(alt_allele), dflt_cell_fmt)
-        if (type(vcf_record.FILTER) is list) and (len(vcf_record.FILTER) == 0):
-            ws.write(row, XLS_FILTER_COL_IDX, "PASS", dflt_cell_fmt)
-        elif type(vcf_record.FILTER) is list:
-            ws.write(row, XLS_FILTER_COL_IDX, ";".join(vcf_record.FILTER), dflt_cell_fmt)
-        else:
-            ws.write(row, XLS_FILTER_COL_IDX, ".", dflt_cell_fmt)
+        ws.write(row, XLS_FILTER_COL_IDX, vcf_record.FILTER, dflt_cell_fmt)
         len_anno_cols = len(anno_cols)
         # annotate INFO columns
         if self.report_layout.exprs is not None:
@@ -696,35 +873,7 @@ class MutRepPipeline(CMMPipeline):
         # for each INFO column
         for anno_idx in xrange(len_anno_cols):
             anno_col_name = anno_cols[anno_idx]
-            if anno_col_name == EST_ORS_EARLYONSET_VS_BRC_COL_NAME:
-                info = cal_est_ors(cases_freq=self.__get_info_val(vcf_record,
-                                                                  WES294_OAF_EARLYONSET_AF_COL_NAME,
-                                                                  allele_idx),
-                                   ctrls_freq=self.__get_info_val(vcf_record,
-                                                                  WES294_OAF_BRCS_AF_COL_NAME,
-                                                                  allele_idx),
-                                   ref_is_mutated=vcf_record.ref_is_mutated[allele_idx],
-                                   )
-            elif anno_col_name == EST_ORS_EARLYONSET_VS_EXAC_NFE_COL_NAME:
-                info = cal_est_ors(cases_freq=self.__get_info_val(vcf_record,
-                                                                  WES294_OAF_EARLYONSET_AF_COL_NAME,
-                                                                  allele_idx),
-                                   ctrls_freq=self.__get_info_val(vcf_record,
-                                                                  EXAC_NFE_COL_NAME,
-                                                                  allele_idx),
-                                   ref_is_mutated=vcf_record.ref_is_mutated[allele_idx],
-                                   )
-            elif anno_col_name == EST_ORS_EARLYONSET_VS_KG_EUR_COL_NAME:
-                info = cal_est_ors(cases_freq=self.__get_info_val(vcf_record,
-                                                                  WES294_OAF_EARLYONSET_AF_COL_NAME,
-                                                                  allele_idx),
-                                   ctrls_freq=self.__get_info_val(vcf_record,
-                                                                  KG2014OCT_EUR_COL_NAME,
-                                                                  allele_idx),
-                                   ref_is_mutated=vcf_record.ref_is_mutated[allele_idx],
-                                   )
-            else:
-                info = self.__get_info_val(vcf_record, anno_col_name, allele_idx)
+            info = vcf_record.get_info(anno_col_name, allele_idx)
             if anno_col_name in PREDICTION_COLS:
                 info = info.description
             if info == "":
@@ -745,36 +894,95 @@ class MutRepPipeline(CMMPipeline):
                         ):
                         info_cell_fmt = self.plain_fmts[cca.color]
                         break
-            ws.write(row, anno_idx+LAYOUT_VCF_COLS, str(info).decode('utf-8'), info_cell_fmt)
-        # annotate samples information
-        ncol = LAYOUT_VCF_COLS + len_anno_cols
-        for sample_idx in xrange(len(samples_id)):
-            call = vcf_record.genotype(samples_id[sample_idx])
-            zygo = call.cmm_gts[allele_idx]
-            # determine cell(s) format
-            if type(call.shared_mutations) is not list:
-                zygo_fmt = dflt_cell_fmt
-            elif not call.shared_mutations[allele_idx]:
-                zygo_fmt = dflt_cell_fmt
-            elif call.actual_gts[allele_idx] == CMMGT_HOMOZYGOTE:
-                hom_shared_color = self.report_layout.cell_color_hom_shared
-                zygo_fmt = self.plain_fmts[hom_shared_color]
+            if is_number(info):
+                ws.write(row, anno_idx+LAYOUT_VCF_COLS, info, info_cell_fmt)
             else:
-                het_shared_color = self.report_layout.cell_color_het_shared
-                zygo_fmt = self.plain_fmts[het_shared_color]
-            # write content to cell(s)
-            ws.write(row, ncol, zygo, zygo_fmt)
-            ncol += 1
-            if self.report_layout.call_gq:
-                zygo_gq = call.data.GQ
-                if zygo_gq is None:
-                    zygo_gq = "."
-                ws.write(row, ncol, zygo_gq, zygo_fmt)
-                ncol += 1
-            if self.report_layout.call_detail:
-                formatted_call = self.__format_call_detail(call, vcf_record.FORMAT.split(":"))
-                ws.write(row, ncol, formatted_call, zygo_fmt)
-                ncol += 1
+                ws.write(row, anno_idx+LAYOUT_VCF_COLS, str(info).decode('utf-8'), info_cell_fmt)
+        # annotate samples information
+        if self.report_layout.recessive_analysis:
+            recessive_info_start_idx = LAYOUT_VCF_COLS + len_anno_cols
+            n_affected_samples = len(self.affected_samples)
+            n_unaffected_samples = len(self.unaffected_samples)
+            cases_cpd_het_count = recessive_analysis_result.affected[CPD_HET_COUNT]
+            ctrls_cpd_het_count = recessive_analysis_result.unaffected[CPD_HET_COUNT]
+            cases_hom_count = recessive_analysis_result.affected[HOM_COUNT]
+            ctrls_hom_count = recessive_analysis_result.unaffected[HOM_COUNT]
+            ws.write(row,
+                     recessive_info_start_idx+RECESSIVE_CPD_HET_CASES_COUNT_COL_IDX,
+                     cases_cpd_het_count,
+                     dflt_cell_fmt)
+            ws.write(row,
+                     recessive_info_start_idx+RECESSIVE_CPD_HET_CTRLS_COUNT_COL_IDX,
+                     ctrls_cpd_het_count,
+                     dflt_cell_fmt)
+            if cases_cpd_het_count > 0:
+                cases_cpd_het_freq = "{:.2f}".format(float(cases_cpd_het_count)/float(n_affected_samples))
+                ctrls_cpd_het_freq = "{:.2f}".format(float(ctrls_cpd_het_count)/float(n_unaffected_samples))
+                cpd_het_color = self.report_layout.cell_color_het_recessive
+                cpd_het_fmt = self.plain_fmts[cpd_het_color]
+                ws.write(row,
+                         recessive_info_start_idx+RECESSIVE_CPD_HET_FREQ_RATIO_COL_IDX,
+                         cases_cpd_het_freq+" vs "+ctrls_cpd_het_freq,
+                         cpd_het_fmt)
+            ws.write(row,
+                     recessive_info_start_idx+RECESSIVE_HOM_CASES_COUNT_COL_IDX,
+                     cases_hom_count,
+                     dflt_cell_fmt)
+            ws.write(row,
+                     recessive_info_start_idx+RECESSIVE_HOM_CTRLS_COUNT_COL_IDX,
+                     ctrls_hom_count,
+                     dflt_cell_fmt)
+            if cases_hom_count > 0:
+                cases_hom_freq = "{:.2f}".format(float(cases_hom_count)/float(n_affected_samples))
+                ctrls_hom_freq = "{:.2f}".format(float(ctrls_hom_count)/float(n_unaffected_samples))
+                hom_color = self.report_layout.cell_color_hom_recessive
+                hom_fmt = self.plain_fmts[hom_color]
+                ws.write(row,
+                         recessive_info_start_idx+RECESSIVE_HOM_FREQ_RATIO_COL_IDX,
+                         cases_hom_freq+" vs "+ctrls_hom_freq,
+                         hom_fmt)
+            ncol = recessive_info_start_idx + RECESSIVE_LAST_COL_IDX + 1
+            ncol = self.__write_zygosities(ws,
+                                           row,
+                                           ncol,
+                                           vcf_record,
+                                           allele_idx,
+                                           self.affected_samples_id,
+                                           #samples_id,
+                                           dflt_cell_fmt,
+                                           recessive_samples_id=recessive_analysis_result.affected[RECESSIVE_SAMPLES_ID],
+                                           )
+            other_samples_id = filter(lambda x: x not in self.affected_samples_id,
+                                      samples_id)
+            sep_color = self.report_layout.cell_color_separator
+            sep_fmt = self.plain_fmts[sep_color]
+            ws.write(row, ncol, "", sep_fmt)
+            ncol = self.__write_zygosities(ws,
+                                           row,
+                                           ncol+1,
+                                           vcf_record,
+                                           allele_idx,
+                                           other_samples_id,
+                                           #samples_id,
+                                           dflt_cell_fmt,
+                                           recessive_samples_id=recessive_analysis_result.unaffected[RECESSIVE_SAMPLES_ID],
+                                           )
+        else:
+            ncol = LAYOUT_VCF_COLS + len_anno_cols
+            ncol = self.__write_zygosities(ws,
+                                           row,
+                                           ncol,
+                                           vcf_record,
+                                           allele_idx,
+                                           samples_id,
+                                           dflt_cell_fmt,
+                                           )
+        # logging
+        if row % RECORDS_LOG_INTERVAL == 0:
+            log_msg = str(row)
+            log_msg += " records were written to the sheet"
+            self.info(log_msg)
+        return row + 1
 
     def __write_contents(self,
                          ws,
@@ -783,6 +991,36 @@ class MutRepPipeline(CMMPipeline):
                          samples_id,
                          check_shared,
                          ):
+        def run_recessive_analysis(ws,
+                                   row,
+                                   vcf_record_buffers,
+                                   affected_samples_id,
+                                   unaffected_samples_id,
+                                   ):
+            recessive_analysis_result = self.__filter_non_recessive_gene(vcf_record_buffers,
+                                                                         affected_samples_id,
+                                                                         unaffected_samples_id,
+                                                                         )
+            for buffer_idx in xrange(len(vcf_record_buffers)):
+                if buffer_idx in recessive_analysis_result.filtered_buffer_idxs:
+                    vcf_record_buffer = vcf_record_buffers[buffer_idx]
+                    row = self.__write_content(ws,
+                                               row,
+                                               vcf_record_buffer.vcf_record,
+                                               vcf_record_buffer.allele_idx,
+                                               samples_id,
+                                               recessive_analysis_result=recessive_analysis_result,
+                                               )
+            del vcf_record_buffers[:]
+            return row
+        # __write_contents start
+        previous_gene = None
+        current_gene = None
+        vcf_record_buffers = []
+        affected_samples_id = filter(lambda x: x in self.affected_samples_id,
+                                     samples_id)
+        unaffected_samples_id = filter(lambda x: x in self.unaffected_samples_id,
+                                       samples_id)
         for vcf_record in vcf_records:
             for allele_idx in xrange(1, len(vcf_record.alleles)):
                 if (check_shared and
@@ -790,6 +1028,9 @@ class MutRepPipeline(CMMPipeline):
                     continue
                 if (self.report_layout.filter_rare and
                     not vcf_record.is_rare(allele_idx=allele_idx)):
+                    continue
+                if (self.report_layout.filter_pass_vqsr and
+                    not vcf_record.is_pass_vqsr(allele_idx=allele_idx)):
                     continue
                 if (self.report_layout.filter_non_intergenic and
                     vcf_record.is_intergenic[allele_idx]):
@@ -830,8 +1071,7 @@ class MutRepPipeline(CMMPipeline):
                 # in the report. Otherwise, no filtering applied
                 if self.report_layout.filter_genes is not None: 
                     gene_found = False
-                    gene_refgenes = self.__get_info_val(vcf_record,
-                                                        GENE_REFGENE_COL_NAME,
+                    gene_refgenes = vcf_record.get_info(GENE_REFGENE_COL_NAME,
                                                         allele_idx).split(',')
                     for filter_gene in self.report_layout.filter_genes:
                         if filter_gene in gene_refgenes:
@@ -839,17 +1079,104 @@ class MutRepPipeline(CMMPipeline):
                             break
                     if not gene_found:
                         continue
-                self.__write_content(ws,
-                                     row,
-                                     vcf_record,
-                                     allele_idx,
-                                     samples_id)
-                if row % RECORDS_LOG_INTERVAL == 0:
-                    log_msg = str(row)
-                    log_msg += " records were written to the sheet"
-                    self.info(log_msg)
-                row += 1
+                if self.report_layout.filter_non_recessive_gene:
+                    current_gene = vcf_record.get_info(GENE_REFGENE_COL_NAME,
+                                                       allele_idx)
+                    # check ing if the current record is a new gene 
+                    # if yes then filter non recessive variants in the previous gene
+                    if (previous_gene is None) or (current_gene != previous_gene):
+                        if previous_gene is not None:
+                            row = run_recessive_analysis(ws,
+                                                         row,
+                                                         vcf_record_buffers,
+                                                         affected_samples_id,
+                                                         unaffected_samples_id,
+                                                         )
+                        previous_gene = current_gene
+                    # accumulate data for the current gene
+                    buffer = VcfRecordBuffer(vcf_record=vcf_record,
+                                             allele_idx=allele_idx)
+                    vcf_record_buffers.append(buffer)
+                else:
+                    row = self.__write_content(ws,
+                                               row,
+                                               vcf_record,
+                                               allele_idx,
+                                               samples_id)
+        # check if filter non recessive gene should be applied with the
+        # last gene in the chromosome
+        if (self.report_layout.filter_non_recessive_gene and
+            current_gene is not None):
+            row = run_recessive_analysis(ws,
+                                         row,
+                                         vcf_record_buffers,
+                                         affected_samples_id,
+                                         unaffected_samples_id,
+                                         )
         return row
+
+    def __filter_non_recessive_gene(self,
+                                    vcf_record_buffers,
+                                    affected_samples_id,
+                                    unaffected_samples_id,
+                                    ):
+        def get_recessive_samples_id(vcf_record_buffers,
+                                     samples_id,
+                                     ):
+            results = {}
+            results[RECESSIVE_SAMPLES_ID] = []
+            results[CPD_HET_COUNT] = 0
+            results[HOM_COUNT] = 0
+            for sample_id in samples_id:
+                recessive_count = 0
+                cpd_het_found = 0
+                hom_found = False
+                # go through vcf_record for the first round
+                # to check if the sample has recessive variants
+                for buffer_idx in xrange(len(vcf_record_buffers)):
+                    vcf_record = vcf_record_buffers[buffer_idx].vcf_record
+                    allele_idx = vcf_record_buffers[buffer_idx].allele_idx
+                    call = vcf_record.genotype(sample_id)
+                    if call.actual_gts[allele_idx] == CMMGT_HOMOZYGOTE:
+                        recessive_count += 2
+                        hom_found = True
+                        cpd_het_found += 1
+                    elif call.actual_gts[allele_idx] == CMMGT_HETEROZYGOTE:
+                        recessive_count += 1
+                        cpd_het_found += 1
+                if recessive_count > 1:
+                    results[RECESSIVE_SAMPLES_ID].append(sample_id)
+                if cpd_het_found > 1:
+                    results[CPD_HET_COUNT] += 1
+                if hom_found:
+                    results[HOM_COUNT] += 1
+            return results
+
+        # __filter_non_recessive_gene start
+        # go through all variants of every samples in the gene
+        # and see if any compound heterozygote and homozygote can be found
+        affected_results = get_recessive_samples_id(vcf_record_buffers,
+                                                    affected_samples_id,
+                                                    )
+        unaffected_results = get_recessive_samples_id(vcf_record_buffers,
+                                                      unaffected_samples_id,
+                                                      )
+        # go through vcf_record for the second round
+        # mark the buffer idx with any affected recessive variants
+        recessive_buffer_idxs = {}
+        for buffer_idx in xrange(len(vcf_record_buffers)):
+            vcf_record = vcf_record_buffers[buffer_idx].vcf_record
+            allele_idx = vcf_record_buffers[buffer_idx].allele_idx
+            for sample_id in affected_results[RECESSIVE_SAMPLES_ID]:
+                call = vcf_record.genotype(sample_id)
+                if (call.actual_gts[allele_idx] == CMMGT_HOMOZYGOTE or
+                    call.actual_gts[allele_idx] == CMMGT_HETEROZYGOTE):
+                    recessive_buffer_idxs[buffer_idx] = True
+                    break
+        recessive_analysis_result = RecessiveAnalysisResult(affected=affected_results,
+                                                            unaffected=unaffected_results,
+                                                            filtered_buffer_idxs=recessive_buffer_idxs)
+        return recessive_analysis_result
 
     def __set_layout(self, ws, sample_start_idx, record_size):
         ws.autofilter(0, 0, 0, sample_start_idx-1)
@@ -858,6 +1185,26 @@ class MutRepPipeline(CMMPipeline):
         ws.set_column(XLS_REF_COL_IDX, XLS_REF_COL_IDX, 3.5)
         ws.set_column(XLS_ALT_COL_IDX, XLS_ALT_COL_IDX, 3.5)
         ws.set_column(XLS_FILTER_COL_IDX, XLS_FILTER_COL_IDX, 3.5)
+        if self.report_layout.recessive_analysis:
+            recessive_info_start_idx = sample_start_idx - RECESSIVE_LAST_COL_IDX - 1
+            ws.set_column(recessive_info_start_idx+RECESSIVE_CPD_HET_CASES_COUNT_COL_IDX,
+                          recessive_info_start_idx+RECESSIVE_CPD_HET_CASES_COUNT_COL_IDX,
+                          3)
+            ws.set_column(recessive_info_start_idx+RECESSIVE_CPD_HET_CTRLS_COUNT_COL_IDX,
+                          recessive_info_start_idx+RECESSIVE_CPD_HET_CTRLS_COUNT_COL_IDX,
+                          3)
+            ws.set_column(recessive_info_start_idx+RECESSIVE_CPD_HET_FREQ_RATIO_COL_IDX,
+                          recessive_info_start_idx+RECESSIVE_CPD_HET_FREQ_RATIO_COL_IDX,
+                          9)
+            ws.set_column(recessive_info_start_idx+RECESSIVE_HOM_CASES_COUNT_COL_IDX,
+                          recessive_info_start_idx+RECESSIVE_HOM_CASES_COUNT_COL_IDX,
+                          3)
+            ws.set_column(recessive_info_start_idx+RECESSIVE_HOM_CTRLS_COUNT_COL_IDX,
+                          recessive_info_start_idx+RECESSIVE_HOM_CTRLS_COUNT_COL_IDX,
+                          3)
+            ws.set_column(recessive_info_start_idx+RECESSIVE_HOM_FREQ_RATIO_COL_IDX,
+                          recessive_info_start_idx+RECESSIVE_HOM_FREQ_RATIO_COL_IDX,
+                          9)
         ws.set_column(sample_start_idx, record_size-1, 3)
         row_freeze_idx = 1
         anno_cols = self.report_layout.anno_cols
@@ -885,19 +1232,19 @@ class MutRepPipeline(CMMPipeline):
             self.thrown(annotated_vcf_tabix + ' does not endswith .vcf.gz')
         row = 1
         if samples_id is None:
-            samples = vcf_reader.samples
-        else:
-            samples = samples_id
+            samples_id = vcf_reader.samples
+        if samples_header is None:
+            samples_header = samples_id
         ws = self.__add_sheet(sheet_name)
-        if samples_header is not None:
-            sample_start_idx, ncol = self.__write_header(ws, samples_header)
-        else:
-            sample_start_idx, ncol = self.__write_header(ws, samples)
+        sample_start_idx, ncol = self.__write_header(ws,
+                                                     samples_id,
+                                                     samples_header,
+                                                     )
         if report_regions is None:
             row = self.__write_contents(ws,
                                         row,
                                         vcf_reader,
-                                        samples,
+                                        samples_id,
                                         check_shared)
         else:
             for report_region in report_regions:
@@ -913,7 +1260,7 @@ class MutRepPipeline(CMMPipeline):
                 row = self.__write_contents(ws,
                                             row,
                                             vcf_records,
-                                            samples,
+                                            samples_id,
                                             check_shared)
         log_msg = "Finish .. "
         log_msg += " total of " + str(row-1)
@@ -1196,7 +1543,7 @@ def create_jobs_setup_file(*args, **kwargs):
         exprs = []
         for raw_pattern in  expression_patterns.split(","):
             name, pattern = raw_pattern.split(":")
-            expr = defaultdict(list)
+            expr = DefaultOrderedDict(list)
             expr[JOBS_SETUP_RPT_EXPRESSIONS_NAME_KEY] = name.strip()
             expr[JOBS_SETUP_RPT_EXPRESSIONS_PATTERN_KEY] = "'" + pattern.strip().replace("'", "''") + "'"
             exprs.append(expr)
@@ -1233,32 +1580,45 @@ def create_jobs_setup_file(*args, **kwargs):
     if call_detail or call_gq:
         extra_anno_cols = []
         if call_detail:
-            extra_anno_cols.append(JOBS_SETUP_RPT_CALL_DETAIL_KEY)
+            extra_anno_cols.append(JOBS_SETUP_RPT_EXTRA_ANNO_CALL_DETAIL)
         if call_gq:
-            extra_anno_cols.append(JOBS_SETUP_RPT_CALL_GQ_KEY)
+            extra_anno_cols.append(JOBS_SETUP_RPT_EXTRA_ANNO_CALL_GQ)
         rpt_cfg[JOBS_SETUP_RPT_EXTRA_ANNO_COLS_KEY] = extra_anno_cols
+    coloring_shared = get_func_arg('coloring_shared', kwargs, default_val=False)
+    coloring_zygosity = get_func_arg('coloring_zygosity', kwargs, default_val=False)
+    if coloring_shared or coloring_zygosity:
+        coloring_samples = []
+        if coloring_shared:
+            coloring_samples.append(JOBS_SETUP_RPT_COLORING_SHARED)
+        if coloring_zygosity:
+            coloring_samples.append(JOBS_SETUP_RPT_COLORING_ZYGOSITY)
+        rpt_cfg[JOBS_SETUP_RPT_COLORING_SAMPLES_KEY] = coloring_samples
     rows_filter_actions = get_func_arg('rows_filter_actions', kwargs)
     if rows_filter_actions is not None:
         filter_criterias = []
         for filter_criteria in rows_filter_actions.split(","):
             if filter_criteria == JOBS_SETUP_RPT_FILTER_RARE:
-                filter_criterias.append(JOBS_SETUP_RPT_FILTER_RARE)
+                filter_criterias.append(filter_criteria)
+            if filter_criteria == JOBS_SETUP_RPT_FILTER_PASS_VQSR:
+                filter_criterias.append(filter_criteria)
             if filter_criteria == JOBS_SETUP_RPT_FILTER_NON_INTERGENIC:
-                filter_criterias.append(JOBS_SETUP_RPT_FILTER_NON_INTERGENIC)
+                filter_criterias.append(filter_criteria)
             if filter_criteria == JOBS_SETUP_RPT_FILTER_NON_INTRONIC:
-                filter_criterias.append(JOBS_SETUP_RPT_FILTER_NON_INTRONIC)
+                filter_criterias.append(filter_criteria)
             if filter_criteria == JOBS_SETUP_RPT_FILTER_NON_UPSTREAM:
-                filter_criterias.append(JOBS_SETUP_RPT_FILTER_NON_UPSTREAM)
+                filter_criterias.append(filter_criteria)
             if filter_criteria == JOBS_SETUP_RPT_FILTER_NON_DOWNSTREAM:
-                filter_criterias.append(JOBS_SETUP_RPT_FILTER_NON_DOWNSTREAM)
+                filter_criterias.append(filter_criteria)
             if filter_criteria == JOBS_SETUP_RPT_FILTER_NON_UTR:
-                filter_criterias.append(JOBS_SETUP_RPT_FILTER_NON_UTR)
+                filter_criterias.append(filter_criteria)
             if filter_criteria == JOBS_SETUP_RPT_FILTER_NON_SYNONYMOUS:
-                filter_criterias.append(JOBS_SETUP_RPT_FILTER_NON_SYNONYMOUS)
+                filter_criterias.append(filter_criteria)
             if filter_criteria == JOBS_SETUP_RPT_FILTER_HAS_MUTATION:
-                filter_criterias.append(JOBS_SETUP_RPT_FILTER_HAS_MUTATION)
+                filter_criterias.append(filter_criteria)
             if filter_criteria == JOBS_SETUP_RPT_FILTER_HAS_SHARED:
-                filter_criterias.append(JOBS_SETUP_RPT_FILTER_HAS_SHARED)
+                filter_criterias.append(filter_criteria)
+            if filter_criteria == JOBS_SETUP_RPT_FILTER_NON_RECESSIVE_GENE:
+                filter_criterias.append(filter_criteria)
         rpt_cfg[JOBS_SETUP_RPT_ROWS_FILTER_ACTIONS_CRITERIA_KEY] = filter_criterias
     frequency_ratios = get_func_arg('frequency_ratios',
                                     kwargs,
