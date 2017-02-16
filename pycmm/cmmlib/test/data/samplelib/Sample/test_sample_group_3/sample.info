@@ -2,46 +2,77 @@ SAMPLES_INFOS:
   - FAMILY_ID: "NO_FAMILY"
     MEMBERS:
       - SAMPLE_ID: "1003-06o"
+        GROUP: 1
+        PHENOTYPE: 2
       - SAMPLE_ID: "1068-05o"
+        GROUP: 1
+        PHENOTYPE: 2
       - SAMPLE_ID: "1094-08F"
+        GROUP: 1
+        PHENOTYPE: 2
       - SAMPLE_ID: "1199-05o"
+        GROUP: 1
+        PHENOTYPE: 2
       - SAMPLE_ID: "1205-05o"
+        GROUP: 1
         PHENOTYPE: 2
       - SAMPLE_ID: "1307-09D"
-        PHENOTYPE: 1
+        GROUP: 1
+        PHENOTYPE: 2
       - SAMPLE_ID: "142-09F"
+        GROUP: 1
+        PHENOTYPE: 2
       - SAMPLE_ID: "153-09F"
+        GROUP: 1
+        PHENOTYPE: 2
   - FAMILY_ID: "8"
     MEMBERS:
       - SAMPLE_ID: "Co-35"
+        GROUP: 3
         PHENOTYPE: 1
       - SAMPLE_ID: "Co-36"
-        PHENOTYPE: 1
+        GROUP: 3
       - SAMPLE_ID: "Co-37"
+        GROUP: 3
   - FAMILY_ID: "12"
     MEMBERS:
       - SAMPLE_ID: "Co-90"
+        GROUP: 4
       - SAMPLE_ID: "Co-89"
+        GROUP: 4
+        PHENOTYPE: 1
   - FAMILY_ID: "13"
     MEMBERS:
       - SAMPLE_ID: "Co-95"
+        PHENOTYPE: 1
       - SAMPLE_ID: "Co-94"
   - FAMILY_ID: "24"
     MEMBERS:
       - SAMPLE_ID: "Co-166"
+        GROUP: 4
       - SAMPLE_ID: "Co-213"
+        GROUP: 4
+        PHENOTYPE: 1
   - FAMILY_ID: "26"
     MEMBERS:
       - SAMPLE_ID: "Co-135"
+        GROUP: 2
+        PHENOTYPE: 1
       - SAMPLE_ID: "Co-131"
+        GROUP: 2
   - FAMILY_ID: "31"
     MEMBERS:
       - SAMPLE_ID: "1793-11D"
+        GROUP: 2
+        PHENOTYPE: 1
       - SAMPLE_ID: "1322-11D"
+        GROUP: 2
   - FAMILY_ID: "87"
     MEMBERS:
       - SAMPLE_ID: "Co-218"
-        PHENOTYPE: 2
+        GROUP: 3
       - SAMPLE_ID: "Co-258"
+        GROUP: 3
         PHENOTYPE: 1
       - SAMPLE_ID: "Co-1179"
+        GROUP: 3

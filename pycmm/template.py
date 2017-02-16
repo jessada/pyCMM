@@ -23,10 +23,10 @@ ENV_TMPDIR = "TMPDIR"
 class pyCMMBase(object):
     """ pyCMM base class """
 
-    def __init__(self, **kwargs):
+    def __init__(self, *args, **kwargs):
         self.__time_stamp = datetime.datetime.now()
         self.pkg_root_dir = dirname(dirname(__file__))
-        super(pyCMMBase, self).__init__(**kwargs)
+        super(pyCMMBase, self).__init__(*args, **kwargs)
         self.__local_scratch_dir = None
 
     def __str__(self):
@@ -148,9 +148,9 @@ class Tester(unittest.TestCase, pyCMMBase):
 
     individual_debug = False
 
-    def __init__(self, test_module_name, **kwargs):
+    def __init__(self, test_module_name, *args, **kwargs):
         self.test_module_name = test_module_name
-        super(Tester, self).__init__(**kwargs)
+        super(Tester, self).__init__(*args, **kwargs)
         pyCMMBase.__init__(self)
 
     def remove_dir(self, dir_name):
@@ -213,8 +213,8 @@ class SafeTester(Tester):
 
     """
 
-    def __init__(self, **kwargs):
-        super(SafeTester, self).__init__(**kwargs)
+    def __init__(self, *args, **kwargs):
+        super(SafeTester, self).__init__(*args, **kwargs)
 
 
 class RiskyTester(Tester):

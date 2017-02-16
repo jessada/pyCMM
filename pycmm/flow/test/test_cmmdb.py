@@ -16,7 +16,7 @@ from pycmm.flow.cmmdb import create_jobs_setup_file
 from pycmm.cmmlib.test.test_annovarlib import DFLT_ANV_TEST_DB_DIR
 from pycmm.cmmlib.test.test_annovarlib import DFLT_ANV_TEST_DB_NAMES
 from pycmm.cmmlib.test.test_annovarlib import DFLT_ANV_TEST_DB_OPS
-from pycmm.cmmlib.familylib import NO_FAMILY
+from pycmm.cmmlib.samplelib import NO_FAMILY
 
 CMMDB_TEST=False
 

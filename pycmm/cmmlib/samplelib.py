@@ -1,6 +1,8 @@
 import yaml
+import re
 from os.path import isfile
 from collections import OrderedDict
+from collections import defaultdict
 from pycmm.settings import PHENOTYPE_MISSING
 from pycmm.settings import PHENOTYPE_UNAFFECTED
 from pycmm.settings import PHENOTYPE_AFFECTED
@@ -12,7 +14,10 @@ JOBS_SETUP_SAMPLES_INFOS_KEY = "SAMPLES_INFOS"
 JOBS_SETUP_FAMILY_ID_KEY = "FAMILY_ID"
 JOBS_SETUP_MEMBERS_LIST_KEY = "MEMBERS"
 JOBS_SETUP_SAMPLE_ID_KEY = "SAMPLE_ID"
-JOBS_SETUP_PHENOTYPE_KEY = "PHENOTYPE"
+JOBS_SETUP_SAMPLE_GROUP_KEY = "GROUP"
+JOBS_SETUP_SAMPLE_PHENOTYPE_KEY = "PHENOTYPE"
+
+SAMPLE_GROUP_MISSING = 0
 
 NO_FAMILY = "NO_FAMILY"
 
@@ -20,15 +25,16 @@ NO_FAMILY = "NO_FAMILY"
 class Sample(CMMParams):
     """  To parse and structure family member information """
 
-    def __init__(self, member_info, fam_id=None, **kwargs):
+    def __init__(self, member_info, fam_id=None, *args, **kwargs):
         self.__gts = None
         self.__fam_id = fam_id
         kwargs["entries"] = member_info
-        super(Sample, self).__init__(**kwargs)
+        super(Sample, self).__init__(*args, **kwargs)
 
-    def get_raw_repr(self, **kwargs):
-        raw_repr = super(Sample, self).get_raw_repr(**kwargs)
+    def get_raw_repr(self, *args, **kwargs):
+        raw_repr = super(Sample, self).get_raw_repr(*args, **kwargs)
         raw_repr["sample id"] = self.sample_id
+        raw_repr["family id"] = self.fam_id
         return raw_repr
 
     @property
@@ -36,8 +42,13 @@ class Sample(CMMParams):
         return self._get_job_config(JOBS_SETUP_SAMPLE_ID_KEY, required=True)
 
     @property
+    def sample_group(self):
+        return self._get_job_config(JOBS_SETUP_SAMPLE_GROUP_KEY,
+                                    default_val=SAMPLE_GROUP_MISSING)
+
+    @property
     def phenotype(self):
-        return self._get_job_config(JOBS_SETUP_PHENOTYPE_KEY,
+        return self._get_job_config(JOBS_SETUP_SAMPLE_PHENOTYPE_KEY,
                                     default_val=PHENOTYPE_MISSING)
 
     @property
@@ -53,16 +64,78 @@ class Sample(CMMParams):
     def gts(self, value):
         self.__gts = value
 
+class SamplesGroup(list, pyCMMBase):
+    """  To parse information of a group of sample """
+
+    def __init__(self,
+                 *args,
+                 **kwargs
+                 ):
+        list.__init__(self, *args)
+        pyCMMBase.__init__(self, *args, **kwargs)
+        self.__ids = None
+        self.__ids_w_fam_pref = None
+        self.__affected = None
+        self.__unaffected = None
+
+    def __parse_ids(self):
+        if self is None:
+            return []
+        return map(lambda x: x.sample_id, self)
+
+    def __parse_ids_w_fam_pref(self):
+        if self is None:
+            return []
+        return map(lambda x: re.sub(NO_FAMILY+r"[a-zA-Z_0-9]*-", "", x),
+                   map(lambda x: str(x.fam_id)+"-"+x.sample_id,
+                       self))
+
+    def __parse_affected_samples(self):
+        if self is None:
+            return []
+        return SamplesGroup(filter(lambda x: x.phenotype==PHENOTYPE_AFFECTED,
+                                   self))
+
+    def __parse_unaffected_samples(self):
+        if self is None:
+            return []
+        return SamplesGroup(filter(lambda x: x.phenotype==PHENOTYPE_UNAFFECTED,
+                                   self))
+
+    @property
+    def ids(self):
+        if self.__ids is None:
+            self.__ids = self.__parse_ids()
+        return self.__ids
+
+    @property
+    def ids_w_fam_pref(self):
+        if self.__ids_w_fam_pref is None:
+            self.__ids_w_fam_pref = self.__parse_ids_w_fam_pref()
+        return self.__ids_w_fam_pref
+
+    @property
+    def affected(self):
+        if self.__affected is None:
+            self.__affected = self.__parse_affected_samples()
+        return self.__affected
+
+    @property
+    def unaffected(self):
+        if self.__unaffected is None:
+            self.__unaffected = self.__parse_unaffected_samples()
+        return self.__unaffected
+
 class Family(CMMParams):
     """  To parse and structure family information """
 
-    def __init__(self, fam_info, **kwargs):
+    def __init__(self, fam_info, *args, **kwargs):
         self.__members = None
         kwargs["entries"] = fam_info
-        super(Family, self).__init__(**kwargs)
+        super(Family, self).__init__(*args, **kwargs)
 
-    def get_raw_repr(self, **kwargs):
-        raw_repr = super(Family, self).get_raw_repr(**kwargs)
+    def get_raw_repr(self, *args, **kwargs):
+        raw_repr = super(Family, self).get_raw_repr(*args, **kwargs)
         raw_repr["family id"] = self.fam_id
         raw_repr["members"] = self.members
         return raw_repr
@@ -87,10 +160,13 @@ class SamplesInfo(pyCMMBase):
     def __init__(self,
                  samples_info,
                  family_template=Family,
-                 **kwargs):
-        super(SamplesInfo, self).__init__(**kwargs)
+                 *args,
+                 **kwargs
+                 ):
+        super(SamplesInfo, self).__init__(*args, **kwargs)
         self.__parse_families(samples_info, family_template)
         self.__samples_list = self.__parse_samples_list()
+        self.__samples_groups = self.__parse_samples_groups()
 
     def __parse_families(self, samples_info, family_template):
         if samples_info is None:
@@ -104,11 +180,23 @@ class SamplesInfo(pyCMMBase):
     def __parse_samples_list(self):
         if self.families is None:
             return None
-        return reduce(lambda x, y: x+y, 
-                      map(lambda x: self.__families[x].members,
-                          self.__families
-                          )
-                      )
+        samples = reduce(lambda x, y: x+y, 
+                         map(lambda x: self.__families[x].members,
+                             self.__families
+                             )
+                         )
+        return SamplesGroup(samples)
+
+    def __parse_samples_groups(self):
+        if self.samples_list is None:
+            return None
+        raw_samples_groups = defaultdict(list)
+        for sample in self.samples_list:
+            raw_samples_groups[sample.sample_group].append(sample)
+        samples_groups = defaultdict(list)
+        for group_no in raw_samples_groups:
+            samples_groups[group_no] = SamplesGroup(raw_samples_groups[group_no])
+        return samples_groups
 
     @property
     def families(self):
@@ -125,44 +213,30 @@ class SamplesInfo(pyCMMBase):
         return self.__samples_list
 
     @property
+    def samples_groups(self):
+        return self.__samples_groups
+
+    @property
     def samples_id(self):
         if self.samples_list is None:
             return None
-        return map(lambda x: x.sample_id, self.samples_list)
+        return self.samples_list.ids
 
     @property
     def samples_id_w_fam_pref(self):
         if self.samples_list is None:
             return None
-        return map(lambda x: x.replace(NO_FAMILY+"-", ""),
-                   map(lambda x: x.fam_id+"-"+x.sample_id,
-                       self.samples_list))
+        return self.samples_list.ids_w_fam_pref
 
     @property
     def affected_samples(self):
-        if self.samples_list is None:
-            return None
-        return filter(lambda x: x.phenotype==PHENOTYPE_AFFECTED, self.samples_list)
-
-    @property
-    def affected_samples_id(self):
-        if self.samples_list is None:
-            return []
-        return map(lambda x: x.sample_id, self.affected_samples)
+        return self.samples_list.affected
 
     @property
     def unaffected_samples(self):
-        if self.samples_list is None:
-            return None
-        return filter(lambda x: x.phenotype==PHENOTYPE_UNAFFECTED, self.samples_list)
+        return self.samples_list.unaffected
 
-    @property
-    def unaffected_samples_id(self):
-        if self.samples_list is None:
-            return []
-        return map(lambda x: x.sample_id, self.unaffected_samples)
-
-def params_to_yaml_doc(**kwargs):
+def params_to_yaml_doc(*args, **kwargs):
     yaml_doc = {}
     if 'sample_info' not in kwargs:
         return yaml_doc

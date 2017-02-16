@@ -5,11 +5,11 @@ from collections import OrderedDict
 from pycmm.settings import DFLT_JOB_ALLOC_TIME
 from pycmm.utils import get_dict_val
 from pycmm.utils.jobman import JobManager
-from pycmm.cmmlib.familylib import params_to_yaml_doc
-from pycmm.cmmlib.familylib import SamplesInfo
-from pycmm.cmmlib.familylib import Family
-from pycmm.cmmlib.familylib import JOBS_SETUP_SAMPLES_INFOS_KEY
-from pycmm.cmmlib.familylib import NO_FAMILY
+from pycmm.cmmlib.samplelib import params_to_yaml_doc
+from pycmm.cmmlib.samplelib import SamplesInfo
+from pycmm.cmmlib.samplelib import Family
+from pycmm.cmmlib.samplelib import JOBS_SETUP_SAMPLES_INFOS_KEY
+from pycmm.cmmlib.samplelib import NO_FAMILY
 
 JOBS_SETUP_JOBS_REPORT_FILE_KEY = "JOBS_REPORT_FILE"
 JOBS_SETUP_PROJECT_NAME_KEY = "PROJECT_NAME"
@@ -24,12 +24,13 @@ class CMMPipeline(JobManager):
     def __init__(self,
                  jobs_setup_file,
                  family_template=Family,
+                 *args,
                  **kwargs
                  ):
         self.__load_jobs_info(jobs_setup_file)
         self.__init_properties(family_template)
         kwargs['jobs_report_file'] = self.jobs_report_file
-        super(CMMPipeline, self).__init__(**kwargs)
+        super(CMMPipeline, self).__init__(*args, **kwargs)
 
     def get_raw_repr(self):
         raw_repr = OrderedDict()
@@ -237,25 +238,26 @@ class CMMPipeline(JobManager):
         return self.__samples_info.affected_samples
 
     @property
-    def affected_samples_id(self):
-        return self.__samples_info.affected_samples_id
-
-    @property
     def unaffected_samples(self):
         return self.__samples_info.unaffected_samples
 
+#    @property
+#    def affected_samples_id(self):
+#        return self.__samples_info.affected_samples_id
+#
     @property
-    def unaffected_samples_id(self):
-        return self.__samples_info.unaffected_samples_id
+    def samples_groups(self):
+        return self.__samples_info.samples_groups
 
-    def monitor_init(self, **kwargs):
-        super(CMMPipeline, self).monitor_init(**kwargs)
 
-    def monitor_action(self, **kwargs):
-        super(CMMPipeline, self).monitor_action(**kwargs)
+    def monitor_init(self, *args, **kwargs):
+        super(CMMPipeline, self).monitor_init(*args, **kwargs)
 
-    def monitor_finalize(self, **kwargs):
-        super(CMMPipeline, self).monitor_finalize(**kwargs)
+    def monitor_action(self, *args, **kwargs):
+        super(CMMPipeline, self).monitor_action(*args, **kwargs)
+
+    def monitor_finalize(self, *args, **kwargs):
+        super(CMMPipeline, self).monitor_finalize(*args, **kwargs)
 
 # a note on parameters of init_jobs_setup_file and create_jobs_setup_file
 # The reason that I explicitly list them is for documentation purpose. It is to
