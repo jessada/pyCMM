@@ -11,6 +11,7 @@ from pycmm.settings import WES294_OAF_EARLYONSET_COLS_TAG
 from pycmm.settings import MUTSTAT_DETAILS_COLS_TAG
 from pycmm.settings import LJB_SCORE_COLS_TAG
 from pycmm.settings import EXAC_OTH_COLS_TAG
+from pycmm.settings import SWEGEN_OTH_COLS_TAG
 from pycmm.settings import UNKNOWN_COLS_TAG
 from pycmm.flow.mutrep import JOBS_SETUP_RPT_FILTER_RARE
 from pycmm.flow.mutrep import JOBS_SETUP_RPT_FILTER_NON_INTERGENIC
