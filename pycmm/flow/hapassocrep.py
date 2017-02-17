@@ -44,7 +44,7 @@ class RptParams(CMMParams):
     def __init__(self, **kwargs):
         super(RptParams, self).__init__(**kwargs)
 
-    def get_raw_repr(self):
+    def get_raw_obj_str(self):
         raw_repr = OrderedDict()
         raw_repr["cutoff p-value"] = self.cutoff_pvalue
         raw_repr["cutoff ORS"] = self.cutoff_ors

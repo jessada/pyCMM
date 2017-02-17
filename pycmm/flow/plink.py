@@ -48,7 +48,7 @@ class FilterCriteria(pyCMMBase):
         self.__criterias = criterias
         super(FilterCriteria, self).__init__(**kwargs)
 
-    def get_raw_repr(self):
+    def get_raw_obj_str(self):
         raw_repr = OrderedDict()
         raw_repr["filter p-value less than 0.05"] = self.filter_pvalue005
         raw_repr["filter disease snp"] = self.filter_disease_snp
@@ -69,8 +69,8 @@ class PlinkParams(CMMParams):
     def __init__(self, **kwargs):
         super(PlinkParams, self).__init__(**kwargs)
 
-    def get_raw_repr(self, **kwargs):
-        raw_repr = super(PlinkParams, self).get_raw_repr(**kwargs)
+    def get_raw_obj_str(self, **kwargs):
+        raw_repr = super(PlinkParams, self).get_raw_obj_str(**kwargs)
         raw_repr["input file prefix"] = self.input_file_prefix
         raw_repr["input binary"] = self.input_binary
         raw_repr["phenotype_file"] = self.phenotype_file

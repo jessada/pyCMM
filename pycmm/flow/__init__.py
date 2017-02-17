@@ -32,7 +32,7 @@ class CMMPipeline(JobManager):
         kwargs['jobs_report_file'] = self.jobs_report_file
         super(CMMPipeline, self).__init__(*args, **kwargs)
 
-    def get_raw_repr(self):
+    def get_raw_obj_str(self):
         raw_repr = OrderedDict()
         raw_repr["project name"] = self.project_name
         raw_repr["project out dir"] = self.project_out_dir

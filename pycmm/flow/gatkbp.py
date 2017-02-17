@@ -51,8 +51,8 @@ class GATKSample(Sample):
         kwargs["member_info"] = sample_info
         super(GATKSample, self).__init__(**kwargs)
 
-    def get_raw_repr(self, **kwargs):
-        raw_repr = super(GATKSample, self).get_raw_repr(**kwargs)
+    def get_raw_obj_str(self, **kwargs):
+        raw_repr = super(GATKSample, self).get_raw_obj_str(**kwargs)
         raw_repr["library"] = self.library
         raw_repr["unit"] = self.unit
         raw_repr["sample group"] = self.sample_group
@@ -152,8 +152,8 @@ class GATKParams(CMMParams):
         super(GATKParams, self).__init__(**kwargs)
         self.__init_properties()
 
-    def get_raw_repr(self, **kwargs):
-        raw_repr = super(GATKParams, self).get_raw_repr(**kwargs)
+    def get_raw_obj_str(self, **kwargs):
+        raw_repr = super(GATKParams, self).get_raw_obj_str(**kwargs)
         raw_repr["known indels"] = self.known_indels
         raw_repr["reference"] = self.reference
         raw_repr["dbsnp file"] = self.dbsnp
@@ -214,8 +214,8 @@ class GATKBPPipeline(CMMPipeline):
         super(GATKBPPipeline, self).__init__(**kwargs)
         self.__init_properties()
 
-    def get_raw_repr(self, **kwargs):
-        raw_repr = super(GATKBPPipeline, self).get_raw_repr(**kwargs)
+    def get_raw_obj_str(self, **kwargs):
+        raw_repr = super(GATKBPPipeline, self).get_raw_obj_str(**kwargs)
         raw_repr["dataset name"] = self.dataset_name
         raw_repr["GATK parameters"] = self.gatk_params
         raw_repr["samples"] = self.samples

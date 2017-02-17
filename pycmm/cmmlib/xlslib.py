@@ -35,7 +35,7 @@ class CMMWorkbook(Workbook, pyCMMBase):
         self.__dflt_hash_fmt = {'font_name': 'Arial', 'font_size': 9}
         self.__dflt_fmt = self.add_format(self.__dflt_hash_fmt)
 
-    def get_raw_repr(self):
+    def get_raw_obj_str(self):
         raw_repr = OrderedDict()
         raw_repr["default cell format"] = self.__dflt_hash_fmt
         return raw_repr

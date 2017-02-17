@@ -162,9 +162,9 @@ class ReportRegion(pyCMMBase):
         self.__raw_region = raw_region
 
     def __repr__(self):
-        return str(self.get_raw_repr())
+        return str(self.get_raw_obj_str())
 
-    def get_raw_repr(self):
+    def get_raw_obj_str(self):
         raw_repr = self.chrom
         if self.start_pos is not None:
             raw_repr += ":" + self.start_pos
@@ -209,7 +209,7 @@ class ActionDelRow(pyCMMBase):
         super(ActionDelRow, self).__init__(*args, **kwargs)
         self.__pattern = pattern
 
-    def get_raw_repr(self):
+    def get_raw_obj_str(self):
         return {"pattern": self.pattern}
 
     @property
@@ -229,7 +229,7 @@ class ActionColorRow(pyCMMBase):
         self.__pattern = pattern
         self.__info = info
 
-    def get_raw_repr(self):
+    def get_raw_obj_str(self):
         return {"pattern": self.pattern,
                 "color": self.color}
 
@@ -254,7 +254,7 @@ class ActionColorCol(pyCMMBase):
         self.__pattern = pattern
         self.__info = info
 
-    def get_raw_repr(self):
+    def get_raw_obj_str(self):
         return {"pattern": self.pattern,
                 "column name": self.col_name,
                 "color": self.color}
@@ -337,8 +337,8 @@ class ReportLayout(CMMParams):
         self.__init_properties()
         self.__init_cell_colors()
 
-    def get_raw_repr(self, *args, **kwargs):
-        raw_repr = super(ReportLayout, self).get_raw_repr(*args, **kwargs)
+    def get_raw_obj_str(self, *args, **kwargs):
+        raw_repr = super(ReportLayout, self).get_raw_obj_str(*args, **kwargs)
         raw_repr["annotated tabix file"] = self.annotated_vcf_tabix
         raw_repr[RPT_LAYOUT_CAPTION_ANNOATED_COLS] = self.anno_cols
         if self.anno_excl_tags is not None and len(self.anno_excl_tags) > 0:
@@ -632,8 +632,8 @@ class MutRepPipeline(CMMPipeline):
         super(MutRepPipeline, self).__init__(*args, **kwargs)
         self.__init_properties()
 
-    def get_raw_repr(self, *args, **kwargs):
-        raw_repr = super(MutRepPipeline, self).get_raw_repr(*args, **kwargs)
+    def get_raw_obj_str(self, *args, **kwargs):
+        raw_repr = super(MutRepPipeline, self).get_raw_obj_str(*args, **kwargs)
         return raw_repr
 
     def get_third_party_software_version(self):
@@ -1053,7 +1053,7 @@ class MutRepPipeline(CMMPipeline):
         
         row_idx = 0
         ws = self.__add_sheet('criteria')
-        rpt_layout = self.report_layout.get_raw_repr()
+        rpt_layout = self.report_layout.get_raw_obj_str()
         row_idx = write_filter(row_idx, "Criteria applied")
         caption_indent = " " * 5
         criteria_indent = " " * 10

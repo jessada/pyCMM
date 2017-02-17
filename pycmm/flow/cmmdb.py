@@ -29,8 +29,8 @@ class MutStatParams(CMMParams):
     def __init__(self, **kwargs):
         super(MutStatParams, self).__init__(**kwargs)
 
-    def get_raw_repr(self, **kwargs):
-        raw_repr = super(MutStatParams, self).get_raw_repr(**kwargs)
+    def get_raw_obj_str(self, **kwargs):
+        raw_repr = super(MutStatParams, self).get_raw_obj_str(**kwargs)
         raw_repr["input vcf tabix file"] = self.input_vcf_tabix
         db_region = self.db_region
         if db_region is None:
@@ -54,8 +54,8 @@ class CMMDBPipeline(CMMPipeline):
         super(CMMDBPipeline, self).__init__(**kwargs)
         self.__init_properties()
 
-    def get_raw_repr(self, **kwargs):
-        raw_repr = super(CMMDBPipeline, self).get_raw_repr(**kwargs)
+    def get_raw_obj_str(self, **kwargs):
+        raw_repr = super(CMMDBPipeline, self).get_raw_obj_str(**kwargs)
         return raw_repr
 
     def __init_properties(self):

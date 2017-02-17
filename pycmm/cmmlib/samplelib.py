@@ -31,8 +31,8 @@ class Sample(CMMParams):
         kwargs["entries"] = member_info
         super(Sample, self).__init__(*args, **kwargs)
 
-    def get_raw_repr(self, *args, **kwargs):
-        raw_repr = super(Sample, self).get_raw_repr(*args, **kwargs)
+    def get_raw_obj_str(self, *args, **kwargs):
+        raw_repr = super(Sample, self).get_raw_obj_str(*args, **kwargs)
         raw_repr["sample id"] = self.sample_id
         raw_repr["family id"] = self.fam_id
         return raw_repr
@@ -134,8 +134,8 @@ class Family(CMMParams):
         kwargs["entries"] = fam_info
         super(Family, self).__init__(*args, **kwargs)
 
-    def get_raw_repr(self, *args, **kwargs):
-        raw_repr = super(Family, self).get_raw_repr(*args, **kwargs)
+    def get_raw_obj_str(self, *args, **kwargs):
+        raw_repr = super(Family, self).get_raw_obj_str(*args, **kwargs)
         raw_repr["family id"] = self.fam_id
         raw_repr["members"] = self.members
         return raw_repr

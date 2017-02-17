@@ -30,12 +30,9 @@ class pyCMMBase(object):
         self.__local_scratch_dir = None
 
     def __str__(self):
-        return self.__repr__()
+        return '<' + self.__class__.__name__ + ' Object> ' + str(self.get_raw_obj_str())
 
-    def __repr__(self):
-        return '<' + self.__class__.__name__ + ' Object> ' + str(self.get_raw_repr())
-
-    def get_raw_repr(self):
+    def get_raw_obj_str(self):
         return "Not yet implemented"
 
     @property

@@ -9,7 +9,7 @@ class DNARegion(pyCMMBase):
         self.__parse_region(region)
         super(DNARegion, self).__init__(**kwargs)
 
-    def get_raw_repr(self):
+    def get_raw_obj_str(self):
         return {"chromosome": self.chrom,
                 "start position": self.start_pos,
                 "end postion": self.end_pos,

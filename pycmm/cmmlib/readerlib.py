@@ -21,7 +21,7 @@ class Reader(pyCMMBase):
         self.__parser = parser
         super(Reader, self).__init__(**kwargs)
 
-    def get_raw_repr(self):
+    def get_raw_obj_str(self):
         raw_repr = OrderedDict()
         raw_repr["file name"] = self.__file_name
         raw_repr["parser"] = self.__parser

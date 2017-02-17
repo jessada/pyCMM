@@ -10,7 +10,7 @@ class VersionManager(pyCMMBase):
     def __init__(self, **kwargs):
         super(VersionManager, self).__init__(**kwargs)
     
-    def get_raw_repr(self):
+    def get_raw_obj_str(self):
         return {"pycmm": self.pycmm_version,
                 "pysam": self.pysam_version,
                 "pyvcf": self.pyvcf_version,

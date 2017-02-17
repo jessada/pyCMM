@@ -29,7 +29,7 @@ class JobRecord(pyCMMBase):
         self.nodelist = None
         super(JobRecord, self).__init__(**kwargs)
     
-    def get_raw_repr(self):
+    def get_raw_obj_str(self):
         return {"job name": self.job_name,
                 "project code": self.project_code,
                 "partition type": self.partition_type,
@@ -109,7 +109,7 @@ class JobManager(pyCMMBase):
             self.__job_nodelist = stdout_data.strip()
         return self.__job_nodelist
 
-    def get_raw_repr(self):
+    def get_raw_obj_str(self):
         return None
 
     def __get_sbatch_cmd(self, job_rec):

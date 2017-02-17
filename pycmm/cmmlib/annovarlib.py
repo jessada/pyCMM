@@ -54,7 +54,7 @@ class Annovar(pyCMMBase):
         self.__data_out_folder = data_out_folder
         self.__tmp_annovar_prefix = self.new_local_tmp_file()
 
-    def get_raw_repr(self):
+    def get_raw_obj_str(self):
         raw_repr = OrderedDict()
         raw_repr["dataset name"] = self.dataset_name
         raw_repr["input file"] = self.input_file
@@ -152,8 +152,8 @@ class PredictionInfo(CMMParams):
         self.__description = description
         self.__harmful = harmful
 
-    def get_raw_repr(self, **kwargs):
-        raw_repr = super(PredictionInfo, self).get_raw_repr(**kwargs)
+    def get_raw_obj_str(self, **kwargs):
+        raw_repr = super(PredictionInfo, self).get_raw_obj_str(**kwargs)
         raw_repr["code"] = self.code
         raw_repr["description"] = self.description
         raw_repr["harmful"] = self.harmful
@@ -400,8 +400,8 @@ class AnnovarParams(CMMParams):
     def __init__(self, **kwargs):
         super(AnnovarParams, self).__init__(**kwargs)
 
-    def get_raw_repr(self, **kwargs):
-        raw_repr = super(AnnovarParams, self).get_raw_repr(**kwargs)
+    def get_raw_obj_str(self, **kwargs):
+        raw_repr = super(AnnovarParams, self).get_raw_obj_str(**kwargs)
         raw_repr["input vcf tabix file"] = self.input_vcf_tabix
         raw_repr["annovar db dir"] = self.db_dir
         raw_repr["annovar build ver"] = self.buildver

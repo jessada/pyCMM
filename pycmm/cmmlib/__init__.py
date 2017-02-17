@@ -10,7 +10,7 @@ class CMMParams(pyCMMBase):
         self.__entries = entries
         super(CMMParams, self).__init__(*args, **kwargs)
 
-    def get_raw_repr(self):
+    def get_raw_obj_str(self):
         raw_repr = OrderedDict()
         return raw_repr
 
