@@ -2,6 +2,7 @@ import sys
 from os.path import join as join_path
 from collections import OrderedDict
 from pycmm.template import pyCMMBase
+from pycmm.settings import DUMMY_TABLE_ANNOVAR_BASH
 from pycmm.settings import LJB_SIFT_PREDICTION_COL_NAME as SIFT_PRED_COL
 from pycmm.settings import LJB_POLYPHEN2_HDIV_PREDICTION_COL_NAME as POLYPHEN2_HDIV_PRED_COL
 from pycmm.settings import LJB_POLYPHEN2_HVAR_PREDICTION_COL_NAME as POLYPHEN2_HVAR_PRED_COL
@@ -111,7 +112,7 @@ class Annovar(pyCMMBase):
 
     @property
     def table_annovar_cmd(self):
-        cmd = "table_annovar.pl"
+        cmd = DUMMY_TABLE_ANNOVAR_BASH
         cmd += " " + self.input_file
         cmd += " " + self.db_dir
         cmd += " -buildver " + self.buildver

@@ -39,6 +39,7 @@ DNASEQ_CREATE_JOB_SETUP_FILE_DESCRIPTION = "An applicationt to generate job setu
 
 ## ************************************************************************************************ CMM DB ************************************************************************************************
 DUMMY_TABLE_ANNOVAR_BIN = 'pyCMM-dummy-table-annovar'
+DUMMY_TABLE_ANNOVAR_BASH = "$PYCMM/bash/table_annovar_dummy.sh"
 
 CMMDB_PIPELINE_DESCRIPTION = "A flow to control a pipeline to process CMM database"
 CMMDB_MUTSTAT_DESCRIPTION = "A flow to control a pipeline to process mutation statistics database"
