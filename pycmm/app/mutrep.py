@@ -6,7 +6,7 @@ from pycmm.settings import MUTREP_SUMMARY_REPORT_DESCRIPTION
 from pycmm.utils import mylogger
 from pycmm.utils import disp
 from pycmm.flow.mutrep import MutRepPipeline
-from pycmm.flow.mutrep import ReportRegion
+from pycmm.flow.mutrep import DNARegion
 from pycmm.flow.mutrep import create_jobs_setup_file
 from pycmm.app import display_configs
 
@@ -20,7 +20,7 @@ def app_pycmm_family_report(*args, **kwargs):
     if raw_report_regions is None:
         report_regions = None
     else:
-        report_regions = map(lambda x: ReportRegion(x),
+        report_regions = map(lambda x: DNARegion(x),
                              raw_report_regions.split(","))
     out_file = kwargs['out_file']
 
@@ -29,7 +29,7 @@ def app_pycmm_family_report(*args, **kwargs):
     if report_regions is None:
         custom_params['report region(s)'] = report_regions
     else:
-        custom_params['report region(s)'] = map(lambda x: x.get_raw_repr(),
+        custom_params['report region(s)'] = map(lambda x: x.get_raw_obj_str(),
                                                 report_regions)
     custom_params['output file'] = out_file
     mylogger.getLogger(__name__)
@@ -52,7 +52,7 @@ def app_pycmm_summary_report(*args, **kwargs):
     if raw_report_regions is None:
         report_regions = None
     else:
-        report_regions = map(lambda x: ReportRegion(x),
+        report_regions = map(lambda x: DNARegion(x),
                              raw_report_regions.split(","))
     out_file = kwargs['out_file']
 
@@ -60,7 +60,7 @@ def app_pycmm_summary_report(*args, **kwargs):
     if report_regions is None:
         custom_params['report region(s)'] = report_regions
     else:
-        custom_params['report region(s)'] = map(lambda x: x.get_raw_repr(),
+        custom_params['report region(s)'] = map(lambda x: x.get_raw_obj_str(),
                                                 report_regions)
     custom_params['output file'] = out_file
     mylogger.getLogger(__name__)

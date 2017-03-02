@@ -1,5 +1,4 @@
 # This Python file uses the following encoding: utf-8
-import re
 import pyaml
 from os.path import join as join_path
 from collections import defaultdict
@@ -35,6 +34,7 @@ from pycmm.flow import get_func_arg
 from pycmm.flow.cmmdb import CMMPipeline
 from pycmm.flow import init_jobs_setup_file
 from pycmm.cmmlib.dnalib import ALL_CHROMS
+from pycmm.cmmlib.dnalib import DNARegion
 from pycmm.cmmlib.tamodel import CMMGT_HOMOZYGOTE
 from pycmm.cmmlib.tamodel import CMMGT_HETEROZYGOTE
 
@@ -57,7 +57,6 @@ CELL_TYPE_HOM_RECESSIVE = 'HOM_RECESSIVE'
 DFLT_COLOR_SEPARATOR = 'XLS_GRAY1_2'
 CELL_TYPE_SEPARATOR = 'SEPARATOR'
 
-CHROM_POS_PATTERN = re.compile(r'''(?P<chrom>.+?):(?P<start_pos>.+?)-(?P<end_pos>.+)''')
 RECORDS_LOG_INTERVAL = 1000
 
 # *************** report layout section ***************
@@ -149,54 +148,51 @@ VcfRecordBuffer = namedtuple('VcfRecordBuffer',
 RecessiveAnalysisResult = namedtuple('RecessiveAnalysisResult',
                                      'affected unaffected filtered_buffer_idxs')
 
-class ReportRegion(pyCMMBase):
-    """ A structure to parse and keep mutation report region """
-
-    def __init__(self,
-                 raw_region,
-                 *args,
-                 **kwargs
-                 ):
-        super(ReportRegion, self).__init__(*args, **kwargs)
-        self.__parse_region(raw_region)
-        self.__raw_region = raw_region
-
-    def __repr__(self):
-        return str(self.get_raw_obj_str())
-
-    def get_raw_obj_str(self):
-        raw_repr = self.chrom
-        if self.start_pos is not None:
-            raw_repr += ":" + self.start_pos
-            raw_repr += "-" + self.end_pos
-        return raw_repr
-
-    @property
-    def chrom(self):
-        return self.__chrom
-
-    @property
-    def start_pos(self):
-        return self.__start_pos
-
-    @property
-    def end_pos(self):
-        return self.__end_pos
-
-    @property
-    def raw_region(self):
-        return self.__raw_region
-
-    def __parse_region(self, raw_region):
-        match = CHROM_POS_PATTERN.match(raw_region)
-        if match is not None:
-            self.__chrom = match.group('chrom')
-            self.__start_pos = match.group('start_pos')
-            self.__end_pos = match.group('end_pos')
-        else:
-            self.__chrom = raw_region
-            self.__start_pos = None
-            self.__end_pos = None
+#class ReportRegion(pyCMMBase):
+#    """ A structure to parse and keep mutation report region """
+#
+#    def __init__(self,
+#                 raw_region,
+#                 *args,
+#                 **kwargs
+#                 ):
+#        super(ReportRegion, self).__init__(*args, **kwargs)
+#        self.__parse_region(raw_region)
+#        self.__raw_region = raw_region
+#
+#    def get_raw_obj_str(self):
+#        raw_repr = self.chrom
+#        if self.start_pos is not None:
+#            raw_repr += ":" + self.start_pos
+#            raw_repr += "-" + self.end_pos
+#        return raw_repr
+#
+#    @property
+#    def chrom(self):
+#        return self.__chrom
+#
+#    @property
+#    def start_pos(self):
+#        return self.__start_pos
+#
+#    @property
+#    def end_pos(self):
+#        return self.__end_pos
+#
+#    @property
+#    def raw_region(self):
+#        return self.__raw_region
+#
+#    def __parse_region(self, raw_region):
+#        match = CHROM_POS_PATTERN.match(raw_region)
+#        if match is not None:
+#            self.__chrom = match.group('chrom')
+#            self.__start_pos = match.group('start_pos')
+#            self.__end_pos = match.group('end_pos')
+#        else:
+#            self.__chrom = raw_region
+#            self.__start_pos = None
+#            self.__end_pos = None
 
 class ActionDelRow(pyCMMBase):
     """ A structure to parse action to delete a row from a mutation report sheet """
@@ -460,8 +456,8 @@ class ReportLayout(CMMParams):
     def report_regions(self):
         regions = self._get_job_config(JOBS_SETUP_RPT_REGIONS_KEY)
         if regions is not None:
-            regions = map(lambda x: ReportRegion(str(x)),
-                           regions)
+            regions = map(lambda x: DNARegion(str(x)),
+                          regions)
         return regions
 
     @property

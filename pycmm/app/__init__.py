@@ -26,7 +26,7 @@ def display_configs(func_name,
                      required_params=required_params,
                      optional_params=optional_params,
                      )
-    disp.disp_params_set("Pipeline parameters", pl.get_raw_repr())
+    disp.disp_params_set("Pipeline parameters", pl.get_raw_obj_str())
 
     if hasattr(pl, "gatk_params"):
 ## *********************************************************************************************** Need refactoring ***********************************************************************************************
@@ -41,15 +41,15 @@ def display_configs(func_name,
         disp.disp_params_set("GATK DNA-Seq Best Practice parameters", gatk_params)
 ## *********************************************************************************************** Need refactoring ***********************************************************************************************
     if hasattr(pl, "plink_params"):
-        disp.disp_params_set("Plink parameters", pl.plink_params.get_raw_repr())
+        disp.disp_params_set("Plink parameters", pl.plink_params.get_raw_obj_str())
     if hasattr(pl, "mutstat_params"):
-        disp.disp_params_set("Mutation statistics database parameters", pl.mutstat_params.get_raw_repr())
+        disp.disp_params_set("Mutation statistics database parameters", pl.mutstat_params.get_raw_obj_str())
     if hasattr(pl, "annovar_params"):
-        disp.disp_params_set("Annovar parameters", pl.annovar_params.get_raw_repr())
+        disp.disp_params_set("Annovar parameters", pl.annovar_params.get_raw_obj_str())
     if hasattr(pl, "report_layout"):
-        disp.disp_params_set("report layout parameters", pl.report_layout.get_raw_repr())
+        disp.disp_params_set("report layout parameters", pl.report_layout.get_raw_obj_str())
     if hasattr(pl, "rpt_params"):
-        disp.disp_params_set("report parameters", pl.rpt_params.get_raw_repr())
+        disp.disp_params_set("report parameters", pl.rpt_params.get_raw_obj_str())
     if custom_params is not None:
         disp.disp_params_set("custom parameters", custom_params)
 
