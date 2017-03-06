@@ -15,6 +15,17 @@ from pycmm.settings import WES294_OAF_EARLYONSET_AF_COL_NAME
 from pycmm.settings import WES294_OAF_BRCS_AF_COL_NAME
 from pycmm.settings import EXAC_NFE_COL_NAME
 from pycmm.settings import KG2014OCT_EUR_COL_NAME
+from pycmm.settings import EXAC03_CONSTRAINT_EXP_SYN_COL_NAME
+from pycmm.settings import EXAC03_CONSTRAINT_N_SYN_COL_NAME
+from pycmm.settings import EXAC03_CONSTRAINT_SYN_Z_COL_NAME
+from pycmm.settings import EXAC03_CONSTRAINT_EXP_MIS_COL_NAME
+from pycmm.settings import EXAC03_CONSTRAINT_N_MIS_COL_NAME
+from pycmm.settings import EXAC03_CONSTRAINT_MIS_Z_COL_NAME
+from pycmm.settings import EXAC03_CONSTRAINT_EXP_LOF_COL_NAME
+from pycmm.settings import EXAC03_CONSTRAINT_N_LOF_COL_NAME
+from pycmm.settings import EXAC03_CONSTRAINT_PLI_COL_NAME
+from pycmm.settings import EXAC03_CONSTRAINT_COL_NAMES
+from pycmm.settings import EXAC03_CONSTRAINT_COL_NAME
 from pycmm.settings import PREDICTION_COLS
 from pycmm.utils import check_equal
 from pycmm.utils import check_in
@@ -32,6 +43,8 @@ FUNC_UPSTREAM = 'upstream'
 FUNC_DOWNSTREAM = 'downstream'
 FUNC_UTR = 'UTR'
 EXONICFUNC_SYNONYMOUS = 'synonymous_SNV'
+
+EXAC_CONSTRAINT_PATTERN = re.compile(r'''(?P<var_name>.+?)=(?P<value>.+)''')
 
 class _TAVcfCall(_VcfCall, pyCMMBase):
     """
@@ -215,6 +228,7 @@ class _TAVcfRecord(_VcfRecord, pyCMMBase):
         self.__family_infos = copy.deepcopy(family_infos)
         self.__shared_cal = False
         self.__pathogenic_counts = {}
+        self.__exac_constraints = {}
 
         if (type(self.FILTER) is list) and (len(self.FILTER) == 0):
             self.FILTER = "PASS"
@@ -359,6 +373,8 @@ class _TAVcfRecord(_VcfRecord, pyCMMBase):
                                                         allele_idx),
                                ref_is_mutated=self.ref_is_mutated[allele_idx],
                                )
+        elif var_name in EXAC03_CONSTRAINT_COL_NAMES:
+            info = self.__get_exac_constraint_val(var_name)
         return info
 
     def __cal_afss(self):
@@ -525,6 +541,26 @@ class _TAVcfRecord(_VcfRecord, pyCMMBase):
                 count += 1
             self.__pathogenic_counts[allele_idx] = count
         return self.__pathogenic_counts[allele_idx]
+
+    def __get_exac_constraint_val(self, var_name):
+        if var_name in self.__exac_constraints:
+            return self.__exac_constraints[var_name]
+        exac_constraint_vals = self.__get_info(EXAC03_CONSTRAINT_COL_NAME)
+        if (exac_constraint_vals is None or
+            exac_constraint_vals == "." or
+            exac_constraint_vals == ""):
+            return None
+        self.__parse_exac_constraint(exac_constraint_vals)
+        return self.__exac_constraints[var_name]
+
+
+    def __parse_exac_constraint(self, exac_constraint_vals):
+        exac_constaints = exac_constraint_vals.split('#')
+        for exac_constaint in exac_constaints:
+            match = EXAC_CONSTRAINT_PATTERN.match(exac_constaint)
+            var_name = match.group('var_name')
+            value = match.group('value')
+            self.__exac_constraints[var_name] = value
 
     def vcf_eval(self, expr, allele_idx):
         def info_repl(match_obj):

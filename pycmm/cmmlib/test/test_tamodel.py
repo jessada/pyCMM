@@ -5,6 +5,15 @@ from pycmm.settings import KG2014OCT_ALL_COL_NAME
 from pycmm.settings import EST_KVOT_EARLYONSET_VS_BRC_COL_NAME
 from pycmm.settings import EST_KVOT_EARLYONSET_VS_EXAC_NFE_COL_NAME
 from pycmm.settings import EST_KVOT_EARLYONSET_VS_KG_EUR_COL_NAME
+from pycmm.settings import EXAC03_CONSTRAINT_EXP_SYN_COL_NAME
+from pycmm.settings import EXAC03_CONSTRAINT_N_SYN_COL_NAME
+from pycmm.settings import EXAC03_CONSTRAINT_SYN_Z_COL_NAME
+from pycmm.settings import EXAC03_CONSTRAINT_EXP_MIS_COL_NAME
+from pycmm.settings import EXAC03_CONSTRAINT_N_MIS_COL_NAME
+from pycmm.settings import EXAC03_CONSTRAINT_MIS_Z_COL_NAME
+from pycmm.settings import EXAC03_CONSTRAINT_EXP_LOF_COL_NAME
+from pycmm.settings import EXAC03_CONSTRAINT_N_LOF_COL_NAME
+from pycmm.settings import EXAC03_CONSTRAINT_PLI_COL_NAME
 from pycmm.cmmlib.taparser import TAVcfReader
 from pycmm.flow.mutrep import MutRepPipeline
 from pycmm.flow.test.test_mutrep import DFLT_TEST_MUTREP_COLS
@@ -2580,6 +2589,77 @@ class TestTAVcfRecord(SafeTester):
         self.assertEqual(vcf_record.pathogenic_count(allele_idx=2),
                          9,
                          "number of harmful pathogenic prediction cannot be correctly determined")
+
+    def test_parse_exac_constraint_1(self):
+        """
+        test parsing exac constraint for the annotated vcf
+        """
+
+        self.init_test(self.current_func_name)
+        in_file = join_path(self.data_dir,
+                            'input.vcf.gz')
+        vcf_reader = TAVcfReader(filename=in_file)
+        vcf_record = vcf_reader.next()
+        vcf_record = vcf_reader.next()
+        self.assertTrue(vcf_record.get_info(EXAC03_CONSTRAINT_EXP_SYN_COL_NAME) is None,
+                        "values of ExAC constraint cannot be correctly determined")
+        self.assertTrue(vcf_record.get_info(EXAC03_CONSTRAINT_N_SYN_COL_NAME) is None,
+                        "values of ExAC constraint cannot be correctly determined")
+        self.assertTrue(vcf_record.get_info(EXAC03_CONSTRAINT_SYN_Z_COL_NAME) is None,
+                        "values of ExAC constraint cannot be correctly determined")
+        self.assertTrue(vcf_record.get_info(EXAC03_CONSTRAINT_EXP_MIS_COL_NAME) is None,
+                        "values of ExAC constraint cannot be correctly determined")
+        self.assertTrue(vcf_record.get_info(EXAC03_CONSTRAINT_N_MIS_COL_NAME) is None,
+                        "values of ExAC constraint cannot be correctly determined")
+        self.assertTrue(vcf_record.get_info(EXAC03_CONSTRAINT_MIS_Z_COL_NAME) is None,
+                        "values of ExAC constraint cannot be correctly determined")
+        self.assertTrue(vcf_record.get_info(EXAC03_CONSTRAINT_EXP_LOF_COL_NAME) is None,
+                        "values of ExAC constraint cannot be correctly determined")
+        self.assertTrue(vcf_record.get_info(EXAC03_CONSTRAINT_N_LOF_COL_NAME) is None,
+                        "values of ExAC constraint cannot be correctly determined")
+        self.assertTrue(vcf_record.get_info(EXAC03_CONSTRAINT_PLI_COL_NAME) is None,
+                        "values of ExAC constraint cannot be correctly determined")
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.get_info(EXAC03_CONSTRAINT_EXP_SYN_COL_NAME),
+                         '45.7717977506',
+                         "values of ExAC constraint cannot be correctly determined")
+        self.assertEqual(vcf_record.get_info(EXAC03_CONSTRAINT_N_SYN_COL_NAME),
+                         '40',
+                         "values of ExAC constraint cannot be correctly determined")
+        self.assertEqual(vcf_record.get_info(EXAC03_CONSTRAINT_SYN_Z_COL_NAME),
+                         '0.528885612026385',
+                         "values of ExAC constraint cannot be correctly determined")
+        self.assertEqual(vcf_record.get_info(EXAC03_CONSTRAINT_EXP_MIS_COL_NAME),
+                         '115.696060891',
+                         "values of ExAC constraint cannot be correctly determined")
+        self.assertEqual(vcf_record.get_info(EXAC03_CONSTRAINT_N_MIS_COL_NAME),
+                         '34',
+                         "values of ExAC constraint cannot be correctly determined")
+        self.assertEqual(vcf_record.get_info(EXAC03_CONSTRAINT_MIS_Z_COL_NAME),
+                         '3.71499650338098',
+                         "values of ExAC constraint cannot be correctly determined")
+        self.assertEqual(vcf_record.get_info(EXAC03_CONSTRAINT_EXP_LOF_COL_NAME),
+                         '15.533928734',
+                         "values of ExAC constraint cannot be correctly determined")
+        self.assertEqual(vcf_record.get_info(EXAC03_CONSTRAINT_N_LOF_COL_NAME),
+                         '1',
+                         "values of ExAC constraint cannot be correctly determined")
+        self.assertEqual(vcf_record.get_info(EXAC03_CONSTRAINT_PLI_COL_NAME),
+                         '0.975506865848027',
+                         "values of ExAC constraint cannot be correctly determined")
+
+    def test_parse_exac_constraint_2(self):
+        """
+        test parsing exac constraint for vcf without the annotation
+        """
+
+        self.init_test(self.current_func_name)
+        in_file = join_path(self.data_dir,
+                            'input.vcf.gz')
+        vcf_reader = TAVcfReader(filename=in_file)
+        vcf_record = vcf_reader.next()
+        self.assertTrue(vcf_record.get_info(EXAC03_CONSTRAINT_EXP_SYN_COL_NAME) is None,
+                        "values of ExAC constraint cannot be correctly determined")
 
     def tearDown(self):
         self.remove_working_dir()
