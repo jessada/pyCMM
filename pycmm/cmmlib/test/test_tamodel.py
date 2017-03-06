@@ -2661,5 +2661,22 @@ class TestTAVcfRecord(SafeTester):
         self.assertTrue(vcf_record.get_info(EXAC03_CONSTRAINT_EXP_SYN_COL_NAME) is None,
                         "values of ExAC constraint cannot be correctly determined")
 
+    def test_parse_exac_constraint_4(self):
+        """
+        test parsing exac constraint for vcf without the annotation
+        """
+
+        self.init_test(self.current_func_name)
+        in_file = join_path(self.data_dir,
+                            'input.vcf.gz')
+        vcf_reader = TAVcfReader(filename=in_file)
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.get_info(EXAC03_CONSTRAINT_N_LOF_COL_NAME, 1),
+                         None,
+                         "values of ExAC constraint cannot be correctly determined")
+        self.assertEqual(vcf_record.get_info(EXAC03_CONSTRAINT_PLI_COL_NAME, 2),
+                         None,
+                         "values of ExAC constraint cannot be correctly determined")
+
     def tearDown(self):
         self.remove_working_dir()

@@ -1,6 +1,7 @@
 import copy
 import sys
 import re
+from collections import defaultdict
 from vcf.model import _Record as _VcfRecord
 from vcf.model import _Call as _VcfCall
 from pycmm.template import pyCMMBase
@@ -228,7 +229,7 @@ class _TAVcfRecord(_VcfRecord, pyCMMBase):
         self.__family_infos = copy.deepcopy(family_infos)
         self.__shared_cal = False
         self.__pathogenic_counts = {}
-        self.__exac_constraints = {}
+        self.__exac_constraints = defaultdict(dict)
 
         if (type(self.FILTER) is list) and (len(self.FILTER) == 0):
             self.FILTER = "PASS"
@@ -313,7 +314,7 @@ class _TAVcfRecord(_VcfRecord, pyCMMBase):
             return self.INFO[var_name]
         return None
 
-    def get_info(self, var_name, allele_idx=None):
+    def get_info(self, var_name, allele_idx=1):
         """
         parsed to be called by high-level function
         - kvot is included
@@ -374,7 +375,7 @@ class _TAVcfRecord(_VcfRecord, pyCMMBase):
                                ref_is_mutated=self.ref_is_mutated[allele_idx],
                                )
         elif var_name in EXAC03_CONSTRAINT_COL_NAMES:
-            info = self.__get_exac_constraint_val(var_name)
+            info = self.__get_exac_constraint_val(var_name, allele_idx)
         return info
 
     def __cal_afss(self):
@@ -542,25 +543,25 @@ class _TAVcfRecord(_VcfRecord, pyCMMBase):
             self.__pathogenic_counts[allele_idx] = count
         return self.__pathogenic_counts[allele_idx]
 
-    def __get_exac_constraint_val(self, var_name):
-        if var_name in self.__exac_constraints:
-            return self.__exac_constraints[var_name]
-        exac_constraint_vals = self.__get_info(EXAC03_CONSTRAINT_COL_NAME)
+    def __get_exac_constraint_val(self, var_name, allele_idx=1):
+        if var_name in self.__exac_constraints[allele_idx]:
+            return self.__exac_constraints[allele_idx][var_name]
+        exac_constraint_vals = self.get_info(EXAC03_CONSTRAINT_COL_NAME, allele_idx)
         if (exac_constraint_vals is None or
             exac_constraint_vals == "." or
             exac_constraint_vals == ""):
             return None
-        self.__parse_exac_constraint(exac_constraint_vals)
-        return self.__exac_constraints[var_name]
+        self.__parse_exac_constraint(exac_constraint_vals, allele_idx)
+        return self.__exac_constraints[allele_idx][var_name]
 
 
-    def __parse_exac_constraint(self, exac_constraint_vals):
+    def __parse_exac_constraint(self, exac_constraint_vals, allele_idx):
         exac_constaints = exac_constraint_vals.split('#')
         for exac_constaint in exac_constaints:
             match = EXAC_CONSTRAINT_PATTERN.match(exac_constaint)
             var_name = match.group('var_name')
             value = match.group('value')
-            self.__exac_constraints[var_name] = value
+            self.__exac_constraints[allele_idx][var_name] = value
 
     def vcf_eval(self, expr, allele_idx):
         def info_repl(match_obj):
