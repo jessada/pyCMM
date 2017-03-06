@@ -1088,22 +1088,18 @@ class MutRepPipeline(CMMPipeline):
                              ):
         if self.report_layout.split_chrom:
             if report_regions is None:
-                region_params = ALL_CHROMS
-            else:
-                region_params = map(lambda x: x.raw_region,
-                                    report_regions)
-            for region_param in region_params:
+                report_regions = map(lambda x: DNARegion(x), ALL_CHROMS)
+            for report_region in report_regions:
                 chr_slurm_log_prefix = slurm_log_prefix
-                chr_slurm_log_prefix += "_chr" + region_param.split(":")[0]
+                chr_slurm_log_prefix += "_" + report_region.region_key
                 job_name = job_name_prefix
-                job_name += "_chr" + region_param.split(":")[0]
+                job_name += "_" + report_region.region_key
                 out_file = out_file_prefix
-                out_file += "_chr" + region_param.split(":")[0]
+                out_file += "_" + report_region.region_key
                 out_file += ".xlsx"
                 job_params = job_params_prefix
-                job_params += " -r " + region_param
+                job_params += " -r " + report_region.raw_region
                 job_params += " -o " + out_file
-                self.dbg(job_script + job_params)
                 self.submit_job(job_name,
                                 self.project_code,
                                 "core",
