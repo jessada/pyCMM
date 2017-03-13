@@ -637,13 +637,13 @@ class TestTAVcfRecordXls(SafeTester):
                              "rpts",
                              project_name+"_summary.xlsx")
         xu = XlsUtils(xls_file)
-        syn_z_col_idx = xu.get_col_idx(EXAC03_CONSTRAINT_SYN_Z_COL_NAME)
+        syn_z_col_idx = xu.get_col_idx(pl.correct_header(EXAC03_CONSTRAINT_SYN_Z_COL_NAME))
         self.assertEqual(xu.get_cell_value(2, syn_z_col_idx),
                          None,
                          "Incorect number of ExAC constraint value"
                          )
-        self.assertEqual(xu.get_cell_value(4, syn_z_col_idx),
-                         "0.528885612026385",
+        self.assertEqual(round(xu.get_cell_value(4, syn_z_col_idx), 2),
+                         0.53,
                          "Incorect number of ExAC constraint value"
                          )
 

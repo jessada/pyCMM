@@ -23,6 +23,9 @@ from pycmm.settings import PATHOGENIC_COUNT_COL_NAME
 from pycmm.settings import DFLT_HEADER_CORRECTIONS
 from pycmm.settings import EXAC03_CONSTRAINT_COL_NAMES
 from pycmm.settings import EXAC03_CONSTRAINT_COL_NAME
+from pycmm.settings import FORMAT_COLS
+from pycmm.settings import FORMAT_COL_FLOAT
+from pycmm.settings import FORMAT_COL_INT
 from pycmm.template import pyCMMBase
 from pycmm.utils import DefaultOrderedDict
 from pycmm.utils import is_number
@@ -327,7 +330,7 @@ class ReportLayout(CMMParams):
     def __init_properties(self):
         self.__anno_cols = None
         self.__freq_ratios = None
-        self.__heder_corrections = self.__get_header_corrections()
+        self.__header_corrections = self.__get_header_corrections()
         self.__exprs = self._get_job_config(JOBS_SETUP_RPT_EXPRESSIONS_KEY)
         if self.__exprs is not None:
             self.__exprs = VcfExpressions(self.__exprs)
@@ -522,7 +525,7 @@ class ReportLayout(CMMParams):
 
     @property
     def header_corrections(self):
-        return self.__heder_corrections
+        return self.__header_corrections
 
     @property
     def freq_ratios(self):
@@ -628,7 +631,7 @@ class MutRepPipeline(CMMPipeline):
         ws.set_default_row(12)
         return ws
 
-    def __correct_header(self, old_header):
+    def correct_header(self, old_header):
         if old_header in self.report_layout.header_corrections:
             return self.report_layout.header_corrections[old_header]
         return old_header
@@ -665,7 +668,7 @@ class MutRepPipeline(CMMPipeline):
         ws.write(0, XLS_FILTER_COL_IDX, "FILTER", cell_fmt)
         len_anno_cols = len(anno_cols)
         for anno_idx in xrange(len_anno_cols):
-            col_name = self.__correct_header(anno_cols[anno_idx])
+            col_name = self.correct_header(anno_cols[anno_idx])
             ws.write(0, anno_idx+LAYOUT_VCF_COLS, col_name, cell_fmt)
         sample_start_idx = LAYOUT_VCF_COLS + len_anno_cols
         if (self.samples_groups is not None and
@@ -781,8 +784,11 @@ class MutRepPipeline(CMMPipeline):
             dflt_cell_fmt = self.plain_fmts[NO_COLOR]
         # start writing content
         alt_allele = vcf_record.alleles[allele_idx]
-        ws.write(row, XLS_CHROM_COL_IDX, vcf_record.CHROM, dflt_cell_fmt)
-        ws.write(row, XLS_POS_COL_IDX, str(vcf_record.POS), dflt_cell_fmt)
+        if is_number(vcf_record.CHROM):
+            ws.write(row, XLS_CHROM_COL_IDX, int(vcf_record.CHROM), dflt_cell_fmt)
+        else:
+            ws.write(row, XLS_CHROM_COL_IDX, vcf_record.CHROM, dflt_cell_fmt)
+        ws.write(row, XLS_POS_COL_IDX, vcf_record.POS, dflt_cell_fmt)
         ws.write(row, XLS_REF_COL_IDX, vcf_record.REF, dflt_cell_fmt)
         ws.write(row, XLS_ALT_COL_IDX, str(alt_allele), dflt_cell_fmt)
         ws.write(row, XLS_FILTER_COL_IDX, vcf_record.FILTER, dflt_cell_fmt)
@@ -817,7 +823,18 @@ class MutRepPipeline(CMMPipeline):
                         ):
                         info_cell_fmt = self.plain_fmts[cca.color]
                         break
-            if is_number(info):
+            if (anno_col_name in FORMAT_COLS and
+                FORMAT_COLS[anno_col_name] == FORMAT_COL_FLOAT and
+                info != "INF" and
+                is_number(info)
+                ):
+                ws.write(row, anno_idx+LAYOUT_VCF_COLS, float(info), info_cell_fmt)
+            elif (anno_col_name in FORMAT_COLS and
+                FORMAT_COLS[anno_col_name] == FORMAT_COL_INT and
+                is_number(info)
+                ):
+                ws.write(row, anno_idx+LAYOUT_VCF_COLS, int(info), info_cell_fmt)
+            elif is_number(info):
                 ws.write(row, anno_idx+LAYOUT_VCF_COLS, info, info_cell_fmt)
             else:
                 ws.write(row, anno_idx+LAYOUT_VCF_COLS, str(info).decode('utf-8'), info_cell_fmt)

@@ -141,6 +141,8 @@ def app_pycmm_mutrep_create_jobs_setup_file(*args, **kwargs):
     layout_params['extra annotation columns'] = extra_anno_cols
     layout_params['only summary report (--only_summary)'] = kwargs['only_summary']
     layout_params['only families report (--only_families)'] = kwargs['only_families']
+    layout_params['coloring shared variants (--coloring_shared)'] = kwargs['coloring_shared']
+    layout_params['coloring variant zygosities (--coloring_zygosity)'] = kwargs['coloring_zygosity']
     disp.disp_params_set("Report layout parameters", layout_params)
     kwargs['project_name'] = kwargs['dataset_name']
     create_jobs_setup_file(**kwargs)
