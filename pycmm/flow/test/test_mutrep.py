@@ -14,6 +14,7 @@ from pycmm.settings import AXEQ_CHR3_6_14_18_COLS_TAG
 from pycmm.settings import AXEQ_CHR5_19_COLS_TAG
 from pycmm.settings import MUTSTAT_DETAILS_COLS_TAG
 from pycmm.settings import EXAC_OTH_COLS_TAG
+from pycmm.settings import EXAC_CONSTRAINT_COLS_TAG
 from pycmm.settings import LJB_SCORE_COLS_TAG
 from pycmm.settings import UNKNOWN_COLS_TAG
 from pycmm.settings import FUNC_REFGENE_COL_NAME
@@ -75,6 +76,7 @@ DFLT_TEST_ANNO_EXCL_TAGS = MT_COLS_TAG
 DFLT_TEST_ANNO_EXCL_TAGS += "," + AXEQ_CHR9_COLS_TAG
 DFLT_TEST_ANNO_EXCL_TAGS += "," + MUTSTAT_DETAILS_COLS_TAG
 DFLT_TEST_ANNO_EXCL_TAGS += "," + EXAC_OTH_COLS_TAG
+DFLT_TEST_ANNO_EXCL_TAGS += "," + EXAC_CONSTRAINT_COLS_TAG
 DFLT_TEST_ANNO_EXCL_TAGS += "," + UNKNOWN_COLS_TAG
 
 MUTREP_TEST = False
@@ -212,7 +214,7 @@ class TestMutRepPipeline(SafeTester):
                          7,
                          "MutRepPipeline cannot correctly read report layout info 'layout columns' from jobs setup file")
         self.assertEqual(len(pl.report_layout.anno_excl_tags),
-                         5,
+                         6,
                          "MutRepPipeline cannot correctly read report layout info 'annotation excluded tags' from jobs setup file")
         self.assertEqual(pl.report_layout.report_regions[1].end_pos,
                          "14542551",

@@ -1,5 +1,4 @@
 # This Python file uses the following encoding: utf-8
-import re
 import pyaml
 from os.path import join as join_path
 from collections import defaultdict
@@ -22,6 +21,11 @@ from pycmm.settings import KG2014OCT_EUR_COL_NAME
 from pycmm.settings import GENE_REFGENE_COL_NAME
 from pycmm.settings import PATHOGENIC_COUNT_COL_NAME
 from pycmm.settings import DFLT_HEADER_CORRECTIONS
+from pycmm.settings import EXAC03_CONSTRAINT_COL_NAMES
+from pycmm.settings import EXAC03_CONSTRAINT_COL_NAME
+from pycmm.settings import FORMAT_COLS
+from pycmm.settings import FORMAT_COL_FLOAT
+from pycmm.settings import FORMAT_COL_INT
 from pycmm.template import pyCMMBase
 from pycmm.utils import DefaultOrderedDict
 from pycmm.utils import is_number
@@ -35,6 +39,7 @@ from pycmm.flow import get_func_arg
 from pycmm.flow.cmmdb import CMMPipeline
 from pycmm.flow import init_jobs_setup_file
 from pycmm.cmmlib.dnalib import ALL_CHROMS
+from pycmm.cmmlib.dnalib import DNARegion
 from pycmm.cmmlib.tamodel import CMMGT_HOMOZYGOTE
 from pycmm.cmmlib.tamodel import CMMGT_HETEROZYGOTE
 
@@ -57,7 +62,6 @@ CELL_TYPE_HOM_RECESSIVE = 'HOM_RECESSIVE'
 DFLT_COLOR_SEPARATOR = 'XLS_GRAY1_2'
 CELL_TYPE_SEPARATOR = 'SEPARATOR'
 
-CHROM_POS_PATTERN = re.compile(r'''(?P<chrom>.+?):(?P<start_pos>.+?)-(?P<end_pos>.+)''')
 RECORDS_LOG_INTERVAL = 1000
 
 # *************** report layout section ***************
@@ -148,55 +152,6 @@ VcfRecordBuffer = namedtuple('VcfRecordBuffer',
                              'vcf_record allele_idx')
 RecessiveAnalysisResult = namedtuple('RecessiveAnalysisResult',
                                      'affected unaffected filtered_buffer_idxs')
-
-class ReportRegion(pyCMMBase):
-    """ A structure to parse and keep mutation report region """
-
-    def __init__(self,
-                 raw_region,
-                 *args,
-                 **kwargs
-                 ):
-        super(ReportRegion, self).__init__(*args, **kwargs)
-        self.__parse_region(raw_region)
-        self.__raw_region = raw_region
-
-    def __repr__(self):
-        return str(self.get_raw_obj_str())
-
-    def get_raw_obj_str(self):
-        raw_repr = self.chrom
-        if self.start_pos is not None:
-            raw_repr += ":" + self.start_pos
-            raw_repr += "-" + self.end_pos
-        return raw_repr
-
-    @property
-    def chrom(self):
-        return self.__chrom
-
-    @property
-    def start_pos(self):
-        return self.__start_pos
-
-    @property
-    def end_pos(self):
-        return self.__end_pos
-
-    @property
-    def raw_region(self):
-        return self.__raw_region
-
-    def __parse_region(self, raw_region):
-        match = CHROM_POS_PATTERN.match(raw_region)
-        if match is not None:
-            self.__chrom = match.group('chrom')
-            self.__start_pos = match.group('start_pos')
-            self.__end_pos = match.group('end_pos')
-        else:
-            self.__chrom = raw_region
-            self.__start_pos = None
-            self.__end_pos = None
 
 class ActionDelRow(pyCMMBase):
     """ A structure to parse action to delete a row from a mutation report sheet """
@@ -375,7 +330,7 @@ class ReportLayout(CMMParams):
     def __init_properties(self):
         self.__anno_cols = None
         self.__freq_ratios = None
-        self.__heder_corrections = self.__get_header_corrections()
+        self.__header_corrections = self.__get_header_corrections()
         self.__exprs = self._get_job_config(JOBS_SETUP_RPT_EXPRESSIONS_KEY)
         if self.__exprs is not None:
             self.__exprs = VcfExpressions(self.__exprs)
@@ -411,6 +366,7 @@ class ReportLayout(CMMParams):
             # the underlying assumption is that all the variants must have the 
             # same number of fields annotated by ANNOVAR
             if (col_name not in vcf_record.INFO.keys() and
+                col_name not in EXAC03_CONSTRAINT_COL_NAMES and
                 col_name not in EST_KVOT_COLS and
                 col_name != PATHOGENIC_COUNT_COL_NAME):
                 self.warning("Columns " + col_name + " is missing")
@@ -436,6 +392,10 @@ class ReportLayout(CMMParams):
                 ):
                 self.warning(col_name + " cannot be calculated")
                 continue
+            if (col_name in EXAC03_CONSTRAINT_COL_NAMES and
+                EXAC03_CONSTRAINT_COL_NAME not in vcf_record.INFO.keys()
+                ):
+                self.warning(col_name + " cannot be calculated")
             # here are the columns that can be shown without errors
             anno_cols.append(col_name)
         return anno_cols
@@ -460,8 +420,8 @@ class ReportLayout(CMMParams):
     def report_regions(self):
         regions = self._get_job_config(JOBS_SETUP_RPT_REGIONS_KEY)
         if regions is not None:
-            regions = map(lambda x: ReportRegion(str(x)),
-                           regions)
+            regions = map(lambda x: DNARegion(str(x)),
+                          regions)
         return regions
 
     @property
@@ -565,7 +525,7 @@ class ReportLayout(CMMParams):
 
     @property
     def header_corrections(self):
-        return self.__heder_corrections
+        return self.__header_corrections
 
     @property
     def freq_ratios(self):
@@ -671,7 +631,7 @@ class MutRepPipeline(CMMPipeline):
         ws.set_default_row(12)
         return ws
 
-    def __correct_header(self, old_header):
+    def correct_header(self, old_header):
         if old_header in self.report_layout.header_corrections:
             return self.report_layout.header_corrections[old_header]
         return old_header
@@ -708,11 +668,12 @@ class MutRepPipeline(CMMPipeline):
         ws.write(0, XLS_FILTER_COL_IDX, "FILTER", cell_fmt)
         len_anno_cols = len(anno_cols)
         for anno_idx in xrange(len_anno_cols):
-            col_name = self.__correct_header(anno_cols[anno_idx])
+            col_name = self.correct_header(anno_cols[anno_idx])
             ws.write(0, anno_idx+LAYOUT_VCF_COLS, col_name, cell_fmt)
         sample_start_idx = LAYOUT_VCF_COLS + len_anno_cols
-        if (len(self.samples_groups) > 1 or 
-            0 not in self.samples_groups):
+        if (self.samples_groups is not None and
+            (len(self.samples_groups) > 1 or 
+             0 not in self.samples_groups)):
             last_col_idx = sample_start_idx
             for group_no in self.samples_groups.keys():
                 if group_no == 0:
@@ -823,8 +784,11 @@ class MutRepPipeline(CMMPipeline):
             dflt_cell_fmt = self.plain_fmts[NO_COLOR]
         # start writing content
         alt_allele = vcf_record.alleles[allele_idx]
-        ws.write(row, XLS_CHROM_COL_IDX, vcf_record.CHROM, dflt_cell_fmt)
-        ws.write(row, XLS_POS_COL_IDX, str(vcf_record.POS), dflt_cell_fmt)
+        if is_number(vcf_record.CHROM):
+            ws.write(row, XLS_CHROM_COL_IDX, int(vcf_record.CHROM), dflt_cell_fmt)
+        else:
+            ws.write(row, XLS_CHROM_COL_IDX, vcf_record.CHROM, dflt_cell_fmt)
+        ws.write(row, XLS_POS_COL_IDX, vcf_record.POS, dflt_cell_fmt)
         ws.write(row, XLS_REF_COL_IDX, vcf_record.REF, dflt_cell_fmt)
         ws.write(row, XLS_ALT_COL_IDX, str(alt_allele), dflt_cell_fmt)
         ws.write(row, XLS_FILTER_COL_IDX, vcf_record.FILTER, dflt_cell_fmt)
@@ -859,14 +823,26 @@ class MutRepPipeline(CMMPipeline):
                         ):
                         info_cell_fmt = self.plain_fmts[cca.color]
                         break
-            if is_number(info):
+            if (anno_col_name in FORMAT_COLS and
+                FORMAT_COLS[anno_col_name] == FORMAT_COL_FLOAT and
+                info != "INF" and
+                is_number(info)
+                ):
+                ws.write(row, anno_idx+LAYOUT_VCF_COLS, float(info), info_cell_fmt)
+            elif (anno_col_name in FORMAT_COLS and
+                FORMAT_COLS[anno_col_name] == FORMAT_COL_INT and
+                is_number(info)
+                ):
+                ws.write(row, anno_idx+LAYOUT_VCF_COLS, int(info), info_cell_fmt)
+            elif is_number(info):
                 ws.write(row, anno_idx+LAYOUT_VCF_COLS, info, info_cell_fmt)
             else:
                 ws.write(row, anno_idx+LAYOUT_VCF_COLS, str(info).decode('utf-8'), info_cell_fmt)
         last_col_idx = LAYOUT_VCF_COLS + len_anno_cols
         # annotate samples information
-        if (len(self.samples_groups) > 1 or 
-            0 not in self.samples_groups):
+        if (self.samples_groups is not None and
+            (len(self.samples_groups) > 1 or 
+             0 not in self.samples_groups)):
             sep_color = self.report_layout.cell_color_separator
             sep_fmt = self.plain_fmts[sep_color]
             for group_no in self.samples_groups.keys():
@@ -1129,22 +1105,18 @@ class MutRepPipeline(CMMPipeline):
                              ):
         if self.report_layout.split_chrom:
             if report_regions is None:
-                region_params = ALL_CHROMS
-            else:
-                region_params = map(lambda x: x.raw_region,
-                                    report_regions)
-            for region_param in region_params:
+                report_regions = map(lambda x: DNARegion(x), ALL_CHROMS)
+            for report_region in report_regions:
                 chr_slurm_log_prefix = slurm_log_prefix
-                chr_slurm_log_prefix += "_chr" + region_param.split(":")[0]
+                chr_slurm_log_prefix += "_" + report_region.region_key
                 job_name = job_name_prefix
-                job_name += "_chr" + region_param.split(":")[0]
+                job_name += "_" + report_region.region_key
                 out_file = out_file_prefix
-                out_file += "_chr" + region_param.split(":")[0]
+                out_file += "_" + report_region.region_key
                 out_file += ".xlsx"
                 job_params = job_params_prefix
-                job_params += " -r " + region_param
+                job_params += " -r " + report_region.raw_region
                 job_params += " -o " + out_file
-                self.dbg(job_script + job_params)
                 self.submit_job(job_name,
                                 self.project_code,
                                 "core",

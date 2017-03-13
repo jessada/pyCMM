@@ -6,10 +6,12 @@ from pycmm.settings import ALL_MUTREP_ANNO_COLS
 from pycmm.settings import PRIMARY_MAF_VAR
 from pycmm.settings import EXAC_ALL_COL_NAME
 from pycmm.settings import PATHOGENIC_COUNT_COL_NAME
+from pycmm.settings import EXAC03_CONSTRAINT_SYN_Z_COL_NAME
 from pycmm.settings import FULL_SYSTEM_TEST
 from pycmm.settings import AXEQ_CHR9_COLS_TAG
 from pycmm.settings import AXEQ_CHR3_6_14_18_COLS_TAG
 from pycmm.settings import AXEQ_CHR5_19_COLS_TAG
+from pycmm.settings import EXAC_CONSTRAINT_COLS_TAG
 from pycmm.settings import LJB_SCORE_COLS_TAG
 from pycmm.cmmlib.xlslib import XlsUtils
 from pycmm.flow.mutrep import MutRepPipeline
@@ -581,6 +583,8 @@ class TestTAVcfRecordXls(SafeTester):
         custom_excl_tags += "," + AXEQ_CHR3_6_14_18_COLS_TAG
         custom_excl_tags += "," + AXEQ_CHR5_19_COLS_TAG
         custom_excl_tags += "," + LJB_SCORE_COLS_TAG
+        custom_excl_tags += "," + EXAC_CONSTRAINT_COLS_TAG
+        custom_excl_tags += "," + LJB_SCORE_COLS_TAG
         rows_filter_actions = JOBS_SETUP_RPT_FILTER_NON_INTERGENIC
         rows_filter_actions += ',' + JOBS_SETUP_RPT_FILTER_NON_INTRONIC
         rows_filter_actions += ',' + JOBS_SETUP_RPT_FILTER_NON_UPSTREAM
@@ -611,6 +615,36 @@ class TestTAVcfRecordXls(SafeTester):
         self.assertEqual(xu.get_cell_value(9, pc_col_idx),
                          5,
                          "Incorect number of harmful pathogenic predictions"
+                         )
+
+    @unittest.skipUnless(FULL_SYSTEM_TEST, "taking too long time to test")
+    def test_parse_exac_constraint_xls_3(self):
+        """
+        - test if exac constraints can be correctly parsed and displayed
+        """
+
+        self.init_test(self.current_func_name)
+        annotated_vcf_tabix = join_path(self.data_dir,
+                                        "input.vcf.gz")
+        project_name = self.test_function
+        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
+                                                        annotated_vcf_tabix=annotated_vcf_tabix,
+                                                        anno_cols=ALL_MUTREP_ANNO_COLS,
+                                                        )
+        pl = MutRepPipeline(jobs_setup_file=jobs_setup_file)
+        pl.gen_summary_report(pl.report_layout.report_regions)
+        xls_file = join_path(self.working_dir,
+                             "rpts",
+                             project_name+"_summary.xlsx")
+        xu = XlsUtils(xls_file)
+        syn_z_col_idx = xu.get_col_idx(pl.correct_header(EXAC03_CONSTRAINT_SYN_Z_COL_NAME))
+        self.assertEqual(xu.get_cell_value(2, syn_z_col_idx),
+                         None,
+                         "Incorect number of ExAC constraint value"
+                         )
+        self.assertEqual(round(xu.get_cell_value(4, syn_z_col_idx), 2),
+                         0.53,
+                         "Incorect number of ExAC constraint value"
                          )
 
     def tearDown(self):
