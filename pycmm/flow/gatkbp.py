@@ -14,6 +14,9 @@ from pycmm.cmmlib.samplelib import NO_FAMILY
 from pycmm.cmmlib.samplelib import Sample
 from pycmm.cmmlib.samplelib import Family
 from pycmm.cmmlib.fastqlib import Fastq
+from pycmm.cmmlib.fastqlib import is_r1
+from pycmm.cmmlib.fastqlib import is_r2
+from pycmm.cmmlib.fastqlib import r1tor2
 from pycmm.flow import CMMPipeline
 from pycmm.flow import init_jobs_setup_file
 
@@ -517,7 +520,7 @@ def create_jobs_setup_file(project_name,
         gatk_params[JOBS_SETUP_OPTIONS_KEY] = options
     job_setup_document[JOBS_SETUP_GATK_PARAMS_SECTION] = gatk_params
 
-    samples = []
+    samples_dict = {}
     # look for all sub-directories of samples_root_dir for sample groups
     for item in listdir(samples_root_dir):
         item_path = join_path(samples_root_dir, item)
@@ -533,8 +536,15 @@ def create_jobs_setup_file(project_name,
                     sample_path = subitem_path
                     # look for fastq.gz files to create sample information
                     sample = None
+                    fastq_files = []
                     for sample_item in listdir(sample_path):
-                        if sample_item.endswith('.fastq.gz'):
+                        if not sample_item.endswith('.fastq.gz'):
+                            continue
+                        file_path = join_path(sample_path, sample_item)
+                        if is_r2(file_path):
+                            continue
+                        if sample_id not in samples_dict.keys():
+                            # if sample information was not there, create one
                             sample = {}
                             sample[JOBS_SETUP_SAMPLE_ID_KEY] = '"' + sample_id + '"'
                             sample[JOBS_SETUP_PLATFORM_KEY] = platform
@@ -544,44 +554,32 @@ def create_jobs_setup_file(project_name,
                             else:
                                 sample[JOBS_SETUP_SAMPLE_USAGE_MAIL_KEY] = 'NO'
                             sample[JOBS_SETUP_PREPROCESS_SAMPLE_KEY] = preprocess_sample
-                            break
-                    # look for fastq.gz files to fastq files info for R1,R2 pairs or R1 alone
-                    fastq_files = []
-                    for sample_item in listdir(sample_path):
-                        if not sample_item.endswith('.fastq.gz'):
-                            continue
-                        if 'R1' not in sample_item:
-                            continue
-                        pair = {}
-                        R1_file = join_path(sample_path, sample_item)
-                        pair[JOBS_SETUP_R1_KEY] = R1_file
-                        R2_file = R1_file.replace('R1', 'R2')
-                        if isfile(R2_file):
-                            pair[JOBS_SETUP_R2_KEY] = R2_file
-                        fastq_files.append(pair)
-                    # look for fastq.gz files to fastq files info for single file (without 'R1')
-                    for sample_item in listdir(sample_path):
-                        if not sample_item.endswith('.fastq.gz'):
-                            continue
-                        if 'R1' in sample_item:
-                            continue
-                        pair = {}
-                        file_path = join_path(sample_path, sample_item)
-                        if 'R2' in file_path and isfile(file_path.replace('R2', 'R1')):
-                            continue
-                        pair[JOBS_SETUP_R1_KEY] = file_path
-                        fastq_files.append(pair)
+                        # parse infor for R1,R2 pairs or R1 alone
+                        if is_r1(file_path):
+                            pair = {}
+                            pair[JOBS_SETUP_R1_KEY] = file_path
+                            R2_file = r1tor2(file_path)
+                            if (R2_file is not None and
+                                isfile(R2_file)):
+                                pair[JOBS_SETUP_R2_KEY] = R2_file
+                            fastq_files.append(pair)
+                        else:
+
+                            # Here it's supposed to be fastq.gz files but not R1 or R2
+                            pair = {}
+                            pair[JOBS_SETUP_R1_KEY] = file_path
+                            fastq_files.append(pair)
                     if sample is not None:
                         sample[JOBS_SETUP_FASTQ_PAIRS_KEY] = fastq_files
                         # check fastq encoding version
                         fastq = Fastq(fastq_files[0][JOBS_SETUP_R1_KEY])
                         sample[JOBS_SETUP_FASTQ_ENCODING_KEY] = fastq.encoding
-                        samples.append(sample)
+                        samples_dict[sample_id] = sample
     # dummy family (no family)
     families = []
     family_info = {}
     family_info[JOBS_SETUP_FAMILY_ID_KEY] = '"' + NO_FAMILY + '"'
-    family_info[JOBS_SETUP_MEMBERS_LIST_KEY] = samples
+    family_info[JOBS_SETUP_MEMBERS_LIST_KEY] = samples_dict.values()
     families.append(family_info)
     job_setup_document[JOBS_SETUP_SAMPLES_INFOS_KEY] = families
 
