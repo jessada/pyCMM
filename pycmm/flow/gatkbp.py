@@ -14,6 +14,9 @@ from pycmm.cmmlib.samplelib import NO_FAMILY
 from pycmm.cmmlib.samplelib import Sample
 from pycmm.cmmlib.samplelib import Family
 from pycmm.cmmlib.fastqlib import Fastq
+from pycmm.cmmlib.fastqlib import is_r1
+from pycmm.cmmlib.fastqlib import is_r2
+from pycmm.cmmlib.fastqlib import r1tor2
 from pycmm.flow import CMMPipeline
 from pycmm.flow import init_jobs_setup_file
 
@@ -21,6 +24,8 @@ PREPROCESS_SAMPLE_SCRIPT = "$PYCMM/bash/GATKBP_preprocess_sample.sh"
 SPLIT_GVCFS_SCRIPT = "$PYCMM/bash/split_gvcfs.sh"
 COMBINE_GVCFS_SCRIPT = "$PYCMM/bash/GATKBP_combine_gvcfs.sh"
 GENOTYPE_GVCFS_SCRIPT = "$PYCMM/bash/GATKBP_genotype_gvcfs.sh"
+CONCAT_VCFS_SCRIPT = "$PYCMM/bash/concat_vcfs.sh"
+VQSR_SCRIPT = "$PYCMM/bash/GATKBP_VQSR.sh"
 
 # *************** gatk parameters section ***************
 JOBS_SETUP_GATK_PARAMS_SECTION = "GATK_PARAMS"
@@ -160,7 +165,8 @@ class GATKParams(CMMParams):
         raw_repr["variants calling"] = self.variants_calling
         raw_repr["targets interval list"] = self.targets_interval_list
         raw_repr["usage mail"] = self.dataset_usage_mail
-        raw_repr["samples"] = self.samples
+        raw_repr["split region file"] = self.split_regions_file
+#        raw_repr["samples"] = self.samples
         return raw_repr
 
     def __init_properties(self):
@@ -216,9 +222,6 @@ class GATKBPPipeline(CMMPipeline):
 
     def get_raw_obj_str(self, **kwargs):
         raw_repr = super(GATKBPPipeline, self).get_raw_obj_str(**kwargs)
-        raw_repr["dataset name"] = self.dataset_name
-        raw_repr["GATK parameters"] = self.gatk_params
-        raw_repr["samples"] = self.samples
         return raw_repr
 
     def __init_properties(self):
@@ -262,7 +265,7 @@ class GATKBPPipeline(CMMPipeline):
         return file_name
 
     def get_genotyped_gvcfs_file_name(self, region_txt=None):
-        file_name = join_path(self.vcf_out_dir,
+        file_name = join_path(self.working_dir,
                               self.dataset_name)
         if region_txt is not None:
             file_name += "_" + region_txt
@@ -274,6 +277,11 @@ class GATKBPPipeline(CMMPipeline):
         versions = OrderedDict()
         versions['GATK'] = vm.gatk_version
         return versions
+
+    @property
+    def vqsr_vcf(self):
+        return join_path(self.vcf_out_dir,
+                         self.dataset_name+".VQSR.vcf")
 
     def preprocess_sample(self,
                           sample_id,
@@ -323,7 +331,7 @@ class GATKBPPipeline(CMMPipeline):
 
     def monitor_init(self, **kwargs):
         super(GATKBPPipeline, self).monitor_init(**kwargs)
-        self.preprocess_dataset()
+        self.process_dataset()
 
     def monitor_action(self, **kwargs):
         super(GATKBPPipeline, self).monitor_action(**kwargs)
@@ -365,7 +373,10 @@ class GATKBPPipeline(CMMPipeline):
         the Haplotype Caller into a single joint gVCF file
         """
 
-        job_name = self.dataset_name + "_comb_gvcfs_" + region_txt
+        if region_txt is None:
+            job_name = self.dataset_name + "_comb_gvcfs"
+        else:
+            job_name = self.dataset_name + "_comb_gvcfs_" + region_txt
         job_script = COMBINE_GVCFS_SCRIPT
         gvcf_list_file = join_path(self.working_dir,
                                    job_name+"_gvcf.list")
@@ -408,11 +419,13 @@ class GATKBPPipeline(CMMPipeline):
                        region_txt=None,
                       ):
         """
-        Combines any number of gVCF files that were produced by
-        the Haplotype Caller into a single joint gVCF file
+        Call samples actual genotypes after combined
         """
 
-        job_name = self.dataset_name + "_gnt_gvcfs_" + region_txt
+        if region_txt is None:
+            job_name = self.dataset_name + "_gnt_gvcfs"
+        else:
+            job_name = self.dataset_name + "_gnt_gvcfs_" + region_txt
         job_script = GENOTYPE_GVCFS_SCRIPT
         gvcf_list_file = join_path(self.working_dir,
                                    job_name+"_gvcf.list")
@@ -444,15 +457,76 @@ class GATKBPPipeline(CMMPipeline):
                                    )
             return job_name
 
-    def preprocess_dataset(self):
+    def concat_vcfs(self,
+                    prereq=None,
+                    ):
         """
-        An aggregate flow to pre-process a DNASeq sample. The flow consists of
-          - bwa-mem alignment
-          - reads sorting
-          - marking duplicates
-          - haplotype caller
-        The flow output a gvcf file for one sample. The return value is the last
-        job name of the process.
+        concat split vcf
+        """
+
+        job_name = self.dataset_name + "_cct_vcfs"
+        job_script = CONCAT_VCFS_SCRIPT
+        vcf_list_file = join_path(self.working_dir,
+                                  job_name+"_vcf.list")
+        f_vcf = open(vcf_list_file, "w")
+        for region_txt in self.gatk_params.split_regions_txt_list:
+            f_vcf.write(self.get_genotyped_gvcfs_file_name(region_txt=region_txt) + "\n")
+        f_vcf.close()
+        output_file = self.get_genotyped_gvcfs_file_name()
+
+        job_params = " -i " + vcf_list_file
+        job_params += " -o " + output_file
+        if self.project_code is None:
+            self.exec_sh(job_script + job_params)
+            return output_file
+        else:
+            self._submit_slurm_job(job_name,
+                                   "1",
+                                   job_script,
+                                   job_params,
+                                   email=self.gatk_params.dataset_usage_mail,
+                                   prereq=prereq,
+                                   )
+            return job_name
+
+    def vqsr(self,
+             prereq=None,
+             ):
+        """
+        Variant Quality Score Recalibration
+        """
+
+        job_name = self.dataset_name + "_vqsr"
+        job_script = VQSR_SCRIPT
+        output_file = self.vqsr_vcf
+
+        job_params = " -i " + self.get_genotyped_gvcfs_file_name()
+        job_params += " -o " + output_file
+        if self.project_code is None:
+            self.exec_sh(job_script + job_params)
+            return output_file
+        else:
+            self._submit_slurm_job(job_name,
+                                   "2",
+                                   job_script,
+                                   job_params,
+                                   email=self.gatk_params.dataset_usage_mail,
+                                   prereq=prereq,
+                                   )
+            return job_name
+
+    def process_dataset(self):
+        """
+        An aggregate flow to DNASeq workflow consisting of
+          - process each sample
+              - bwa-mem alignment
+              - reads sorting
+              - marking duplicates
+              - haplotype caller
+          - if needed, split gvcf
+          - combine gvcf
+          - genotype gvcf
+          - if needed, concat vcf
         """
 
         prereq = []
@@ -463,11 +537,14 @@ class GATKBPPipeline(CMMPipeline):
             (self.gatk_params.split_regions_txt_list is not None)
             ):
             job_name_split_gvcfs = self.split_gvcfs(prereq=prereq)
+            job_name_genotype_gvcfs_list = []
             for region_txt in self.gatk_params.split_regions_txt_list:
                 job_name_combine_gvcfs = self.combine_gvcfs(region_txt=region_txt,
                                                             prereq=[job_name_split_gvcfs])
-                job_name_genotype_gvcfs = self.genotype_gvcfs(region_txt=region_txt,
-                                                              prereq=[job_name_combine_gvcfs]) 
+                job_name_genotype_gvcfs_list.append(self.genotype_gvcfs(region_txt=region_txt,
+                                                                        prereq=[job_name_combine_gvcfs]))
+            job_name_concat_vcfs = self.concat_vcfs(prereq=job_name_genotype_gvcfs_list) 
+            return job_name_concat_vcfs
         elif self.gatk_params.variants_calling:
             job_name_combine_gvcfs = self.combine_gvcfs(prereq=prereq) 
             job_name_genotype_gvcfs = self.genotype_gvcfs(prereq=[job_name_combine_gvcfs]) 
@@ -517,7 +594,7 @@ def create_jobs_setup_file(project_name,
         gatk_params[JOBS_SETUP_OPTIONS_KEY] = options
     job_setup_document[JOBS_SETUP_GATK_PARAMS_SECTION] = gatk_params
 
-    samples = []
+    samples_dict = {}
     # look for all sub-directories of samples_root_dir for sample groups
     for item in listdir(samples_root_dir):
         item_path = join_path(samples_root_dir, item)
@@ -533,8 +610,15 @@ def create_jobs_setup_file(project_name,
                     sample_path = subitem_path
                     # look for fastq.gz files to create sample information
                     sample = None
+                    fastq_files = []
                     for sample_item in listdir(sample_path):
-                        if sample_item.endswith('.fastq.gz'):
+                        if not sample_item.endswith('.fastq.gz'):
+                            continue
+                        file_path = join_path(sample_path, sample_item)
+                        if is_r2(file_path):
+                            continue
+                        if sample_id not in samples_dict.keys():
+                            # if sample information was not there, create one
                             sample = {}
                             sample[JOBS_SETUP_SAMPLE_ID_KEY] = '"' + sample_id + '"'
                             sample[JOBS_SETUP_PLATFORM_KEY] = platform
@@ -544,44 +628,31 @@ def create_jobs_setup_file(project_name,
                             else:
                                 sample[JOBS_SETUP_SAMPLE_USAGE_MAIL_KEY] = 'NO'
                             sample[JOBS_SETUP_PREPROCESS_SAMPLE_KEY] = preprocess_sample
-                            break
-                    # look for fastq.gz files to fastq files info for R1,R2 pairs or R1 alone
-                    fastq_files = []
-                    for sample_item in listdir(sample_path):
-                        if not sample_item.endswith('.fastq.gz'):
-                            continue
-                        if 'R1' not in sample_item:
-                            continue
-                        pair = {}
-                        R1_file = join_path(sample_path, sample_item)
-                        pair[JOBS_SETUP_R1_KEY] = R1_file
-                        R2_file = R1_file.replace('R1', 'R2')
-                        if isfile(R2_file):
-                            pair[JOBS_SETUP_R2_KEY] = R2_file
-                        fastq_files.append(pair)
-                    # look for fastq.gz files to fastq files info for single file (without 'R1')
-                    for sample_item in listdir(sample_path):
-                        if not sample_item.endswith('.fastq.gz'):
-                            continue
-                        if 'R1' in sample_item:
-                            continue
-                        pair = {}
-                        file_path = join_path(sample_path, sample_item)
-                        if 'R2' in file_path and isfile(file_path.replace('R2', 'R1')):
-                            continue
-                        pair[JOBS_SETUP_R1_KEY] = file_path
-                        fastq_files.append(pair)
+                        # parse infor for R1,R2 pairs or R1 alone
+                        if is_r1(file_path):
+                            pair = {}
+                            pair[JOBS_SETUP_R1_KEY] = file_path
+                            R2_file = r1tor2(file_path)
+                            if (R2_file is not None and
+                                isfile(R2_file)):
+                                pair[JOBS_SETUP_R2_KEY] = R2_file
+                            fastq_files.append(pair)
+                        else:
+                            # Here it's supposed to be fastq.gz files but not R1 or R2
+                            pair = {}
+                            pair[JOBS_SETUP_R1_KEY] = file_path
+                            fastq_files.append(pair)
                     if sample is not None:
                         sample[JOBS_SETUP_FASTQ_PAIRS_KEY] = fastq_files
                         # check fastq encoding version
                         fastq = Fastq(fastq_files[0][JOBS_SETUP_R1_KEY])
                         sample[JOBS_SETUP_FASTQ_ENCODING_KEY] = fastq.encoding
-                        samples.append(sample)
+                        samples_dict[sample_id] = sample
     # dummy family (no family)
     families = []
     family_info = {}
     family_info[JOBS_SETUP_FAMILY_ID_KEY] = '"' + NO_FAMILY + '"'
-    family_info[JOBS_SETUP_MEMBERS_LIST_KEY] = samples
+    family_info[JOBS_SETUP_MEMBERS_LIST_KEY] = samples_dict.values()
     families.append(family_info)
     job_setup_document[JOBS_SETUP_SAMPLES_INFOS_KEY] = families
 

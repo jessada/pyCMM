@@ -2,6 +2,7 @@ import argparse
 import sys
 from argparse import RawTextHelpFormatter
 from pycmm.app.mutrep import app_pycmm_mutrep_create_jobs_setup_file
+from pycmm.settings import DFLT_JOB_ALLOC_TIME
 from pycmm.settings import MUTREP_CREATE_JOB_SETUP_FILE_DESCRIPTION
 from pycmm.settings import AXEQ_CHR3_6_14_18_COLS_TAG
 from pycmm.settings import AXEQ_CHR5_19_COLS_TAG
@@ -54,12 +55,13 @@ argp.add_argument('-p',
                   help='UPPMAX project code',
                   default=None,
                   )
+help = 'UPPMAX allocation time (default: {dflt_val})'.format(dflt_val=DFLT_JOB_ALLOC_TIME)
 argp.add_argument('--job_alloc_time',
-                   dest='job_alloc_time',
-                   metavar="ALLOC_TIME",
-                   help='UPPMAX allocation time for jobs that create databases (i.e. mut stat, table annovar)',
-                   default=None,
-                   )
+                  dest='job_alloc_time',
+                  metavar="ALLOC_TIME",
+                  help=help,
+                  default=DFLT_JOB_ALLOC_TIME,
+                  )
 mutrep_group.add_argument('-A',
                           dest='annotated_vcf_tabix',
                           metavar="FILE",

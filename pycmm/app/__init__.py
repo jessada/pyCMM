@@ -29,17 +29,7 @@ def display_configs(func_name,
     disp.disp_params_set("Pipeline parameters", pl.get_raw_obj_str())
 
     if hasattr(pl, "gatk_params"):
-## *********************************************************************************************** Need refactoring ***********************************************************************************************
-        gatk_params = OrderedDict()
-        gatk_params['reference file'] = pl.gatk_params.reference
-        gatk_params['known indels'] = pl.gatk_params.known_indels
-        gatk_params['dbsnp file'] = pl.gatk_params.dbsnp
-        gatk_params['variants calling'] = pl.gatk_params.variants_calling
-        gatk_params['targets interval list'] = pl.gatk_params.targets_interval_list
-        gatk_params['split chromosome regions'] = pl.gatk_params.split_regions_file
-        gatk_params['dataset usage mail'] = pl.gatk_params.dataset_usage_mail
-        disp.disp_params_set("GATK DNA-Seq Best Practice parameters", gatk_params)
-## *********************************************************************************************** Need refactoring ***********************************************************************************************
+        disp.disp_params_set("GATK DNA-Seq Best Practice parameters", pl.gatk_params.get_raw_obj_str())
     if hasattr(pl, "plink_params"):
         disp.disp_params_set("Plink parameters", pl.plink_params.get_raw_obj_str())
     if hasattr(pl, "mutstat_params"):

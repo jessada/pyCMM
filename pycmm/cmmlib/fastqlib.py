@@ -1,4 +1,5 @@
 import sys
+from os.path import isfile
 from pycmm.template import pyCMMBase
 from pycmm.cmmlib.readerlib import Reader
 
@@ -13,6 +14,36 @@ ENCODING_RANGES = {
     ENCODING_ILLUMINA_1_5: (66, 105),
     ENCODING_ILLUMINA_1_8: (33, 74),
 }
+
+def r2tor1(file_name):
+    if file_name.endswith('_2.fastq.gz'):
+        return file_name.replace('_2.fastq.gz', '_1.fastq.gz')
+    if 'R2' in file_name:
+        return file_name.replace('R2', 'R1')
+    return None
+
+def r1tor2(file_name):
+    if file_name.endswith('_1.fastq.gz'):
+        return file_name.replace('_1.fastq.gz', '_2.fastq.gz')
+    if 'R1' in file_name:
+        return file_name.replace('R1', 'R2')
+    return None
+
+def is_r1(file_name):
+    if 'R1' in file_name:
+        return True
+    if file_name.endswith('_1.fastq.gz'):
+        return True
+    return False
+
+def is_r2(file_name):
+    if 'R2' in file_name:
+        return True
+    if r2tor1(file_name) is None:
+        return False
+    if isfile(r2tor1(file_name)):
+        return True
+    return False
 
 class FastqParser(pyCMMBase):
     """ To parse a record in fastq format """

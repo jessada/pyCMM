@@ -2,6 +2,7 @@ import argparse
 import sys
 from argparse import RawTextHelpFormatter
 from pycmm.settings import DNASEQ_CREATE_JOB_SETUP_FILE_DESCRIPTION
+from pycmm.settings import DFLT_JOB_ALLOC_TIME
 from pycmm.app.gatkbp import app_pycmm_gatkbp_create_jobs_setup_file
 from collections import OrderedDict
 
