@@ -8,6 +8,7 @@ from pycmm.settings import SLOW_PROJECT_CODE
 from pycmm.flow.gatkbp import GATKBPPipeline
 from pycmm.flow.gatkbp import create_jobs_setup_file
 from pycmm.utils import file_size
+from pycmm.utils import find_files
 from pycmm.cmmlib.fastqlib import ENCODING_ILLUMINA_1_5
 from pycmm.cmmlib.fastqlib import ENCODING_ILLUMINA_1_8
 
@@ -94,7 +95,6 @@ class TestGATKBPPipeline(SafeTester):
     def test_load_jobs_info_1(self):
         """ test if default job configurations are loaded correctly """
 
-        self.individual_debug = True
         self.init_test(self.current_func_name)
         job_name = self.test_function
         jobs_setup_file = self.__create_jobs_setup_file()
@@ -211,7 +211,6 @@ class TestGATKBPPipeline(SafeTester):
     def test_load_jobs_info_2(self):
         """ test if modified job configurations are loaded correctly """
 
-        self.individual_debug = True
         self.init_test(self.current_func_name)
         job_name = self.test_function
         targets_interval_list = join_path(self.data_dir,
@@ -304,10 +303,39 @@ class TestGATKBPPipeline(SafeTester):
         split_tbi = join_path(join_path(pl.split_gvcfs_out_dir,
                                         region_txt),
                               pl.samples_id[0]+"."+region_txt+".g.vcf.gz.tbi")
-        self.assertEqual(file_size(split_tbi),
-                         174,
-                         "split_gvcfs doesn't function correctly")
+        self.assertTrue(file_size(split_tbi) > 10,
+                        "split_gvcfs doesn't function correctly")
                                           
+    @unittest.skipUnless(FULL_SYSTEM_TEST or GATKBP_TEST, "taking too long time to test")
+    def test_split_gvcfs_02(self):
+        """
+        test basic split gvcf produced by piper.
+        """
+
+        self.init_test(self.current_func_name)
+        split_regions_file = join_path(self.data_dir,
+                                       "split.regions_file") 
+        jobs_setup_file = self.__create_jobs_setup_file(split_regions_file=split_regions_file)
+        pl = GATKBPPipeline(jobs_setup_file=jobs_setup_file)
+        for sample_id in pl.samples_id:
+            gvcf_file = join_path(join_path(self.data_dir,
+                                            "gvcf"),
+                                  sample_id+".g.vcf.gz")
+            pl.copy_file(gvcf_file,
+                         pl.gvcf_out_dir)
+            tbi_file = join_path(join_path(self.data_dir,
+                                           "gvcf"),
+                                  sample_id+".g.vcf.gz.tbi")
+            pl.copy_file(tbi_file,
+                         pl.gvcf_out_dir)
+        pl.split_gvcfs()
+        file_count = 0
+        for file_name in find_files(pl.working_dir, pattern="*.g.vcf.gz"):
+            file_count += 1
+        self.assertEqual(file_count,
+                         24,
+                         "split_gvcfs doesn't function correctly")
+
     @unittest.skipUnless(FULL_SYSTEM_TEST or GATKBP_TEST, "taking too long time to test")
     def test_combine_gvcfs_01(self):
         """
@@ -332,6 +360,28 @@ class TestGATKBPPipeline(SafeTester):
                         "combine gvcfs doesn't function correctly")
 
     @unittest.skipUnless(FULL_SYSTEM_TEST or GATKBP_TEST, "taking too long time to test")
+    def test_combine_gvcfs_02(self):
+        """
+        test combine split gvcf files. Input are sampling of piper gvcfs
+        """
+
+        self.init_test(self.current_func_name)
+        split_regions_file = join_path(self.data_dir,
+                                       "split.regions_file") 
+        jobs_setup_file = self.__create_jobs_setup_file(split_regions_file=split_regions_file)
+        pl = GATKBPPipeline(jobs_setup_file=jobs_setup_file)
+        src_dir = join_path(self.data_dir,
+                            'split_gvcfs')
+        cmd = "cp -r"
+        cmd += " " + src_dir
+        cmd += " " + pl.working_dir
+        self.exec_sh(cmd)
+        for region_txt in pl.gatk_params.split_regions_txt_list:
+            out_file = pl.combine_gvcfs(region_txt=region_txt)
+            self.assertTrue(file_size(out_file) > 4000,
+                            "combine gvcfs doesn't function correctly")
+
+    @unittest.skipUnless(FULL_SYSTEM_TEST or GATKBP_TEST, "taking too long time to test")
     def test_genotype_gvcfs_01(self):
         """
         test GATK genotype gvcfs function. Input are result from normal pairs of
@@ -353,6 +403,69 @@ class TestGATKBPPipeline(SafeTester):
         out_file = pl.genotype_gvcfs(region_txt=region_txt)
         self.assertTrue(file_size(out_file) > 5000,
                         "genotype gvcfs doesn't function correctly")
+
+    @unittest.skipUnless(FULL_SYSTEM_TEST or GATKBP_TEST, "taking too long time to test")
+    def test_genotype_gvcfs_02(self):
+        """
+        test GATK genotype gvcfs function. Input are sampling of piper gvcfs
+        """
+
+        self.init_test(self.current_func_name)
+        split_regions_file = join_path(self.data_dir,
+                                       "split.regions_file") 
+        jobs_setup_file = self.__create_jobs_setup_file(split_regions_file=split_regions_file)
+        pl = GATKBPPipeline(jobs_setup_file=jobs_setup_file)
+        src_dir = join_path(self.data_dir,
+                            'tmp')
+        cmd = "cp -r"
+        cmd += " " + src_dir
+        cmd += " " + pl.project_out_dir
+        self.exec_sh(cmd)
+        for region_txt in pl.gatk_params.split_regions_txt_list:
+            out_file = pl.genotype_gvcfs(region_txt=region_txt)
+            self.assertTrue(file_size(out_file) > 4000,
+                            "genotype gvcfs doesn't function correctly")
+
+    @unittest.skipUnless(FULL_SYSTEM_TEST or GATKBP_TEST, "taking too long time to test")
+    def test_concat_vcfs_02(self):
+        """
+        test if split vcf cannbe concatenated. Input are sampling of piper gvcfs
+        """
+
+        self.init_test(self.current_func_name)
+        split_regions_file = join_path(self.data_dir,
+                                       "split.regions_file") 
+        jobs_setup_file = self.__create_jobs_setup_file(split_regions_file=split_regions_file)
+        pl = GATKBPPipeline(jobs_setup_file=jobs_setup_file)
+        src_dir = join_path(self.data_dir,
+                            'tmp')
+        cmd = "cp -r"
+        cmd += " " + src_dir
+        cmd += " " + pl.project_out_dir
+        self.exec_sh(cmd)
+        out_file = pl.concat_vcfs()
+        self.assertTrue(file_size(out_file) > 4000,
+                        "concat vcfs doesn't function correctly")
+
+    @unittest.skipUnless(FULL_SYSTEM_TEST or GATKBP_TEST, "taking too long time to test")
+    def test_vqsr_02(self):
+        """
+        test VQSR process. Input are sampling of piper gvcfs
+        """
+
+        self.individual_debug = True
+        self.init_test(self.current_func_name)
+        jobs_setup_file = self.__create_jobs_setup_file()
+        pl = GATKBPPipeline(jobs_setup_file=jobs_setup_file)
+        src_dir = join_path(self.data_dir,
+                            'tmp')
+        cmd = "cp -r"
+        cmd += " " + src_dir
+        cmd += " " + pl.project_out_dir
+        self.exec_sh(cmd)
+        out_file = pl.vqsr()
+        self.assertTrue(file_size(out_file) > 4000,
+                        "concat vcfs doesn't function correctly")
 
     @unittest.skipUnless(FULL_SYSTEM_TEST or GATKBP_TEST, "taking too long time to test")
     def test_preprocess_dataset_01(self):
