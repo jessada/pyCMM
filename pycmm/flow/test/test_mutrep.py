@@ -37,6 +37,7 @@ from pycmm.settings import EST_KVOT_EARLYONSET_VS_BRC_COL_NAME
 from pycmm.settings import EST_KVOT_EARLYONSET_VS_EXAC_NFE_COL_NAME
 from pycmm.settings import EST_KVOT_EARLYONSET_VS_KG_EUR_COL_NAME
 from pycmm.settings import WES294_OAF_BRCS_AF_COL_NAME
+from pycmm.settings import SWEGEN_AF_COL_NAME
 from pycmm.flow.mutrep import MutRepPipeline
 from pycmm.flow.mutrep import create_jobs_setup_file
 from pycmm.flow.mutrep import JOBS_SETUP_RPT_FILTER_RARE
@@ -234,13 +235,13 @@ class TestMutRepPipeline(SafeTester):
         self.assertEqual(pl.report_layout.exprs.actions[ACTION_DELETE_ROW][0].pattern,
                          '1>0',
                          "MutRepPipeline cannot correctly read report layout info 'expression actions' from jobs setup file")
-        self.assertEqual(pl.report_layout.exprs.actions[ACTION_COLOR_COL][0].pattern,
+        self.assertEqual(pl.report_layout.exprs.actions[ACTION_COLOR_COL]['cytoBand'][0].pattern,
                          '1>0',
                          "MutRepPipeline cannot correctly read report layout info 'expression actions' from jobs setup file")
-        self.assertEqual(pl.report_layout.exprs.actions[ACTION_COLOR_COL][0].col_name,
+        self.assertEqual(pl.report_layout.exprs.actions[ACTION_COLOR_COL]['cytoBand'][0].col_name,
                          'cytoBand',
                          "MutRepPipeline cannot correctly read report layout info 'expression actions' from jobs setup file")
-        self.assertEqual(pl.report_layout.exprs.actions[ACTION_COLOR_COL][0].color,
+        self.assertEqual(pl.report_layout.exprs.actions[ACTION_COLOR_COL]['cytoBand'][0].color,
                          'yellow',
                          "MutRepPipeline cannot correctly read report layout info 'expression actions' from jobs setup file")
         self.assertTrue(pl.report_layout.split_chrom,
@@ -302,13 +303,13 @@ class TestMutRepPipeline(SafeTester):
         self.assertEqual(pl.report_layout.exprs.actions[ACTION_DELETE_ROW][0].pattern,
                          '\'"abc" < 4\'',
                          "MutRepPipeline cannot correctly read report layout info 'expression actions' from jobs setup file")
-        self.assertEqual(pl.report_layout.exprs.actions[ACTION_COLOR_COL][0].pattern,
+        self.assertEqual(pl.report_layout.exprs.actions[ACTION_COLOR_COL]['F_U_8'][0].pattern,
                          'jkl>5',
                          "MutRepPipeline cannot correctly read report layout info 'expression actions' from jobs setup file")
-        self.assertEqual(pl.report_layout.exprs.actions[ACTION_COLOR_COL][0].col_name,
+        self.assertEqual(pl.report_layout.exprs.actions[ACTION_COLOR_COL]['F_U_8'][0].col_name,
                          'F_U_8',
                          "MutRepPipeline cannot correctly read report layout info 'expression actions' from jobs setup file")
-        self.assertEqual(pl.report_layout.exprs.actions[ACTION_COLOR_COL][0].color,
+        self.assertEqual(pl.report_layout.exprs.actions[ACTION_COLOR_COL]['F_U_8'][0].color,
                          'red',
                          "MutRepPipeline cannot correctly read report layout info 'expression actions' from jobs setup file")
         self.assertEqual(pl.report_layout.exprs.actions[ACTION_COLOR_ROW][0].pattern,
@@ -1068,6 +1069,63 @@ class TestMutRepPipeline(SafeTester):
         exp_rgb = "FF" + COLORS_RGB["YELLOW"][-6:]
         self.assertEqual(xu.get_cell_rgb(4, col_idx, sheet_idx=0),
                          exp_rgb,
+                         "Incorrect color"
+                         )
+
+    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST, "taking too long time to test")
+    def test_expression_action_color_col_2(self):
+        """
+        test multiple coloring in one column with different expression
+        """
+
+        self.init_test(self.current_func_name)
+        annotated_vcf_tabix = join_path(self.data_dir,
+                                        "input.vcf.gz")
+        project_name = self.test_function
+        anno_cols = list(DFLT_TEST_MUTREP_COLS)
+        anno_cols.append(SWEGEN_AF_COL_NAME)
+        expression_patterns='swegen_rare:("SWEGEN_AF"!=\'\')'
+        expression_patterns+='and(float("SWEGEN_AF")<0.03)'
+        expression_usages='swegen_rare:color_col:SWEGEN_AF:YELLOW'
+        expression_patterns+=',swegen_very_rare:("SWEGEN_AF"!=\'\')'
+        expression_patterns+='and(float("SWEGEN_AF")<0.01)'
+        expression_usages+=',swegen_very_rare:color_col:SWEGEN_AF:XLS_ORANGE'
+        expression_patterns+=',swegen_empty:("SWEGEN_AF"==\'\')'
+        expression_usages+=',swegen_empty:color_col:SWEGEN_AF:XLS_ORANGE'
+        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
+                                                        annotated_vcf_tabix=annotated_vcf_tabix,
+                                                        report_regions="1,17",
+                                                        expression_patterns=expression_patterns,
+                                                        expression_usages=expression_usages,
+                                                        anno_cols=anno_cols,
+                                                        )
+        pl = MutRepPipeline(jobs_setup_file=jobs_setup_file)
+        pl.gen_summary_report(pl.report_layout.report_regions)
+        xls_file = join_path(self.working_dir,
+                             "rpts",
+                             project_name+"_summary.xlsx")
+        xu = XlsUtils(xls_file)
+        col_idx = xu.get_col_idx(col_name="SWEGEN_AF", sheet_idx=0)
+        exp_yellow = "FF" + COLORS_RGB["YELLOW"][-6:]
+        exp_orange = "FFFDB50A"
+        self.assertEqual(xu.get_cell_rgb(2, col_idx, sheet_idx=0),
+                         RGB_NO_FILL,
+                         "Incorrect color"
+                         )
+        self.assertEqual(xu.get_cell_rgb(3, col_idx, sheet_idx=0),
+                         exp_orange,
+                         "Incorrect color"
+                         )
+        self.assertEqual(xu.get_cell_rgb(4, col_idx, sheet_idx=0),
+                         exp_orange,
+                         "Incorrect color"
+                         )
+        self.assertEqual(xu.get_cell_rgb(5, col_idx, sheet_idx=0),
+                         exp_orange,
+                         "Incorrect color"
+                         )
+        self.assertEqual(xu.get_cell_rgb(6, col_idx, sheet_idx=0),
+                         exp_yellow,
                          "Incorrect color"
                          )
 

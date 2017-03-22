@@ -2379,10 +2379,10 @@ class TestTAVcfRecord(SafeTester):
         self.init_test(self.current_func_name)
         in_file = join_path(self.data_dir,
                             'input.vcf.gz')
-        expr1 = '("P-value_8" != \'.\') and (float("P-value_8") < 0.02)'
-        expr2 = '("P-value_8" != \'.\') and (float("P-value_8") < 0.05)'
-        expr3 = '("P-value_8" != \'.\') and (float("P-value_8") < 1e-019)'
-        expr4 = '("P-value_8" != \'.\') and (float("P-value_8") < 1e-020)'
+        expr1 = '("P-value_8" != \'\') and (float("P-value_8") < 0.02)'
+        expr2 = '("P-value_8" != \'\') and (float("P-value_8") < 0.05)'
+        expr3 = '("P-value_8" != \'\') and (float("P-value_8") < 1e-019)'
+        expr4 = '("P-value_8" != \'\') and (float("P-value_8") < 1e-020)'
         vcf_reader = TAVcfReader(filename=in_file)
         vcf_record = vcf_reader.next()
         # allele idx equal to 1 mean the first alternate allele

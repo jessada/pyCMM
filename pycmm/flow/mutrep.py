@@ -269,6 +269,7 @@ class VcfExpressions(pyCMMBase):
             # -> if the evaluation of the pattern is True the do the action
             # and the item can also have an info field
             self.__actions = defaultdict(list)
+            actions_color_col = defaultdict(list)
             for expr in self.__expressions:
                 if JOBS_SETUP_RPT_EXPRESSIONS_USAGES_KEY in expr:
                     pattern = expr[JOBS_SETUP_RPT_EXPRESSIONS_PATTERN_KEY]
@@ -281,7 +282,9 @@ class VcfExpressions(pyCMMBase):
                         if action == ACTION_COLOR_ROW:
                             self.__actions[ACTION_COLOR_ROW].append(ActionColorRow(pattern, info=info))
                         if action == ACTION_COLOR_COL:
-                            self.__actions[ACTION_COLOR_COL].append(ActionColorCol(pattern, info=info))
+                            acc = ActionColorCol(pattern, info=info)
+                            actions_color_col[acc.col_name].append(acc)
+            self.__actions[ACTION_COLOR_COL] = actions_color_col
         return self.__actions
 
 class ReportLayout(CMMParams):
@@ -795,34 +798,31 @@ class MutRepPipeline(CMMPipeline):
         len_anno_cols = len(anno_cols)
         # annotate INFO columns
         if self.report_layout.exprs is not None:
-            color_col_names = map(lambda x: x.col_name,
-                                  self.report_layout.exprs.actions[ACTION_COLOR_COL])
+            color_col_actions = self.report_layout.exprs.actions[ACTION_COLOR_COL]
         else:
-            color_col_names = []
+            color_col_actions = {}
         # for each INFO column
         for anno_idx in xrange(len_anno_cols):
             anno_col_name = anno_cols[anno_idx]
             info = vcf_record.get_info(anno_col_name, allele_idx)
+            if (info == "" or
+                info is None
+                ):
+                info = ""
+            # determine if the column needed to be colored even though it's empty
+            info_cell_fmt = dflt_cell_fmt
+            color_col = False
+            if anno_col_name in color_col_actions:
+                anno_color_col_actions = color_col_actions[anno_col_name]
+                for cca in anno_color_col_actions:
+                    if vcf_record.vcf_eval(cca.pattern, allele_idx):
+                        info_cell_fmt = self.plain_fmts[cca.color]
+                        color_col = True
+            if info == "" and not color_col:
+                continue
             if anno_col_name in PREDICTION_COLS:
                 info = info.description
-            if info == "":
-                continue
-            if info is None:
-                continue
-            if info == [None]:
-                continue
-            if info == ".":
-                continue
             # determine cell format
-            info_cell_fmt = dflt_cell_fmt
-            if anno_col_name in color_col_names:
-                color_col_actions = self.report_layout.exprs.actions[ACTION_COLOR_COL]
-                for cca in color_col_actions:
-                    if ((anno_col_name == cca.col_name) and
-                        vcf_record.vcf_eval(cca.pattern, allele_idx)
-                        ):
-                        info_cell_fmt = self.plain_fmts[cca.color]
-                        break
             if (anno_col_name in FORMAT_COLS and
                 FORMAT_COLS[anno_col_name] == FORMAT_COL_FLOAT and
                 info != "INF" and
@@ -950,7 +950,8 @@ class MutRepPipeline(CMMPipeline):
         return row
 
     def __set_layout(self, ws, sample_start_idx, record_size):
-        ws.autofilter(0, 0, 0, sample_start_idx-1)
+#        ws.autofilter(0, 0, 0, sample_start_idx-1)
+        ws.autofilter(0, 0, 0, record_size-1)
         ws.set_column(XLS_CHROM_COL_IDX, XLS_CHROM_COL_IDX, 2.5)
         ws.set_column(XLS_POS_COL_IDX, XLS_POS_COL_IDX, 9)
         ws.set_column(XLS_REF_COL_IDX, XLS_REF_COL_IDX, 3.5)

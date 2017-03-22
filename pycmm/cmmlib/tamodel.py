@@ -351,6 +351,12 @@ class _TAVcfRecord(_VcfRecord, pyCMMBase):
                 info = info[0]
             elif (type(info) is list) and (len(info) > 1):
                 info = info[allele_idx-1]
+            if (info == "" or
+                info is None or
+                info == [None] or
+                info == "."
+                ):
+                info = ""
         elif var_name == PATHOGENIC_COUNT_COL_NAME:
             info = self.pathogenic_count(allele_idx=allele_idx)
         elif var_name == EST_KVOT_EARLYONSET_VS_BRC_COL_NAME:
