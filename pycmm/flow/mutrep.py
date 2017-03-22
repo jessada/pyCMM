@@ -298,12 +298,14 @@ class ReportLayout(CMMParams):
     def get_raw_obj_str(self, *args, **kwargs):
         raw_repr = super(ReportLayout, self).get_raw_obj_str(*args, **kwargs)
         raw_repr["annotated tabix file"] = self.annotated_vcf_tabix
-        raw_repr[RPT_LAYOUT_CAPTION_ANNOATED_COLS] = self.anno_cols
+        raw_repr["annotation columns"] = self.anno_cols
         if self.anno_excl_tags is not None and len(self.anno_excl_tags) > 0:
             raw_repr["annotation exclusion tags"] = self.anno_excl_tags
         raw_repr["genotyping calling detail"] = self.call_detail
         raw_repr["genotyping calling quality"] = self.call_gq
         raw_repr[RPT_LAYOUT_CAPTION_FREQ_RATIOS] = self.freq_ratios
+        if self.exprs is not None:
+            raw_repr["expression actions"] = self.exprs.actions
         raw_repr["genes list"] = self.filter_genes
         if self.report_regions is None:
             raw_repr[RPT_LAYOUT_CAPTION_RPT_REGIONS] = "ALL"
