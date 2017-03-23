@@ -4,7 +4,7 @@ from os.path import exists as path_exists
 from os.path import join as join_path
 from pycmm.settings import FULL_SYSTEM_TEST
 from pycmm.template import SafeTester
-from pycmm.settings import SLOW_PROJECT_CODE
+from pycmm.settings import TEST_PROJECT_CODE
 from pycmm.flow.gatkbp import GATKBPPipeline
 from pycmm.flow.gatkbp import create_jobs_setup_file
 from pycmm.utils import file_size
@@ -20,42 +20,18 @@ DFLT_REF_FILE = 'ref.fa'
 
 GATKBP_TEST = False
 
-def create_gatk_jobs_setup_file(test_function,
-                                working_dir,
-                                data_dir,
-                                project_code=None,
-                                job_alloc_time=None,
-                                variants_calling=False,
-                                known_indels=DFLT_KNOWN_INDELS,
-                                targets_interval_list=None,
-                                split_regions_file=None,
-                                dataset_usage_mail=False,
-                                sample_usage_mail={},
-                                preprocess_sample=True,
-                                ):
-    jobs_setup_file = join_path(working_dir, test_function+'_jobs_setup.txt')
+
+def create_gatk_jobs_setup_file(*args, **kwargs):
     known_indels_file = []
-    for item in known_indels:
-        known_indels_file.append(join_path(data_dir, item))
-    dbsnp_file = join_path(data_dir, DFLT_DBSNP_FILE)
-    reference_file = join_path(data_dir, DFLT_REF_FILE)
-    create_jobs_setup_file(project_name=test_function,
-                           project_code=project_code,
-                           job_alloc_time=job_alloc_time,
-                           reference_file=reference_file,
-                           project_out_dir=working_dir,
-                           samples_root_dir=data_dir,
-                           variants_calling=variants_calling,
-                           known_indels_file=known_indels_file,
-                           dbsnp_file=dbsnp_file,
-                           targets_interval_list=targets_interval_list,
-                           split_regions_file=split_regions_file,
-                           dataset_usage_mail=dataset_usage_mail,
-                           sample_usage_mail=sample_usage_mail,
-                           preprocess_sample=preprocess_sample,
-                           out_jobs_setup_file=jobs_setup_file,
-                           )
-    return jobs_setup_file
+    for item in DFLT_KNOWN_INDELS:
+        known_indels_file.append(join_path(kwargs['samples_root_dir'], item))
+    kwargs['known_indels_file'] = known_indels_file
+    kwargs['dbsnp_file'] = join_path(kwargs['samples_root_dir'], DFLT_DBSNP_FILE)
+    kwargs['reference_file'] = join_path(kwargs['samples_root_dir'], DFLT_REF_FILE)
+    kwargs['out_jobs_setup_file'] = join_path(kwargs['project_out_dir'],
+                                              kwargs['project_name']+'_jobs_setup.txt')
+    create_jobs_setup_file(*args, **kwargs)
+    return kwargs['out_jobs_setup_file']
 
 class TestGATKBPPipeline(SafeTester):
 
@@ -67,30 +43,11 @@ class TestGATKBPPipeline(SafeTester):
     def setUp(self):
         pass
 
-    def __create_jobs_setup_file(self,
-                                 project_code=None,
-                                 job_alloc_time=None,
-                                 variants_calling=False,
-                                 known_indels=DFLT_KNOWN_INDELS,
-                                 targets_interval_list=None,
-                                 split_regions_file=None,
-                                 dataset_usage_mail=False,
-                                 sample_usage_mail={},
-                                 preprocess_sample=True,
-                                 ):
-        return create_gatk_jobs_setup_file(test_function=self.test_function,
-                                           working_dir=self.working_dir,
-                                           data_dir=self.data_dir,
-                                           project_code=project_code,
-                                           job_alloc_time=job_alloc_time,
-                                           variants_calling=variants_calling,
-                                           known_indels=known_indels,
-                                           targets_interval_list=targets_interval_list,
-                                           split_regions_file=split_regions_file,
-                                           dataset_usage_mail=dataset_usage_mail,
-                                           sample_usage_mail=sample_usage_mail,
-                                           preprocess_sample=preprocess_sample,
-                                           )
+    def __create_jobs_setup_file(self, *args, **kwargs):
+        kwargs['project_name'] = self.test_function
+        kwargs['project_out_dir'] = self.working_dir
+        kwargs['samples_root_dir'] = self.data_dir
+        return create_gatk_jobs_setup_file(*args, **kwargs)
 
     def test_load_jobs_info_1(self):
         """ test if default job configurations are loaded correctly """
@@ -217,7 +174,7 @@ class TestGATKBPPipeline(SafeTester):
                                           "targets.interval_list") 
         split_regions_file = join_path(self.data_dir,
                                        "split.regions_file") 
-        jobs_setup_file = self.__create_jobs_setup_file(project_code=SLOW_PROJECT_CODE,
+        jobs_setup_file = self.__create_jobs_setup_file(project_code=TEST_PROJECT_CODE,
                                                         variants_calling=True,
                                                         job_alloc_time="20:00:00",
                                                         targets_interval_list=targets_interval_list,
@@ -447,26 +404,26 @@ class TestGATKBPPipeline(SafeTester):
         self.assertTrue(file_size(out_file) > 4000,
                         "concat vcfs doesn't function correctly")
 
-    @unittest.skipUnless(FULL_SYSTEM_TEST or GATKBP_TEST, "taking too long time to test")
-    def test_vqsr_02(self):
-        """
-        test VQSR process. Input are sampling of piper gvcfs
-        """
-
-        self.individual_debug = True
-        self.init_test(self.current_func_name)
-        jobs_setup_file = self.__create_jobs_setup_file()
-        pl = GATKBPPipeline(jobs_setup_file=jobs_setup_file)
-        src_dir = join_path(self.data_dir,
-                            'tmp')
-        cmd = "cp -r"
-        cmd += " " + src_dir
-        cmd += " " + pl.project_out_dir
-        self.exec_sh(cmd)
-        out_file = pl.vqsr()
-        self.assertTrue(file_size(out_file) > 4000,
-                        "concat vcfs doesn't function correctly")
-
+#    @unittest.skipUnless(FULL_SYSTEM_TEST or GATKBP_TEST, "taking too long time to test")
+#    def test_vqsr_02(self):
+#        """
+#        test VQSR process. Input are sampling of piper gvcfs
+#        """
+#
+#        self.individual_debug = True
+#        self.init_test(self.current_func_name)
+#        jobs_setup_file = self.__create_jobs_setup_file()
+#        pl = GATKBPPipeline(jobs_setup_file=jobs_setup_file)
+#        src_dir = join_path(self.data_dir,
+#                            'tmp')
+#        cmd = "cp -r"
+#        cmd += " " + src_dir
+#        cmd += " " + pl.project_out_dir
+#        self.exec_sh(cmd)
+#        out_file = pl.vqsr()
+#        self.assertTrue(file_size(out_file) > 4000,
+#                        "concat vcfs doesn't function correctly")
+#
     @unittest.skipUnless(FULL_SYSTEM_TEST or GATKBP_TEST, "taking too long time to test")
     def test_preprocess_dataset_01(self):
         """
@@ -493,7 +450,7 @@ class TestGATKBPPipeline(SafeTester):
                                   sample_id+".g.vcf.gz.tbi")
             pl.copy_file(tbi_file,
                          pl.gvcf_out_dir)
-        pl.preprocess_dataset()
+        pl.process_dataset()
 
     def tearDown(self):
         self.remove_working_dir()

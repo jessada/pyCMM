@@ -18,6 +18,7 @@ from pycmm.cmmlib.fastqlib import is_r1
 from pycmm.cmmlib.fastqlib import is_r2
 from pycmm.cmmlib.fastqlib import r1tor2
 from pycmm.flow import CMMPipeline
+from pycmm.flow import get_func_arg
 from pycmm.flow import init_jobs_setup_file
 
 PREPROCESS_SAMPLE_SCRIPT = "$PYCMM/bash/GATKBP_preprocess_sample.sh"
@@ -48,16 +49,18 @@ JOBS_SETUP_R2_KEY = "R2"
 JOBS_SETUP_FASTQ_PAIRS_KEY = "fastq_files"
 JOBS_SETUP_FASTQ_ENCODING_KEY = "encoding"
 
+DFLT_PLATFORM = "Illumina"
+
 
 class GATKSample(Sample):
     """  To parse and structure GATK sample """
 
-    def __init__(self, sample_info, **kwargs):
+    def __init__(self, sample_info, *args, **kwargs):
         kwargs["member_info"] = sample_info
-        super(GATKSample, self).__init__(**kwargs)
+        super(GATKSample, self).__init__(*args, **kwargs)
 
-    def get_raw_obj_str(self, **kwargs):
-        raw_repr = super(GATKSample, self).get_raw_obj_str(**kwargs)
+    def get_raw_obj_str(self, *args, **kwargs):
+        raw_repr = super(GATKSample, self).get_raw_obj_str(*args, **kwargs)
         raw_repr["library"] = self.library
         raw_repr["unit"] = self.unit
         raw_repr["sample group"] = self.sample_group
@@ -137,9 +140,9 @@ class GATKSample(Sample):
 class GATKFamily(Family):
     """  To parse and structure GATK dummy family """
 
-    def __init__(self, **kwargs):
+    def __init__(self, *args, **kwargs):
         self.__members = None
-        super(GATKFamily, self).__init__(**kwargs)
+        super(GATKFamily, self).__init__(*args, **kwargs)
 
     @property
     def members(self):
@@ -153,12 +156,12 @@ class GATKFamily(Family):
 class GATKParams(CMMParams):
     """  To handle and parse GATK parameters  """
 
-    def __init__(self, **kwargs):
-        super(GATKParams, self).__init__(**kwargs)
+    def __init__(self, *args, **kwargs):
+        super(GATKParams, self).__init__(*args, **kwargs)
         self.__init_properties()
 
-    def get_raw_obj_str(self, **kwargs):
-        raw_repr = super(GATKParams, self).get_raw_obj_str(**kwargs)
+    def get_raw_obj_str(self, *args, **kwargs):
+        raw_repr = super(GATKParams, self).get_raw_obj_str(*args, **kwargs)
         raw_repr["known indels"] = self.known_indels
         raw_repr["reference"] = self.reference
         raw_repr["dbsnp file"] = self.dbsnp
@@ -166,7 +169,6 @@ class GATKParams(CMMParams):
         raw_repr["targets interval list"] = self.targets_interval_list
         raw_repr["usage mail"] = self.dataset_usage_mail
         raw_repr["split region file"] = self.split_regions_file
-#        raw_repr["samples"] = self.samples
         return raw_repr
 
     def __init_properties(self):
@@ -215,13 +217,13 @@ class GATKParams(CMMParams):
 class GATKBPPipeline(CMMPipeline):
     """ A class to control GATK best practice pipeline """
 
-    def __init__(self, **kwargs):
+    def __init__(self, *args, **kwargs):
         kwargs['family_template'] = GATKFamily
-        super(GATKBPPipeline, self).__init__(**kwargs)
+        super(GATKBPPipeline, self).__init__(*args, **kwargs)
         self.__init_properties()
 
-    def get_raw_obj_str(self, **kwargs):
-        raw_repr = super(GATKBPPipeline, self).get_raw_obj_str(**kwargs)
+    def get_raw_obj_str(self, *args, **kwargs):
+        raw_repr = super(GATKBPPipeline, self).get_raw_obj_str(*args, **kwargs)
         return raw_repr
 
     def __init_properties(self):
@@ -329,12 +331,12 @@ class GATKBPPipeline(CMMPipeline):
     def __garbage_collecting(self):
         pass
 
-    def monitor_init(self, **kwargs):
-        super(GATKBPPipeline, self).monitor_init(**kwargs)
+    def monitor_init(self, *args, **kwargs):
+        super(GATKBPPipeline, self).monitor_init(*args, **kwargs)
         self.process_dataset()
 
-    def monitor_action(self, **kwargs):
-        super(GATKBPPipeline, self).monitor_action(**kwargs)
+    def monitor_action(self, *args, **kwargs):
+        super(GATKBPPipeline, self).monitor_action(*args, **kwargs)
         self.__garbage_collecting()
 
     def split_gvcfs(self,
@@ -550,50 +552,43 @@ class GATKBPPipeline(CMMPipeline):
             job_name_genotype_gvcfs = self.genotype_gvcfs(prereq=[job_name_combine_gvcfs]) 
             return job_name_genotype_gvcfs
 
-def create_jobs_setup_file(project_name,
-                           project_out_dir,
-                           reference_file,
-                           samples_root_dir,
-                           platform='Illumina',
-                           known_indels_file=None,
-                           dbsnp_file=None,
-                           variants_calling=False,
-                           targets_interval_list=None,
-                           split_regions_file=None,
-                           dataset_usage_mail=False,
-                           sample_usage_mail={},
-                           preprocess_sample=True,
-                           project_code=None,
-                           job_alloc_time=None,
-                           jobs_report_file=None,
-                           out_jobs_setup_file=None,
-                           ):
-    job_setup_document, stream = init_jobs_setup_file(project_name=project_name,
-                                                      project_out_dir=project_out_dir,
-                                                      project_code=project_code,
-                                                      job_alloc_time=job_alloc_time,
-                                                      sample_info=None,
-                                                      jobs_report_file=jobs_report_file,
-                                                      out_jobs_setup_file=out_jobs_setup_file,
-                                                      )
+def create_jobs_setup_file(*args, **kwargs):
+    job_setup_document, stream = init_jobs_setup_file(*args, **kwargs)
     gatk_params = {}
+    known_indels_file = get_func_arg('known_indels_file', kwargs)
     if known_indels_file is not None:
         gatk_params[JOBS_SETUP_KNOWN_INDELS_KEY] = known_indels_file
+    dbsnp_file = get_func_arg('dbsnp_file', kwargs)
     if dbsnp_file is not None:
         gatk_params[JOBS_SETUP_DBSNP_KEY] = dbsnp_file
-    gatk_params[JOBS_SETUP_REFFERENCE_KEY] = reference_file
-    gatk_params[JOBS_SETUP_VARIANTS_CALLING_KEY] = variants_calling
+    project_out_dir = kwargs['project_out_dir']
+    gatk_params[JOBS_SETUP_REFFERENCE_KEY] = kwargs['reference_file']
+    gatk_params[JOBS_SETUP_VARIANTS_CALLING_KEY] = get_func_arg('variants_calling',
+                                                                kwargs,
+                                                                default_val=False)
+    targets_interval_list = get_func_arg('targets_interval_list', kwargs)
     if targets_interval_list is not None:
         gatk_params[JOBS_SETUP_TARGETS_INTERVAL_LIST_KEY] = targets_interval_list
+    split_regions_file = get_func_arg('split_regions_file', kwargs)
     if split_regions_file is not None:
         gatk_params[JOBS_SETUP_SPLIT_REGIONS_FILE_KEY] = split_regions_file
     options = []
+    dataset_usage_mail = get_func_arg('dataset_usage_mail',
+                                      kwargs,
+                                      default_val=False)
     if dataset_usage_mail:
         options.append(JOBS_SETUP_USAGE_MAIL)
     if len(options) > 0:
         gatk_params[JOBS_SETUP_OPTIONS_KEY] = options
     job_setup_document[JOBS_SETUP_GATK_PARAMS_SECTION] = gatk_params
 
+    samples_root_dir = kwargs['samples_root_dir']
+    sample_usage_mail = get_func_arg('sample_usage_mail',
+                                      kwargs,
+                                      default_val={})
+    preprocess_sample = get_func_arg('preprocess_sample',
+                                      kwargs,
+                                      default_val=True)
     samples_dict = {}
     # look for all sub-directories of samples_root_dir for sample groups
     for item in listdir(samples_root_dir):
@@ -621,7 +616,7 @@ def create_jobs_setup_file(project_name,
                             # if sample information was not there, create one
                             sample = {}
                             sample[JOBS_SETUP_SAMPLE_ID_KEY] = '"' + sample_id + '"'
-                            sample[JOBS_SETUP_PLATFORM_KEY] = platform
+                            sample[JOBS_SETUP_PLATFORM_KEY] = DFLT_PLATFORM
                             sample[JOBS_SETUP_SAMPLE_GROUP_KEY] = sample_group
                             if sample_id in sample_usage_mail:
                                 sample[JOBS_SETUP_SAMPLE_USAGE_MAIL_KEY] = 'YES'
