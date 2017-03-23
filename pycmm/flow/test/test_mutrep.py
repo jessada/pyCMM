@@ -174,6 +174,7 @@ class TestMutRepPipeline(SafeTester):
     def test_load_jobs_info_2(self):
         """ test if non-default layout configurations are loaded correctly """
 
+        self.individual_debug = True
         self.init_test(self.current_func_name)
         dummy_annotated_vcf_tabix = join_path(self.data_dir,
                                               "input.vcf.gz")
@@ -190,7 +191,7 @@ class TestMutRepPipeline(SafeTester):
                                                         frequency_ratios=None,
                                                         filter_genes="CHEK2",
                                                         expression_patterns="test1:1>0",
-                                                        expression_usages="test1:del_row,test1:color_col:cytoBand:yellow",
+                                                        expression_usages="test1:DELETE_ROW,test1:COLOR_COLUMN:cytoBand:yellow",
                                                         split_chrom=True,
                                                         summary_families_sheet=True,
                                                         call_detail=True,
@@ -285,7 +286,7 @@ class TestMutRepPipeline(SafeTester):
                                                         frequency_ratios="ExAC:0.5",
                                                         filter_genes="CHEK2,NOTCH1,NOTCH4",
                                                         expression_patterns='expr_with_key:"abc" < 4,expr_wo:jkl>5, expr78 : 2>3',
-                                                        expression_usages="expr_with_key:del_row,expr_wo:color_col:F_U_8:red,expr_wo:color_row:green,expr78:color_row:orange",
+                                                        expression_usages="expr_with_key:DELETE_ROW,expr_wo:COLOR_COLUMN:F_U_8:red,expr_wo:COLOR_ROW:green,expr78:COLOR_ROW:orange",
                                                         )
         pl = MutRepPipeline(jobs_setup_file=jobs_setup_file)
         self.assertEqual(pl.report_layout.report_regions,
@@ -901,7 +902,7 @@ class TestMutRepPipeline(SafeTester):
                                                         annotated_vcf_tabix=annotated_vcf_tabix,
                                                         report_regions="6:78171940-78172992,18:28610987-28611790",
                                                         expression_patterns='exp_ns_snv:"ExonicFunc.refGene"==\'synonymous_SNV\'',
-                                                        expression_usages="exp_ns_snv:del_row",
+                                                        expression_usages="exp_ns_snv:DELETE_ROW",
                                                         call_detail="YES",
                                                         )
         pl = MutRepPipeline(jobs_setup_file=jobs_setup_file)
@@ -930,7 +931,7 @@ class TestMutRepPipeline(SafeTester):
                                                         annotated_vcf_tabix=annotated_vcf_tabix,
                                                         report_regions="6:78171940-78172992,18:28610987-28611790",
                                                         expression_patterns='exp_OAF1:"AXEQ_CHR3_6_14_18_PF"==\'1.0000\'',
-                                                        expression_usages="exp_OAF1:del_row",
+                                                        expression_usages="exp_OAF1:DELETE_ROW",
                                                         )
         pl = MutRepPipeline(jobs_setup_file)
         pl.gen_summary_report(pl.report_layout.report_regions)
@@ -960,7 +961,7 @@ class TestMutRepPipeline(SafeTester):
                                                         annotated_vcf_tabix=annotated_vcf_tabix,
                                                         report_regions="22",
                                                         expression_patterns='exp_OAF0:"OAF_EARLYONSET_AF"==\'0.0000\',exp_OAF1:"OAF_EARLYONSET_AF"==\'1.0000\',exp_OAF_empty:"OAF_EARLYONSET_AF"==\'\',exp_OAF_NA:"OAF_EARLYONSET_AF"==\'NA\'',
-                                                        expression_usages="exp_OAF0:del_row,exp_OAF1:del_row,exp_OAF_empty:del_row,exp_OAF_NA:del_row",
+                                                        expression_usages="exp_OAF0:DELETE_ROW,exp_OAF1:DELETE_ROW,exp_OAF_empty:DELETE_ROW,exp_OAF_NA:DELETE_ROW",
                                                         anno_cols=anno_cols,
                                                         )
         pl = MutRepPipeline(jobs_setup_file=jobs_setup_file)
@@ -989,7 +990,7 @@ class TestMutRepPipeline(SafeTester):
                                                         annotated_vcf_tabix=annotated_vcf_tabix,
                                                         report_regions="6:78171940-78172992,18:28610987-28611790",
                                                         expression_patterns='exp_splicing:"Func.refGene"==\'splicing\'',
-                                                        expression_usages="exp_splicing:color_row:ROSY_BROWN",
+                                                        expression_usages="exp_splicing:COLOR_ROW:ROSY_BROWN",
                                                         call_detail="YES",
                                                         )
         pl = MutRepPipeline(jobs_setup_file=jobs_setup_file)
@@ -1017,7 +1018,7 @@ class TestMutRepPipeline(SafeTester):
                             "Incorrect color"
                             )
 
-    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST, "taking too long time to test")
+#    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST, "taking too long time to test")
     def test_expression_action_color_col_1(self):
         """
         test if expreesion patterns and expression actions can be used
@@ -1032,7 +1033,7 @@ class TestMutRepPipeline(SafeTester):
                                                         annotated_vcf_tabix=annotated_vcf_tabix,
                                                         report_regions="6:78171940-78172992,18:28610987-28611790",
                                                         expression_patterns='exp_exonic:"Func.refGene"==\'exonic\',exp_ns_snv:"ExonicFunc.refGene"==\'nonsynonymous_SNV\'',
-                                                        expression_usages="exp_exonic:color_row:ROSY_BROWN,exp_ns_snv:color_col:cytoBand:TEAL,exp_exonic:color_col:Gene.refGene:YELLOW",
+                                                        expression_usages="exp_exonic:COLOR_ROW:ROSY_BROWN,exp_ns_snv:COLOR_COLUMN:cytoBand:TEAL,exp_exonic:COLOR_COLUMN:Gene.refGene:YELLOW",
                                                         call_detail="YES",
                                                         )
         pl = MutRepPipeline(jobs_setup_file=jobs_setup_file)
@@ -1086,12 +1087,15 @@ class TestMutRepPipeline(SafeTester):
         anno_cols.append(SWEGEN_AF_COL_NAME)
         expression_patterns='swegen_rare:("SWEGEN_AF"!=\'\')'
         expression_patterns+='and(float("SWEGEN_AF")<0.03)'
-        expression_usages='swegen_rare:color_col:SWEGEN_AF:YELLOW'
+        expression_usages='swegen_rare:COLOR_COLUMN:SWEGEN_AF:YELLOW'
         expression_patterns+=',swegen_very_rare:("SWEGEN_AF"!=\'\')'
         expression_patterns+='and(float("SWEGEN_AF")<0.01)'
-        expression_usages+=',swegen_very_rare:color_col:SWEGEN_AF:XLS_ORANGE'
+        expression_usages+=',swegen_very_rare:COLOR_COLUMN:SWEGEN_AF:XLS_ORANGE'
         expression_patterns+=',swegen_empty:("SWEGEN_AF"==\'\')'
-        expression_usages+=',swegen_empty:color_col:SWEGEN_AF:XLS_ORANGE'
+        expression_usages+=',swegen_empty:COLOR_COLUMN:SWEGEN_AF:XLS_ORANGE'
+        expression_patterns+=',kg_all_rare:("1000g2014oct_all"!=\'\')'
+        expression_patterns+='and(float("1000g2014oct_all")<0.03)'
+        expression_usages+=',kg_all_rare:COLOR_COLUMN:1000g2014oct_all:YELLOW'
         jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
                                                         annotated_vcf_tabix=annotated_vcf_tabix,
                                                         report_regions="1,17",
@@ -1927,7 +1931,7 @@ class TestMutRepPipeline(SafeTester):
                                                         report_regions="2,6,7,19",
                                                         rows_filter_actions=rows_filter_actions,
                                                         expression_patterns=",".join(map(lambda x: x+":"+expression_patterns[x], expression_patterns)),
-                                                        expression_usages=",".join(map(lambda x: x+":del_row", expression_patterns)),
+                                                        expression_usages=",".join(map(lambda x: x+":DELETE_ROW", expression_patterns)),
                                                         )
         pl = MutRepPipeline(jobs_setup_file=jobs_setup_file)
         pl.gen_summary_report(pl.report_layout.report_regions)
@@ -2004,7 +2008,7 @@ class TestMutRepPipeline(SafeTester):
                                                         report_regions="2,6,7,19",
                                                         rows_filter_actions=rows_filter_actions,
                                                         expression_patterns=",".join(map(lambda x: x+":"+expression_patterns[x], expression_patterns)),
-                                                        expression_usages=",".join(map(lambda x: x+":del_row", expression_patterns)),
+                                                        expression_usages=",".join(map(lambda x: x+":DELETE_ROW", expression_patterns)),
                                                         )
         pl = MutRepPipeline(jobs_setup_file=jobs_setup_file)
         pl.gen_summary_report(pl.report_layout.report_regions)

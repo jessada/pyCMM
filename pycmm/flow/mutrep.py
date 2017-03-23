@@ -43,9 +43,9 @@ from pycmm.cmmlib.dnalib import DNARegion
 from pycmm.cmmlib.tamodel import CMMGT_HOMOZYGOTE
 from pycmm.cmmlib.tamodel import CMMGT_HETEROZYGOTE
 
-ACTION_DELETE_ROW = "del_row"
-ACTION_COLOR_ROW = "color_row"
-ACTION_COLOR_COL = "color_col"
+ACTION_DELETE_ROW = "DELETE_ROW"
+ACTION_COLOR_ROW = "COLOR_ROW"
+ACTION_COLOR_COL = "COLOR_COLUMN"
 
 DFLT_COLOR_HET_SHARED = 'SILVER'
 DFLT_COLOR_HOM_SHARED = 'GRAY25'
