@@ -376,6 +376,12 @@ class _TAVcfRecord(_VcfRecord, pyCMMBase):
                                )
         elif var_name in EXAC03_CONSTRAINT_COL_NAMES:
             info = self.__get_exac_constraint_val(var_name, allele_idx)
+        if (info == "" or
+            info is None or
+            info == [None] or
+            info == "."
+            ):
+           info = ""
         return info
 
     def __cal_afss(self):

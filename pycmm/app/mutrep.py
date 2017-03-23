@@ -112,7 +112,7 @@ def app_pycmm_mutrep_create_jobs_setup_file(*args, **kwargs):
                      )
     layout_params = OrderedDict()
     if kwargs['anno_cols'] is not None:
-        layout_params['annotation columns (-a)'] = kwargs['anno_cols']
+        layout_params['annotation columns (-a)'] = kwargs['anno_cols'].split(",")
     else:
         layout_params['annotation columns (-a)'] = "all"
     if kwargs['anno_excl_tags'] is not None:

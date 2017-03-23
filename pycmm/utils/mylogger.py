@@ -7,7 +7,7 @@ lg.setLevel(logging.DEBUG)
 ch = logging.StreamHandler()
 ch.setLevel(logging.DEBUG)
 # create formatter and add it to the handlers
-formatter = logging.Formatter('## [%(levelname)s]%(asctime)25s - %(processName)-12s - %(name)-12s - %(message)s')
+formatter = logging.Formatter('## [%(levelname)s]%(asctime)25s - %(name)-12s - %(message)s')
 ch.setFormatter(formatter)
 # add the handlers to the logger
 lg.addHandler(ch)
