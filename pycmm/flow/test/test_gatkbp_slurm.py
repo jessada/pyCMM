@@ -133,9 +133,9 @@ class TestGATKBPPipelineSlurm(SafeTester):
 # ************************************** test orginally wrong encode Phred score samples **************************************
 
     @unittest.skipUnless(SLURM_GATKBP_TEST, "taking too much UPPMAX cpu-core hours")
-    def test_vqsr_02(self):
+    def test_vqsr_01(self):
         """
-        test VQSR process. Input are sampling of piper gvcfs
+        test VQSR process. Input is one chromosome of vcf file from WES294
         """
 
         self.individual_debug = True

@@ -36,8 +36,8 @@ from pycmm.cmmlib.taparser import TAVcfReader as VcfReader
 from pycmm.cmmlib.xlslib import CMMWorkbook as Workbook
 from pycmm.cmmlib.xlslib import NO_COLOR
 from pycmm.flow import get_func_arg
-from pycmm.flow.cmmdb import CMMPipeline
 from pycmm.flow import init_jobs_setup_file
+from pycmm.flow.cmmdb import CMMPipeline
 from pycmm.cmmlib.dnalib import ALL_CHROMS
 from pycmm.cmmlib.dnalib import DNARegion
 from pycmm.cmmlib.tamodel import CMMGT_HOMOZYGOTE

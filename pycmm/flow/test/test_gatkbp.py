@@ -404,26 +404,6 @@ class TestGATKBPPipeline(SafeTester):
         self.assertTrue(file_size(out_file) > 4000,
                         "concat vcfs doesn't function correctly")
 
-#    @unittest.skipUnless(FULL_SYSTEM_TEST or GATKBP_TEST, "taking too long time to test")
-#    def test_vqsr_02(self):
-#        """
-#        test VQSR process. Input are sampling of piper gvcfs
-#        """
-#
-#        self.individual_debug = True
-#        self.init_test(self.current_func_name)
-#        jobs_setup_file = self.__create_jobs_setup_file()
-#        pl = GATKBPPipeline(jobs_setup_file=jobs_setup_file)
-#        src_dir = join_path(self.data_dir,
-#                            'tmp')
-#        cmd = "cp -r"
-#        cmd += " " + src_dir
-#        cmd += " " + pl.project_out_dir
-#        self.exec_sh(cmd)
-#        out_file = pl.vqsr()
-#        self.assertTrue(file_size(out_file) > 4000,
-#                        "concat vcfs doesn't function correctly")
-#
     @unittest.skipUnless(FULL_SYSTEM_TEST or GATKBP_TEST, "taking too long time to test")
     def test_preprocess_dataset_01(self):
         """
