@@ -11,8 +11,7 @@ from pycmm.settings import FULL_SYSTEM_TEST
 from pycmm.settings import DFLT_ANV_DB_DIR
 from pycmm.settings import DFLT_ANV_DB_NAMES
 from pycmm.settings import DFLT_ANV_DB_OPS
-from pycmm.settings import FAST_PROJECT_CODE
-from pycmm.settings import SLOW_PROJECT_CODE
+from pycmm.settings import TEST_PROJECT_CODE
 from pycmm.utils import count_lines
 from pycmm.flow.cmmdb import CMMDBPipeline
 from pycmm.flow.cmmdb import create_jobs_setup_file
@@ -46,7 +45,7 @@ DFLT_ANV_TEST_DB_OPS += ",r"
 #    def __create_jobs_setup_file(self,
 #                                 vcf_tabix_file,
 #                                 dataset_name=None,
-#                                 project_code=SLOW_PROJECT_CODE,
+#                                 project_code=TEST_PROJECT_CODE,
 #                                 db_alloc_time=DFLT_CMMDB_ALLOC_TIME,
 #                                 db_region="18",
 #                                 sample_infos=None,
@@ -90,7 +89,7 @@ DFLT_ANV_TEST_DB_OPS += ",r"
 #                         exp_dataset_name,
 #                         "CMMDBPipeline cannot correctly read meta info 'dataset name' from jobs setup file")
 #        self.assertEqual(pl.project_code,
-#                         SLOW_PROJECT_CODE,
+#                         TEST_PROJECT_CODE,
 #                         "CMMDBPipeline cannot correctly read meta info 'project code' from jobs setup file")
 #        self.assertEqual(pl.db_alloc_time,
 #                         DFLT_CMMDB_ALLOC_TIME,
@@ -322,7 +321,7 @@ DFLT_ANV_TEST_DB_OPS += ",r"
 #        jobs_setup_file = self.__create_jobs_setup_file(db_alloc_time="5:00:00",
 #                                                        dataset_name="test_cal_stat_1",
 #                                                        vcf_tabix_file=vcf_tabix_file,
-#                                                        project_code=FAST_PROJECT_CODE,
+#                                                        project_code=TEST_PROJECT_CODE,
 #                                                        db_region="X",
 #                                                        )
 #        pl = CMMDBPipeline(jobs_setup_file)
@@ -338,7 +337,7 @@ DFLT_ANV_TEST_DB_OPS += ",r"
 #                                   "multi_chrs.vcf.gz")
 #        jobs_setup_file = self.__create_jobs_setup_file(dataset_name="test_cal_stat_2",
 #                                                        vcf_tabix_file=vcf_tabix_file,
-#                                                        project_code=FAST_PROJECT_CODE,
+#                                                        project_code=TEST_PROJECT_CODE,
 #                                                        db_region=None,
 #                                                        )
 #        pl = CMMDBPipeline(jobs_setup_file)
@@ -393,7 +392,7 @@ DFLT_ANV_TEST_DB_OPS += ",r"
 #        vcf_tabix_file = join_path(self.data_dir,
 #                                   "input.vcf.gz")
 #        jobs_setup_file = self.__create_jobs_setup_file(vcf_tabix_file=vcf_tabix_file,
-#                                                        project_code=FAST_PROJECT_CODE)
+#                                                        project_code=TEST_PROJECT_CODE)
 #        pl = CMMDBPipeline(jobs_setup_file)
 #        pl.table_annovar()
 #

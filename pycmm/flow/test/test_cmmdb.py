@@ -9,7 +9,7 @@ from os.path import isdir
 from pycmm.template import SafeTester
 from pycmm.settings import FULL_SYSTEM_TEST
 #from pycmm.settings import FAST_PROJECT_CODE
-from pycmm.settings import SLOW_PROJECT_CODE
+from pycmm.settings import TEST_PROJECT_CODE
 from pycmm.utils import count_lines
 from pycmm.flow.cmmdb import CMMDBPipeline
 from pycmm.flow.cmmdb import create_jobs_setup_file
@@ -120,7 +120,7 @@ class TestCMMDBPipeline(SafeTester):
         job_name = self.test_function
         dummy_vcf_tabix_file = "/path/to/vcf_tabix_file"
         jobs_setup_file = self.__create_jobs_setup_file(vcf_tabix_file=dummy_vcf_tabix_file,
-                                                        project_code=SLOW_PROJECT_CODE,
+                                                        project_code=TEST_PROJECT_CODE,
                                                         job_alloc_time="120:00:00",
                                                         db_region=None,
                                                         sample_info="Co-441,Co-666",
@@ -128,7 +128,7 @@ class TestCMMDBPipeline(SafeTester):
         pl = CMMDBPipeline(jobs_setup_file=jobs_setup_file)
         exp_project_name = self.test_function
         self.assertEqual(pl.project_code,
-                         SLOW_PROJECT_CODE,
+                         TEST_PROJECT_CODE,
                          "CMMDBPipeline cannot correctly read meta info 'project code' from jobs setup file")
         self.assertEqual(pl.job_alloc_time,
                          "120:00:00",
