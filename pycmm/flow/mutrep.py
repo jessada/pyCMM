@@ -20,6 +20,9 @@ from pycmm.settings import EXAC_NFE_COL_NAME
 from pycmm.settings import KG2014OCT_EUR_COL_NAME
 from pycmm.settings import GENE_REFGENE_COL_NAME
 from pycmm.settings import PATHOGENIC_COUNT_COL_NAME
+from pycmm.settings import INTERVAR_AND_EVIDENCE_COL_NAME
+from pycmm.settings import INTERVAR_CLASS_COL_NAME
+from pycmm.settings import INTERVAR_EVIDENCE_COL_NAME
 from pycmm.settings import DFLT_HEADER_CORRECTIONS
 from pycmm.settings import EXAC03_CONSTRAINT_COL_NAMES
 from pycmm.settings import EXAC03_CONSTRAINT_COL_NAME
@@ -373,7 +376,10 @@ class ReportLayout(CMMParams):
             if (col_name not in vcf_record.INFO.keys() and
                 col_name not in EXAC03_CONSTRAINT_COL_NAMES and
                 col_name not in EST_KVOT_COLS and
-                col_name != PATHOGENIC_COUNT_COL_NAME):
+                col_name != PATHOGENIC_COUNT_COL_NAME and
+                col_name != INTERVAR_CLASS_COL_NAME and
+                col_name != INTERVAR_EVIDENCE_COL_NAME
+                ):
                 self.warning("Columns " + col_name + " is missing")
                 continue
             if ((col_name == EST_KVOT_EARLYONSET_VS_BRC_COL_NAME) and
@@ -401,6 +407,13 @@ class ReportLayout(CMMParams):
                 EXAC03_CONSTRAINT_COL_NAME not in vcf_record.INFO.keys()
                 ):
                 self.warning(col_name + " cannot be calculated")
+                continue
+            if ((col_name == INTERVAR_CLASS_COL_NAME or
+                col_name == INTERVAR_EVIDENCE_COL_NAME) and
+                INTERVAR_AND_EVIDENCE_COL_NAME not in vcf_record.INFO.keys()
+                ):
+                self.warning(col_name + " cannot be calculated")
+                continue
             # here are the columns that can be shown without errors
             anno_cols.append(col_name)
         return anno_cols

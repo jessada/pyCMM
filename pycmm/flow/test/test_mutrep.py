@@ -1018,7 +1018,7 @@ class TestMutRepPipeline(SafeTester):
                             "Incorrect color"
                             )
 
-#    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST, "taking too long time to test")
+    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST, "taking too long time to test")
     def test_expression_action_color_col_1(self):
         """
         test if expreesion patterns and expression actions can be used

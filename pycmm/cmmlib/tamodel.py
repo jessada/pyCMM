@@ -28,9 +28,14 @@ from pycmm.settings import EXAC03_CONSTRAINT_PLI_COL_NAME
 from pycmm.settings import EXAC03_CONSTRAINT_COL_NAMES
 from pycmm.settings import EXAC03_CONSTRAINT_COL_NAME
 from pycmm.settings import PREDICTION_COLS
+from pycmm.settings import INTERVAR_AND_EVIDENCE_COL_NAME
+from pycmm.settings import INTERVAR_CLASS_COL_NAME
+from pycmm.settings import INTERVAR_EVIDENCE_COL_NAME
 from pycmm.utils import check_equal
 from pycmm.utils import check_in
 from pycmm.utils import is_number
+from pycmm.cmmlib.intervarlib import parse_intervar_class
+from pycmm.cmmlib.intervarlib import parse_intervar_evidence
 
 CMMGT_WILDTYPE = 'wt'
 CMMGT_HOMOZYGOTE = 'hom'
@@ -376,6 +381,12 @@ class _TAVcfRecord(_VcfRecord, pyCMMBase):
                                )
         elif var_name in EXAC03_CONSTRAINT_COL_NAMES:
             info = self.__get_exac_constraint_val(var_name, allele_idx)
+        elif var_name == INTERVAR_CLASS_COL_NAME:
+            info = parse_intervar_class(self.get_info(INTERVAR_AND_EVIDENCE_COL_NAME,
+                                                      allele_idx))
+        elif var_name == INTERVAR_EVIDENCE_COL_NAME:
+            info = parse_intervar_evidence(self.get_info(INTERVAR_AND_EVIDENCE_COL_NAME,
+                                                         allele_idx))
         if (info == "" or
             info is None or
             info == [None] or

@@ -7,6 +7,8 @@ from pycmm.settings import PRIMARY_MAF_VAR
 from pycmm.settings import EXAC_ALL_COL_NAME
 from pycmm.settings import PATHOGENIC_COUNT_COL_NAME
 from pycmm.settings import EXAC03_CONSTRAINT_SYN_Z_COL_NAME
+from pycmm.settings import INTERVAR_CLASS_COL_NAME
+from pycmm.settings import INTERVAR_EVIDENCE_COL_NAME
 from pycmm.settings import FULL_SYSTEM_TEST
 from pycmm.settings import AXEQ_CHR9_COLS_TAG
 from pycmm.settings import AXEQ_CHR3_6_14_18_COLS_TAG
@@ -14,6 +16,11 @@ from pycmm.settings import AXEQ_CHR5_19_COLS_TAG
 from pycmm.settings import EXAC_CONSTRAINT_COLS_TAG
 from pycmm.settings import LJB_SCORE_COLS_TAG
 from pycmm.cmmlib.xlslib import XlsUtils
+from pycmm.cmmlib.intervarlib import INTERVAR_CLASS_BENIGN
+from pycmm.cmmlib.intervarlib import INTERVAR_CLASS_LIKELY_BENIGN
+from pycmm.cmmlib.intervarlib import INTERVAR_CLASS_UNCERTAIN_SIGNIFICANCE
+from pycmm.cmmlib.intervarlib import INTERVAR_CLASS_LIKELY_PATHOGENIC
+from pycmm.cmmlib.intervarlib import INTERVAR_CLASS_PATHOGENIC
 from pycmm.flow.mutrep import MutRepPipeline
 from pycmm.flow.mutrep import create_jobs_setup_file
 from pycmm.flow.mutrep import JOBS_SETUP_RPT_FILTER_RARE
@@ -646,6 +653,81 @@ class TestTAVcfRecordXls(SafeTester):
                          0.53,
                          "Incorect number of ExAC constraint value"
                          )
+
+    @unittest.skipUnless(FULL_SYSTEM_TEST, "taking too long time to test")
+    def test_intervar_1(self):
+        """
+        - test if intervar classification and evidence can be parsed
+        """
+
+        self.init_test(self.current_func_name)
+        anno_cols = list(DFLT_TEST_MUTREP_COLS)
+        anno_cols.append(INTERVAR_CLASS_COL_NAME)
+        anno_cols.append(INTERVAR_EVIDENCE_COL_NAME)
+        annotated_vcf_tabix = join_path(self.data_dir,
+                                        "input.vcf.gz")
+        project_name = self.test_function
+        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
+                                                        annotated_vcf_tabix=annotated_vcf_tabix,
+                                                        anno_cols=anno_cols,
+                                                        )
+        pl = MutRepPipeline(jobs_setup_file=jobs_setup_file)
+        pl.gen_summary_report(pl.report_layout.report_regions)
+        xls_file = join_path(self.working_dir,
+                             "rpts",
+                             project_name+"_summary.xlsx")
+        xu = XlsUtils(xls_file)
+        intervar_class_col_idx = xu.get_col_idx(pl.correct_header(INTERVAR_CLASS_COL_NAME))
+        self.assertEqual(xu.get_cell_value(2, intervar_class_col_idx),
+                         INTERVAR_CLASS_BENIGN,
+                         "Incorect intervar value"
+                         )
+        self.assertEqual(xu.get_cell_value(3, intervar_class_col_idx),
+                         INTERVAR_CLASS_LIKELY_BENIGN,
+                         "Incorect intervar value"
+                         )
+        self.assertEqual(xu.get_cell_value(4, intervar_class_col_idx),
+                         INTERVAR_CLASS_UNCERTAIN_SIGNIFICANCE,
+                         "Incorect intervar value"
+                         )
+        self.assertEqual(xu.get_cell_value(5, intervar_class_col_idx),
+                         INTERVAR_CLASS_BENIGN,
+                         "Incorect intervar value"
+                         )
+        self.assertEqual(xu.get_cell_value(6, intervar_class_col_idx),
+                         INTERVAR_CLASS_PATHOGENIC,
+                         "Incorect intervar value"
+                         )
+        self.assertEqual(xu.get_cell_value(7, intervar_class_col_idx),
+                         INTERVAR_CLASS_LIKELY_PATHOGENIC,
+                         "Incorect intervar value"
+                         )
+        intervar_evidence_col_idx = xu.get_col_idx(pl.correct_header(INTERVAR_EVIDENCE_COL_NAME))
+        self.assertEqual(xu.get_cell_value(2, intervar_evidence_col_idx),
+                         "BA1, BS1, BP4, BP7",
+                         "Incorect intervar value"
+                         )
+        self.assertEqual(xu.get_cell_value(3, intervar_evidence_col_idx),
+                         "PM1, BS2, BP4",
+                         "Incorect intervar value"
+                         )
+        self.assertEqual(xu.get_cell_value(4, intervar_evidence_col_idx),
+                         None,
+                         "Incorect intervar value"
+                         )
+        self.assertEqual(xu.get_cell_value(5, intervar_evidence_col_idx),
+                         "BS1, BS2",
+                         "Incorect intervar value"
+                         )
+        self.assertEqual(xu.get_cell_value(6, intervar_evidence_col_idx),
+                         "PVS1, PM2, PP5",
+                         "Incorect intervar value"
+                         )
+        self.assertEqual(xu.get_cell_value(7, intervar_evidence_col_idx),
+                         "PVS1, PM2",
+                         "Incorect intervar value"
+                         )
+
 
     def tearDown(self):
         self.remove_working_dir()
