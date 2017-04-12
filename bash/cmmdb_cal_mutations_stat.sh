@@ -15,19 +15,23 @@ $0 [OPTION]
 option:
 -k {name}          dataset name (required)
 -i {file}          specify tabix file (required)
+-t {file}          specify vcf2avdb key table (required)
 -r {region}        specify vcf region to be exported (default:None)
 -c {patient list}  specify vcf columns to exported. This can be either in comma-separated format or it can be a file name (default:$COL_CONFIG_DEFAULT)
 -o {file}          output file name (required)
 EOF
 )
 
-while getopts ":k:i:r:c:o:" OPTION; do
+while getopts ":k:i:t:r:c:o:" OPTION; do
   case "$OPTION" in
     k)
       dataset_name="$OPTARG"
       ;;
     i)
       tabix_file="$OPTARG"
+      ;;
+    t)
+      vcf2avdb_key_table="$OPTARG"
       ;;
     r)
       vcf_region="$OPTARG"
@@ -46,8 +50,10 @@ done
 
 [ ! -z $dataset_name ] || die "Please specify dataset name (-k)"
 [ ! -z $tabix_file ] || die "Please specify tabix file (-i)"
+[ ! -z $vcf2avdb_key_table ] || die "Please specify vcf2avdb key table (-t)"
 [ ! -z $out_file ] || die "Plesae specify output file name (-o)"
 [ -f $tabix_file ] || die "$tabix_file is not a valid file name"
+[ -f $vcf2avdb_key_table ] || die "$vcf2avdb_key_table is not a valid file name"
 
 #setting default values:
 : ${vcf_region=$VCF_REGION_DEFAULT}
@@ -77,6 +83,7 @@ else
     col_count=${#col_list[@]}
 fi
 
+working_dir=`mktemp -d`
 ## ****************************************  display configuration  ****************************************
 new_section_txt "S T A R T <$script_name>"
 info_msg
@@ -94,6 +101,7 @@ info_msg
 info_msg "overall configuration"
 display_param "dataset name (-k)" "$dataset_name"
 display_param "tabix file (-i)" "$tabix_file"
+display_param "vcf2avdb key table (-t)" "$vcf2avdb_key_table"
 display_param "statistics output file (-o)" "$out_file"
 
 ## display optional configuration
@@ -118,7 +126,14 @@ else
     display_param "vcf region" "ALL"
 fi
 
+## display misc configuration
+info_msg
+info_msg "misc configuration"
+display_param "working direcotry" "$working_dir"
+
 # ****************************************  executing  ****************************************
+tmp_raw_stat="$working_dir/$dataset_name.raw_stat"
+
 VCF_QUERY_FORMAT="'%CHROM\t%POS\t%REF\t%ALT[\t%GT]\n'"
 COL_KEY_COUNT=4
 IDX_0_CHR_COL=0
@@ -223,6 +238,38 @@ function count_frequency {
     done
 }
 
+if [ ! -z "$vcf_region" ]; then
+    for (( n=0; n<$((${#vcf_region_list[@]})); n++ ))
+    do
+        count_frequency "${vcf_region_list[$n]}" >> "$tmp_raw_stat"
+    done
+else
+    count_frequency "" >> "$tmp_raw_stat"
+fi
+
+#---------- generate stat key --------------
+tmp_stat_key_sort=$working_dir/$dataset_name"_tmp_sort.key.stat"
+:>$tmp_stat_key_sort
+add_key_to_stat="grep -P \"^[0-9]\" $tmp_raw_stat"
+add_key_to_stat+=" | awk -F'\t' '{ printf \"%02d_%012d_%s_%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n\", \$1, \$2, \$4, \$5, \$6,  \$7,  \$8,  \$9,  \$10,  \$11,  \$12,  \$13,  \$14  }'"
+add_key_to_stat+=" | sort -k1,1"
+add_key_to_stat+=" >> $tmp_stat_key_sort"
+eval_cmd "$add_key_to_stat"
+add_key_to_stat="grep -vP \"^[0-9]\" $tmp_raw_stat"
+add_key_to_stat+=" | awk -F'\t' '{ printf \"%s_%012d_%s_%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n\", \$1, \$2, \$4, \$5, \$6,  \$7,  \$8,  \$9,  \$10,  \$11,  \$12,  \$13,  \$14 }'"
+add_key_to_stat+=" | sort -k1,1"
+add_key_to_stat+=" >> $tmp_stat_key_sort"
+eval_cmd "$add_key_to_stat"
+#---------- generate stat key --------------
+
+#---------- reformat stat --------------
+tmp_formatted_stat="$working_dir/$dataset_name"_tmp_formatted.stat
+
+format_stat_cmd="join -t $'\t' -j 1 -o 1.2,1.3,1.4,1.5,1.6,2.2,2.3,2.4,2.5,2.6,2.7,2.8,2.9,2.10 <( sort -k1,1 $vcf2avdb_key_table ) $tmp_stat_key_sort > $tmp_formatted_stat"
+eval_cmd "$format_stat_cmd"
+#---------- reformat stat --------------
+
+
 col_prefix=$( echo $dataset_name | awk '{print toupper($0)}' )
 # create header
 header="#Chr"
@@ -241,13 +288,22 @@ header+="\t$col_prefix"_AF
 header+="\t$col_prefix"_PF
 echo -e "$header" > "$out_file"
         
-if [ ! -z "$vcf_region" ]; then
-    for (( n=0; n<$((${#vcf_region_list[@]})); n++ ))
-    do
-        count_frequency "${vcf_region_list[$n]}" >> "$out_file"
-    done
-else
-    count_frequency "" >> "$out_file"
-fi
+cmd="grep -P \"^[0-9]\" $tmp_formatted_stat"
+cmd+=" | sort -k1,1n -k2,2 -k4,4"
+cmd+=" >> $out_file"
+eval_cmd "$cmd" 
+cmd="grep -vP \"^[0-9]\" $tmp_formatted_stat"
+cmd+=" | sort -k1,1 -k2,2 -k4,4"
+cmd+=" >> $out_file"
+eval_cmd "$cmd" 
+
+#---------- idx stat file --------------
+idx_stat_file="$out_file.idx"
+idx_cmd="$PYCMM/bash/compileAnnnovarIndex.pl"
+idx_cmd+=" $out_file"
+idx_cmd+=" 1000"
+idx_cmd+=" > $idx_stat_file"
+eval_cmd "$idx_cmd"
+#---------- idx stat file --------------
 
 new_section_txt "F I N I S H <$script_name>"

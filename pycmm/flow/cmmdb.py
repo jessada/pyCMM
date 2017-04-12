@@ -12,13 +12,15 @@ from pycmm.cmmlib.annovarlib import get_annovar_params_sections
 from pycmm.cmmlib.dnalib import ALL_CHROMS
 from pycmm.settings import DUMMY_TABLE_ANNOVAR_BIN
 
-CAL_MUTATIONS_STAT_SCRIPT = "$PYCMM/bash/cal_mutations_stat.sh"
-VCF_AF_TO_ANNOVAR_SCRIPT = "$PYCMM/bash/vcf_AF_to_annovar.sh"
+CAL_MUTATIONS_STAT_CMMDB_SCRIPT = "$PYCMM/bash/cmmdb_cal_mutations_stat.sh"
+VCF_AF_TO_ANNOVAR_CMMDB_SCRIPT = "$PYCMM/bash/cmmdb_vcf_AF_to_annovar.sh"
+VCF2AVDB_KEY_CMMDB_SCRIPT = "$PYCMM/bash/cmmdb_vcf2avdb_key.sh"
 
 # *************** mustat db section ***************
 JOBS_SETUP_MUTSTAT_PARAMS_SECTION = "MUTSTAT_PARAMS"
 JOBS_SETUP_VCF_TABIX_FILE_KEY = "VCF_TABIX_FILE"
 JOBS_SETUP_DB_REGION_KEY = "DB_REGION"
+JOBS_SETUP_VCF2AVDB_KEY_TABLE_KEY = "VCF2AVDB_KEY_TABLE"
 
 # *************** table_annovar db section ***************
 JOBS_SETUP_ANV_PARAMS_SECTION = "ANNOVAR_PARAMS"
@@ -47,6 +49,10 @@ class MutStatParams(CMMParams):
     def db_region(self):
         return self._get_job_config(JOBS_SETUP_DB_REGION_KEY)
 
+    @property
+    def vcf2avdb_key_table(self):
+        return self._get_job_config(JOBS_SETUP_VCF2AVDB_KEY_TABLE_KEY)
+
 class CMMDBPipeline(CMMPipeline):
     """ A class to control CMMDB best practice pipeline """
 
@@ -72,8 +78,8 @@ class CMMDBPipeline(CMMPipeline):
                                                           required=True))
 
     @property
-    def out_stat_files(self):
-        return self.__out_stat_files
+    def out_files(self):
+        return self.__out_files
 
     def get_third_party_software_version(self):
         vm = VersionManager()
@@ -82,14 +88,16 @@ class CMMDBPipeline(CMMPipeline):
         versions['table_annovar.pl'] = vm.table_annovar_version
         return versions
 
-    def __get_cal_mut_stat_params(self,
+    def __get_cmmdb_script_params(self,
                                   dataset_name,
-                                  out_stat_file,
+                                  out_file,
                                   db_region=None,
                                   samples_id=None,
                                   ):
         params = " -k " + dataset_name
         params += " -i " + self.mutstat_params.input_vcf_tabix
+        if self.mutstat_params.vcf2avdb_key_table is not None:
+            params += " -t " + self.mutstat_params.vcf2avdb_key_table
         if db_region is not None:
             params += " -r " + db_region
         if samples_id is not None:
@@ -97,47 +105,51 @@ class CMMDBPipeline(CMMPipeline):
                 params += " -c " + ",".join(samples_id)
             else:
                 params += " -c " + samples_id
-        params += " -o " + out_stat_file
+        params += " -o " + out_file
         return params
 
-    def __run_stat_cal(self, script_name):
+    def __run_cmm_script(self,
+                         script_name,
+                         out_suffix=".stat",
+                         job_name_suffix="_cal_stat",
+                         ):
         if self.project_code is None:
-            self.__out_stat_files = join_path(self.data_out_dir,
-                                              self.dataset_name + ".stat")
-            params = self.__get_cal_mut_stat_params(dataset_name=self.dataset_name,
-                                                    out_stat_file=self.out_stat_files,
+            self.__out_files = join_path(self.data_out_dir,
+                                              self.dataset_name + out_suffix)
+            params = self.__get_cmmdb_script_params(dataset_name=self.dataset_name,
+                                                    out_file=self.out_files,
                                                     db_region=self.mutstat_params.db_region,
                                                     samples_id=self.samples_id,
                                                     )
             cmd = script_name + params
             exec_sh(cmd)
         elif self.mutstat_params.db_region is None:
-            self.__out_stat_files = []
+            self.__out_files = []
             for chrom in ALL_CHROMS:
                 dataset_name = self.dataset_name + "_" + chrom
-                out_stat_file = join_path(self.data_out_dir,
-                                          dataset_name + ".stat")
-                params = self.__get_cal_mut_stat_params(dataset_name=dataset_name,
-                                                        out_stat_file=out_stat_file,
+                out_file = join_path(self.data_out_dir,
+                                          dataset_name + out_suffix)
+                params = self.__get_cmmdb_script_params(dataset_name=dataset_name,
+                                                        out_file=out_file,
                                                         db_region=chrom,
                                                         samples_id=self.samples_id,
                                                         )
-                self.__out_stat_files.append(out_stat_file)
-                job_name = dataset_name + "_get_freq"
+                self.__out_files.append(out_file)
+                job_name = dataset_name + job_name_suffix
                 self._submit_slurm_job(job_name,
                                        "1",
                                        script_name,
                                        params,
                                        )
         else:
-            self.__out_stat_files = join_path(self.data_out_dir,
-                                              self.dataset_name + ".stat")
-            params = self.__get_cal_mut_stat_params(dataset_name=self.dataset_name,
-                                                    out_stat_file=self.out_stat_files,
+            self.__out_files = join_path(self.data_out_dir,
+                                              self.dataset_name + out_suffix)
+            params = self.__get_cmmdb_script_params(dataset_name=self.dataset_name,
+                                                    out_file=self.out_files,
                                                     db_region=self.mutstat_params.db_region,
                                                     samples_id=self.samples_id,
                                                     )
-            job_name = self.dataset_name + "_cal_stat"
+            job_name = self.dataset_name + job_name_suffix
             self._submit_slurm_job(job_name,
                                    "1",
                                    script_name,
@@ -145,10 +157,16 @@ class CMMDBPipeline(CMMPipeline):
                                    )
 
     def cal_mut_stat(self):
-        self.__run_stat_cal(CAL_MUTATIONS_STAT_SCRIPT)
+        self.__run_cmm_script(CAL_MUTATIONS_STAT_CMMDB_SCRIPT)
 
     def vcfaf_to_annovar(self):
-        self.__run_stat_cal(VCF_AF_TO_ANNOVAR_SCRIPT)
+        self.__run_cmm_script(VCF_AF_TO_ANNOVAR_CMMDB_SCRIPT)
+
+    def vcf2annovar_key(self):
+        self.__run_cmm_script(VCF2AVDB_KEY_CMMDB_SCRIPT,
+                              out_suffix=".key",
+                              job_name_suffix="_key",
+                              )
 
     def table_annovar(self):
         # calling dummy table_annovar mainly because to clariy the configurations and for logging
@@ -184,6 +202,10 @@ def create_cmmdb_jobs_setup_file(*args, **kwargs):
     if db_region is not None:
         mutstat_params[JOBS_SETUP_DB_REGION_KEY] = '"' + db_region + '"'
     job_setup_document[JOBS_SETUP_MUTSTAT_PARAMS_SECTION] = mutstat_params
+
+    vcf2avdb_key_table = get_func_arg('vcf2avdb_key_table', kwargs)
+    if vcf2avdb_key_table is not None:
+        mutstat_params[JOBS_SETUP_VCF2AVDB_KEY_TABLE_KEY] = vcf2avdb_key_table
 
     anv_params = get_annovar_params_sections(*args, **kwargs)
     job_setup_document[JOBS_SETUP_ANV_PARAMS_SECTION] = anv_params

@@ -82,7 +82,6 @@ PLINK_CREATE_JOB_SETUP_FILE_DESCRIPTION = "An application to generate job setup 
 
 ## > > > > > > > > > > > > > > > > > > > > > > > > > > Annovar DB configurations < < < < < < < < < < < < < < < < < < < < < < < < < <
 DFLT_ANV_DB_DIR = os.environ['ANNOVAR_HUMAN_DB_DIR']
-#DFLT_ANV_DB_DIR = "/glob/jessada/tools/annovar/humandb"
 DFLT_ANV_DB_NAMES = "refGene"
 DFLT_ANV_DB_OPS = "g"
 DFLT_ANV_DB_NAMES += ",cytoBand"

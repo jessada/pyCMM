@@ -8,7 +8,6 @@ from os.path import dirname
 from os.path import isdir
 from pycmm.template import SafeTester
 from pycmm.settings import FULL_SYSTEM_TEST
-#from pycmm.settings import FAST_PROJECT_CODE
 from pycmm.settings import TEST_PROJECT_CODE
 from pycmm.utils import count_lines
 from pycmm.flow.cmmdb import CMMDBPipeline
@@ -18,8 +17,8 @@ from pycmm.cmmlib.test.test_annovarlib import DFLT_ANV_TEST_DB_NAMES
 from pycmm.cmmlib.test.test_annovarlib import DFLT_ANV_TEST_DB_OPS
 from pycmm.cmmlib.samplelib import NO_FAMILY
 
-CMMDB_TEST=False
-
+CMMDB_TEST = False
+DFLT_TEST_DB_REGION = "18"
 
 class TestCMMDBPipeline(SafeTester):
 
@@ -31,38 +30,26 @@ class TestCMMDBPipeline(SafeTester):
     def setUp(self):
         pass
 
-    def __create_jobs_setup_file(self,
-                                 vcf_tabix_file,
-                                 project_name=None,
-                                 project_code=None,
-                                 job_alloc_time=None,
-                                 db_region="18",
-                                 sample_info=None,
-                                 annovar_human_db_dir=DFLT_ANV_TEST_DB_DIR,
-                                 annovar_buildver="hg19",
-                                 annovar_db_names=DFLT_ANV_TEST_DB_NAMES,
-                                 annovar_db_ops=DFLT_ANV_TEST_DB_OPS,
-                                 annovar_nastring=".",
-                                 ):
-        jobs_setup_file = join_path(self.working_dir,
-                                    self.test_function+'_jobs_setup.txt')
-        if project_name is None:
-            project_name = self.test_function
-        create_jobs_setup_file(project_name=project_name,
-                               project_out_dir=self.working_dir,
-                               vcf_tabix_file=vcf_tabix_file,
-                               db_region=db_region,
-                               sample_info=sample_info,
-                               project_code=project_code,
-                               job_alloc_time=job_alloc_time,
-                               annovar_human_db_dir=annovar_human_db_dir,
-                               annovar_buildver=annovar_buildver,
-                               annovar_db_names=annovar_db_names,
-                               annovar_db_ops=annovar_db_ops,
-                               annovar_nastring=annovar_nastring,
-                               out_jobs_setup_file=jobs_setup_file,
-                               )
-        return jobs_setup_file
+    def __create_jobs_setup_file(self, *args, **kwargs):
+        if 'project_name' not in kwargs:
+            kwargs['project_name'] = self.test_function
+        if 'db_region' not in kwargs:
+            kwargs['db_region'] = DFLT_TEST_DB_REGION
+        if 'annovar_human_db_dir' not in kwargs:
+            kwargs['annovar_human_db_dir'] = DFLT_ANV_TEST_DB_DIR
+        if 'annovar_buildver' not in kwargs:
+            kwargs['annovar_buildver'] = "hg19"
+        if 'annovar_db_names' not in kwargs:
+            kwargs['annovar_db_names'] = DFLT_ANV_TEST_DB_NAMES
+        if 'annovar_db_ops' not in kwargs:
+            kwargs['annovar_db_ops'] = DFLT_ANV_TEST_DB_OPS
+        if 'annovar_nastring' not in kwargs:
+            kwargs['annovar_nastring'] = "."
+        kwargs['project_out_dir'] = self.working_dir
+        kwargs['out_jobs_setup_file'] = join_path(self.working_dir,
+                                                  self.test_function+'_jobs_setup.txt')
+        create_jobs_setup_file(*args, **kwargs)
+        return kwargs['out_jobs_setup_file']
 
     @unittest.skipUnless(isdir("/proj/b2011117"), "This can only run in UPPMAX")
     def test_load_jobs_info_1(self):
@@ -124,6 +111,7 @@ class TestCMMDBPipeline(SafeTester):
                                                         job_alloc_time="120:00:00",
                                                         db_region=None,
                                                         sample_info="Co-441,Co-666",
+                                                        vcf2avdb_key_table="somefile.key",
                                                         )
         pl = CMMDBPipeline(jobs_setup_file=jobs_setup_file)
         exp_project_name = self.test_function
@@ -136,6 +124,9 @@ class TestCMMDBPipeline(SafeTester):
         self.assertEqual(pl.mutstat_params.db_region,
                          None,
                          "CMMDBPipeline cannot correctly read meta info 'vcf region' from jobs setup file")
+        self.assertEqual(pl.mutstat_params.vcf2avdb_key_table,
+                         "somefile.key",
+                         "CMMDBPipeline cannot correctly read meta info 'vcf2avdb key table' from jobs setup file")
         self.assertEqual(pl.samples_id,
                          ["Co-441","Co-666"],
                          "CMMDBPipeline cannot correctly read meta info 'samples' from jobs setup file")
@@ -148,7 +139,6 @@ class TestCMMDBPipeline(SafeTester):
     def test_load_jobs_info_3(self):
         """ test if families structures are loaded correctly """
 
-        self.individual_debug = True
         self.init_test(self.current_func_name)
         job_name = self.test_function
         dummy_vcf_tabix_file = "/path/to/vcf_tabix_file"
@@ -206,7 +196,6 @@ class TestCMMDBPipeline(SafeTester):
     def test_load_jobs_info_5(self):
         """ test if can load sample infos in family structured format as a file """
 
-        self.individual_debug = True
         self.init_test(self.current_func_name)
         job_name = self.test_function
         dummy_vcf_tabix_file = "/path/to/vcf_tabix_file"
@@ -231,67 +220,92 @@ class TestCMMDBPipeline(SafeTester):
     def test_cal_mut_stat_offline_1(self):
         """ test basic offline version (w/o slurm) of cal_mut_stat (one chrom)"""
 
-        self.individual_debug = True
         self.init_test(self.current_func_name)
         vcf_tabix_file = join_path(self.data_dir,
                                    "input.vcf.gz")
-        exp_result = join_path(self.data_dir,
-                               "exp_stat")
+        vcf2avdb_key_table = join_path(self.data_dir,
+                                       "vcf2avdb.key")
         jobs_setup_file = self.__create_jobs_setup_file(vcf_tabix_file=vcf_tabix_file,
                                                         project_code=None,
                                                         db_region=None,
+                                                        vcf2avdb_key_table=vcf2avdb_key_table,
                                                         )
         pl = CMMDBPipeline(jobs_setup_file=jobs_setup_file)
         pl.cal_mut_stat()
-        self.assertTrue(filecmp.cmp(pl.out_stat_files,
-                                    exp_result),
+        exp_stat = join_path(self.data_dir,
+                             "exp_stat")
+        self.assertTrue(filecmp.cmp(pl.out_files,
+                                    exp_stat),
+                        "cal_mut_stat doesn't function correctly")
+        exp_idx = join_path(self.data_dir,
+                            "exp_idx")
+        self.assertTrue(filecmp.cmp(pl.out_files+".idx",
+                                    exp_idx),
                         "cal_mut_stat doesn't function correctly")
 
     @unittest.skipUnless(FULL_SYSTEM_TEST or CMMDB_TEST, "taking too long time to test")
     def test_cal_mut_stat_offline_2(self):
         """ test a little advance offline version (w/o slurm) of cal_mut_stat (all chroms) """
 
-        self.individual_debug = True
         self.init_test(self.current_func_name)
         vcf_tabix_file = join_path(self.data_dir,
                                    "multi_chrs.vcf.gz")
+        vcf2avdb_key_table = join_path(self.data_dir,
+                                       "vcf2avdb.key")
         jobs_setup_file = self.__create_jobs_setup_file(vcf_tabix_file=vcf_tabix_file,
                                                         project_code=None,
                                                         db_region=None,
+                                                        vcf2avdb_key_table=vcf2avdb_key_table,
                                                         )
         pl = CMMDBPipeline(jobs_setup_file=jobs_setup_file)
         pl.cal_mut_stat()
+        exp_stat = join_path(self.data_dir,
+                             "exp_stat")
+        self.assertTrue(filecmp.cmp(pl.out_files,
+                                    exp_stat),
+                        "cal_mut_stat doesn't function correctly")
+        exp_idx = join_path(self.data_dir,
+                            "exp_idx")
+        self.assertTrue(filecmp.cmp(pl.out_files+".idx",
+                                    exp_idx),
+                        "cal_mut_stat doesn't function correctly")
 
     @unittest.skipUnless(FULL_SYSTEM_TEST or CMMDB_TEST, "taking too long time to test")
     def test_cal_mut_stat_offline_3(self):
         """ to offline version (w/o slurm) if it can handle multi allelic stat correctly """
 
-        self.individual_debug = True
         self.init_test(self.current_func_name)
         vcf_tabix_file = join_path(self.data_dir,
                                    "input.vcf.gz")
-        exp_result = join_path(self.data_dir,
-                               "exp_stat")
+        vcf2avdb_key_table = join_path(self.data_dir,
+                                       "vcf2avdb.key")
         jobs_setup_file = self.__create_jobs_setup_file(vcf_tabix_file=vcf_tabix_file,
                                                         project_code=None,
                                                         db_region=None,
+                                                        vcf2avdb_key_table=vcf2avdb_key_table,
                                                         )
         pl = CMMDBPipeline(jobs_setup_file=jobs_setup_file)
         pl.cal_mut_stat()
-        self.assertTrue(filecmp.cmp(pl.out_stat_files,
-                                    exp_result),
+        exp_stat = join_path(self.data_dir,
+                             "exp_stat")
+        self.assertTrue(filecmp.cmp(pl.out_files,
+                                    exp_stat),
+                        "cal_mut_stat doesn't function correctly")
+        exp_idx = join_path(self.data_dir,
+                            "exp_idx")
+        self.assertTrue(filecmp.cmp(pl.out_files+".idx",
+                                    exp_idx),
                         "cal_mut_stat doesn't function correctly")
 
     @unittest.skipUnless(FULL_SYSTEM_TEST or CMMDB_TEST, "taking too long time to test")
     def test_cal_mut_stat_offline_4(self):
         """ to offline version (w/o slurm) if it can calculate stat of subpopulation """
 
-        self.individual_debug = True
         self.init_test(self.current_func_name)
         vcf_tabix_file = join_path(self.data_dir,
                                    "input.vcf.gz")
-        exp_result = join_path(self.data_dir,
-                               "exp_stat")
+        vcf2avdb_key_table = join_path(self.data_dir,
+                                       "vcf2avdb.key")
         sample_info = "Br-176"
         sample_info += ",Br-120"
         sample_info += ",Alb-31"
@@ -306,34 +320,49 @@ class TestCMMDBPipeline(SafeTester):
                                                         project_code=None,
                                                         db_region=None,
                                                         sample_info=sample_info,
+                                                        vcf2avdb_key_table=vcf2avdb_key_table,
                                                         )
         pl = CMMDBPipeline(jobs_setup_file=jobs_setup_file)
         pl.cal_mut_stat()
-        self.assertTrue(filecmp.cmp(pl.out_stat_files,
-                                    exp_result),
+        exp_stat = join_path(self.data_dir,
+                             "exp_stat")
+        self.assertTrue(filecmp.cmp(pl.out_files,
+                                    exp_stat),
+                        "cal_mut_stat doesn't function correctly")
+        exp_idx = join_path(self.data_dir,
+                            "exp_idx")
+        self.assertTrue(filecmp.cmp(pl.out_files+".idx",
+                                    exp_idx),
                         "cal_mut_stat doesn't function correctly")
 
     @unittest.skipUnless(FULL_SYSTEM_TEST or CMMDB_TEST, "taking too long time to test")
     def test_cal_mut_stat_offline_5(self):
         """ to test if AF can be calculated if GF = 0 """
 
-        self.individual_debug = True
         self.init_test(self.current_func_name)
         vcf_tabix_file = join_path(self.data_dir,
                                    "input.vcf.gz")
-        exp_result = join_path(self.data_dir,
-                               "exp_stat")
         sample_info = join_path(self.data_dir,
                                 "sample.list")
+        vcf2avdb_key_table = join_path(self.data_dir,
+                                       "vcf2avdb.key")
         jobs_setup_file = self.__create_jobs_setup_file(vcf_tabix_file=vcf_tabix_file,
                                                         project_code=None,
                                                         db_region=None,
                                                         sample_info=sample_info,
+                                                        vcf2avdb_key_table=vcf2avdb_key_table,
                                                         )
         pl = CMMDBPipeline(jobs_setup_file=jobs_setup_file)
         pl.cal_mut_stat()
-        self.assertTrue(filecmp.cmp(pl.out_stat_files,
-                                    exp_result),
+        exp_stat = join_path(self.data_dir,
+                             "exp_stat")
+        self.assertTrue(filecmp.cmp(pl.out_files,
+                                    exp_stat),
+                        "cal_mut_stat doesn't function correctly")
+        exp_idx = join_path(self.data_dir,
+                            "exp_idx")
+        self.assertTrue(filecmp.cmp(pl.out_files+".idx",
+                                    exp_idx),
                         "cal_mut_stat doesn't function correctly")
 
     @unittest.skipUnless(FULL_SYSTEM_TEST or CMMDB_TEST, "taking too long time to test")
@@ -343,17 +372,109 @@ class TestCMMDBPipeline(SafeTester):
         self.init_test(self.current_func_name)
         vcf_tabix_file = join_path(self.data_dir,
                                    "input.vcf.gz")
-        exp_result = join_path(self.data_dir,
-                               "exp_stat")
+        vcf2avdb_key_table = join_path(self.data_dir,
+                                       "vcf2avdb.key")
         jobs_setup_file = self.__create_jobs_setup_file(vcf_tabix_file=vcf_tabix_file,
                                                         project_code=None,
                                                         db_region="22",
+                                                        vcf2avdb_key_table=vcf2avdb_key_table,
                                                         )
         pl = CMMDBPipeline(jobs_setup_file=jobs_setup_file)
         pl.vcfaf_to_annovar()
-        self.assertTrue(filecmp.cmp(pl.out_stat_files,
-                                    exp_result),
+        exp_stat = join_path(self.data_dir,
+                             "exp_stat")
+        self.assertTrue(filecmp.cmp(pl.out_files,
+                                    exp_stat),
                         "vcfaf_to_annovar doesn't function correctly")
+        exp_idx = join_path(self.data_dir,
+                            "exp_idx")
+        self.assertTrue(filecmp.cmp(pl.out_files+".idx",
+                                    exp_idx),
+                        "vcfaf_to_annovar doesn't function correctly")
+
+    @unittest.skipUnless(FULL_SYSTEM_TEST or CMMDB_TEST, "taking too long time to test")
+    def test_vcfaf_to_annovar_offline_2(self):
+        """ test basic offline version (w/o slurm) of vcfaf_to_annovar (all chrom)"""
+
+        self.init_test(self.current_func_name)
+        vcf_tabix_file = join_path(self.data_dir,
+                                   "input.vcf.gz")
+        vcf2avdb_key_table = join_path(self.data_dir,
+                                       "vcf2avdb.key")
+        jobs_setup_file = self.__create_jobs_setup_file(vcf_tabix_file=vcf_tabix_file,
+                                                        project_code=None,
+                                                        db_region=None,
+                                                        vcf2avdb_key_table=vcf2avdb_key_table,
+                                                        )
+        pl = CMMDBPipeline(jobs_setup_file=jobs_setup_file)
+        pl.vcfaf_to_annovar()
+        exp_stat = join_path(self.data_dir,
+                             "exp_stat")
+        self.assertTrue(filecmp.cmp(pl.out_files,
+                                    exp_stat),
+                        "vcfaf_to_annovar doesn't function correctly")
+        exp_idx = join_path(self.data_dir,
+                            "exp_idx")
+        self.assertTrue(filecmp.cmp(pl.out_files+".idx",
+                                    exp_idx),
+                        "vcfaf_to_annovar doesn't function correctly")
+
+    @unittest.skipUnless(FULL_SYSTEM_TEST or CMMDB_TEST, "taking too long time to test")
+    def test_vcf2avdb_key_offline_1(self):
+        """ test generating vcf2avdb key """
+
+        self.init_test(self.current_func_name)
+        vcf_tabix_file = join_path(self.data_dir,
+                                   "input.vcf.gz")
+        exp_result = join_path(self.data_dir,
+                               "exp_key")
+        jobs_setup_file = self.__create_jobs_setup_file(vcf_tabix_file=vcf_tabix_file,
+                                                        project_code=None,
+                                                        db_region=None,
+                                                        )
+        pl = CMMDBPipeline(jobs_setup_file=jobs_setup_file)
+        pl.vcf2annovar_key()
+        self.assertTrue(filecmp.cmp(pl.out_files,
+                                    exp_result),
+                        "vcf2avdb_key doesn't function correctly")
+
+    @unittest.skipUnless(FULL_SYSTEM_TEST or CMMDB_TEST, "taking too long time to test")
+    def test_vcf2avdb_key_offline_2(self):
+        """ test generating vcf2avdb key """
+
+        self.init_test(self.current_func_name)
+        vcf_tabix_file = join_path(self.data_dir,
+                                   "input.vcf.gz")
+        exp_result = join_path(self.data_dir,
+                               "exp_key")
+        jobs_setup_file = self.__create_jobs_setup_file(vcf_tabix_file=vcf_tabix_file,
+                                                        project_code=None,
+                                                        db_region=None,
+                                                        )
+        pl = CMMDBPipeline(jobs_setup_file=jobs_setup_file)
+        pl.vcf2annovar_key()
+        self.assertTrue(filecmp.cmp(pl.out_files,
+                                    exp_result),
+                        "vcf2avdb_key doesn't function correctly")
+
+    @unittest.skipUnless(FULL_SYSTEM_TEST or CMMDB_TEST, "taking too long time to test")
+    def test_vcf2avdb_key_offline_3(self):
+        """ test generating vcf2avdb key """
+
+        self.init_test(self.current_func_name)
+        vcf_tabix_file = join_path(self.data_dir,
+                                   "input.vcf.gz")
+        exp_result = join_path(self.data_dir,
+                               "exp_key")
+        jobs_setup_file = self.__create_jobs_setup_file(vcf_tabix_file=vcf_tabix_file,
+                                                        project_code=None,
+                                                        db_region=None,
+                                                        )
+        pl = CMMDBPipeline(jobs_setup_file=jobs_setup_file)
+        pl.vcf2annovar_key()
+        self.assertTrue(filecmp.cmp(pl.out_files,
+                                    exp_result),
+                        "vcf2avdb_key doesn't function correctly")
 
     @unittest.skipUnless(FULL_SYSTEM_TEST or CMMDB_TEST, "taking too long time to test")
     def test_table_annovar_offline_1(self):
@@ -372,25 +493,5 @@ class TestCMMDBPipeline(SafeTester):
                          151,
                          "table annovar result is incorrect ")
 
-    @unittest.skipUnless(FULL_SYSTEM_TEST or CMMDB_TEST, "taking too long time to test")
-    def test_table_annovar_offline_2(self):
-        """ test offline version (w/o slurm) of table_annovar together with custom cal_stat """
-
-        self.init_test(self.current_func_name)
-        vcf_tabix_file = join_path(self.data_dir,
-                                   "input.vcf.gz")
-        annovar_db_names = DFLT_ANV_TEST_DB_NAMES
-        annovar_db_names += ",test_pyCMM"
-        annovar_db_ops = DFLT_ANV_TEST_DB_OPS
-        annovar_db_ops += ",f"
-        jobs_setup_file = self.__create_jobs_setup_file(vcf_tabix_file=vcf_tabix_file,
-                                                        annovar_db_names=annovar_db_names,
-                                                        annovar_db_ops=annovar_db_ops,
-                                                        project_code=None)
-        pl = CMMDBPipeline(jobs_setup_file=jobs_setup_file)
-        pl.table_annovar()
-        out_annotated_vcf = join_path(self.working_dir,
-                                      self.current_func_name+"_annotated.vcf")
-        self.assertEqual(count_lines(out_annotated_vcf),
-                         215,
-                         "table annovar result is incorrect ")
+    def tearDown(self):
+        self.remove_working_dir()
