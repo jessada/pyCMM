@@ -67,6 +67,8 @@ def app_pycmm_cmmdb_create_jobs_setup_file(*args, **kwargs):
     required_params['project output directory (-O)'] = kwargs['project_out_dir']
     required_params['vcf tabix file (-i)'] = kwargs['vcf_tabix_file']
     optional_params = OrderedDict()
+    if kwargs['vcf2avdb_key_table'] is not None:
+        optional_params['vcf2avdb key (-t)'] = kwargs['vcf2avdb_key_table']
     if kwargs['db_region'] is not None:
         optional_params['vcf region (-r)'] = kwargs['db_region']
     if kwargs['sample_info'] is not None:
@@ -81,14 +83,16 @@ def app_pycmm_cmmdb_create_jobs_setup_file(*args, **kwargs):
                      required_params=required_params,
                      optional_params=optional_params,
                      )
-    create_jobs_setup_file(project_name=kwargs['dataset_name'],
-                           project_out_dir=kwargs['project_out_dir'],
-                           vcf_tabix_file=kwargs['vcf_tabix_file'],
-                           db_region=kwargs['db_region'],
-                           sample_info=kwargs['sample_info'],
-                           project_code=kwargs['project_code'],
-                           job_alloc_time=kwargs['job_alloc_time'],
-                           out_jobs_setup_file=kwargs['out_jobs_setup_file'],
-                           )
+    kwargs['project_name'] = kwargs['dataset_name']
+    create_jobs_setup_file(*args, **kwargs)
+#    create_jobs_setup_file(project_name=kwargs['dataset_name'],
+#                           project_out_dir=kwargs['project_out_dir'],
+#                           vcf_tabix_file=kwargs['vcf_tabix_file'],
+#                           db_region=kwargs['db_region'],
+#                           sample_info=kwargs['sample_info'],
+#                           project_code=kwargs['project_code'],
+#                           job_alloc_time=kwargs['job_alloc_time'],
+#                           out_jobs_setup_file=kwargs['out_jobs_setup_file'],
+#                           )
     mylogger.getLogger(__name__)
     disp.new_section_txt("F I N I S H <" + func_name + ">")
