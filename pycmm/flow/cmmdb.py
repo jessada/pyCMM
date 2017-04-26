@@ -15,6 +15,7 @@ from pycmm.settings import DUMMY_TABLE_ANNOVAR_BIN
 CAL_MUTATIONS_STAT_CMMDB_SCRIPT = "$PYCMM/bash/cmmdb_cal_mutations_stat.sh"
 VCF_AF_TO_ANNOVAR_CMMDB_SCRIPT = "$PYCMM/bash/cmmdb_vcf_AF_to_annovar.sh"
 VCF2AVDB_KEY_CMMDB_SCRIPT = "$PYCMM/bash/cmmdb_vcf2avdb_key.sh"
+CONCAT_STAT_CMMDB_SCRIPT = "$PYCMM/bash/cmmdb_concat_stat.sh"
 
 # *************** mustat db section ***************
 JOBS_SETUP_MUTSTAT_PARAMS_SECTION = "MUTSTAT_PARAMS"

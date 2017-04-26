@@ -33,7 +33,7 @@ info_msg ()
 {
     local message="$1"
 
-    INFO_MSG_FORMAT="## [INFO] %s"
+    INFO_MSG_FORMAT="## [INFO] `date "+%Y-%m-%d %H:%M:%S,%3N"` - %s"
     local formated_msg=`printf "$INFO_MSG_FORMAT" "$message"`
     msg_to_out "$formated_msg"
 }
@@ -42,7 +42,7 @@ debug_msg ()
 {
     local message="$1"
 
-    DEBUG_MSG_FORMAT="## [DEBUG] %s"
+    DEBUG_MSG_FORMAT="## [DEBUG] `date "+%Y-%m-%d %H:%M:%S,%3N"` - %s"
     local formated_msg=`printf "$DEBUG_MSG_FORMAT" "$message"`
     if [ "$dev_mode" == "On" ]
     then

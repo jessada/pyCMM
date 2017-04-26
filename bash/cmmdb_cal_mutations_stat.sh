@@ -132,6 +132,9 @@ info_msg "misc configuration"
 display_param "working direcotry" "$working_dir"
 
 # ****************************************  executing  ****************************************
+
+new_section_txt "E X E C U T I N G"
+
 tmp_raw_stat="$working_dir/$dataset_name.raw_stat"
 
 VCF_QUERY_FORMAT="'%CHROM\t%POS\t%REF\t%ALT[\t%GT]\n'"
@@ -188,7 +191,7 @@ function count_frequency {
             for (( j=$IDX_0_GT_COL; j<$((${#rec_col[@]})); j++ ))
             do
                 # count genotypes
-            	if [ ${rec_col[$j]} != "./." ] && [ ${rec_col[$j]} != "." ]
+            	if [ "${rec_col[$j]}" != "./." ] && [ "${rec_col[$j]}" != "." ]
                 then
                     let gt_count++
                 else
@@ -289,11 +292,11 @@ header+="\t$col_prefix"_PF
 echo -e "$header" > "$out_file"
         
 cmd="grep -P \"^[0-9]\" $tmp_formatted_stat"
-cmd+=" | sort -k1,1n -k2,2 -k4,4"
+cmd+=" | sort -k1,1n -k2,2n -k4,4 -k5,5"
 cmd+=" >> $out_file"
 eval_cmd "$cmd" 
 cmd="grep -vP \"^[0-9]\" $tmp_formatted_stat"
-cmd+=" | sort -k1,1 -k2,2 -k4,4"
+cmd+=" | sort -k1,1 -k2,2n -k4,4 -k5,5"
 cmd+=" >> $out_file"
 eval_cmd "$cmd" 
 

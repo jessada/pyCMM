@@ -10,8 +10,10 @@ from pycmm.template import SafeTester
 from pycmm.settings import FULL_SYSTEM_TEST
 from pycmm.settings import TEST_PROJECT_CODE
 from pycmm.utils import count_lines
+from pycmm.utils import exec_sh
 from pycmm.flow.cmmdb import CMMDBPipeline
 from pycmm.flow.cmmdb import create_jobs_setup_file
+from pycmm.flow.cmmdb import CONCAT_STAT_CMMDB_SCRIPT
 from pycmm.cmmlib.test.test_annovarlib import DFLT_ANV_TEST_DB_DIR
 from pycmm.cmmlib.test.test_annovarlib import DFLT_ANV_TEST_DB_NAMES
 from pycmm.cmmlib.test.test_annovarlib import DFLT_ANV_TEST_DB_OPS
@@ -475,6 +477,30 @@ class TestCMMDBPipeline(SafeTester):
         self.assertTrue(filecmp.cmp(pl.out_files,
                                     exp_result),
                         "vcf2avdb_key doesn't function correctly")
+
+    @unittest.skipUnless(FULL_SYSTEM_TEST or CMMDB_TEST, "taking too long time to test")
+    def test_concat_stat_1(self):
+        """ test generating vcf2avdb key """
+
+        self.init_test(self.current_func_name)
+        out_file = join_path(self.working_dir,
+                             join_path("data_out",
+                                       self.current_func_name+".stat"))
+        cmd = CONCAT_STAT_CMMDB_SCRIPT
+        cmd += " -k " + self.current_func_name
+        cmd += " -d " + self.data_dir
+        cmd += " -o " + out_file
+        exec_sh(cmd)
+        exp_stat = join_path(self.data_dir,
+                             "exp_stat")
+        self.assertTrue(filecmp.cmp(out_file,
+                                    exp_stat),
+                        "concat_stat doesn't function correctly")
+        exp_idx = join_path(self.data_dir,
+                            "exp_idx")
+        self.assertTrue(filecmp.cmp(out_file+".idx",
+                                    exp_idx),
+                        "concat_stat doesn't function correctly")
 
     @unittest.skipUnless(FULL_SYSTEM_TEST or CMMDB_TEST, "taking too long time to test")
     def test_table_annovar_offline_1(self):

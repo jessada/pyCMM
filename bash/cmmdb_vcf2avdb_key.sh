@@ -63,6 +63,8 @@ display_param "working direcotry" "$working_dir"
 
 # ****************************************  executing  ****************************************
 
+new_section_txt "E X E C U T I N G"
+
 tmp_vcf_query=$working_dir/$dataset_name"_tmp_vcf_query"
 avinput_file_prefix=$working_dir/$dataset_name"_avdb_individual"
 tmp_avdb_uniq=$working_dir/$dataset_name"_tmp_uniq.avdb"

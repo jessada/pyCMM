@@ -96,6 +96,9 @@ info_msg "misc configuration"
 display_param "working direcotry" "$working_dir"
 
 # ****************************************  executing  ****************************************
+
+new_section_txt "E X E C U T I N G"
+
 tmp_raw_stat="$working_dir/$dataset_name.raw_stat"
 
 VCF_QUERY_FORMAT="'%CHROM\t%POS\t%REF\t%ALT\t%INFO/Het_KGA\t%INFO/Hom_KGA\t%INFO/Hemi_KGA\t%INFO/AC_KGA\t%INFO/AN_KGA\n'"
@@ -188,11 +191,11 @@ echo -e "$header" > "$out_file"
 raw_stat_file="$working_dir/raw_hg19_CMM_$dataset_name.txt"
 
 cmd="grep -P \"^[0-9]\" $tmp_formatted_stat"
-cmd+=" | sort -k1,1n -k2,2 -k4,4"
+cmd+=" | sort -k1,1n -k2,2n -k4,4 -k5,5"
 cmd+=" >> $out_file"
 eval_cmd "$cmd" 
 cmd="grep -vP \"^[0-9]\" $tmp_formatted_stat"
-cmd+=" | sort -k1,1 -k2,2 -k4,4"
+cmd+=" | sort -k1,1 -k2,2n -k4,4 -k5,5"
 cmd+=" >> $out_file"
 eval_cmd "$cmd" 
 
