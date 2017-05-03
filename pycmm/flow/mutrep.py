@@ -699,6 +699,7 @@ class MutRepPipeline(CMMPipeline):
                 group_samples = self.samples_groups[group_no]
                 samples = SamplesGroup(filter(lambda x: x.sample_id in samples_id,
                                               group_samples))
+                ws.write(0, last_col_idx, ".", cell_fmt)
                 last_col_idx += 1
                 last_col_idx = write_samples_header(last_col_idx,
                                                     samples.ids_w_fam_pref,
