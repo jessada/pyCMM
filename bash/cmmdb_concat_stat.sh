@@ -4,9 +4,6 @@ source $PYCMM/bash/cmm_functions.sh
 script_name=$(basename $0)
 params="$@"
 
-##-t {file}          specify vcf2avdb key table (required)
-##-r {region}        specify vcf region to be exported (default:None)
-##-c {patient list}  specify vcf columns to exported. This can be either in comma-separated format or it can be a file name (default:$COL_CONFIG_DEFAULT)
 usage=$(
 cat <<EOF
 usage:
