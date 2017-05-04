@@ -241,14 +241,17 @@ class CMMPipeline(JobManager):
     def unaffected_samples(self):
         return self.__samples_info.unaffected_samples
 
-#    @property
-#    def affected_samples_id(self):
-#        return self.__samples_info.affected_samples_id
-#
     @property
     def samples_groups(self):
         return self.__samples_info.samples_groups
 
+    @property
+    def samples_list(self):
+        return self.__samples_info.samples_list
+
+    @property
+    def has_samples_info(self):
+        return self.__samples_info.has_info
 
     def monitor_init(self, *args, **kwargs):
         super(CMMPipeline, self).monitor_init(*args, **kwargs)

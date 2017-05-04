@@ -104,8 +104,6 @@ JOBS_SETUP_RPT_FILTER_NON_SYNONYMOUS = "Non-Synonymous"
 JOBS_SETUP_RPT_FILTER_HAS_MUTATION = "Has-Mutation"
 JOBS_SETUP_RPT_FILTER_HAS_SHARED = "Has-Shared"
 JOBS_SETUP_RPT_FILTER_NON_RECESSIVE_GENE = "Non-Recessive-Gene"
-#JOBS_SETUP_RPT_ONLY_SUMMARY_KEY = "ONLY_SUMMARY"
-#JOBS_SETUP_RPT_ONLY_FAMILIES_KEY = "ONLY_FAMILIES"
 JOBS_SETUP_RPT_FILTER_GENES_KEY = "FILTER_GENES"
 JOBS_SETUP_RPT_COLORING_SAMPLES_KEY = "COLORING_SAMPLES"
 JOBS_SETUP_RPT_COLORING_SHARED = "Shared"
@@ -329,10 +327,6 @@ class ReportLayout(CMMParams):
         filter_actions[FILTER_HAS_SHARED] = self.filter_has_shared
         filter_actions[FILTER_NON_RECESSIVE_GENE] = self.filter_non_recessive_gene
         raw_repr[RPT_LAYOUT_CAPTION_FILTER_ACTIONS] = filter_actions
-#        report_exclusion = {}
-#        report_exclusion['only summary'] = self.only_summary
-#        report_exclusion['only families'] = self.only_families
-#        raw_repr['report exclusion'] = report_exclusion
         return raw_repr
 
     def __init_properties(self):
@@ -593,16 +587,6 @@ class ReportLayout(CMMParams):
         return self._get_job_config(JOBS_SETUP_RPT_SHOW_SHARED_MUTATIONS,
                                     default_val=False)
 
-#    @property
-#    def only_summary(self):
-#        return self._get_job_config(JOBS_SETUP_RPT_ONLY_SUMMARY_KEY,
-#                                    default_val=False)
-#
-#    @property
-#    def only_families(self):
-#        return self._get_job_config(JOBS_SETUP_RPT_ONLY_FAMILIES_KEY,
-#                                    default_val=False)
-
 class MutRepPipeline(CMMPipeline):
     """ A class to control CMMDB best practice pipeline """
 
@@ -654,7 +638,7 @@ class MutRepPipeline(CMMPipeline):
             return self.report_layout.header_corrections[old_header]
         return old_header
 
-    def __write_header(self, ws, samples_id, samples_header):
+    def __write_header(self, ws, samples_id):
         def write_samples_header(start_ncol_idx,
                                  samples_header,
                                  cell_fmt,
@@ -705,6 +689,12 @@ class MutRepPipeline(CMMPipeline):
                                                     cell_fmt,
                                                     )
         else:
+            if not self.has_samples_info:
+                samples_header = samples_id
+            else:
+                samples = SamplesGroup(filter(lambda x: x.sample_id in samples_id,
+                                              self.samples_list))
+                samples_header = samples.ids_w_fam_pref
             last_col_idx = write_samples_header(sample_start_idx,
                                                 samples_header,
                                                 cell_fmt,
@@ -965,7 +955,6 @@ class MutRepPipeline(CMMPipeline):
         return row
 
     def __set_layout(self, ws, sample_start_idx, record_size):
-#        ws.autofilter(0, 0, 0, sample_start_idx-1)
         ws.autofilter(0, 0, 0, record_size-1)
         ws.set_column(XLS_CHROM_COL_IDX, XLS_CHROM_COL_IDX, 2.5)
         ws.set_column(XLS_POS_COL_IDX, XLS_POS_COL_IDX, 9)
@@ -985,7 +974,6 @@ class MutRepPipeline(CMMPipeline):
                          sheet_name,
                          report_regions,
                          samples_id=None,
-                         samples_header=None,
                          check_shared=False,
                          ):
         wb = self.__wb
@@ -1000,12 +988,9 @@ class MutRepPipeline(CMMPipeline):
         row = 1
         if samples_id is None:
             samples_id = vcf_reader.samples
-        if samples_header is None:
-            samples_header = samples_id
         ws = self.__add_sheet(sheet_name)
         sample_start_idx, ncol = self.__write_header(ws,
                                                      samples_id,
-                                                     samples_header,
                                                      )
         if report_regions is None:
             row = self.__write_contents(ws,
@@ -1107,7 +1092,6 @@ class MutRepPipeline(CMMPipeline):
         self.__add_muts_sheet("summary_all",
                               report_regions,
                               samples_id=self.samples_id,
-                              samples_header=self.samples_id_w_fam_pref,
                               )
         self.__add_criteria_sheet()
         self.__wb.close()
@@ -1252,13 +1236,6 @@ class MutRepPipeline(CMMPipeline):
 
     def __gen_reports(self):
         self.gen_summary_reports()
-#        if self.report_layout.only_summary:
-#            self.gen_summary_reports()
-#        elif self.report_layout.only_families:
-#            self.gen_families_reports()
-#        else:
-#            self.gen_families_reports()
-#            self.gen_summary_reports()
 
     def monitor_init(self, *args, **kwargs):
         self.__gen_reports()
@@ -1318,14 +1295,6 @@ def create_jobs_setup_file(*args, **kwargs):
                                                            kwargs,
                                                            default_val=False,
                                                            )
-#    rpt_cfg[JOBS_SETUP_RPT_ONLY_SUMMARY_KEY] = get_func_arg('only_summary',
-#                                                            kwargs,
-#                                                            default_val=False,
-#                                                            )
-#    rpt_cfg[JOBS_SETUP_RPT_ONLY_FAMILIES_KEY] = get_func_arg('only_families',
-#                                                             kwargs,
-#                                                             default_val=False,
-#                                                             )
     call_detail = get_func_arg('call_detail', kwargs, default_val=False)
     call_gq = get_func_arg('call_gq', kwargs, default_val=False)
     if call_detail or call_gq:

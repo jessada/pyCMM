@@ -299,6 +299,24 @@ class TestSamplesInfo(SafeTester):
                                )
         return jobs_setup_file
 
+    def test_has_info_1(self):
+        """ test if SamplesInfo has no information"""
+
+        self.init_test(self.current_func_name)
+        jobs_setup_file = self.__create_jobs_setup_file()
+        pl = CMMPipeline(jobs_setup_file=jobs_setup_file)
+        self.assertFalse(pl.has_samples_info,
+                         "SamplesInfo cannot tell correctly if it has information")
+
+    def test_has_info_2(self):
+        """ test if SamplesInfo has information"""
+
+        self.init_test(self.current_func_name)
+        jobs_setup_file = self.__create_jobs_setup_file(sample_info="18:Co-345:Co-37,12:Co-890:Co-290,13:Co-95,266:Co-131:Co-1355,314:1793-11o,987:Co-218:Co-2588,911:Co-1454:Co-4700,prostate:Pro001:Pro002:Pro003")
+        pl = CMMPipeline(jobs_setup_file=jobs_setup_file)
+        self.assertTrue(pl.has_samples_info,
+                        "SamplesInfo cannot tell correctly if it has information")
+
     def test_extract_samples_id_1(self):
         """ test if samples list can be extract from jobs setup data """
 

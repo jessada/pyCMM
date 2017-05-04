@@ -160,10 +160,6 @@ class TestMutRepPipeline(SafeTester):
                          "MutRepPipeline cannot correctly read report layout info 'filter has-mutation' from jobs setup file")
         self.assertFalse(pl.report_layout.filter_non_recessive_gene,
                          "MutRepPipeline cannot correctly read report layout info 'filter non-recessive-gene' from jobs setup file")
-#        self.assertFalse(pl.report_layout.only_summary,
-#                         "MutRepPipeline cannot correctly read report layout info 'only summary' from jobs setup file")
-#        self.assertFalse(pl.report_layout.only_families,
-#                         "MutRepPipeline cannot correctly read report layout info 'only families' from jobs setup file")
         self.assertTrue(pl.report_layout.filter_genes is None,
                         "MutRepPipeline cannot correctly read report layout info 'filter genes' from jobs setup file")
         self.assertFalse(pl.report_layout.coloring_shared,
@@ -197,8 +193,6 @@ class TestMutRepPipeline(SafeTester):
                                                         call_gq=True,
                                                         show_shared_mutations=True,
                                                         rows_filter_actions=rows_filter_actions,
-#                                                        only_summary=True,
-#                                                        only_families=True,
                                                         coloring_shared=True,
                                                         coloring_zygosity=True,
                                                         )
@@ -265,10 +259,6 @@ class TestMutRepPipeline(SafeTester):
                         "MutRepPipeline cannot correctly read report layout info 'filter has-mutation' from jobs setup file")
         self.assertTrue(pl.report_layout.filter_non_recessive_gene,
                         "MutRepPipeline cannot correctly read report layout info 'filter non-recessive-gene' from jobs setup file")
-#        self.assertTrue(pl.report_layout.only_summary,
-#                        "MutRepPipeline cannot correctly read report layout info 'only summary' from jobs setup file")
-#        self.assertTrue(pl.report_layout.only_families,
-#                        "MutRepPipeline cannot correctly read report layout info 'only families' from jobs setup file")
         self.assertEqual(pl.report_layout.filter_genes[0],
                          'CHEK2',
                          "MutRepPipeline cannot correctly read report layout info 'filter genes' from jobs setup file")
@@ -384,6 +374,7 @@ class TestMutRepPipeline(SafeTester):
         is correctly generated
         """
 
+        self.individual_debug = True
         self.init_test(self.current_func_name)
         annotated_vcf_tabix = join_path(self.data_dir,
                                         "input.vcf.gz")

@@ -164,6 +164,7 @@ class SamplesInfo(pyCMMBase):
                  **kwargs
                  ):
         super(SamplesInfo, self).__init__(*args, **kwargs)
+        self.__has_info = samples_info is not None
         self.__parse_families(samples_info, family_template)
         self.__samples_list = self.__parse_samples_list()
         self.__samples_groups = self.__parse_samples_groups()
@@ -197,6 +198,10 @@ class SamplesInfo(pyCMMBase):
         for group_no in raw_samples_groups:
             samples_groups[group_no] = SamplesGroup(raw_samples_groups[group_no])
         return samples_groups
+
+    @property
+    def has_info(self):
+        return self.__has_info
 
     @property
     def families(self):
