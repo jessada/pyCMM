@@ -34,7 +34,7 @@ from pycmm.utils import DefaultOrderedDict
 from pycmm.utils import is_number
 from pycmm.utils.ver import VersionManager
 from pycmm.cmmlib import CMMParams
-from pycmm.cmmlib.samplelib import SamplesGroup
+#from pycmm.cmmlib.samplelib import SamplesGroup
 from pycmm.cmmlib.taparser import TAVcfReader as VcfReader
 from pycmm.cmmlib.xlslib import CMMWorkbook as Workbook
 from pycmm.cmmlib.xlslib import NO_COLOR
@@ -681,20 +681,21 @@ class MutRepPipeline(CMMPipeline):
                 if group_no == 0:
                     continue
                 group_samples = self.samples_groups[group_no]
-                samples = SamplesGroup(filter(lambda x: x.sample_id in samples_id,
-                                              group_samples))
+                samples_header = map(lambda x: x.sample_id_w_fam_pref,
+                                     filter(lambda x: x.sample_id in samples_id,
+                                            group_samples))
                 last_col_idx += 1
                 last_col_idx = write_samples_header(last_col_idx,
-                                                    samples.ids_w_fam_pref,
+                                                    samples_header,
                                                     cell_fmt,
                                                     )
         else:
             if not self.has_samples_info:
                 samples_header = samples_id
             else:
-                samples = SamplesGroup(filter(lambda x: x.sample_id in samples_id,
-                                              self.samples_list))
-                samples_header = samples.ids_w_fam_pref
+                samples_header = map(lambda x: x.sample_id_w_fam_pref, 
+                                     filter(lambda x: x.sample_id in samples_id,
+                                            self.samples_list))
             last_col_idx = write_samples_header(sample_start_idx,
                                                 samples_header,
                                                 cell_fmt,
@@ -854,7 +855,8 @@ class MutRepPipeline(CMMPipeline):
                 if group_no == 0:
                     continue
                 group_samples = self.samples_groups[group_no]
-                samples = SamplesGroup(filter(lambda x: x.sample_id in samples_id,
+                group_samples_id = map(lambda x: x.sample_id,
+                                       filter(lambda x: x.sample_id in samples_id,
                                               group_samples))
                 ws.write(row, last_col_idx, "", sep_fmt)
                 last_col_idx += 1
@@ -863,7 +865,7 @@ class MutRepPipeline(CMMPipeline):
                                                        last_col_idx,
                                                        vcf_record,
                                                        allele_idx,
-                                                       samples.ids,
+                                                       group_samples_id,
                                                        dflt_cell_fmt,
                                                        )
         else:

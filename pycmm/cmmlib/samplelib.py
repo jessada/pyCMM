@@ -42,6 +42,24 @@ class Sample(CMMParams):
         return self._get_job_config(JOBS_SETUP_SAMPLE_ID_KEY, required=True)
 
     @property
+    def sample_id_w_fam_pref(self):
+        return re.sub(NO_FAMILY+r"[a-zA-Z_0-9]*-",
+                      "",
+                      str(self.fam_id)+"-"+self.sample_id)
+
+#    def __parse_ids(self):
+#        if self is None:
+#            return []
+#        return map(lambda x: x.sample_id, self)
+#
+#    def __parse_ids_w_fam_pref(self):
+#        if self is None:
+#            return []
+#        return map(lambda x: re.sub(NO_FAMILY+r"[a-zA-Z_0-9]*-", "", x),
+#                   map(lambda x: str(x.fam_id)+"-"+x.sample_id,
+#                       self))
+#
+    @property
     def sample_group(self):
         return self._get_job_config(JOBS_SETUP_SAMPLE_GROUP_KEY,
                                     default_val=SAMPLE_GROUP_MISSING)
@@ -64,68 +82,68 @@ class Sample(CMMParams):
     def gts(self, value):
         self.__gts = value
 
-class SamplesGroup(list, pyCMMBase):
-    """  To parse information of a group of sample """
-
-    def __init__(self,
-                 *args,
-                 **kwargs
-                 ):
-        list.__init__(self, *args)
-        pyCMMBase.__init__(self, *args, **kwargs)
-        self.__ids = None
-        self.__ids_w_fam_pref = None
-#        self.__affected = None
-#        self.__unaffected = None
-
-    def __parse_ids(self):
-        if self is None:
-            return []
-        return map(lambda x: x.sample_id, self)
-
-    def __parse_ids_w_fam_pref(self):
-        if self is None:
-            return []
-        return map(lambda x: re.sub(NO_FAMILY+r"[a-zA-Z_0-9]*-", "", x),
-                   map(lambda x: str(x.fam_id)+"-"+x.sample_id,
-                       self))
-
-#    def __parse_affected_samples(self):
+#class SamplesGroup(list, pyCMMBase):
+#    """  To parse information of a group of sample """
+#
+#    def __init__(self,
+#                 *args,
+#                 **kwargs
+#                 ):
+#        list.__init__(self, *args)
+#        pyCMMBase.__init__(self, *args, **kwargs)
+#        self.__ids = None
+#        self.__ids_w_fam_pref = None
+##        self.__affected = None
+##        self.__unaffected = None
+#
+#    def __parse_ids(self):
 #        if self is None:
 #            return []
-#        return SamplesGroup(filter(lambda x: x.phenotype==PHENOTYPE_AFFECTED,
-#                                   self))
+#        return map(lambda x: x.sample_id, self)
 #
-#    def __parse_unaffected_samples(self):
+#    def __parse_ids_w_fam_pref(self):
 #        if self is None:
 #            return []
-#        return SamplesGroup(filter(lambda x: x.phenotype==PHENOTYPE_UNAFFECTED,
-#                                   self))
+#        return map(lambda x: re.sub(NO_FAMILY+r"[a-zA-Z_0-9]*-", "", x),
+#                   map(lambda x: str(x.fam_id)+"-"+x.sample_id,
+#                       self))
 #
-    @property
-    def ids(self):
-        if self.__ids is None:
-            self.__ids = self.__parse_ids()
-        return self.__ids
-
-    @property
-    def ids_w_fam_pref(self):
-        if self.__ids_w_fam_pref is None:
-            self.__ids_w_fam_pref = self.__parse_ids_w_fam_pref()
-        return self.__ids_w_fam_pref
-
+##    def __parse_affected_samples(self):
+##        if self is None:
+##            return []
+##        return SamplesGroup(filter(lambda x: x.phenotype==PHENOTYPE_AFFECTED,
+##                                   self))
+##
+##    def __parse_unaffected_samples(self):
+##        if self is None:
+##            return []
+##        return SamplesGroup(filter(lambda x: x.phenotype==PHENOTYPE_UNAFFECTED,
+##                                   self))
+##
 #    @property
-#    def affected(self):
-#        if self.__affected is None:
-#            self.__affected = self.__parse_affected_samples()
-#        return self.__affected
+#    def ids(self):
+#        if self.__ids is None:
+#            self.__ids = self.__parse_ids()
+#        return self.__ids
 #
 #    @property
-#    def unaffected(self):
-#        if self.__unaffected is None:
-#            self.__unaffected = self.__parse_unaffected_samples()
-#        return self.__unaffected
+#    def ids_w_fam_pref(self):
+#        if self.__ids_w_fam_pref is None:
+#            self.__ids_w_fam_pref = self.__parse_ids_w_fam_pref()
+#        return self.__ids_w_fam_pref
 #
+##    @property
+##    def affected(self):
+##        if self.__affected is None:
+##            self.__affected = self.__parse_affected_samples()
+##        return self.__affected
+##
+##    @property
+##    def unaffected(self):
+##        if self.__unaffected is None:
+##            self.__unaffected = self.__parse_unaffected_samples()
+##        return self.__unaffected
+##
 class Family(CMMParams):
     """  To parse and structure family information """
 
@@ -178,6 +196,16 @@ class SamplesInfo(pyCMMBase):
             family = family_template(fam_info=entry)
             self.__families[family.fam_id] = family
 
+#    def __parse_samples_list(self):
+#        if self.families is None:
+#            return None
+#        samples = reduce(lambda x, y: x+y, 
+#                         map(lambda x: self.__families[x].members,
+#                             self.__families
+#                             )
+#                         )
+#        return SamplesGroup(samples)
+#
     def __parse_samples_list(self):
         if self.families is None:
             return None
@@ -186,17 +214,28 @@ class SamplesInfo(pyCMMBase):
                              self.__families
                              )
                          )
-        return SamplesGroup(samples)
+        return samples
 
+#    def __parse_samples_groups(self):
+#        if self.samples_list is None:
+#            return None
+#        raw_samples_groups = defaultdict(list)
+#        for sample in self.samples_list:
+#            raw_samples_groups[sample.sample_group].append(sample)
+#        samples_groups = defaultdict(list)
+#        for group_no in raw_samples_groups:
+#            samples_groups[group_no] = SamplesGroup(raw_samples_groups[group_no])
+#        return samples_groups
+#
     def __parse_samples_groups(self):
         if self.samples_list is None:
             return None
-        raw_samples_groups = defaultdict(list)
-        for sample in self.samples_list:
-            raw_samples_groups[sample.sample_group].append(sample)
         samples_groups = defaultdict(list)
-        for group_no in raw_samples_groups:
-            samples_groups[group_no] = SamplesGroup(raw_samples_groups[group_no])
+        for sample in self.samples_list:
+            samples_groups[sample.sample_group].append(sample)
+#        samples_groups = defaultdict(list)
+#        for group_no in raw_samples_groups:
+#            samples_groups[group_no] = SamplesGroup(raw_samples_groups[group_no])
         return samples_groups
 
     @property
@@ -225,13 +264,13 @@ class SamplesInfo(pyCMMBase):
     def samples_id(self):
         if self.samples_list is None:
             return None
-        return self.samples_list.ids
+        return map(lambda x: x.sample_id, self.samples_list)
 
     @property
     def samples_id_w_fam_pref(self):
         if self.samples_list is None:
             return None
-        return self.samples_list.ids_w_fam_pref
+        return map(lambda x: x.sample_id_w_fam_pref, self.samples_list)
 
 #    @property
 #    def affected_samples(self):
