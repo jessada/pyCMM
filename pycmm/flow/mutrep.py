@@ -90,6 +90,7 @@ JOBS_SETUP_RPT_SUMMARY_FAMILIES_KEY = "SUMMARY_FAMILIES"
 JOBS_SETUP_RPT_EXTRA_ANNO_COLS_KEY = "EXTRA_ANNOTATION_COLUMNS"
 JOBS_SETUP_RPT_EXTRA_ANNO_CALL_DETAIL = "Calling_detail"
 JOBS_SETUP_RPT_EXTRA_ANNO_CALL_GQ = "Calling_GQ"
+JOBS_SETUP_RPT_SHOW_SHARED_MUTATIONS = "Show_shared_mutations"
 JOBS_SETUP_RPT_MT_KEY = "Mitochondria"
 JOBS_SETUP_RPT_ROWS_FILTER_ACTIONS_CRITERIA_KEY = "ROWS_FILTER_ACTIONS_CRITERIA"
 JOBS_SETUP_RPT_FILTER_RARE = "Rare"
@@ -103,8 +104,8 @@ JOBS_SETUP_RPT_FILTER_NON_SYNONYMOUS = "Non-Synonymous"
 JOBS_SETUP_RPT_FILTER_HAS_MUTATION = "Has-Mutation"
 JOBS_SETUP_RPT_FILTER_HAS_SHARED = "Has-Shared"
 JOBS_SETUP_RPT_FILTER_NON_RECESSIVE_GENE = "Non-Recessive-Gene"
-JOBS_SETUP_RPT_ONLY_SUMMARY_KEY = "ONLY_SUMMARY"
-JOBS_SETUP_RPT_ONLY_FAMILIES_KEY = "ONLY_FAMILIES"
+#JOBS_SETUP_RPT_ONLY_SUMMARY_KEY = "ONLY_SUMMARY"
+#JOBS_SETUP_RPT_ONLY_FAMILIES_KEY = "ONLY_FAMILIES"
 JOBS_SETUP_RPT_FILTER_GENES_KEY = "FILTER_GENES"
 JOBS_SETUP_RPT_COLORING_SAMPLES_KEY = "COLORING_SAMPLES"
 JOBS_SETUP_RPT_COLORING_SHARED = "Shared"
@@ -328,11 +329,10 @@ class ReportLayout(CMMParams):
         filter_actions[FILTER_HAS_SHARED] = self.filter_has_shared
         filter_actions[FILTER_NON_RECESSIVE_GENE] = self.filter_non_recessive_gene
         raw_repr[RPT_LAYOUT_CAPTION_FILTER_ACTIONS] = filter_actions
-        report_exclusion = {}
-        report_exclusion['only summary'] = self.only_summary
-        report_exclusion['only families'] = self.only_families
-        raw_repr['report exclusion'] = report_exclusion
-        raw_repr["summary_families sheet"] = self.summary_families_sheet
+#        report_exclusion = {}
+#        report_exclusion['only summary'] = self.only_summary
+#        report_exclusion['only families'] = self.only_families
+#        raw_repr['report exclusion'] = report_exclusion
         return raw_repr
 
     def __init_properties(self):
@@ -527,21 +527,6 @@ class ReportLayout(CMMParams):
                                                                         default_val=[])
 
     @property
-    def summary_families_sheet(self):
-        return self._get_job_config(JOBS_SETUP_RPT_SUMMARY_FAMILIES_KEY,
-                                    default_val=False)
-
-    @property
-    def only_summary(self):
-        return self._get_job_config(JOBS_SETUP_RPT_ONLY_SUMMARY_KEY,
-                                    default_val=False)
-
-    @property
-    def only_families(self):
-        return self._get_job_config(JOBS_SETUP_RPT_ONLY_FAMILIES_KEY,
-                                    default_val=False)
-
-    @property
     def header_corrections(self):
         return self.__header_corrections
 
@@ -602,6 +587,21 @@ class ReportLayout(CMMParams):
     @property
     def cell_color_separator(self):
         return self.__cell_colors[CELL_TYPE_SEPARATOR]
+
+    @property
+    def show_shared_mutations(self):
+        return self._get_job_config(JOBS_SETUP_RPT_SHOW_SHARED_MUTATIONS,
+                                    default_val=False)
+
+#    @property
+#    def only_summary(self):
+#        return self._get_job_config(JOBS_SETUP_RPT_ONLY_SUMMARY_KEY,
+#                                    default_val=False)
+#
+#    @property
+#    def only_families(self):
+#        return self._get_job_config(JOBS_SETUP_RPT_ONLY_FAMILIES_KEY,
+#                                    default_val=False)
 
 class MutRepPipeline(CMMPipeline):
     """ A class to control CMMDB best practice pipeline """
@@ -699,7 +699,6 @@ class MutRepPipeline(CMMPipeline):
                 group_samples = self.samples_groups[group_no]
                 samples = SamplesGroup(filter(lambda x: x.sample_id in samples_id,
                                               group_samples))
-                ws.write(0, last_col_idx, ".", cell_fmt)
                 last_col_idx += 1
                 last_col_idx = write_samples_header(last_col_idx,
                                                     samples.ids_w_fam_pref,
@@ -1110,6 +1109,7 @@ class MutRepPipeline(CMMPipeline):
                               samples_id=self.samples_id,
                               samples_header=self.samples_id_w_fam_pref,
                               )
+        self.__add_criteria_sheet()
         self.__wb.close()
 
     def __submit_report_jobs(self,
@@ -1251,13 +1251,14 @@ class MutRepPipeline(CMMPipeline):
             self.__gen_family_reports(fam_id)
 
     def __gen_reports(self):
-        if self.report_layout.only_summary:
-            self.gen_summary_reports()
-        elif self.report_layout.only_families:
-            self.gen_families_reports()
-        else:
-            self.gen_families_reports()
-            self.gen_summary_reports()
+        self.gen_summary_reports()
+#        if self.report_layout.only_summary:
+#            self.gen_summary_reports()
+#        elif self.report_layout.only_families:
+#            self.gen_families_reports()
+#        else:
+#            self.gen_families_reports()
+#            self.gen_summary_reports()
 
     def monitor_init(self, *args, **kwargs):
         self.__gen_reports()
@@ -1317,18 +1318,14 @@ def create_jobs_setup_file(*args, **kwargs):
                                                            kwargs,
                                                            default_val=False,
                                                            )
-    rpt_cfg[JOBS_SETUP_RPT_SUMMARY_FAMILIES_KEY] = get_func_arg('summary_families_sheet',
-                                                                kwargs,
-                                                                default_val=False,
-                                                                )
-    rpt_cfg[JOBS_SETUP_RPT_ONLY_SUMMARY_KEY] = get_func_arg('only_summary',
-                                                            kwargs,
-                                                            default_val=False,
-                                                            )
-    rpt_cfg[JOBS_SETUP_RPT_ONLY_FAMILIES_KEY] = get_func_arg('only_families',
-                                                             kwargs,
-                                                             default_val=False,
-                                                             )
+#    rpt_cfg[JOBS_SETUP_RPT_ONLY_SUMMARY_KEY] = get_func_arg('only_summary',
+#                                                            kwargs,
+#                                                            default_val=False,
+#                                                            )
+#    rpt_cfg[JOBS_SETUP_RPT_ONLY_FAMILIES_KEY] = get_func_arg('only_families',
+#                                                             kwargs,
+#                                                             default_val=False,
+#                                                             )
     call_detail = get_func_arg('call_detail', kwargs, default_val=False)
     call_gq = get_func_arg('call_gq', kwargs, default_val=False)
     if call_detail or call_gq:
@@ -1338,6 +1335,10 @@ def create_jobs_setup_file(*args, **kwargs):
         if call_gq:
             extra_anno_cols.append(JOBS_SETUP_RPT_EXTRA_ANNO_CALL_GQ)
         rpt_cfg[JOBS_SETUP_RPT_EXTRA_ANNO_COLS_KEY] = extra_anno_cols
+    rpt_cfg[JOBS_SETUP_RPT_SHOW_SHARED_MUTATIONS] = get_func_arg('show_shared_mutations',
+                                                                 kwargs,
+                                                                 default_val=False,
+                                                                 )
     coloring_shared = get_func_arg('coloring_shared', kwargs, default_val=False)
     coloring_zygosity = get_func_arg('coloring_zygosity', kwargs, default_val=False)
     if coloring_shared or coloring_zygosity:

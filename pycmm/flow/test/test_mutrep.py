@@ -142,12 +142,12 @@ class TestMutRepPipeline(SafeTester):
                          "MutRepPipeline cannot correctly read report layout info 'expressions' from jobs setup file")
         self.assertFalse(pl.report_layout.split_chrom,
                          "MutRepPipeline cannot correctly read report layout info 'split chrom' from jobs setup file")
-        self.assertFalse(pl.report_layout.summary_families_sheet,
-                         "MutRepPipeline cannot correctly read report layout info 'summary families sheet' from jobs setup file")
         self.assertFalse(pl.report_layout.call_detail,
                          "MutRepPipeline cannot correctly read report layout info 'call info' from jobs setup file")
         self.assertFalse(pl.report_layout.call_gq,
                          "MutRepPipeline cannot correctly read report layout info 'call info' from jobs setup file")
+        self.assertFalse(pl.report_layout.show_shared_mutations,
+                         "MutRepPipeline cannot correctly read report layout info 'show shared mutations' from jobs setup file")
         self.assertFalse(pl.report_layout.filter_rare,
                          "MutRepPipeline cannot correctly read report layout info 'filter rare' from jobs setup file")
         self.assertFalse(pl.report_layout.filter_pass_vqsr,
@@ -160,10 +160,10 @@ class TestMutRepPipeline(SafeTester):
                          "MutRepPipeline cannot correctly read report layout info 'filter has-mutation' from jobs setup file")
         self.assertFalse(pl.report_layout.filter_non_recessive_gene,
                          "MutRepPipeline cannot correctly read report layout info 'filter non-recessive-gene' from jobs setup file")
-        self.assertFalse(pl.report_layout.only_summary,
-                         "MutRepPipeline cannot correctly read report layout info 'only summary' from jobs setup file")
-        self.assertFalse(pl.report_layout.only_families,
-                         "MutRepPipeline cannot correctly read report layout info 'only families' from jobs setup file")
+#        self.assertFalse(pl.report_layout.only_summary,
+#                         "MutRepPipeline cannot correctly read report layout info 'only summary' from jobs setup file")
+#        self.assertFalse(pl.report_layout.only_families,
+#                         "MutRepPipeline cannot correctly read report layout info 'only families' from jobs setup file")
         self.assertTrue(pl.report_layout.filter_genes is None,
                         "MutRepPipeline cannot correctly read report layout info 'filter genes' from jobs setup file")
         self.assertFalse(pl.report_layout.coloring_shared,
@@ -193,12 +193,12 @@ class TestMutRepPipeline(SafeTester):
                                                         expression_patterns="test1:1>0",
                                                         expression_usages="test1:DELETE_ROW,test1:COLOR_COLUMN:cytoBand:yellow",
                                                         split_chrom=True,
-                                                        summary_families_sheet=True,
                                                         call_detail=True,
                                                         call_gq=True,
+                                                        show_shared_mutations=True,
                                                         rows_filter_actions=rows_filter_actions,
-                                                        only_summary=True,
-                                                        only_families=True,
+#                                                        only_summary=True,
+#                                                        only_families=True,
                                                         coloring_shared=True,
                                                         coloring_zygosity=True,
                                                         )
@@ -247,12 +247,12 @@ class TestMutRepPipeline(SafeTester):
                          "MutRepPipeline cannot correctly read report layout info 'expression actions' from jobs setup file")
         self.assertTrue(pl.report_layout.split_chrom,
                         "MutRepPipeline cannot correctly read report layout info 'split chrom' from jobs setup file")
-        self.assertTrue(pl.report_layout.summary_families_sheet,
-                        "MutRepPipeline cannot correctly read report layout info 'summary families sheet' from jobs setup file")
         self.assertTrue(pl.report_layout.call_detail,
                         "MutRepPipeline cannot correctly read report layout info 'call info' from jobs setup file")
         self.assertTrue(pl.report_layout.call_gq,
                         "MutRepPipeline cannot correctly read report layout info 'call info' from jobs setup file")
+        self.assertTrue(pl.report_layout.show_shared_mutations,
+                        "MutRepPipeline cannot correctly read report layout info 'show shared mutations' from jobs setup file")
         self.assertTrue(pl.report_layout.filter_rare,
                         "MutRepPipeline cannot correctly read report layout info 'filter rare' from jobs setup file")
         self.assertTrue(pl.report_layout.filter_pass_vqsr,
@@ -265,10 +265,10 @@ class TestMutRepPipeline(SafeTester):
                         "MutRepPipeline cannot correctly read report layout info 'filter has-mutation' from jobs setup file")
         self.assertTrue(pl.report_layout.filter_non_recessive_gene,
                         "MutRepPipeline cannot correctly read report layout info 'filter non-recessive-gene' from jobs setup file")
-        self.assertTrue(pl.report_layout.only_summary,
-                        "MutRepPipeline cannot correctly read report layout info 'only summary' from jobs setup file")
-        self.assertTrue(pl.report_layout.only_families,
-                        "MutRepPipeline cannot correctly read report layout info 'only families' from jobs setup file")
+#        self.assertTrue(pl.report_layout.only_summary,
+#                        "MutRepPipeline cannot correctly read report layout info 'only summary' from jobs setup file")
+#        self.assertTrue(pl.report_layout.only_families,
+#                        "MutRepPipeline cannot correctly read report layout info 'only families' from jobs setup file")
         self.assertEqual(pl.report_layout.filter_genes[0],
                          'CHEK2',
                          "MutRepPipeline cannot correctly read report layout info 'filter genes' from jobs setup file")
@@ -418,7 +418,6 @@ class TestMutRepPipeline(SafeTester):
                                                         annotated_vcf_tabix=annotated_vcf_tabix,
                                                         report_regions="6:78171940-78172992,18:28610987-28611790",
                                                         sample_info="1234:Alb-31:Br-466,6067:Br-432:Al-161:Br-504,6789:Al-65",
-                                                        summary_families_sheet=True,
                                                         call_detail="YES",
                                                         )
         pl = MutRepPipeline(jobs_setup_file=jobs_setup_file)
@@ -1147,7 +1146,6 @@ class TestMutRepPipeline(SafeTester):
                                                         annotated_vcf_tabix=annotated_vcf_tabix,
                                                         report_regions="9:99700709-99702632",
                                                         sample_info="8:Co-35:Co-37,13:Co-95,275:Co-1262:Co-618,296:Co-793:Co-876",
-                                                        summary_families_sheet=True,
                                                         coloring_shared=True,
                                                         )
         pl = MutRepPipeline(jobs_setup_file=jobs_setup_file)
@@ -1223,7 +1221,6 @@ class TestMutRepPipeline(SafeTester):
                                                         report_regions="22",
                                                         sample_info=sample_info,
                                                         anno_cols=anno_cols,
-                                                        summary_families_sheet=True,
                                                         )
         pl = MutRepPipeline(jobs_setup_file=jobs_setup_file)
         pl.gen_summary_report(pl.report_layout.report_regions)
@@ -1237,7 +1234,7 @@ class TestMutRepPipeline(SafeTester):
                          "Incorect ORS estimation"
                          )
         self.assertEqual(xu.get_cell_value(5, ors_col_idx),
-                         "1.5273",
+                         1.5273,
                          "Incorect ORS estimation"
                          )
         self.assertEqual(xu.get_cell_value(6, ors_col_idx),
@@ -1250,11 +1247,11 @@ class TestMutRepPipeline(SafeTester):
                          "Incorect ORS estimation"
                          )
         self.assertEqual(xu.get_cell_value(5, ors_col_idx),
-                         "1.3446",
+                         1.3446,
                          "Incorect ORS estimation"
                          )
         self.assertEqual(xu.get_cell_value(6, ors_col_idx),
-                         "0.5681",
+                         0.5681,
                          "Incorect ORS estimation"
                          )
         ors_col_idx = xu.get_col_idx(EST_KVOT_EARLYONSET_VS_KG_EUR_COL_NAME)
@@ -1263,11 +1260,11 @@ class TestMutRepPipeline(SafeTester):
                          "Incorect ORS estimation"
                          )
         self.assertEqual(xu.get_cell_value(5, ors_col_idx),
-                         "1.2375",
+                         1.2375,
                          "Incorect ORS estimation"
                          )
         self.assertEqual(xu.get_cell_value(6, ors_col_idx),
-                         "0.9378",
+                         0.9378,
                          "Incorect ORS estimation"
                          )
 
@@ -1284,7 +1281,6 @@ class TestMutRepPipeline(SafeTester):
                                                         annotated_vcf_tabix=annotated_vcf_tabix,
                                                         report_regions="6:78171940-78172992,18:28610987-28611790",
                                                         sample_info="1234:Alb-31:Br-466,6067:Br-432:Al-161:Br-504,6789:Al-65",
-                                                        summary_families_sheet=True,
                                                         call_detail="YES",
                                                         rows_filter_actions=rows_filter_actions,
                                                         )
@@ -1340,15 +1336,15 @@ class TestMutRepPipeline(SafeTester):
         xu = XlsUtils(xls_file)
         ors_col_idx = xu.get_col_idx("ALL_EXOME_AF")
         self.assertEqual(xu.get_cell_value(4, ors_col_idx),
-                         "0.1250",
+                         0.1250,
                          "Incorect ORS estimation"
                          )
         self.assertEqual(xu.get_cell_value(5, ors_col_idx),
-                         "0.0244",
+                         0.0244,
                          "Incorect ORS estimation"
                          )
         self.assertEqual(xu.get_cell_value(6, ors_col_idx),
-                         "0.0375",
+                         0.0375,
                          "Incorect ORS estimation"
                          )
 
@@ -2040,6 +2036,56 @@ class TestMutRepPipeline(SafeTester):
                          "het",
                          "Incorrect cell value"
                          )
+
+#    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST, "taking too long time to test")
+    def test_show_shared_mutations_1(self):
+        """ test if shared mutations can be shown """
+
+        self.individual_debug = True
+        self.init_test(self.current_func_name)
+        annotated_vcf_tabix = join_path(self.data_dir,
+                                        "input.vcf.gz")
+        project_name = self.test_function
+        custom_excl_tags = DFLT_TEST_ANNO_EXCL_TAGS
+        custom_excl_tags += "," + AXEQ_CHR3_6_14_18_COLS_TAG
+        custom_excl_tags += "," + AXEQ_CHR5_19_COLS_TAG
+        custom_excl_tags += "," + LJB_SCORE_COLS_TAG
+        sample_info = join_path(self.data_dir,
+                                "sample.info")
+        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
+                                                        annotated_vcf_tabix=annotated_vcf_tabix,
+#                                                        anno_cols=ALL_MUTREP_ANNO_COLS,
+                                                        anno_excl_tags=custom_excl_tags,
+                                                        sample_info=sample_info,
+                                                        report_regions="3",
+                                                        )
+        pl = MutRepPipeline(jobs_setup_file=jobs_setup_file)
+        pl.gen_summary_report(pl.report_layout.report_regions)
+#        xls_file = join_path(self.working_dir,
+#                             "rpts",
+#                             project_name+"_summary.xlsx")
+#        xu = XlsUtils(xls_file)
+#        xls_file = join_path(self.working_dir,
+#                             "rpts",
+#                             project_name+"_summary.xlsx")
+#        xu = XlsUtils(xls_file)
+#        sample_col_idx = xu.get_col_idx("256-Co-388")
+#        self.assertEqual(xu.get_cell_value(2, sample_col_idx),
+#                         "wt",
+#                         "Incorrect cell value"
+#                         )
+#        self.assertEqual(xu.get_cell_rgb(2, sample_col_idx),
+#                         RGB_NO_FILL,
+#                         "Incorrect color"
+#                         )
+#        self.assertEqual(xu.get_cell_value(3, sample_col_idx),
+#                         "het",
+#                         "Incorrect cell value"
+#                         )
+#        self.assertEqual(xu.get_cell_rgb(3, sample_col_idx),
+#                         RGB_NO_FILL,
+#                         "Incorrect color"
+#                         )
 
     def tearDown(self):
         self.remove_working_dir()
