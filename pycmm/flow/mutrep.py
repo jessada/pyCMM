@@ -638,29 +638,35 @@ class MutRepPipeline(CMMPipeline):
             return self.report_layout.header_corrections[old_header]
         return old_header
 
+    def __write_sample(self, ws, row, col, content, fmt):
+        ws.write(row, col, content, fmt)
+        return col + 1
+
     def __write_header(self, ws, samples_id):
-        def write_samples_header(start_ncol_idx,
+        def write_samples_header(start_col,
                                  samples_header,
                                  cell_fmt,
-                                 coloring_samples_idx=[],
                                  ):
-            last_col_idx = start_ncol_idx
-            for sample_idx in xrange(len(samples_header)):
-                sample_id = samples_header[sample_idx]
-                if sample_idx in coloring_samples_idx:
-                    unaffected_sample_color = self.report_layout.cell_color_separator
-                    sample_cell_fmt = self.plain_fmts[unaffected_sample_color]
-                else:
-                    sample_cell_fmt = cell_fmt
-                ws.write(0, last_col_idx, sample_id, sample_cell_fmt)
-                last_col_idx += 1
+            next_col = start_col
+            for hdr in samples_header:
+                next_col = self.__write_sample(ws, 0, next_col, hdr, cell_fmt)
                 if self.report_layout.call_gq:
-                    ws.write(0, last_col_idx, sample_id+"_GQ", cell_fmt)
-                    last_col_idx += 1
+                    next_col = self.__write_sample(ws, 0, next_col, hdr+"_GQ", cell_fmt)
                 if self.report_layout.call_detail:
-                    ws.write(0, last_col_idx, sample_id+"(detail)", cell_fmt)
-                    last_col_idx += 1
-            return last_col_idx
+                    next_col = self.__write_sample(ws, 0, next_col, hdr+"(detail)", cell_fmt)
+            return next_col
+
+        def write_samples(start_col,
+                          samples,
+                          cell_fmt,
+                          ):
+            samples_header = map(lambda x: x.sample_id_w_fam_pref, 
+                                 samples)
+            return write_samples_header(start_col,
+                                        samples_header,
+                                        cell_fmt,
+                                        )
+
         anno_cols = self.report_layout.anno_cols
         cell_fmt = self.plain_fmts[NO_COLOR]
         ws.write(0, XLS_CHROM_COL_IDX, "CHROM", cell_fmt)
@@ -681,25 +687,27 @@ class MutRepPipeline(CMMPipeline):
                 if group_no == 0:
                     continue
                 group_samples = self.samples_groups[group_no]
-                samples_header = map(lambda x: x.sample_id_w_fam_pref,
-                                     filter(lambda x: x.sample_id in samples_id,
-                                            group_samples))
+                samples = filter(lambda x: x.sample_id in samples_id,
+                                 group_samples)
                 last_col_idx += 1
-                last_col_idx = write_samples_header(last_col_idx,
-                                                    samples_header,
-                                                    cell_fmt,
-                                                    )
+                last_col_idx = write_samples(last_col_idx,
+                                             samples,
+                                             cell_fmt,
+                                             )
         else:
             if not self.has_samples_info:
                 samples_header = samples_id
+                last_col_idx = write_samples_header(sample_start_idx,
+                                                    samples_header,
+                                                    cell_fmt,
+                                                    )
             else:
-                samples_header = map(lambda x: x.sample_id_w_fam_pref, 
-                                     filter(lambda x: x.sample_id in samples_id,
-                                            self.samples_list))
-            last_col_idx = write_samples_header(sample_start_idx,
-                                                samples_header,
-                                                cell_fmt,
-                                                )
+                samples = filter(lambda x: x.sample_id in samples_id,
+                                 self.samples_list)
+                last_col_idx = write_samples(sample_start_idx,
+                                             samples,
+                                             cell_fmt,
+                                             )
         return sample_start_idx, last_col_idx
 
     def __format_call_detail(self, call, call_fmt):
@@ -726,7 +734,7 @@ class MutRepPipeline(CMMPipeline):
                            dflt_cell_fmt,
                            recessive_samples_id=None,
                            ):
-        last_col_idx = start_col
+        next_col = start_col
         for sample_idx in xrange(len(samples_id)):
             sample_id = samples_id[sample_idx]
             call = vcf_record.genotype(sample_id)
@@ -757,19 +765,16 @@ class MutRepPipeline(CMMPipeline):
                 zygo_fmt = dflt_cell_fmt
 
             # write content to cell(s)
-            ws.write(row, last_col_idx, zygo, zygo_fmt)
-            last_col_idx += 1
+            next_col = self.__write_sample(ws, row, next_col, zygo, zygo_fmt)
             if self.report_layout.call_gq:
                 zygo_gq = call.data.GQ
                 if zygo_gq is None:
                     zygo_gq = "."
-                ws.write(row, last_col_idx, zygo_gq, zygo_fmt)
-                last_col_idx += 1
+                next_col = self.__write_sample(ws, row, next_col, zygo_gq, zygo_fmt)
             if self.report_layout.call_detail:
                 formatted_call = self.__format_call_detail(call, vcf_record.FORMAT.split(":"))
-                ws.write(row, last_col_idx, formatted_call, zygo_fmt)
-                last_col_idx += 1
-        return last_col_idx
+                next_col = self.__write_sample(ws, row, next_col, formatted_call, zygo_fmt)
+        return next_col
 
     def __write_content(self,
                         ws,
