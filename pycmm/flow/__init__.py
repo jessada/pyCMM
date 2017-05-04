@@ -233,14 +233,14 @@ class CMMPipeline(JobManager):
     def samples_id_w_fam_pref(self):
         return self.__samples_info.samples_id_w_fam_pref
 
-    @property
-    def affected_samples(self):
-        return self.__samples_info.affected_samples
-
-    @property
-    def unaffected_samples(self):
-        return self.__samples_info.unaffected_samples
-
+#    @property
+#    def affected_samples(self):
+#        return self.__samples_info.affected_samples
+#
+#    @property
+#    def unaffected_samples(self):
+#        return self.__samples_info.unaffected_samples
+#
     @property
     def samples_groups(self):
         return self.__samples_info.samples_groups

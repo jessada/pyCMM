@@ -75,8 +75,8 @@ class SamplesGroup(list, pyCMMBase):
         pyCMMBase.__init__(self, *args, **kwargs)
         self.__ids = None
         self.__ids_w_fam_pref = None
-        self.__affected = None
-        self.__unaffected = None
+#        self.__affected = None
+#        self.__unaffected = None
 
     def __parse_ids(self):
         if self is None:
@@ -90,18 +90,18 @@ class SamplesGroup(list, pyCMMBase):
                    map(lambda x: str(x.fam_id)+"-"+x.sample_id,
                        self))
 
-    def __parse_affected_samples(self):
-        if self is None:
-            return []
-        return SamplesGroup(filter(lambda x: x.phenotype==PHENOTYPE_AFFECTED,
-                                   self))
-
-    def __parse_unaffected_samples(self):
-        if self is None:
-            return []
-        return SamplesGroup(filter(lambda x: x.phenotype==PHENOTYPE_UNAFFECTED,
-                                   self))
-
+#    def __parse_affected_samples(self):
+#        if self is None:
+#            return []
+#        return SamplesGroup(filter(lambda x: x.phenotype==PHENOTYPE_AFFECTED,
+#                                   self))
+#
+#    def __parse_unaffected_samples(self):
+#        if self is None:
+#            return []
+#        return SamplesGroup(filter(lambda x: x.phenotype==PHENOTYPE_UNAFFECTED,
+#                                   self))
+#
     @property
     def ids(self):
         if self.__ids is None:
@@ -114,18 +114,18 @@ class SamplesGroup(list, pyCMMBase):
             self.__ids_w_fam_pref = self.__parse_ids_w_fam_pref()
         return self.__ids_w_fam_pref
 
-    @property
-    def affected(self):
-        if self.__affected is None:
-            self.__affected = self.__parse_affected_samples()
-        return self.__affected
-
-    @property
-    def unaffected(self):
-        if self.__unaffected is None:
-            self.__unaffected = self.__parse_unaffected_samples()
-        return self.__unaffected
-
+#    @property
+#    def affected(self):
+#        if self.__affected is None:
+#            self.__affected = self.__parse_affected_samples()
+#        return self.__affected
+#
+#    @property
+#    def unaffected(self):
+#        if self.__unaffected is None:
+#            self.__unaffected = self.__parse_unaffected_samples()
+#        return self.__unaffected
+#
 class Family(CMMParams):
     """  To parse and structure family information """
 
@@ -233,14 +233,14 @@ class SamplesInfo(pyCMMBase):
             return None
         return self.samples_list.ids_w_fam_pref
 
-    @property
-    def affected_samples(self):
-        return self.samples_list.affected
-
-    @property
-    def unaffected_samples(self):
-        return self.samples_list.unaffected
-
+#    @property
+#    def affected_samples(self):
+#        return self.samples_list.affected
+#
+#    @property
+#    def unaffected_samples(self):
+#        return self.samples_list.unaffected
+#
 def params_to_yaml_doc(*args, **kwargs):
     yaml_doc = {}
     if 'sample_info' not in kwargs:
