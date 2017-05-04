@@ -81,7 +81,7 @@ function decompose_n_leftalign {
     eval_cmd "$cmd"
 }
 
-tabix -h $input_vcf_gz 1:1-1 > $out_file
+tabix -h $input_vcf 1:1-1 > $out_file
 decompose_n_leftalign 1
 decompose_n_leftalign 2
 decompose_n_leftalign 3
