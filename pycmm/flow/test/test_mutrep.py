@@ -2029,55 +2029,55 @@ class TestMutRepPipeline(SafeTester):
                          "Incorrect cell value"
                          )
 
-#    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST, "taking too long time to test")
-    def test_show_shared_mutations_1(self):
-        """ test if shared mutations can be shown """
-
-        self.individual_debug = True
-        self.init_test(self.current_func_name)
-        annotated_vcf_tabix = join_path(self.data_dir,
-                                        "input.vcf.gz")
-        project_name = self.test_function
-        custom_excl_tags = DFLT_TEST_ANNO_EXCL_TAGS
-        custom_excl_tags += "," + AXEQ_CHR3_6_14_18_COLS_TAG
-        custom_excl_tags += "," + AXEQ_CHR5_19_COLS_TAG
-        custom_excl_tags += "," + LJB_SCORE_COLS_TAG
-        sample_info = join_path(self.data_dir,
-                                "sample.info")
-        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
-                                                        annotated_vcf_tabix=annotated_vcf_tabix,
-#                                                        anno_cols=ALL_MUTREP_ANNO_COLS,
-                                                        anno_excl_tags=custom_excl_tags,
-                                                        sample_info=sample_info,
-                                                        report_regions="3",
-                                                        )
-        pl = MutRepPipeline(jobs_setup_file=jobs_setup_file)
-        pl.gen_summary_report(pl.report_layout.report_regions)
-#        xls_file = join_path(self.working_dir,
-#                             "rpts",
-#                             project_name+"_summary.xlsx")
-#        xu = XlsUtils(xls_file)
-#        xls_file = join_path(self.working_dir,
-#                             "rpts",
-#                             project_name+"_summary.xlsx")
-#        xu = XlsUtils(xls_file)
-#        sample_col_idx = xu.get_col_idx("256-Co-388")
-#        self.assertEqual(xu.get_cell_value(2, sample_col_idx),
-#                         "wt",
-#                         "Incorrect cell value"
-#                         )
-#        self.assertEqual(xu.get_cell_rgb(2, sample_col_idx),
-#                         RGB_NO_FILL,
-#                         "Incorrect color"
-#                         )
-#        self.assertEqual(xu.get_cell_value(3, sample_col_idx),
-#                         "het",
-#                         "Incorrect cell value"
-#                         )
-#        self.assertEqual(xu.get_cell_rgb(3, sample_col_idx),
-#                         RGB_NO_FILL,
-#                         "Incorrect color"
-#                         )
-
+##    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST, "taking too long time to test")
+#    def test_show_shared_mutations_1(self):
+#        """ test if shared mutations can be shown """
+#
+#        self.individual_debug = True
+#        self.init_test(self.current_func_name)
+#        annotated_vcf_tabix = join_path(self.data_dir,
+#                                        "input.vcf.gz")
+#        project_name = self.test_function
+#        custom_excl_tags = DFLT_TEST_ANNO_EXCL_TAGS
+#        custom_excl_tags += "," + AXEQ_CHR3_6_14_18_COLS_TAG
+#        custom_excl_tags += "," + AXEQ_CHR5_19_COLS_TAG
+#        custom_excl_tags += "," + LJB_SCORE_COLS_TAG
+#        sample_info = join_path(self.data_dir,
+#                                "sample.info")
+#        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
+#                                                        annotated_vcf_tabix=annotated_vcf_tabix,
+##                                                        anno_cols=ALL_MUTREP_ANNO_COLS,
+#                                                        anno_excl_tags=custom_excl_tags,
+#                                                        sample_info=sample_info,
+#                                                        report_regions="3",
+#                                                        )
+#        pl = MutRepPipeline(jobs_setup_file=jobs_setup_file)
+#        pl.gen_summary_report(pl.report_layout.report_regions)
+##        xls_file = join_path(self.working_dir,
+##                             "rpts",
+##                             project_name+"_summary.xlsx")
+##        xu = XlsUtils(xls_file)
+##        xls_file = join_path(self.working_dir,
+##                             "rpts",
+##                             project_name+"_summary.xlsx")
+##        xu = XlsUtils(xls_file)
+##        sample_col_idx = xu.get_col_idx("256-Co-388")
+##        self.assertEqual(xu.get_cell_value(2, sample_col_idx),
+##                         "wt",
+##                         "Incorrect cell value"
+##                         )
+##        self.assertEqual(xu.get_cell_rgb(2, sample_col_idx),
+##                         RGB_NO_FILL,
+##                         "Incorrect color"
+##                         )
+##        self.assertEqual(xu.get_cell_value(3, sample_col_idx),
+##                         "het",
+##                         "Incorrect cell value"
+##                         )
+##        self.assertEqual(xu.get_cell_rgb(3, sample_col_idx),
+##                         RGB_NO_FILL,
+##                         "Incorrect color"
+##                         )
+#
     def tearDown(self):
         self.remove_working_dir()

@@ -8,6 +8,7 @@ from pycmm.flow import CMMPipeline
 from pycmm.flow import create_jobs_setup_file
 from pycmm.cmmlib.samplelib import NO_FAMILY
 from pycmm.cmmlib.samplelib import SAMPLE_GROUP_MISSING
+from pycmm.cmmlib.samplelib import UNKNOWN_DATASET
 
 
 class TestSample(SafeTester):
@@ -34,94 +35,94 @@ class TestSample(SafeTester):
                                )
         return jobs_setup_file
 
-    def test_sample_group_1(self):
-        """ test if sample group can be determined if there is no information """
-
-        self.init_test(self.current_func_name)
-        jobs_setup_file = self.__create_jobs_setup_file(sample_info="18:Co-345:Co-37,12:Co-890:Co-290,13:Co-95,266:Co-131:Co-1355,314:1793-11o,987:Co-218:Co-2588,911:Co-1454:Co-4700,prostate:Pro001:Pro002:Pro003")
-        pl = CMMPipeline(jobs_setup_file=jobs_setup_file)
-        self.assertEqual(len(pl.families_info),
-                         8,
-                         "familiylib can't handle families information")
-        self.assertEqual('prostate' in pl.families_info,
-                         True,
-                         "familiylib can't handle families information")
-        self.assertEqual('breast' in pl.families_info,
-                         False,
-                         "familiylib can't handle families information")
-        self.assertEqual(pl.families_info["18"].members[0].sample_id,
-                         "Co-345",
-                         "familiylib can't handle families information")
-        self.assertEqual(pl.families_info["18"].members[0].sample_group,
-                         SAMPLE_GROUP_MISSING,
-                         "sample group cannot be determined")
-        self.assertEqual(pl.families_info["911"].fam_id,
-                         "911",
-                         "familiylib can't handle families information")
-        self.assertEqual(pl.families_info["prostate"].members[0].fam_id,
-                         "prostate",
-                         "familiylib can't handle families information")
-        self.assertEqual(pl.families_info["prostate"].members[0].sample_group,
-                         SAMPLE_GROUP_MISSING,
-                         "sample group cannot be determined")
-
-    def test_sample_group_2(self):
-        """ test backward compatible if loading from file (no sample group) """
-
-        self.init_test(self.current_func_name)
-        sample_info = join_path(self.data_dir,
-                                "sample.info")
-        jobs_setup_file = self.__create_jobs_setup_file(sample_info=sample_info)
-        pl = CMMPipeline(jobs_setup_file=jobs_setup_file)
-        self.assertEqual('breast' in pl.families_info,
-                         False,
-                         "familiylib can't handle families information")
-        self.assertEqual(pl.families_info["87"].members[0].sample_id,
-                         "Co-218",
-                         "familiylib can't handle families information")
-        self.assertEqual(pl.families_info["87"].members[0].sample_group,
-                         SAMPLE_GROUP_MISSING,
-                         "sample group cannot be determined")
-        self.assertEqual(pl.families_info["8"].members[1].sample_group,
-                         SAMPLE_GROUP_MISSING,
-                         "sample group cannot be determined")
-
-    def test_sample_group_3(self):
-        """ test group can be loaded if they are identified """
-
-        self.init_test(self.current_func_name)
-        sample_info = join_path(self.data_dir,
-                                "sample.info")
-        jobs_setup_file = self.__create_jobs_setup_file(sample_info=sample_info)
-        pl = CMMPipeline(jobs_setup_file=jobs_setup_file)
-        self.assertEqual('breast' in pl.families_info,
-                         False,
-                         "familiylib can't handle families information")
-        self.assertEqual(pl.families_info["13"].members[1].sample_id,
-                         "Co-94",
-                         "familiylib can't handle families information")
-        self.assertEqual(pl.families_info["13"].members[1].sample_group,
-                         SAMPLE_GROUP_MISSING,
-                         "sample group cannot be determined")
-        self.assertEqual(pl.families_info["87"].members[0].sample_id,
-                         "Co-218",
-                         "familiylib can't handle families information")
-        self.assertEqual(pl.families_info["87"].members[0].sample_group,
-                         3,
-                         "sample group cannot be determined")
-        self.assertEqual(pl.families_info["8"].members[1].sample_group,
-                         3,
-                         "sample group cannot be determined")
-        self.assertEqual(pl.families_info[NO_FAMILY].members[3].sample_id,
-                         "1199-05o",
-                         "familiylib can't handle families information")
-        self.assertEqual(pl.families_info[NO_FAMILY].members[3].sample_group,
-                         1,
-                         "sample group cannot be determined")
-        self.assertEqual(pl.families_info[NO_FAMILY].members[4].sample_group,
-                         1,
-                         "sample group cannot be determined")
-
+#    def test_sample_group_1(self):
+#        """ test if sample group can be determined if there is no information """
+#
+#        self.init_test(self.current_func_name)
+#        jobs_setup_file = self.__create_jobs_setup_file(sample_info="18:Co-345:Co-37,12:Co-890:Co-290,13:Co-95,266:Co-131:Co-1355,314:1793-11o,987:Co-218:Co-2588,911:Co-1454:Co-4700,prostate:Pro001:Pro002:Pro003")
+#        pl = CMMPipeline(jobs_setup_file=jobs_setup_file)
+#        self.assertEqual(len(pl.families_info),
+#                         8,
+#                         "familiylib can't handle families information")
+#        self.assertEqual('prostate' in pl.families_info,
+#                         True,
+#                         "familiylib can't handle families information")
+#        self.assertEqual('breast' in pl.families_info,
+#                         False,
+#                         "familiylib can't handle families information")
+#        self.assertEqual(pl.families_info["18"].members[0].sample_id,
+#                         "Co-345",
+#                         "familiylib can't handle families information")
+#        self.assertEqual(pl.families_info["18"].members[0].sample_group,
+#                         SAMPLE_GROUP_MISSING,
+#                         "sample group cannot be determined")
+#        self.assertEqual(pl.families_info["911"].fam_id,
+#                         "911",
+#                         "familiylib can't handle families information")
+#        self.assertEqual(pl.families_info["prostate"].members[0].fam_id,
+#                         "prostate",
+#                         "familiylib can't handle families information")
+#        self.assertEqual(pl.families_info["prostate"].members[0].sample_group,
+#                         SAMPLE_GROUP_MISSING,
+#                         "sample group cannot be determined")
+#
+#    def test_sample_group_2(self):
+#        """ test backward compatible if loading from file (no sample group) """
+#
+#        self.init_test(self.current_func_name)
+#        sample_info = join_path(self.data_dir,
+#                                "sample.info")
+#        jobs_setup_file = self.__create_jobs_setup_file(sample_info=sample_info)
+#        pl = CMMPipeline(jobs_setup_file=jobs_setup_file)
+#        self.assertEqual('breast' in pl.families_info,
+#                         False,
+#                         "familiylib can't handle families information")
+#        self.assertEqual(pl.families_info["87"].members[0].sample_id,
+#                         "Co-218",
+#                         "familiylib can't handle families information")
+#        self.assertEqual(pl.families_info["87"].members[0].sample_group,
+#                         SAMPLE_GROUP_MISSING,
+#                         "sample group cannot be determined")
+#        self.assertEqual(pl.families_info["8"].members[1].sample_group,
+#                         SAMPLE_GROUP_MISSING,
+#                         "sample group cannot be determined")
+#
+#    def test_sample_group_3(self):
+#        """ test group can be loaded if they are identified """
+#
+#        self.init_test(self.current_func_name)
+#        sample_info = join_path(self.data_dir,
+#                                "sample.info")
+#        jobs_setup_file = self.__create_jobs_setup_file(sample_info=sample_info)
+#        pl = CMMPipeline(jobs_setup_file=jobs_setup_file)
+#        self.assertEqual('breast' in pl.families_info,
+#                         False,
+#                         "familiylib can't handle families information")
+#        self.assertEqual(pl.families_info["13"].members[1].sample_id,
+#                         "Co-94",
+#                         "familiylib can't handle families information")
+#        self.assertEqual(pl.families_info["13"].members[1].sample_group,
+#                         SAMPLE_GROUP_MISSING,
+#                         "sample group cannot be determined")
+#        self.assertEqual(pl.families_info["87"].members[0].sample_id,
+#                         "Co-218",
+#                         "familiylib can't handle families information")
+#        self.assertEqual(pl.families_info["87"].members[0].sample_group,
+#                         3,
+#                         "sample group cannot be determined")
+#        self.assertEqual(pl.families_info["8"].members[1].sample_group,
+#                         3,
+#                         "sample group cannot be determined")
+#        self.assertEqual(pl.families_info[NO_FAMILY].members[3].sample_id,
+#                         "1199-05o",
+#                         "familiylib can't handle families information")
+#        self.assertEqual(pl.families_info[NO_FAMILY].members[3].sample_group,
+#                         1,
+#                         "sample group cannot be determined")
+#        self.assertEqual(pl.families_info[NO_FAMILY].members[4].sample_group,
+#                         1,
+#                         "sample group cannot be determined")
+#
     def test_sample_phenotype_1(self):
         """ test if sample phenotype can be determined if there is no information """
 
@@ -213,12 +214,12 @@ class TestSample(SafeTester):
     def tearDown(self):
         self.remove_working_dir()
 
-class TestFamily(SafeTester):
+class TestMutRepSamplesInfo(SafeTester):
 
     def __init__(self, methodName):
-        super(TestFamily, self).__init__(methodName=methodName,
-                                         test_module_name=__name__,
-                                         )
+        super(TestMutRepSamplesInfo, self).__init__(methodName=methodName,
+                                                    test_module_name=__name__,
+                                                    )
 
     def setUp(self):
         pass
@@ -271,6 +272,86 @@ class TestFamily(SafeTester):
         self.assertEqual(pl.families_info,
                          None,
                          "familiylib can't handle families information")
+
+    def test_extract_families_info_3(self):
+        """ test if Family objects can be extract from a sample_info file """
+
+        self.init_test(self.current_func_name)
+        sample_info = join_path(self.data_dir,
+                                "sample.info")
+        jobs_setup_file = self.__create_jobs_setup_file(sample_info=sample_info)
+        pl = CMMPipeline(jobs_setup_file=jobs_setup_file)
+        self.assertEqual(len(pl.families_info),
+                         9,
+                         "familiylib can't handle families information")
+        self.assertEqual('prostate' in pl.families_info,
+                         True,
+                         "familiylib can't handle families information")
+        self.assertEqual('breast' in pl.families_info,
+                         False,
+                         "familiylib can't handle families information")
+        self.assertEqual(pl.families_info["18"].members[0].sample_id,
+                         "Co-345",
+                         "familiylib can't handle families information")
+        self.assertEqual(pl.families_info["911"].fam_id,
+                         "911",
+                         "familiylib can't handle families information")
+        self.assertEqual(pl.families_info["prostate"].members[0].fam_id,
+                         "prostate",
+                         "familiylib can't handle families information")
+
+    def test_datasets_1(self):
+        """
+        test if datasets can be identified if sample info are passed through
+        function params
+        """
+
+        self.init_test(self.current_func_name)
+        jobs_setup_file = self.__create_jobs_setup_file(sample_info="18:Co-345:Co-37,12:Co-890:Co-290,13:Co-95,266:Co-131:Co-1355,314:1793-11o,987:Co-218:Co-2588,911:Co-1454:Co-4700,prostate:Pro001:Pro002:Pro003")
+        pl = CMMPipeline(jobs_setup_file=jobs_setup_file)
+        self.assertEqual(len(pl.datasets),
+                         1,
+                         "incorrect datasets information")
+        self.assertEqual(pl.datasets.values()[0].dataset_id,
+                         UNKNOWN_DATASET,
+                         "incorrect datasets information")
+        self.assertEqual(len(pl.datasets.values()[0].families),
+                         8,
+                         "incorrect datasets information")
+
+    def test_datasets_2(self):
+        """ test if datasets can be identified if no data """
+
+        self.init_test(self.current_func_name)
+        jobs_setup_file = self.__create_jobs_setup_file()
+        pl = CMMPipeline(jobs_setup_file=jobs_setup_file)
+        self.assertEqual(pl.datasets,
+                         None,
+                         "incorrect datasets information")
+
+    def test_datasets_3(self):
+        """ test if datasets can be identified from a sample_info file """
+
+        self.init_test(self.current_func_name)
+        sample_info = join_path(self.data_dir,
+                                "sample.info")
+        jobs_setup_file = self.__create_jobs_setup_file(sample_info=sample_info)
+        pl = CMMPipeline(jobs_setup_file=jobs_setup_file)
+        self.assertEqual(len(pl.datasets),
+                         2,
+                         "incorrect datasets information")
+        self.assertEqual(len(pl.datasets.values()[0].families),
+                         7,
+                         "incorrect datasets information")
+        self.assertEqual(pl.datasets.values()[0].dataset_id,
+                         'ds1',
+                         "incorrect datasets information")
+        self.assertEqual(len(pl.datasets.values()[1].families),
+                         2,
+                         "incorrect datasets information")
+        self.assertEqual(pl.datasets.values()[1].dataset_id,
+                         'ds2',
+                         "incorrect datasets information")
 
     def tearDown(self):
         self.remove_working_dir()
@@ -466,48 +547,48 @@ class TestSamplesInfo(SafeTester):
 #                         2,
 #                         "incorrect number of unaffected samples")
 #
-    def test_samples_groups_1(self):
-        """ test if sample group; can be determined if there is no information """
-
-        self.init_test(self.current_func_name)
-        jobs_setup_file = self.__create_jobs_setup_file(sample_info="18:Co-345:Co-37,12:Co-890:Co-290,13:Co-95,266:Co-131:Co-1355,314:1793-11o,987:Co-218:Co-2588,911:Co-1454:Co-4700,prostate:Pro001:Pro002:Pro003")
-        pl = CMMPipeline(jobs_setup_file=jobs_setup_file)
-        self.assertEqual(len(pl.samples_groups[3]),
-                         0,
-                         "incorrect number of affected samples")
-
-    def test_samples_groups_2(self):
-        """ test backward compatible if loading from file (no group) """
-
-        self.init_test(self.current_func_name)
-        sample_info = join_path(self.data_dir,
-                                "sample.info")
-        jobs_setup_file = self.__create_jobs_setup_file(sample_info=sample_info)
-        pl = CMMPipeline(jobs_setup_file)
-        self.assertEqual(len(pl.samples_groups[3]),
-                         0,
-                         "incorrect number of affected samples")
-
-    def test_samples_groups_3(self):
-        """ test sample group can be loaded if they are identified """
-
-        self.init_test(self.current_func_name)
-        sample_info = join_path(self.data_dir,
-                                "sample.info")
-        jobs_setup_file = self.__create_jobs_setup_file(sample_info=sample_info)
-        pl = CMMPipeline(jobs_setup_file=jobs_setup_file)
-        self.assertEqual(len(pl.samples_groups[1]),
-                         8,
-                         "incorrect number of affected samples")
-        self.assertEqual(len(pl.samples_groups[2]),
-                         4,
-                         "incorrect number of affected samples")
-        self.assertEqual(len(pl.samples_groups[3]),
-                         6,
-                         "incorrect number of affected samples")
-        self.assertEqual(len(pl.samples_groups[4]),
-                         4,
-                         "incorrect number of affected samples")
+#    def test_samples_groups_1(self):
+#        """ test if sample group; can be determined if there is no information """
+#
+#        self.init_test(self.current_func_name)
+#        jobs_setup_file = self.__create_jobs_setup_file(sample_info="18:Co-345:Co-37,12:Co-890:Co-290,13:Co-95,266:Co-131:Co-1355,314:1793-11o,987:Co-218:Co-2588,911:Co-1454:Co-4700,prostate:Pro001:Pro002:Pro003")
+#        pl = CMMPipeline(jobs_setup_file=jobs_setup_file)
+#        self.assertEqual(len(pl.samples_groups[3]),
+#                         0,
+#                         "incorrect number of affected samples")
+#
+#    def test_samples_groups_2(self):
+#        """ test backward compatible if loading from file (no group) """
+#
+#        self.init_test(self.current_func_name)
+#        sample_info = join_path(self.data_dir,
+#                                "sample.info")
+#        jobs_setup_file = self.__create_jobs_setup_file(sample_info=sample_info)
+#        pl = CMMPipeline(jobs_setup_file)
+#        self.assertEqual(len(pl.samples_groups[3]),
+#                         0,
+#                         "incorrect number of affected samples")
+#
+#    def test_samples_groups_3(self):
+#        """ test sample group can be loaded if they are identified """
+#
+#        self.init_test(self.current_func_name)
+#        sample_info = join_path(self.data_dir,
+#                                "sample.info")
+#        jobs_setup_file = self.__create_jobs_setup_file(sample_info=sample_info)
+#        pl = CMMPipeline(jobs_setup_file=jobs_setup_file)
+#        self.assertEqual(len(pl.samples_groups[1]),
+#                         8,
+#                         "incorrect number of affected samples")
+#        self.assertEqual(len(pl.samples_groups[2]),
+#                         4,
+#                         "incorrect number of affected samples")
+#        self.assertEqual(len(pl.samples_groups[3]),
+#                         6,
+#                         "incorrect number of affected samples")
+#        self.assertEqual(len(pl.samples_groups[4]),
+#                         4,
+#                         "incorrect number of affected samples")
 
     def tearDown(self):
         self.remove_working_dir()

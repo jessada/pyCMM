@@ -1,0 +1,40 @@
+SAMPLES_INFOS:
+  - DATASET_ID: ds1
+    FAMILIES:
+      - FAMILY_ID: "18"
+        MEMBERS:
+          - SAMPLE_ID: "Co-345"
+          - SAMPLE_ID: "Co-37"
+      - FAMILY_ID: "12"
+        MEMBERS:
+          - SAMPLE_ID: "Co-890"
+          - SAMPLE_ID: "Co-290"
+      - FAMILY_ID: "13"
+        MEMBERS:
+          - SAMPLE_ID: "Co-95"
+      - FAMILY_ID: "266"
+        MEMBERS:
+          - SAMPLE_ID: "Co-131"
+          - SAMPLE_ID: "Co-1355"
+      - FAMILY_ID: "314"
+        MEMBERS:
+          - SAMPLE_ID: "1793-11o"
+      - FAMILY_ID: "987"
+        MEMBERS:
+          - SAMPLE_ID: "Co-218"
+          - SAMPLE_ID: "Co-2588"
+      - FAMILY_ID: "2468"
+        MEMBERS:
+          - SAMPLE_ID: "Co-123"
+          - SAMPLE_ID: "Co-2235"
+  - DATASET_ID: ds2
+    FAMILIES:
+      - FAMILY_ID: "911"
+        MEMBERS:
+          - SAMPLE_ID: "Co-1454"
+          - SAMPLE_ID: "Co-4700"
+      - FAMILY_ID: "prostate"
+        MEMBERS:
+          - SAMPLE_ID: "Pro001"
+          - SAMPLE_ID: "Pro002"
+          - SAMPLE_ID: "Pro003"
