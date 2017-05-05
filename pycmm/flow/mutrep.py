@@ -702,7 +702,6 @@ class MutRepPipeline(CMMPipeline):
 #                if group_no == SAMPLE_GROUP_MISSING:
 #                    continue
                 samples = self.samples_groups[group_no]
-                self.dbg(samples)
                 next_col += 1
                 next_col = write_samples(next_col,
                                          samples,
@@ -925,7 +924,7 @@ class MutRepPipeline(CMMPipeline):
                                                        dflt_cell_fmt,
                                                        )
         else:
-            self.throw("grouping error in mutations report header")
+            self.throw("grouping error in mutations report content")
 #        if (self.samples_groups is not None and
 #            (len(self.samples_groups) > 1 or 
 #             0 not in self.samples_groups)):

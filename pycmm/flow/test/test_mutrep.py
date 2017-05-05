@@ -510,373 +510,373 @@ class TestMutRepPipeline(SafeTester):
                          "mutation report cannot exclude '*' allele"
                          )
 
-    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST, "taking too long time to test")
-    def test_family_report_1(self):
-        """ test with only one family which has only one members """
-
-        self.init_test(self.current_func_name)
-        annotated_vcf_tabix = join_path(self.data_dir,
-                                        "input.vcf.gz")
-        project_name = self.test_function
-        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
-                                                        annotated_vcf_tabix=annotated_vcf_tabix,
-                                                        call_detail="YES",
-                                                        report_regions="6",
-                                                        sample_info="6789:Al-65",
-                                                        )
-        pl = MutRepPipeline(jobs_setup_file=jobs_setup_file)
-        pl.gen_family_report('6789', pl.report_layout.report_regions)
-        xls_file = join_path(self.working_dir,
-                             "rpts",
-                             project_name+"_fam6789.xlsx")
-        xu = XlsUtils(xls_file)
-        self.assertEqual(xu.nsheets,
-                         1,
-                         "invalid number of sheets")
-        self.assertEqual(xu.get_sheet_idx("Al-65"),
-                         0,
-                         "invalid sheet name")
-
-    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST, "taking too long time to test")
-    def test_family_report_2(self):
-        """ test with only one family which has two members """
-
-        self.init_test(self.current_func_name)
-        annotated_vcf_tabix = join_path(self.data_dir,
-                                        "input.vcf.gz")
-        project_name = self.test_function
-        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
-                                                        annotated_vcf_tabix=annotated_vcf_tabix,
-                                                        call_detail="YES",
-                                                        report_regions="6",
-                                                        sample_info="1234:Alb-31:Br-466",
-                                                        )
-        pl = MutRepPipeline(jobs_setup_file=jobs_setup_file)
-        pl.gen_family_report('1234', pl.report_layout.report_regions)
-        xls_file = join_path(self.working_dir,
-                             "rpts",
-                             project_name+"_fam1234.xlsx")
-        xu = XlsUtils(xls_file)
-        self.assertEqual(xu.nsheets,
-                         3,
-                         "invalid number of sheets")
-        self.assertEqual(xu.get_sheet_idx("shared"),
-                         0,
-                         "invalid sheet name")
-        self.assertEqual(xu.get_sheet_idx("Alb-31"),
-                         1,
-                         "invalid sheet name")
-        self.assertEqual(xu.get_sheet_idx("Br-466"),
-                         2,
-                         "invalid sheet name")
-
-    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST, "taking too long time to test")
-    def test_family_report_3(self):
-        """ test with only one family which has three members """
-
-        self.init_test(self.current_func_name)
-        annotated_vcf_tabix = join_path(self.data_dir,
-                                        "input.vcf.gz")
-        project_name = self.test_function
-        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
-                                                        annotated_vcf_tabix=annotated_vcf_tabix,
-                                                        call_detail="YES",
-                                                        report_regions="6",
-                                                        sample_info="6067:Br-432:Al-161:Br-504",
-                                                        )
-        pl = MutRepPipeline(jobs_setup_file=jobs_setup_file)
-        pl.gen_family_report('6067', pl.report_layout.report_regions)
-        xls_file = join_path(self.working_dir,
-                             "rpts",
-                             project_name+"_fam6067.xlsx")
-        xu = XlsUtils(xls_file)
-        self.assertEqual(xu.nsheets,
-                         4,
-                         "invalid number of sheets")
-        self.assertEqual(xu.get_sheet_idx("shared"),
-                         0,
-                         "invalid sheet name")
-        self.assertEqual(xu.get_sheet_idx("Br-432"),
-                         1,
-                         "invalid sheet name")
-        self.assertEqual(xu.get_sheet_idx("Al-161"),
-                         2,
-                         "invalid sheet name")
-        self.assertEqual(xu.get_sheet_idx("Br-504"),
-                         3,
-                         "invalid sheet name")
-
-    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST, "taking too long time to test")
-    def test_family_report_4(self):
-        """
-        test with number of mutations are correct in each tab
-        - shared
-        - member 1
-        - member 2
-        """
-
-        self.init_test(self.current_func_name)
-        annotated_vcf_tabix = join_path(self.data_dir,
-                                        "input.vcf.gz")
-        project_name = self.test_function
-        frequency_ratios = PRIMARY_MAF_VAR + ":0.2"
-        frequency_ratios += "," + AXEQ_CHR5_19_GF_COL_NAME + ":0.3"
-        frequency_ratios += "," + EXAC_ALL_COL_NAME + ":0.3"
-        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
-                                                        annotated_vcf_tabix=annotated_vcf_tabix,
-                                                        call_detail="YES",
-                                                        report_regions=None,
-                                                        frequency_ratios=frequency_ratios,
-                                                        sample_info="24:Co-166:Co-213",
-                                                        )
-        pl = MutRepPipeline(jobs_setup_file=jobs_setup_file)
-        pl.gen_family_report('24', pl.report_layout.report_regions)
-        xls_file = join_path(self.working_dir,
-                             "rpts",
-                             project_name+"_fam24.xlsx")
-        xu = XlsUtils(xls_file)
-        self.assertEqual(xu.count_rows(sheet_idx=0),
-                         8,
-                         "incorrect number of mutations")
-        self.assertEqual(xu.count_rows(sheet_idx=1),
-                         11,
-                         "incorrect number of mutations")
-        self.assertEqual(xu.count_rows(sheet_idx=2),
-                         13,
-                         "incorrect number of mutations")
-
-    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST, "taking too long time to test")
-    def test_family_report_5(self):
-        """ test if report can be run with missing columns """
-
-        self.init_test(self.current_func_name)
-        annotated_vcf_tabix = join_path(self.data_dir,
-                                        "input.vcf.gz")
-        project_name = self.test_function
-        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
-                                                        annotated_vcf_tabix=annotated_vcf_tabix,
-                                                        report_regions=None,
-                                                        anno_cols=ALL_MUTREP_ANNO_COLS,
-                                                        sample_info="24:Co-166:Co-213",
-                                                        )
-        pl = MutRepPipeline(jobs_setup_file=jobs_setup_file)
-        pl.gen_family_report('24', pl.report_layout.report_regions)
-        xls_file = join_path(self.working_dir,
-                             "rpts",
-                             project_name+"_fam24.xlsx")
-        xu = XlsUtils(xls_file)
-        self.assertEqual(xu.count_rows(sheet_idx=0),
-                         8,
-                         "incorrect number of mutations")
-        self.assertEqual(xu.count_rows(sheet_idx=1),
-                         11,
-                         "incorrect number of mutations")
-        self.assertEqual(xu.count_rows(sheet_idx=2),
-                         13,
-                         "incorrect number of mutations")
-
-    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST, "taking too long time to test")
-    def test_families_reports_1(self):
-        """ test generating offline families reports (1 family)"""
-
-        self.init_test(self.current_func_name)
-        annotated_vcf_tabix = join_path(self.data_dir,
-                                        "input.vcf.gz")
-        project_name = self.test_function
-        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
-                                                        annotated_vcf_tabix=annotated_vcf_tabix,
-                                                        call_detail="YES",
-                                                        report_regions="6",
-                                                        sample_info="6067:Br-432:Al-161:Br-504",
-                                                        )
-        pl = MutRepPipeline(jobs_setup_file=jobs_setup_file)
-        pl.gen_families_reports()
-        xls_file = join_path(self.working_dir,
-                             "rpts",
-                             project_name+"_fam6067.xlsx")
-        xu = XlsUtils(xls_file)
-        self.assertEqual(xu.nsheets,
-                         4,
-                         "invalid number of sheets")
-        self.assertEqual(xu.count_rows(sheet_idx=0),
-                         4,
-                         "incorrect number of mutations")
-        self.assertEqual(xu.count_rows(sheet_idx=1),
-                         6,
-                         "incorrect number of mutations")
-        self.assertEqual(xu.count_rows(sheet_idx=2),
-                         7,
-                         "incorrect number of mutations")
-        self.assertEqual(xu.count_rows(sheet_idx=3),
-                         7,
-                         "incorrect number of mutations")
-
-    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST, "taking too long time to test")
-    def test_families_reports_2(self):
-        """ test generating offline families reports (3 families)"""
-
-        self.init_test(self.current_func_name)
-        annotated_vcf_tabix = join_path(self.data_dir,
-                                        "input.vcf.gz")
-        project_name = self.test_function
-        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
-                                                        annotated_vcf_tabix=annotated_vcf_tabix,
-                                                        report_regions="6",
-                                                        call_detail="YES",
-                                                        sample_info="1234:Alb-31:Br-466,6067:Br-432:Al-161:Br-504,6789:Al-65",
-                                                        )
-        pl = MutRepPipeline(jobs_setup_file=jobs_setup_file)
-        pl.gen_families_reports()
-        xls_file = join_path(self.working_dir,
-                             "rpts",
-                             project_name+"_fam1234.xlsx")
-        xu = XlsUtils(xls_file)
-        self.assertEqual(xu.nsheets,
-                         3,
-                         "invalid number of sheets")
-        xls_file = join_path(self.working_dir,
-                             "rpts",
-                             project_name+"_fam6067.xlsx")
-        xu = XlsUtils(xls_file)
-        self.assertEqual(xu.nsheets,
-                         4,
-                         "invalid number of sheets")
-        xls_file = join_path(self.working_dir,
-                             "rpts",
-                             project_name+"_fam6789.xlsx")
-        xu = XlsUtils(xls_file)
-        self.assertEqual(xu.nsheets,
-                         1,
-                         "invalid number of sheets")
-
-    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST, "taking too long time to test")
-    def test_families_reports_3(self):
-        """ test generating 101 CRC families reports """
-
-        self.init_test(self.current_func_name)
-        annotated_vcf_tabix = join_path(self.data_dir,
-                                        "input.vcf.gz")
-        project_name = self.test_function
-        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
-                                                        annotated_vcf_tabix=annotated_vcf_tabix,
-                                                        report_regions=None,
-                                                        call_detail=False,
-                                                        sample_info="8:Co-35:Co-37,12:Co-89:Co-90,13:Co-95,26:Co-131:Co-135,31:1793-11D:1322-11D,87:Co-218:Co-258,91:Co-454:Co-700,94:Co-238,110:1526-02D:Co-1301,134:Co-460:Co-553,141:Co-305:Co-785,185:Co-603:Co-669,191:Co-384,214:Co-484,216:Co-367:Co-446,221:Co-358,227:Co-364,231:Co-555:Co-572,254:Co-616:Co-1156,275:Co-618:Co-1262,288:Co-1141,296:Co-793:Co-876,301:Co-837:Co-840:Co-1053,306:Co-779,309:Co-783,312:Co-1116,315:1462-01D,325:Co-851:Co-859,348:Co-846:Co-857,350:1104-03D:Co-866,409:Co-1254,415:Co-1031:Co-1037,425:Co-1458:Co-1595,434:Co-1051:Co-1534,445:Co-1157:Co-1158,478:Co-1207:Co-1274,485:Co-1302:Co-1322,532:Co-1583:Co-1584,574:468-04:474-05,578:531-04o:Co-1349,650:398-05o:729-05o,695:Co-1354:Co-1359:Co-1368,739:529-05:Co-1467,740:602-05o:Co-1373:Co-1383,849:Co-1764:Co-1765,869:Co-1685,871:Co-1618:Co-1661,918:134-06:354-06,975:Co-1591:Co-1600,1025:Co-1529,1085:Co-1518,1113:642-06:Co-1538,1206:1052-05D:Co-1552,1207:2818-07D,1213:Co-1666,1252:Co-1719,1290:Co-1723,prostate:P001:P002:P003",
-                                                        )
-        pl = MutRepPipeline(jobs_setup_file=jobs_setup_file)
-        pl.gen_families_reports()
-        xls_file = join_path(self.working_dir,
-                             "rpts",
-                             project_name+"_fam869.xlsx")
-        xu = XlsUtils(xls_file)
-        self.assertEqual(xu.nsheets,
-                         1,
-                         "invalid number of sheets")
-        xls_file = join_path(self.working_dir,
-                             "rpts",
-                             project_name+"_fam13.xlsx")
-        xu = XlsUtils(xls_file)
-        self.assertEqual(xu.nsheets,
-                         1,
-                         "invalid number of sheets")
-        xls_file = join_path(self.working_dir,
-                             "rpts",
-                             project_name+"_fam425.xlsx")
-        xu = XlsUtils(xls_file)
-        self.assertEqual(xu.nsheets,
-                         3,
-                         "invalid number of sheets")
-        xls_file = join_path(self.working_dir,
-                             "rpts",
-                             project_name+"_fam301.xlsx")
-        xu = XlsUtils(xls_file)
-        self.assertEqual(xu.nsheets,
-                         4,
-                         "invalid number of sheets")
-
-    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST, "taking too long time to test")
-    def test_families_reports_4(self):
-        """ test generating NK64 fam24 families reports """
-
-        self.init_test(self.current_func_name)
-        annotated_vcf_tabix = join_path(self.data_dir,
-                                        "input.vcf.gz")
-        project_name = self.test_function
-        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
-                                                        annotated_vcf_tabix=annotated_vcf_tabix,
-                                                        report_regions=None,
-                                                        call_detail=False,
-                                                        sample_info="24:Co-166:Co-213",
-                                                        )
-        pl = MutRepPipeline(jobs_setup_file=jobs_setup_file)
-        pl.gen_families_reports()
-        xls_file = join_path(self.working_dir,
-                             "rpts",
-                             project_name+"_fam24.xlsx")
-        xu = XlsUtils(xls_file)
-        self.assertEqual(xu.nsheets,
-                         3,
-                         "invalid number of sheets")
-        self.assertEqual(xu.count_rows(sheet_idx=0),
-                         2,
-                         "incorrect number of mutations")
-        self.assertEqual(xu.count_rows(sheet_idx=1),
-                         5,
-                         "incorrect number of mutations")
-        self.assertEqual(xu.count_rows(sheet_idx=2),
-                         3,
-                         "incorrect number of mutations")
-
-    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST, "taking too long time to test")
-    def test_families_reports_5(self):
-        """ test generating NK64 PMS2 families reports """
-
-        self.init_test(self.current_func_name)
-        annotated_vcf_tabix = join_path(self.data_dir,
-                                        "input.vcf.gz")
-        anno_cols = list(DFLT_TEST_MUTREP_COLS)
-        anno_cols.append("LRT_score")
-        anno_cols.append("LRT_pred")
-        anno_cols.append("Polyphen2_HDIV_score")
-        anno_cols.append("Polyphen2_HDIV_pred")
-        project_name = self.test_function
-        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
-                                                        annotated_vcf_tabix=annotated_vcf_tabix,
-                                                        anno_cols=anno_cols,
-                                                        report_regions=None,
-                                                        call_detail=False,
-                                                        sample_info="MYUTH:2014-06388-02,119:Co-1209:Co-1220:Co-1222:Co-1285,1244:2310-08D:627-04o:3015-11D,1330:861-10D,1410:930-06o,1680:301-08F",
-                                                        )
-        pl = MutRepPipeline(jobs_setup_file=jobs_setup_file)
-        pl.gen_families_reports()
-        xls_file = join_path(self.working_dir,
-                             "rpts",
-                             project_name+"_famMYUTH.xlsx")
-        xu = XlsUtils(xls_file)
-        self.assertEqual(xu.nsheets,
-                         1,
-                         "invalid number of sheets")
-        xls_file = join_path(self.working_dir,
-                             "rpts",
-                             project_name+"_fam119.xlsx")
-        xu = XlsUtils(xls_file)
-        self.assertEqual(xu.nsheets,
-                         5,
-                         "invalid number of sheets")
-        xls_file = join_path(self.working_dir,
-                             "rpts",
-                             project_name+"_fam1330.xlsx")
-        xu = XlsUtils(xls_file)
-        self.assertEqual(xu.nsheets,
-                         1,
-                         "invalid number of sheets")
-        xls_file = join_path(self.working_dir,
-                             "rpts",
-                             project_name+"_fam1680.xlsx")
-        xu = XlsUtils(xls_file)
-        self.assertEqual(xu.nsheets,
-                         1,
-                         "invalid number of sheets")
+#    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST, "taking too long time to test")
+#    def test_family_report_1(self):
+#        """ test with only one family which has only one members """
+#
+#        self.init_test(self.current_func_name)
+#        annotated_vcf_tabix = join_path(self.data_dir,
+#                                        "input.vcf.gz")
+#        project_name = self.test_function
+#        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
+#                                                        annotated_vcf_tabix=annotated_vcf_tabix,
+#                                                        call_detail="YES",
+#                                                        report_regions="6",
+#                                                        sample_info="6789:Al-65",
+#                                                        )
+#        pl = MutRepPipeline(jobs_setup_file=jobs_setup_file)
+#        pl.gen_family_report('6789', pl.report_layout.report_regions)
+#        xls_file = join_path(self.working_dir,
+#                             "rpts",
+#                             project_name+"_fam6789.xlsx")
+#        xu = XlsUtils(xls_file)
+#        self.assertEqual(xu.nsheets,
+#                         1,
+#                         "invalid number of sheets")
+#        self.assertEqual(xu.get_sheet_idx("Al-65"),
+#                         0,
+#                         "invalid sheet name")
+#
+#    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST, "taking too long time to test")
+#    def test_family_report_2(self):
+#        """ test with only one family which has two members """
+#
+#        self.init_test(self.current_func_name)
+#        annotated_vcf_tabix = join_path(self.data_dir,
+#                                        "input.vcf.gz")
+#        project_name = self.test_function
+#        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
+#                                                        annotated_vcf_tabix=annotated_vcf_tabix,
+#                                                        call_detail="YES",
+#                                                        report_regions="6",
+#                                                        sample_info="1234:Alb-31:Br-466",
+#                                                        )
+#        pl = MutRepPipeline(jobs_setup_file=jobs_setup_file)
+#        pl.gen_family_report('1234', pl.report_layout.report_regions)
+#        xls_file = join_path(self.working_dir,
+#                             "rpts",
+#                             project_name+"_fam1234.xlsx")
+#        xu = XlsUtils(xls_file)
+#        self.assertEqual(xu.nsheets,
+#                         3,
+#                         "invalid number of sheets")
+#        self.assertEqual(xu.get_sheet_idx("shared"),
+#                         0,
+#                         "invalid sheet name")
+#        self.assertEqual(xu.get_sheet_idx("Alb-31"),
+#                         1,
+#                         "invalid sheet name")
+#        self.assertEqual(xu.get_sheet_idx("Br-466"),
+#                         2,
+#                         "invalid sheet name")
+#
+#    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST, "taking too long time to test")
+#    def test_family_report_3(self):
+#        """ test with only one family which has three members """
+#
+#        self.init_test(self.current_func_name)
+#        annotated_vcf_tabix = join_path(self.data_dir,
+#                                        "input.vcf.gz")
+#        project_name = self.test_function
+#        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
+#                                                        annotated_vcf_tabix=annotated_vcf_tabix,
+#                                                        call_detail="YES",
+#                                                        report_regions="6",
+#                                                        sample_info="6067:Br-432:Al-161:Br-504",
+#                                                        )
+#        pl = MutRepPipeline(jobs_setup_file=jobs_setup_file)
+#        pl.gen_family_report('6067', pl.report_layout.report_regions)
+#        xls_file = join_path(self.working_dir,
+#                             "rpts",
+#                             project_name+"_fam6067.xlsx")
+#        xu = XlsUtils(xls_file)
+#        self.assertEqual(xu.nsheets,
+#                         4,
+#                         "invalid number of sheets")
+#        self.assertEqual(xu.get_sheet_idx("shared"),
+#                         0,
+#                         "invalid sheet name")
+#        self.assertEqual(xu.get_sheet_idx("Br-432"),
+#                         1,
+#                         "invalid sheet name")
+#        self.assertEqual(xu.get_sheet_idx("Al-161"),
+#                         2,
+#                         "invalid sheet name")
+#        self.assertEqual(xu.get_sheet_idx("Br-504"),
+#                         3,
+#                         "invalid sheet name")
+#
+#    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST, "taking too long time to test")
+#    def test_family_report_4(self):
+#        """
+#        test with number of mutations are correct in each tab
+#        - shared
+#        - member 1
+#        - member 2
+#        """
+#
+#        self.init_test(self.current_func_name)
+#        annotated_vcf_tabix = join_path(self.data_dir,
+#                                        "input.vcf.gz")
+#        project_name = self.test_function
+#        frequency_ratios = PRIMARY_MAF_VAR + ":0.2"
+#        frequency_ratios += "," + AXEQ_CHR5_19_GF_COL_NAME + ":0.3"
+#        frequency_ratios += "," + EXAC_ALL_COL_NAME + ":0.3"
+#        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
+#                                                        annotated_vcf_tabix=annotated_vcf_tabix,
+#                                                        call_detail="YES",
+#                                                        report_regions=None,
+#                                                        frequency_ratios=frequency_ratios,
+#                                                        sample_info="24:Co-166:Co-213",
+#                                                        )
+#        pl = MutRepPipeline(jobs_setup_file=jobs_setup_file)
+#        pl.gen_family_report('24', pl.report_layout.report_regions)
+#        xls_file = join_path(self.working_dir,
+#                             "rpts",
+#                             project_name+"_fam24.xlsx")
+#        xu = XlsUtils(xls_file)
+#        self.assertEqual(xu.count_rows(sheet_idx=0),
+#                         8,
+#                         "incorrect number of mutations")
+#        self.assertEqual(xu.count_rows(sheet_idx=1),
+#                         11,
+#                         "incorrect number of mutations")
+#        self.assertEqual(xu.count_rows(sheet_idx=2),
+#                         13,
+#                         "incorrect number of mutations")
+#
+#    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST, "taking too long time to test")
+#    def test_family_report_5(self):
+#        """ test if report can be run with missing columns """
+#
+#        self.init_test(self.current_func_name)
+#        annotated_vcf_tabix = join_path(self.data_dir,
+#                                        "input.vcf.gz")
+#        project_name = self.test_function
+#        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
+#                                                        annotated_vcf_tabix=annotated_vcf_tabix,
+#                                                        report_regions=None,
+#                                                        anno_cols=ALL_MUTREP_ANNO_COLS,
+#                                                        sample_info="24:Co-166:Co-213",
+#                                                        )
+#        pl = MutRepPipeline(jobs_setup_file=jobs_setup_file)
+#        pl.gen_family_report('24', pl.report_layout.report_regions)
+#        xls_file = join_path(self.working_dir,
+#                             "rpts",
+#                             project_name+"_fam24.xlsx")
+#        xu = XlsUtils(xls_file)
+#        self.assertEqual(xu.count_rows(sheet_idx=0),
+#                         8,
+#                         "incorrect number of mutations")
+#        self.assertEqual(xu.count_rows(sheet_idx=1),
+#                         11,
+#                         "incorrect number of mutations")
+#        self.assertEqual(xu.count_rows(sheet_idx=2),
+#                         13,
+#                         "incorrect number of mutations")
+#
+#    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST, "taking too long time to test")
+#    def test_families_reports_1(self):
+#        """ test generating offline families reports (1 family)"""
+#
+#        self.init_test(self.current_func_name)
+#        annotated_vcf_tabix = join_path(self.data_dir,
+#                                        "input.vcf.gz")
+#        project_name = self.test_function
+#        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
+#                                                        annotated_vcf_tabix=annotated_vcf_tabix,
+#                                                        call_detail="YES",
+#                                                        report_regions="6",
+#                                                        sample_info="6067:Br-432:Al-161:Br-504",
+#                                                        )
+#        pl = MutRepPipeline(jobs_setup_file=jobs_setup_file)
+#        pl.gen_families_reports()
+#        xls_file = join_path(self.working_dir,
+#                             "rpts",
+#                             project_name+"_fam6067.xlsx")
+#        xu = XlsUtils(xls_file)
+#        self.assertEqual(xu.nsheets,
+#                         4,
+#                         "invalid number of sheets")
+#        self.assertEqual(xu.count_rows(sheet_idx=0),
+#                         4,
+#                         "incorrect number of mutations")
+#        self.assertEqual(xu.count_rows(sheet_idx=1),
+#                         6,
+#                         "incorrect number of mutations")
+#        self.assertEqual(xu.count_rows(sheet_idx=2),
+#                         7,
+#                         "incorrect number of mutations")
+#        self.assertEqual(xu.count_rows(sheet_idx=3),
+#                         7,
+#                         "incorrect number of mutations")
+#
+#    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST, "taking too long time to test")
+#    def test_families_reports_2(self):
+#        """ test generating offline families reports (3 families)"""
+#
+#        self.init_test(self.current_func_name)
+#        annotated_vcf_tabix = join_path(self.data_dir,
+#                                        "input.vcf.gz")
+#        project_name = self.test_function
+#        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
+#                                                        annotated_vcf_tabix=annotated_vcf_tabix,
+#                                                        report_regions="6",
+#                                                        call_detail="YES",
+#                                                        sample_info="1234:Alb-31:Br-466,6067:Br-432:Al-161:Br-504,6789:Al-65",
+#                                                        )
+#        pl = MutRepPipeline(jobs_setup_file=jobs_setup_file)
+#        pl.gen_families_reports()
+#        xls_file = join_path(self.working_dir,
+#                             "rpts",
+#                             project_name+"_fam1234.xlsx")
+#        xu = XlsUtils(xls_file)
+#        self.assertEqual(xu.nsheets,
+#                         3,
+#                         "invalid number of sheets")
+#        xls_file = join_path(self.working_dir,
+#                             "rpts",
+#                             project_name+"_fam6067.xlsx")
+#        xu = XlsUtils(xls_file)
+#        self.assertEqual(xu.nsheets,
+#                         4,
+#                         "invalid number of sheets")
+#        xls_file = join_path(self.working_dir,
+#                             "rpts",
+#                             project_name+"_fam6789.xlsx")
+#        xu = XlsUtils(xls_file)
+#        self.assertEqual(xu.nsheets,
+#                         1,
+#                         "invalid number of sheets")
+#
+#    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST, "taking too long time to test")
+#    def test_families_reports_3(self):
+#        """ test generating 101 CRC families reports """
+#
+#        self.init_test(self.current_func_name)
+#        annotated_vcf_tabix = join_path(self.data_dir,
+#                                        "input.vcf.gz")
+#        project_name = self.test_function
+#        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
+#                                                        annotated_vcf_tabix=annotated_vcf_tabix,
+#                                                        report_regions=None,
+#                                                        call_detail=False,
+#                                                        sample_info="8:Co-35:Co-37,12:Co-89:Co-90,13:Co-95,26:Co-131:Co-135,31:1793-11D:1322-11D,87:Co-218:Co-258,91:Co-454:Co-700,94:Co-238,110:1526-02D:Co-1301,134:Co-460:Co-553,141:Co-305:Co-785,185:Co-603:Co-669,191:Co-384,214:Co-484,216:Co-367:Co-446,221:Co-358,227:Co-364,231:Co-555:Co-572,254:Co-616:Co-1156,275:Co-618:Co-1262,288:Co-1141,296:Co-793:Co-876,301:Co-837:Co-840:Co-1053,306:Co-779,309:Co-783,312:Co-1116,315:1462-01D,325:Co-851:Co-859,348:Co-846:Co-857,350:1104-03D:Co-866,409:Co-1254,415:Co-1031:Co-1037,425:Co-1458:Co-1595,434:Co-1051:Co-1534,445:Co-1157:Co-1158,478:Co-1207:Co-1274,485:Co-1302:Co-1322,532:Co-1583:Co-1584,574:468-04:474-05,578:531-04o:Co-1349,650:398-05o:729-05o,695:Co-1354:Co-1359:Co-1368,739:529-05:Co-1467,740:602-05o:Co-1373:Co-1383,849:Co-1764:Co-1765,869:Co-1685,871:Co-1618:Co-1661,918:134-06:354-06,975:Co-1591:Co-1600,1025:Co-1529,1085:Co-1518,1113:642-06:Co-1538,1206:1052-05D:Co-1552,1207:2818-07D,1213:Co-1666,1252:Co-1719,1290:Co-1723,prostate:P001:P002:P003",
+#                                                        )
+#        pl = MutRepPipeline(jobs_setup_file=jobs_setup_file)
+#        pl.gen_families_reports()
+#        xls_file = join_path(self.working_dir,
+#                             "rpts",
+#                             project_name+"_fam869.xlsx")
+#        xu = XlsUtils(xls_file)
+#        self.assertEqual(xu.nsheets,
+#                         1,
+#                         "invalid number of sheets")
+#        xls_file = join_path(self.working_dir,
+#                             "rpts",
+#                             project_name+"_fam13.xlsx")
+#        xu = XlsUtils(xls_file)
+#        self.assertEqual(xu.nsheets,
+#                         1,
+#                         "invalid number of sheets")
+#        xls_file = join_path(self.working_dir,
+#                             "rpts",
+#                             project_name+"_fam425.xlsx")
+#        xu = XlsUtils(xls_file)
+#        self.assertEqual(xu.nsheets,
+#                         3,
+#                         "invalid number of sheets")
+#        xls_file = join_path(self.working_dir,
+#                             "rpts",
+#                             project_name+"_fam301.xlsx")
+#        xu = XlsUtils(xls_file)
+#        self.assertEqual(xu.nsheets,
+#                         4,
+#                         "invalid number of sheets")
+#
+#    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST, "taking too long time to test")
+#    def test_families_reports_4(self):
+#        """ test generating NK64 fam24 families reports """
+#
+#        self.init_test(self.current_func_name)
+#        annotated_vcf_tabix = join_path(self.data_dir,
+#                                        "input.vcf.gz")
+#        project_name = self.test_function
+#        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
+#                                                        annotated_vcf_tabix=annotated_vcf_tabix,
+#                                                        report_regions=None,
+#                                                        call_detail=False,
+#                                                        sample_info="24:Co-166:Co-213",
+#                                                        )
+#        pl = MutRepPipeline(jobs_setup_file=jobs_setup_file)
+#        pl.gen_families_reports()
+#        xls_file = join_path(self.working_dir,
+#                             "rpts",
+#                             project_name+"_fam24.xlsx")
+#        xu = XlsUtils(xls_file)
+#        self.assertEqual(xu.nsheets,
+#                         3,
+#                         "invalid number of sheets")
+#        self.assertEqual(xu.count_rows(sheet_idx=0),
+#                         2,
+#                         "incorrect number of mutations")
+#        self.assertEqual(xu.count_rows(sheet_idx=1),
+#                         5,
+#                         "incorrect number of mutations")
+#        self.assertEqual(xu.count_rows(sheet_idx=2),
+#                         3,
+#                         "incorrect number of mutations")
+#
+#    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST, "taking too long time to test")
+#    def test_families_reports_5(self):
+#        """ test generating NK64 PMS2 families reports """
+#
+#        self.init_test(self.current_func_name)
+#        annotated_vcf_tabix = join_path(self.data_dir,
+#                                        "input.vcf.gz")
+#        anno_cols = list(DFLT_TEST_MUTREP_COLS)
+#        anno_cols.append("LRT_score")
+#        anno_cols.append("LRT_pred")
+#        anno_cols.append("Polyphen2_HDIV_score")
+#        anno_cols.append("Polyphen2_HDIV_pred")
+#        project_name = self.test_function
+#        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
+#                                                        annotated_vcf_tabix=annotated_vcf_tabix,
+#                                                        anno_cols=anno_cols,
+#                                                        report_regions=None,
+#                                                        call_detail=False,
+#                                                        sample_info="MYUTH:2014-06388-02,119:Co-1209:Co-1220:Co-1222:Co-1285,1244:2310-08D:627-04o:3015-11D,1330:861-10D,1410:930-06o,1680:301-08F",
+#                                                        )
+#        pl = MutRepPipeline(jobs_setup_file=jobs_setup_file)
+#        pl.gen_families_reports()
+#        xls_file = join_path(self.working_dir,
+#                             "rpts",
+#                             project_name+"_famMYUTH.xlsx")
+#        xu = XlsUtils(xls_file)
+#        self.assertEqual(xu.nsheets,
+#                         1,
+#                         "invalid number of sheets")
+#        xls_file = join_path(self.working_dir,
+#                             "rpts",
+#                             project_name+"_fam119.xlsx")
+#        xu = XlsUtils(xls_file)
+#        self.assertEqual(xu.nsheets,
+#                         5,
+#                         "invalid number of sheets")
+#        xls_file = join_path(self.working_dir,
+#                             "rpts",
+#                             project_name+"_fam1330.xlsx")
+#        xu = XlsUtils(xls_file)
+#        self.assertEqual(xu.nsheets,
+#                         1,
+#                         "invalid number of sheets")
+#        xls_file = join_path(self.working_dir,
+#                             "rpts",
+#                             project_name+"_fam1680.xlsx")
+#        xu = XlsUtils(xls_file)
+#        self.assertEqual(xu.nsheets,
+#                         1,
+#                         "invalid number of sheets")
 
     @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST, "taking too long time to test")
     def test_expression_action_del_row_1(self):
@@ -1930,7 +1930,7 @@ class TestMutRepPipeline(SafeTester):
         last_anno_col_idx = xu.get_col_idx("CADD_phred")
         first_sample_col_idx = xu.get_col_idx("1003-06o")
         self.assertEqual(first_sample_col_idx-last_anno_col_idx,
-                         1,
+                         2,
                          "Incorrect report layout"
                          )
         self.assertEqual(xu.get_cell_value(5, first_sample_col_idx),
