@@ -51,8 +51,8 @@ ACTION_DELETE_ROW = "DELETE_ROW"
 ACTION_COLOR_ROW = "COLOR_ROW"
 ACTION_COLOR_COL = "COLOR_COLUMN"
 
-DFLT_COLOR_HET_SHARED = 'SILVER'
-DFLT_COLOR_HOM_SHARED = 'GRAY25'
+DFLT_COLOR_HET_SHARED = 'LIGHT_BLUE'
+DFLT_COLOR_HOM_SHARED = 'ICEBLUE'
 CELL_TYPE_HET_SHARED = 'HET_SHARED'
 CELL_TYPE_HOM_SHARED = 'HOM_SHARED'
 DFLT_COLOR_HET_ZYGO = 'XLS_LIGHT_GREEN'
@@ -689,65 +689,34 @@ class MutRepPipeline(CMMPipeline):
             pass
         elif not self.has_samples_info:
             # if no info provided, just show all samples in vcf
-            samples_header = self.vcf_reader.samples
             next_col = write_samples_header(sample_start_col,
-                                            samples_header,
+                                            self.vcf_reader.samples,
                                             cell_fmt,
                                             )
-        elif (self.samples_groups is not None and
-              len(self.samples_groups) > 0): 
-            # show all group 
+        elif (self.datasets is not None and
+              len(self.datasets) > 0): 
             next_col = sample_start_col
-            for group_no in self.samples_groups.keys():
-#                if group_no == SAMPLE_GROUP_MISSING:
-#                    continue
-                samples = self.samples_groups[group_no]
-                next_col += 1
-                next_col = write_samples(next_col,
-                                         samples,
-                                         cell_fmt,
-                                         )
-        else:
-            self.throw("grouping error in mutations report header")
-#        else:
-#            if not self.has_samples_info:
-#            else:
-#                samples = filter(lambda x: x.sample_id in samples_id,
-#                                 self.samples_list)
-#                last_col_idx = write_samples(sample_start_col,
-#                                             samples,
-#                                             cell_fmt,
-#                                             )
-
-#        elif (self.samples_groups is not None and
-#              (len(self.samples_groups) > 1 or 
-#               0 not in self.samples_groups)):
-#            last_col_idx = sample_start_idx
-#            for group_no in self.samples_groups.keys():
-#                if group_no == 0:
-#                    continue
-#                group_samples = self.samples_groups[group_no]
-#                samples = filter(lambda x: x.sample_id in samples_id,
-#                                 group_samples)
-#                last_col_idx += 1
-#                last_col_idx = write_samples(last_col_idx,
-#                                             samples,
-#                                             cell_fmt,
-#                                             )
-#        else:
-#            if not self.has_samples_info:
-#                samples_header = samples_id
-#                last_col_idx = write_samples_header(sample_start_idx,
-#                                                    samples_header,
-#                                                    cell_fmt,
-#                                                    )
-#            else:
-#                samples = filter(lambda x: x.sample_id in samples_id,
-#                                 self.samples_list)
-#                last_col_idx = write_samples(sample_start_idx,
-#                                             samples,
-#                                             cell_fmt,
-#                                             )
+            for dataset in self.datasets.values():
+                if self.report_layout.show_shared_mutations:
+                    for family in dataset.families.values():
+                        next_col = self.__write_sample(ws,
+                                                       0,
+                                                       next_col,
+                                                       family.fam_id,
+                                                       cell_fmt,
+                                                       )
+                        samples_header = map(lambda x: x.sample_id,
+                                             family.samples_list)
+                        next_col = write_samples_header(next_col,
+                                                        samples_header,
+                                                        cell_fmt,
+                                                        )
+                else:
+                    next_col += 1
+                    next_col = write_samples(next_col,
+                                             dataset.samples_list,
+                                             cell_fmt,
+                                             )
         return sample_start_col, next_col
 
     def __format_call_detail(self, call, call_fmt):
@@ -889,7 +858,7 @@ class MutRepPipeline(CMMPipeline):
                 ws.write(row, anno_idx+LAYOUT_VCF_COLS, info, info_cell_fmt)
             else:
                 ws.write(row, anno_idx+LAYOUT_VCF_COLS, str(info).decode('utf-8'), info_cell_fmt)
-        last_col_idx = LAYOUT_VCF_COLS + len_anno_cols
+        next_col = LAYOUT_VCF_COLS + len_anno_cols
         # annotate samples information
         if fam_id is not None:
             # reserved for handling displaying some specific samples
@@ -897,65 +866,59 @@ class MutRepPipeline(CMMPipeline):
         elif not self.has_samples_info:
             # if no info provided, just show all samples in vcf
             samples_id = self.vcf_reader.samples
-            last_col_idx = self.__write_zygosities(ws,
+            next_col = self.__write_zygosities(ws,
                                                    row,
-                                                   last_col_idx,
+                                                   next_col,
                                                    vcf_record,
                                                    allele_idx,
                                                    samples_id,
                                                    dflt_cell_fmt,
                                                    )
-        elif (self.samples_groups is not None and
-              len(self.samples_groups) > 0): 
-            # show all group 
+        elif (self.datasets is not None and
+              len(self.datasets) > 0): 
             sep_color = self.report_layout.cell_color_separator
             sep_fmt = self.plain_fmts[sep_color]
-            for group_no in self.samples_groups.keys():
-                group_samples_id = map(lambda x: x.sample_id,
-                                       self.samples_groups[group_no])
-                ws.write(row, last_col_idx, "", sep_fmt)
-                last_col_idx += 1
-                last_col_idx = self.__write_zygosities(ws,
+            for dataset in self.datasets.values():
+                if self.report_layout.show_shared_mutations:
+                    het_shared_color = self.report_layout.cell_color_het_shared
+                    het_fmt = self.plain_fmts[het_shared_color]
+                    for family in dataset.families.values():
+                        samples_id = map(lambda x: x.sample_id,
+                                         family.samples_list)
+                        call = vcf_record.genotype(samples_id[0])
+                        if (type(call.shared_mutations) is not list or
+                            not call.shared_mutations[allele_idx]):
+                            shared_txt = "not shared"
+                            shared_fmt = sep_fmt
+                        else:
+                            shared_txt = "shared"
+                            shared_fmt = het_fmt
+                        next_col = self.__write_sample(ws,
                                                        row,
-                                                       last_col_idx,
+                                                       next_col,
+                                                       shared_txt,
+                                                       shared_fmt,
+                                                       )
+                        next_col = self.__write_zygosities(ws,
+                                                           row,
+                                                           next_col,
+                                                           vcf_record,
+                                                           allele_idx,
+                                                           samples_id,
+                                                           dflt_cell_fmt,
+                                                           )
+                else:
+                    samples_id = map(lambda x: x.sample_id,
+                                     dataset.samples_list)
+                    next_col += 1
+                    next_col = self.__write_zygosities(ws,
+                                                       row,
+                                                       next_col,
                                                        vcf_record,
                                                        allele_idx,
-                                                       group_samples_id,
+                                                       samples_id,
                                                        dflt_cell_fmt,
                                                        )
-        else:
-            self.throw("grouping error in mutations report content")
-#        if (self.samples_groups is not None and
-#            (len(self.samples_groups) > 1 or 
-#             0 not in self.samples_groups)):
-#            sep_color = self.report_layout.cell_color_separator
-#            sep_fmt = self.plain_fmts[sep_color]
-#            for group_no in self.samples_groups.keys():
-#                if group_no == 0:
-#                    continue
-#                group_samples = self.samples_groups[group_no]
-#                group_samples_id = map(lambda x: x.sample_id,
-#                                       filter(lambda x: x.sample_id in samples_id,
-#                                              group_samples))
-#                ws.write(row, last_col_idx, "", sep_fmt)
-#                last_col_idx += 1
-#                last_col_idx = self.__write_zygosities(ws,
-#                                                       row,
-#                                                       last_col_idx,
-#                                                       vcf_record,
-#                                                       allele_idx,
-#                                                       group_samples_id,
-#                                                       dflt_cell_fmt,
-#                                                       )
-#        else:
-#            last_col_idx = self.__write_zygosities(ws,
-#                                                   row,
-#                                                   last_col_idx,
-#                                                   vcf_record,
-#                                                   allele_idx,
-#                                                   samples_id,
-#                                                   dflt_cell_fmt,
-#                                                   )
         # logging
         if row % RECORDS_LOG_INTERVAL == 0:
             log_msg = str(row)
@@ -968,7 +931,7 @@ class MutRepPipeline(CMMPipeline):
                          row,
                          vcf_records,
                          fam_id,
-                         check_shared,
+#                         check_shared,
                          ):
         for vcf_record in vcf_records:
             for allele_idx in xrange(1, len(vcf_record.alleles)):
@@ -1040,7 +1003,8 @@ class MutRepPipeline(CMMPipeline):
         return row
 
     def __set_layout(self, ws, sample_start_idx, record_size):
-        ws.autofilter(0, 0, 0, record_size-1)
+        ws.autofilter(0, 0, 0, sample_start_idx-1)
+#        ws.autofilter(0, 0, 0, record_size-1)
         ws.set_column(XLS_CHROM_COL_IDX, XLS_CHROM_COL_IDX, 2.5)
         ws.set_column(XLS_POS_COL_IDX, XLS_POS_COL_IDX, 9)
         ws.set_column(XLS_REF_COL_IDX, XLS_REF_COL_IDX, 3.5)
@@ -1059,7 +1023,7 @@ class MutRepPipeline(CMMPipeline):
                          sheet_name,
                          report_regions,
                          fam_id=None,
-                         check_shared=False,
+#                         check_shared=False,
                          ):
         wb = self.__wb
         annotated_vcf_tabix = self.report_layout.annotated_vcf_tabix
@@ -1083,7 +1047,8 @@ class MutRepPipeline(CMMPipeline):
                                         row,
                                         self.vcf_reader,
                                         fam_id,
-                                        check_shared)
+#                                        check_shared
+                                        )
         else:
             for report_region in report_regions:
                 if report_region.start_pos is None:
@@ -1099,7 +1064,8 @@ class MutRepPipeline(CMMPipeline):
                                             row,
                                             vcf_records,
                                             fam_id,
-                                            check_shared)
+#                                            check_shared
+                                            )
         log_msg = "Finish .. "
         log_msg += " total of " + str(row-1)
         log_msg += " records were written to the sheet"
@@ -1273,7 +1239,7 @@ class MutRepPipeline(CMMPipeline):
             self.__add_muts_sheet(samples_id[0],
                                   report_regions,
                                   samples_id=samples_id,
-                                  check_shared=True,
+#                                  check_shared=True,
                                   )
         else:
             self.info("")
@@ -1281,14 +1247,16 @@ class MutRepPipeline(CMMPipeline):
             self.__add_muts_sheet("shared",
                                   report_regions,
                                   samples_id=samples_id,
-                                  check_shared=True)
+#                                  check_shared=True)
+                                  )
             for sample_name in samples_id:
                 self.info("")
                 self.info(" >> add '" + sample_name + "' sheet")
                 self.__add_muts_sheet(sample_name,
                                       report_regions,
                                       samples_id=[sample_name],
-                                      check_shared=True)
+#                                      check_shared=True)
+                                      )
         self.__wb.close()
 
     def __gen_family_reports(self, fam_id):

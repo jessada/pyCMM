@@ -81,7 +81,6 @@ DFLT_TEST_ANNO_EXCL_TAGS += "," + EXAC_CONSTRAINT_COLS_TAG
 DFLT_TEST_ANNO_EXCL_TAGS += "," + UNKNOWN_COLS_TAG
 
 MUTREP_TEST = False
-#MUTREP_TEST = True
 
 RGB_NO_FILL = "00000000"
 
@@ -1151,7 +1150,7 @@ class TestMutRepPipeline(SafeTester):
                          "het",
                          "Incorrect cell value"
                          )
-        exp_rgb = "FF" + COLORS_RGB["SILVER"][-6:]
+        exp_rgb = "FF" + COLORS_RGB["LIGHT_BLUE"][-6:]
         self.assertEqual(xu.get_cell_rgb(5, col_idx, sheet_idx=0),
                          exp_rgb,
                          "Incorrect color"
@@ -1587,7 +1586,7 @@ class TestMutRepPipeline(SafeTester):
                              project_name+"_summary.xlsx")
         xu = XlsUtils(xls_file)
         sample_col_idx = xu.get_col_idx("256-Co-388")
-        exp_rgb = "FF" + COLORS_RGB["SILVER"][-6:]
+        exp_rgb = "FF" + COLORS_RGB["LIGHT_BLUE"][-6:]
         self.assertEqual(xu.get_cell_value(2, sample_col_idx),
                          "wt",
                          "Incorrect cell value"
@@ -1605,7 +1604,7 @@ class TestMutRepPipeline(SafeTester):
                          "Incorrect color"
                          )
         sample_col_idx = xu.get_col_idx("13-Co-95")
-        exp_rgb = "FF" + COLORS_RGB["GRAY25"][-6:]
+        exp_rgb = "FF" + COLORS_RGB["ICEBLUE"][-6:]
         self.assertEqual(xu.get_cell_value(2, sample_col_idx),
                          ".",
                          "Incorrect cell value"
@@ -1875,165 +1874,13 @@ class TestMutRepPipeline(SafeTester):
                          "Incorrect color"
                          )
 
-    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST, "taking too long time to test")
-    def test_samples_groups_1(self):
-        """
-        test if samples in mutation report can be displayed in groups
-          - no group
-        """
-
-        self.init_test(self.current_func_name)
-        annotated_vcf_tabix = join_path(self.data_dir,
-                                        "input.vcf.gz")
-        project_name = self.test_function
-        custom_excl_tags = DFLT_TEST_ANNO_EXCL_TAGS
-        custom_excl_tags += "," + AXEQ_CHR3_6_14_18_COLS_TAG
-        custom_excl_tags += "," + AXEQ_CHR5_19_COLS_TAG
-        custom_excl_tags += "," + LJB_SCORE_COLS_TAG
-        rows_filter_actions = JOBS_SETUP_RPT_FILTER_HAS_MUTATION
-        rows_filter_actions += ',' + JOBS_SETUP_RPT_FILTER_PASS_VQSR
-        rows_filter_actions += ',' + JOBS_SETUP_RPT_FILTER_NON_INTERGENIC
-        rows_filter_actions += ',' + JOBS_SETUP_RPT_FILTER_NON_INTRONIC
-        rows_filter_actions += ',' + JOBS_SETUP_RPT_FILTER_NON_UPSTREAM
-        rows_filter_actions += ',' + JOBS_SETUP_RPT_FILTER_NON_DOWNSTREAM
-        rows_filter_actions += ',' + JOBS_SETUP_RPT_FILTER_NON_UTR
-        rows_filter_actions += ',' + JOBS_SETUP_RPT_FILTER_NON_SYNONYMOUS
-        expression_patterns = OrderedDict()
-        expression_patterns['filter_NA_young'] = '"' + WES294_OAF_EARLYONSET_AF_COL_NAME + '"==\'NA\''
-        expression_patterns['filter_unique_young'] = 'float("' + WES294_OAF_EARLYONSET_AF_COL_NAME + '")<0.0196'
-        expression_patterns['filter_kvot_young_vs_exac'] = '("' + EST_KVOT_EARLYONSET_VS_EXAC_NFE_COL_NAME + '"!=\'INF\')'
-        expression_patterns['filter_kvot_young_vs_exac'] += 'and("' + EST_KVOT_EARLYONSET_VS_EXAC_NFE_COL_NAME + '"!=\'\')'
-        expression_patterns['filter_kvot_young_vs_exac'] += 'and("' + EST_KVOT_EARLYONSET_VS_EXAC_NFE_COL_NAME + '"!=\'NA\')'
-        expression_patterns['filter_kvot_young_vs_exac'] += 'and(float("' + EST_KVOT_EARLYONSET_VS_EXAC_NFE_COL_NAME + '")<1.3)'
-        expression_patterns['filter_kvot_young_vs_brc'] = '("' + EST_KVOT_EARLYONSET_VS_BRC_COL_NAME + '"!=\'INF\')'
-        expression_patterns['filter_kvot_young_vs_brc'] += 'and("' + EST_KVOT_EARLYONSET_VS_BRC_COL_NAME + '"!=\'\')'
-        expression_patterns['filter_kvot_young_vs_brc'] += 'and(float("' + EST_KVOT_EARLYONSET_VS_BRC_COL_NAME + '")<1.3)'
-        expression_patterns['filter_ncRNA_exonic'] = '"' + FUNC_REFGENE_COL_NAME + '"==\'ncRNA_exonic\''
-        sample_info = join_path(self.data_dir,
-                                "sample.info")
-        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
-                                                        annotated_vcf_tabix=annotated_vcf_tabix,
-                                                        anno_cols=ALL_MUTREP_ANNO_COLS,
-                                                        anno_excl_tags=custom_excl_tags,
-                                                        sample_info=sample_info,
-                                                        report_regions="2,6,7,19",
-                                                        rows_filter_actions=rows_filter_actions,
-                                                        expression_patterns=",".join(map(lambda x: x+":"+expression_patterns[x], expression_patterns)),
-                                                        expression_usages=",".join(map(lambda x: x+":DELETE_ROW", expression_patterns)),
-                                                        )
-        pl = MutRepPipeline(jobs_setup_file=jobs_setup_file)
-        pl.gen_summary_report(pl.report_layout.report_regions)
-        xls_file = join_path(self.working_dir,
-                             "rpts",
-                             project_name+"_summary.xlsx")
-        xu = XlsUtils(xls_file)
-        last_anno_col_idx = xu.get_col_idx("CADD_phred")
-        first_sample_col_idx = xu.get_col_idx("1003-06o")
-        self.assertEqual(first_sample_col_idx-last_anno_col_idx,
-                         2,
-                         "Incorrect report layout"
-                         )
-        self.assertEqual(xu.get_cell_value(5, first_sample_col_idx),
-                         "het",
-                         "Incorrect cell value"
-                         )
-        last_sample_col_idx = xu.get_col_idx("L862-Br-716")
-        self.assertEqual(last_sample_col_idx-first_sample_col_idx,
-                         290,
-                         "Incorrect report layout"
-                         )
-        self.assertEqual(xu.get_cell_value(5, last_sample_col_idx),
-                         "wt",
-                         "Incorrect cell value"
-                         )
-        sample_col_idx = xu.get_col_idx("L862-Br-710")
-        self.assertEqual(xu.get_cell_value(6, sample_col_idx),
-                         "het",
-                         "Incorrect cell value"
-                         )
-
-    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST, "taking too long time to test")
-    def test_samples_groups_2(self):
-        """
-        test if samples in mutation report can be displayed in groups
-          - all the samples have group information
-        """
-
-        self.init_test(self.current_func_name)
-        annotated_vcf_tabix = join_path(self.data_dir,
-                                        "input.vcf.gz")
-        project_name = self.test_function
-        custom_excl_tags = DFLT_TEST_ANNO_EXCL_TAGS
-        custom_excl_tags += "," + AXEQ_CHR3_6_14_18_COLS_TAG
-        custom_excl_tags += "," + AXEQ_CHR5_19_COLS_TAG
-        custom_excl_tags += "," + LJB_SCORE_COLS_TAG
-        rows_filter_actions = JOBS_SETUP_RPT_FILTER_HAS_MUTATION
-        rows_filter_actions += ',' + JOBS_SETUP_RPT_FILTER_PASS_VQSR
-        rows_filter_actions += ',' + JOBS_SETUP_RPT_FILTER_NON_INTERGENIC
-        rows_filter_actions += ',' + JOBS_SETUP_RPT_FILTER_NON_INTRONIC
-        rows_filter_actions += ',' + JOBS_SETUP_RPT_FILTER_NON_UPSTREAM
-        rows_filter_actions += ',' + JOBS_SETUP_RPT_FILTER_NON_DOWNSTREAM
-        rows_filter_actions += ',' + JOBS_SETUP_RPT_FILTER_NON_UTR
-        rows_filter_actions += ',' + JOBS_SETUP_RPT_FILTER_NON_SYNONYMOUS
-        expression_patterns = OrderedDict()
-        expression_patterns['filter_NA_young'] = '"' + WES294_OAF_EARLYONSET_AF_COL_NAME + '"==\'NA\''
-        expression_patterns['filter_unique_young'] = 'float("' + WES294_OAF_EARLYONSET_AF_COL_NAME + '")<0.0196'
-        expression_patterns['filter_kvot_young_vs_exac'] = '("' + EST_KVOT_EARLYONSET_VS_EXAC_NFE_COL_NAME + '"!=\'INF\')'
-        expression_patterns['filter_kvot_young_vs_exac'] += 'and("' + EST_KVOT_EARLYONSET_VS_EXAC_NFE_COL_NAME + '"!=\'\')'
-        expression_patterns['filter_kvot_young_vs_exac'] += 'and("' + EST_KVOT_EARLYONSET_VS_EXAC_NFE_COL_NAME + '"!=\'NA\')'
-        expression_patterns['filter_kvot_young_vs_exac'] += 'and(float("' + EST_KVOT_EARLYONSET_VS_EXAC_NFE_COL_NAME + '")<1.3)'
-        expression_patterns['filter_kvot_young_vs_brc'] = '("' + EST_KVOT_EARLYONSET_VS_BRC_COL_NAME + '"!=\'INF\')'
-        expression_patterns['filter_kvot_young_vs_brc'] += 'and("' + EST_KVOT_EARLYONSET_VS_BRC_COL_NAME + '"!=\'\')'
-        expression_patterns['filter_kvot_young_vs_brc'] += 'and(float("' + EST_KVOT_EARLYONSET_VS_BRC_COL_NAME + '")<1.3)'
-        expression_patterns['filter_ncRNA_exonic'] = '"' + FUNC_REFGENE_COL_NAME + '"==\'ncRNA_exonic\''
-        sample_info = join_path(self.data_dir,
-                                "sample.info")
-        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
-                                                        annotated_vcf_tabix=annotated_vcf_tabix,
-                                                        anno_cols=ALL_MUTREP_ANNO_COLS,
-                                                        anno_excl_tags=custom_excl_tags,
-                                                        sample_info=sample_info,
-                                                        report_regions="2,6,7,19",
-                                                        rows_filter_actions=rows_filter_actions,
-                                                        expression_patterns=",".join(map(lambda x: x+":"+expression_patterns[x], expression_patterns)),
-                                                        expression_usages=",".join(map(lambda x: x+":DELETE_ROW", expression_patterns)),
-                                                        )
-        pl = MutRepPipeline(jobs_setup_file=jobs_setup_file)
-        pl.gen_summary_report(pl.report_layout.report_regions)
-        xls_file = join_path(self.working_dir,
-                             "rpts",
-                             project_name+"_summary.xlsx")
-        xu = XlsUtils(xls_file)
-        last_anno_col_idx = xu.get_col_idx("CADD_phred")
-        first_sample_col_idx = xu.get_col_idx("1003-06o")
-        self.assertEqual(first_sample_col_idx-last_anno_col_idx,
-                         2,
-                         "Incorrect report layout"
-                         )
-        self.assertEqual(xu.get_cell_value(5, first_sample_col_idx),
-                         "het",
-                         "Incorrect cell value"
-                         )
-        last_sample_col_idx = xu.get_col_idx("L862-Br-716")
-        self.assertEqual(last_sample_col_idx-first_sample_col_idx,
-                         297,
-                         "Incorrect report layout"
-                         )
-        self.assertEqual(xu.get_cell_value(5, last_sample_col_idx),
-                         "wt",
-                         "Incorrect cell value"
-                         )
-        sample_col_idx = xu.get_col_idx("L862-Br-710")
-        self.assertEqual(xu.get_cell_value(6, sample_col_idx),
-                         "het",
-                         "Incorrect cell value"
-                         )
-
-##    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST, "taking too long time to test")
-#    def test_show_shared_mutations_1(self):
-#        """ test if shared mutations can be shown """
+#    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST, "taking too long time to test")
+#    def test_samples_groups_1(self):
+#        """
+#        test if samples in mutation report can be displayed in groups
+#          - no group
+#        """
 #
-#        self.individual_debug = True
 #        self.init_test(self.current_func_name)
 #        annotated_vcf_tabix = join_path(self.data_dir,
 #                                        "input.vcf.gz")
@@ -2042,42 +1889,193 @@ class TestMutRepPipeline(SafeTester):
 #        custom_excl_tags += "," + AXEQ_CHR3_6_14_18_COLS_TAG
 #        custom_excl_tags += "," + AXEQ_CHR5_19_COLS_TAG
 #        custom_excl_tags += "," + LJB_SCORE_COLS_TAG
+#        rows_filter_actions = JOBS_SETUP_RPT_FILTER_HAS_MUTATION
+#        rows_filter_actions += ',' + JOBS_SETUP_RPT_FILTER_PASS_VQSR
+#        rows_filter_actions += ',' + JOBS_SETUP_RPT_FILTER_NON_INTERGENIC
+#        rows_filter_actions += ',' + JOBS_SETUP_RPT_FILTER_NON_INTRONIC
+#        rows_filter_actions += ',' + JOBS_SETUP_RPT_FILTER_NON_UPSTREAM
+#        rows_filter_actions += ',' + JOBS_SETUP_RPT_FILTER_NON_DOWNSTREAM
+#        rows_filter_actions += ',' + JOBS_SETUP_RPT_FILTER_NON_UTR
+#        rows_filter_actions += ',' + JOBS_SETUP_RPT_FILTER_NON_SYNONYMOUS
+#        expression_patterns = OrderedDict()
+#        expression_patterns['filter_NA_young'] = '"' + WES294_OAF_EARLYONSET_AF_COL_NAME + '"==\'NA\''
+#        expression_patterns['filter_unique_young'] = 'float("' + WES294_OAF_EARLYONSET_AF_COL_NAME + '")<0.0196'
+#        expression_patterns['filter_kvot_young_vs_exac'] = '("' + EST_KVOT_EARLYONSET_VS_EXAC_NFE_COL_NAME + '"!=\'INF\')'
+#        expression_patterns['filter_kvot_young_vs_exac'] += 'and("' + EST_KVOT_EARLYONSET_VS_EXAC_NFE_COL_NAME + '"!=\'\')'
+#        expression_patterns['filter_kvot_young_vs_exac'] += 'and("' + EST_KVOT_EARLYONSET_VS_EXAC_NFE_COL_NAME + '"!=\'NA\')'
+#        expression_patterns['filter_kvot_young_vs_exac'] += 'and(float("' + EST_KVOT_EARLYONSET_VS_EXAC_NFE_COL_NAME + '")<1.3)'
+#        expression_patterns['filter_kvot_young_vs_brc'] = '("' + EST_KVOT_EARLYONSET_VS_BRC_COL_NAME + '"!=\'INF\')'
+#        expression_patterns['filter_kvot_young_vs_brc'] += 'and("' + EST_KVOT_EARLYONSET_VS_BRC_COL_NAME + '"!=\'\')'
+#        expression_patterns['filter_kvot_young_vs_brc'] += 'and(float("' + EST_KVOT_EARLYONSET_VS_BRC_COL_NAME + '")<1.3)'
+#        expression_patterns['filter_ncRNA_exonic'] = '"' + FUNC_REFGENE_COL_NAME + '"==\'ncRNA_exonic\''
 #        sample_info = join_path(self.data_dir,
 #                                "sample.info")
 #        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
 #                                                        annotated_vcf_tabix=annotated_vcf_tabix,
-##                                                        anno_cols=ALL_MUTREP_ANNO_COLS,
+#                                                        anno_cols=ALL_MUTREP_ANNO_COLS,
 #                                                        anno_excl_tags=custom_excl_tags,
 #                                                        sample_info=sample_info,
-#                                                        report_regions="3",
+#                                                        report_regions="2,6,7,19",
+#                                                        rows_filter_actions=rows_filter_actions,
+#                                                        expression_patterns=",".join(map(lambda x: x+":"+expression_patterns[x], expression_patterns)),
+#                                                        expression_usages=",".join(map(lambda x: x+":DELETE_ROW", expression_patterns)),
 #                                                        )
 #        pl = MutRepPipeline(jobs_setup_file=jobs_setup_file)
 #        pl.gen_summary_report(pl.report_layout.report_regions)
-##        xls_file = join_path(self.working_dir,
-##                             "rpts",
-##                             project_name+"_summary.xlsx")
-##        xu = XlsUtils(xls_file)
-##        xls_file = join_path(self.working_dir,
-##                             "rpts",
-##                             project_name+"_summary.xlsx")
-##        xu = XlsUtils(xls_file)
-##        sample_col_idx = xu.get_col_idx("256-Co-388")
-##        self.assertEqual(xu.get_cell_value(2, sample_col_idx),
-##                         "wt",
-##                         "Incorrect cell value"
-##                         )
-##        self.assertEqual(xu.get_cell_rgb(2, sample_col_idx),
-##                         RGB_NO_FILL,
-##                         "Incorrect color"
-##                         )
-##        self.assertEqual(xu.get_cell_value(3, sample_col_idx),
-##                         "het",
-##                         "Incorrect cell value"
-##                         )
-##        self.assertEqual(xu.get_cell_rgb(3, sample_col_idx),
-##                         RGB_NO_FILL,
-##                         "Incorrect color"
-##                         )
+#        xls_file = join_path(self.working_dir,
+#                             "rpts",
+#                             project_name+"_summary.xlsx")
+#        xu = XlsUtils(xls_file)
+#        last_anno_col_idx = xu.get_col_idx("CADD_phred")
+#        first_sample_col_idx = xu.get_col_idx("1003-06o")
+#        self.assertEqual(first_sample_col_idx-last_anno_col_idx,
+#                         2,
+#                         "Incorrect report layout"
+#                         )
+#        self.assertEqual(xu.get_cell_value(5, first_sample_col_idx),
+#                         "het",
+#                         "Incorrect cell value"
+#                         )
+#        last_sample_col_idx = xu.get_col_idx("L862-Br-716")
+#        self.assertEqual(last_sample_col_idx-first_sample_col_idx,
+#                         290,
+#                         "Incorrect report layout"
+#                         )
+#        self.assertEqual(xu.get_cell_value(5, last_sample_col_idx),
+#                         "wt",
+#                         "Incorrect cell value"
+#                         )
+#        sample_col_idx = xu.get_col_idx("L862-Br-710")
+#        self.assertEqual(xu.get_cell_value(6, sample_col_idx),
+#                         "het",
+#                         "Incorrect cell value"
+#                         )
 #
+#    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST, "taking too long time to test")
+#    def test_samples_groups_2(self):
+#        """
+#        test if samples in mutation report can be displayed in groups
+#          - all the samples have group information
+#        """
+#
+#        self.init_test(self.current_func_name)
+#        annotated_vcf_tabix = join_path(self.data_dir,
+#                                        "input.vcf.gz")
+#        project_name = self.test_function
+#        custom_excl_tags = DFLT_TEST_ANNO_EXCL_TAGS
+#        custom_excl_tags += "," + AXEQ_CHR3_6_14_18_COLS_TAG
+#        custom_excl_tags += "," + AXEQ_CHR5_19_COLS_TAG
+#        custom_excl_tags += "," + LJB_SCORE_COLS_TAG
+#        rows_filter_actions = JOBS_SETUP_RPT_FILTER_HAS_MUTATION
+#        rows_filter_actions += ',' + JOBS_SETUP_RPT_FILTER_PASS_VQSR
+#        rows_filter_actions += ',' + JOBS_SETUP_RPT_FILTER_NON_INTERGENIC
+#        rows_filter_actions += ',' + JOBS_SETUP_RPT_FILTER_NON_INTRONIC
+#        rows_filter_actions += ',' + JOBS_SETUP_RPT_FILTER_NON_UPSTREAM
+#        rows_filter_actions += ',' + JOBS_SETUP_RPT_FILTER_NON_DOWNSTREAM
+#        rows_filter_actions += ',' + JOBS_SETUP_RPT_FILTER_NON_UTR
+#        rows_filter_actions += ',' + JOBS_SETUP_RPT_FILTER_NON_SYNONYMOUS
+#        expression_patterns = OrderedDict()
+#        expression_patterns['filter_NA_young'] = '"' + WES294_OAF_EARLYONSET_AF_COL_NAME + '"==\'NA\''
+#        expression_patterns['filter_unique_young'] = 'float("' + WES294_OAF_EARLYONSET_AF_COL_NAME + '")<0.0196'
+#        expression_patterns['filter_kvot_young_vs_exac'] = '("' + EST_KVOT_EARLYONSET_VS_EXAC_NFE_COL_NAME + '"!=\'INF\')'
+#        expression_patterns['filter_kvot_young_vs_exac'] += 'and("' + EST_KVOT_EARLYONSET_VS_EXAC_NFE_COL_NAME + '"!=\'\')'
+#        expression_patterns['filter_kvot_young_vs_exac'] += 'and("' + EST_KVOT_EARLYONSET_VS_EXAC_NFE_COL_NAME + '"!=\'NA\')'
+#        expression_patterns['filter_kvot_young_vs_exac'] += 'and(float("' + EST_KVOT_EARLYONSET_VS_EXAC_NFE_COL_NAME + '")<1.3)'
+#        expression_patterns['filter_kvot_young_vs_brc'] = '("' + EST_KVOT_EARLYONSET_VS_BRC_COL_NAME + '"!=\'INF\')'
+#        expression_patterns['filter_kvot_young_vs_brc'] += 'and("' + EST_KVOT_EARLYONSET_VS_BRC_COL_NAME + '"!=\'\')'
+#        expression_patterns['filter_kvot_young_vs_brc'] += 'and(float("' + EST_KVOT_EARLYONSET_VS_BRC_COL_NAME + '")<1.3)'
+#        expression_patterns['filter_ncRNA_exonic'] = '"' + FUNC_REFGENE_COL_NAME + '"==\'ncRNA_exonic\''
+#        sample_info = join_path(self.data_dir,
+#                                "sample.info")
+#        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
+#                                                        annotated_vcf_tabix=annotated_vcf_tabix,
+#                                                        anno_cols=ALL_MUTREP_ANNO_COLS,
+#                                                        anno_excl_tags=custom_excl_tags,
+#                                                        sample_info=sample_info,
+#                                                        report_regions="2,6,7,19",
+#                                                        rows_filter_actions=rows_filter_actions,
+#                                                        expression_patterns=",".join(map(lambda x: x+":"+expression_patterns[x], expression_patterns)),
+#                                                        expression_usages=",".join(map(lambda x: x+":DELETE_ROW", expression_patterns)),
+#                                                        )
+#        pl = MutRepPipeline(jobs_setup_file=jobs_setup_file)
+#        pl.gen_summary_report(pl.report_layout.report_regions)
+#        xls_file = join_path(self.working_dir,
+#                             "rpts",
+#                             project_name+"_summary.xlsx")
+#        xu = XlsUtils(xls_file)
+#        last_anno_col_idx = xu.get_col_idx("CADD_phred")
+#        first_sample_col_idx = xu.get_col_idx("1003-06o")
+#        self.assertEqual(first_sample_col_idx-last_anno_col_idx,
+#                         2,
+#                         "Incorrect report layout"
+#                         )
+#        self.assertEqual(xu.get_cell_value(5, first_sample_col_idx),
+#                         "het",
+#                         "Incorrect cell value"
+#                         )
+#        last_sample_col_idx = xu.get_col_idx("L862-Br-716")
+#        self.assertEqual(last_sample_col_idx-first_sample_col_idx,
+#                         297,
+#                         "Incorrect report layout"
+#                         )
+#        self.assertEqual(xu.get_cell_value(5, last_sample_col_idx),
+#                         "wt",
+#                         "Incorrect cell value"
+#                         )
+#        sample_col_idx = xu.get_col_idx("L862-Br-710")
+#        self.assertEqual(xu.get_cell_value(6, sample_col_idx),
+#                         "het",
+#                         "Incorrect cell value"
+#                         )
+
+    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST, "taking too long time to test")
+    def test_show_shared_mutations_1(self):
+        """ test if shared mutations can be shown """
+
+        self.individual_debug = True
+        self.init_test(self.current_func_name)
+        annotated_vcf_tabix = join_path(self.data_dir,
+                                        "input.vcf.gz")
+        project_name = self.test_function
+        custom_excl_tags = DFLT_TEST_ANNO_EXCL_TAGS
+        custom_excl_tags += "," + AXEQ_CHR3_6_14_18_COLS_TAG
+        custom_excl_tags += "," + AXEQ_CHR5_19_COLS_TAG
+        custom_excl_tags += "," + LJB_SCORE_COLS_TAG
+        sample_info = join_path(self.data_dir,
+                                "sample.info")
+        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
+                                                        annotated_vcf_tabix=annotated_vcf_tabix,
+                                                        anno_excl_tags=custom_excl_tags,
+                                                        sample_info=sample_info,
+                                                        report_regions="3",
+                                                        show_shared_mutations=True,
+                                                        coloring_shared=True,
+                                                        )
+        pl = MutRepPipeline(jobs_setup_file=jobs_setup_file)
+        pl.gen_summary_report(pl.report_layout.report_regions)
+        xls_file = join_path(self.working_dir,
+                             "rpts",
+                             project_name+"_summary.xlsx")
+        xu = XlsUtils(xls_file)
+        fam_col_idx = xu.get_col_idx("F0007826")
+        self.assertEqual(xu.get_cell_value(2, fam_col_idx),
+                         "not shared",
+                         "Incorrect cell value"
+                         )
+        exp_rgb = "FF" + COLORS_RGB["XLS_GRAY1_2"][-6:]
+        self.assertEqual(xu.get_cell_rgb(2, fam_col_idx),
+                         exp_rgb,
+                         "Incorrect color"
+                         )
+        self.assertEqual(xu.get_cell_value(3, fam_col_idx),
+                         "shared",
+                         "Incorrect cell value"
+                         )
+        exp_rgb = "FF" + COLORS_RGB["LIGHT_BLUE"][-6:]
+        self.assertEqual(xu.get_cell_rgb(3, fam_col_idx),
+                         exp_rgb,
+                         "Incorrect color"
+                         )
+
     def tearDown(self):
         self.remove_working_dir()
