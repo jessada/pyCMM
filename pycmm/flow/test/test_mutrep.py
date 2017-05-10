@@ -81,6 +81,7 @@ DFLT_TEST_ANNO_EXCL_TAGS += "," + EXAC_CONSTRAINT_COLS_TAG
 DFLT_TEST_ANNO_EXCL_TAGS += "," + UNKNOWN_COLS_TAG
 
 MUTREP_TEST = False
+MUTREP_TEST = True
 
 RGB_NO_FILL = "00000000"
 
@@ -146,7 +147,7 @@ class TestMutRepPipeline(SafeTester):
                          "MutRepPipeline cannot correctly read report layout info 'call info' from jobs setup file")
         self.assertFalse(pl.report_layout.call_gq,
                          "MutRepPipeline cannot correctly read report layout info 'call info' from jobs setup file")
-        self.assertFalse(pl.report_layout.show_shared_mutations,
+        self.assertFalse(pl.report_layout.show_shared_variants,
                          "MutRepPipeline cannot correctly read report layout info 'show shared mutations' from jobs setup file")
         self.assertFalse(pl.report_layout.filter_rare,
                          "MutRepPipeline cannot correctly read report layout info 'filter rare' from jobs setup file")
@@ -191,7 +192,7 @@ class TestMutRepPipeline(SafeTester):
                                                         split_chrom=True,
                                                         call_detail=True,
                                                         call_gq=True,
-                                                        show_shared_mutations=True,
+                                                        show_shared_variants=True,
                                                         rows_filter_actions=rows_filter_actions,
                                                         coloring_shared=True,
                                                         coloring_zygosity=True,
@@ -245,7 +246,7 @@ class TestMutRepPipeline(SafeTester):
                         "MutRepPipeline cannot correctly read report layout info 'call info' from jobs setup file")
         self.assertTrue(pl.report_layout.call_gq,
                         "MutRepPipeline cannot correctly read report layout info 'call info' from jobs setup file")
-        self.assertTrue(pl.report_layout.show_shared_mutations,
+        self.assertTrue(pl.report_layout.show_shared_variants,
                         "MutRepPipeline cannot correctly read report layout info 'show shared mutations' from jobs setup file")
         self.assertTrue(pl.report_layout.filter_rare,
                         "MutRepPipeline cannot correctly read report layout info 'filter rare' from jobs setup file")
@@ -962,6 +963,41 @@ class TestMutRepPipeline(SafeTester):
         xu = XlsUtils(xls_file)
         self.assertEqual(xu.count_rows(sheet_idx=0),
                          4,
+                         "Incorrect number of rows"
+                         )
+
+#    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST, "taking too long time to test")
+    def test_expression_action_del_row_4(self):
+        """
+        test if expreesion patterns and expression actions can be used
+        for deleting rows with "true synonymous" variants
+        """
+
+        self.individual_debug = True
+        self.init_test(self.current_func_name)
+        annotated_vcf_tabix = join_path(self.data_dir,
+                                        "input.vcf.gz")
+        project_name = self.test_function
+        anno_cols = list(DFLT_TEST_MUTREP_COLS)
+        anno_cols.append("OAF_EARLYONSET_AF")
+        anno_cols.append("dpsi_zscore")
+        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
+                                                        annotated_vcf_tabix=annotated_vcf_tabix,
+                                                        report_regions="1",
+#                                                        expression_patterns='exp_OAF0:"OAF_EARLYONSET_AF"==\'0.0000\',exp_OAF1:"OAF_EARLYONSET_AF"==\'1.0000\',exp_OAF_empty:"OAF_EARLYONSET_AF"==\'\',exp_OAF_NA:"OAF_EARLYONSET_AF"==\'NA\'',
+                                                        expression_patterns='true_synonymous:("dpsi_zscore"!=\'\')and(float("dpsi_zscore")>-2)and("ExonicFunc.refGene"==\'synonymous_SNV\')and(float("dpsi_zscore")<2)',
+#                                                        expression_usages="exp_OAF0:DELETE_ROW,exp_OAF1:DELETE_ROW,exp_OAF_empty:DELETE_ROW,exp_OAF_NA:DELETE_ROW",
+                                                        expression_usages="true_synonymous:DELETE_ROW",
+                                                        anno_cols=anno_cols,
+                                                        )
+        pl = MutRepPipeline(jobs_setup_file=jobs_setup_file)
+        pl.gen_summary_report(pl.report_layout.report_regions)
+        xls_file = join_path(self.working_dir,
+                             "rpts",
+                             project_name+"_summary.xlsx")
+        xu = XlsUtils(xls_file)
+        self.assertEqual(xu.count_rows(sheet_idx=0),
+                         2,
                          "Incorrect number of rows"
                          )
 
@@ -2029,7 +2065,7 @@ class TestMutRepPipeline(SafeTester):
                          )
 
     @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST, "taking too long time to test")
-    def test_show_shared_mutations_1(self):
+    def test_show_shared_variants_1(self):
         """ test if shared mutations can be shown """
 
         self.individual_debug = True
@@ -2048,7 +2084,7 @@ class TestMutRepPipeline(SafeTester):
                                                         anno_excl_tags=custom_excl_tags,
                                                         sample_info=sample_info,
                                                         report_regions="3",
-                                                        show_shared_mutations=True,
+                                                        show_shared_variants=True,
                                                         coloring_shared=True,
                                                         )
         pl = MutRepPipeline(jobs_setup_file=jobs_setup_file)

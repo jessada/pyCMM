@@ -161,7 +161,6 @@ class TestTAVcfRecordXls(SafeTester):
                                                         sample_info="24:Co-166:Co-213:Co-648,8:Co-37,275:Co-618,478:Co-1274",
                                                         anno_cols=DFLT_TEST_MUTREP_COLS,
                                                         anno_excl_tags=DFLT_TEST_ANNO_EXCL_TAGS,
-                                                        summary_families_sheet=True,
                                                         )
         pl = MutRepPipeline(jobs_setup_file)
         pl.gen_summary_report(pl.report_layout.report_regions)
@@ -169,7 +168,7 @@ class TestTAVcfRecordXls(SafeTester):
                              "rpts",
                              project_name+"_summary.xlsx")
         xu = XlsUtils(xls_file)
-        self.assertEqual(xu.count_rows(sheet_idx=1),
+        self.assertEqual(xu.count_rows(sheet_idx=0),
                          34,
                          "shared mutation cannot be correctly determined")
         rows_filter_actions = JOBS_SETUP_RPT_FILTER_HAS_MUTATION
@@ -179,7 +178,6 @@ class TestTAVcfRecordXls(SafeTester):
                                                         sample_info="24:Co-166:Co-213:Co-648,8:Co-37,275:Co-618,478:Co-1274",
                                                         anno_cols=DFLT_TEST_MUTREP_COLS,
                                                         anno_excl_tags=DFLT_TEST_ANNO_EXCL_TAGS,
-                                                        summary_families_sheet=True,
                                                         rows_filter_actions=rows_filter_actions,
                                                         )
         pl = MutRepPipeline(jobs_setup_file)
@@ -188,7 +186,7 @@ class TestTAVcfRecordXls(SafeTester):
                              "rpts",
                              project_name+"_summary.xlsx")
         xu = XlsUtils(xls_file)
-        self.assertEqual(xu.count_rows(sheet_idx=1),
+        self.assertEqual(xu.count_rows(sheet_idx=0),
                          13,
                          "shared mutation cannot be correctly determined")
 

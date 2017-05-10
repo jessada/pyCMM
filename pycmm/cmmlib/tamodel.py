@@ -588,10 +588,35 @@ class _TAVcfRecord(_VcfRecord, pyCMMBase):
             repl_txt += ")"
             return repl_txt
 
-        info_field = re.search(r'(\".+?\")', expr).group(0)
-        info_val = eval(re.sub(r'(\".+?\")',
-                               info_repl,
-                               info_field)) 
-        return eval(re.sub(r'(\".+?\")',
-                           "info_val",
-                           expr))
+        # look for annotated fields
+        info_fields = {}
+#        info_field = re.search(r'(\".+?\")', expr).group(0)
+#        self.dbg(expr)
+        for match in re.finditer(r'(\".+?\")', expr):
+            info_fields[match.group(1)] = 1
+        # replace the annotated fields with the actual values
+        repl_expr = expr
+        for info_field in info_fields:
+            info_val = eval(re.sub(r'(\".+?\")',
+                                   info_repl,
+                                   info_field)) 
+#            self.dbg(info_val)
+            repl_expr = re.sub(info_field,
+                               "'"+str(info_val)+"'",
+                               repl_expr)
+#        self.dbg(repl_expr)
+#        self.dbg(info_field)
+#        self.dbg(re.sub(r'(\".+?\")',
+#                               info_repl,
+#                               info_field)) 
+#        info_val = eval(re.sub(r'(\".+?\")',
+#                               info_repl,
+#                               info_field)) 
+#        self.dbg(re.sub(r'(\".+?\")',
+#                           "info_val",
+#                           expr))
+        # then eval the expression
+        return eval(repl_expr)
+#        return eval(re.sub(r'(\".+?\")',
+#                           "info_val",
+#                           expr))

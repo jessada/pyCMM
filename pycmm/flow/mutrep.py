@@ -91,7 +91,7 @@ JOBS_SETUP_RPT_SUMMARY_FAMILIES_KEY = "SUMMARY_FAMILIES"
 JOBS_SETUP_RPT_EXTRA_ANNO_COLS_KEY = "EXTRA_ANNOTATION_COLUMNS"
 JOBS_SETUP_RPT_EXTRA_ANNO_CALL_DETAIL = "Calling_detail"
 JOBS_SETUP_RPT_EXTRA_ANNO_CALL_GQ = "Calling_GQ"
-JOBS_SETUP_RPT_SHOW_SHARED_MUTATIONS = "Show_shared_mutations"
+JOBS_SETUP_RPT_SHOW_SHARED_VARIANTS = "Show_shared_mutations"
 JOBS_SETUP_RPT_MT_KEY = "Mitochondria"
 JOBS_SETUP_RPT_ROWS_FILTER_ACTIONS_CRITERIA_KEY = "ROWS_FILTER_ACTIONS_CRITERIA"
 JOBS_SETUP_RPT_FILTER_RARE = "Rare"
@@ -299,22 +299,25 @@ class ReportLayout(CMMParams):
         self.__init_cell_colors()
 
     def get_raw_obj_str(self, *args, **kwargs):
-        raw_repr = super(ReportLayout, self).get_raw_obj_str(*args, **kwargs)
-        raw_repr["annotated tabix file"] = self.annotated_vcf_tabix
-        raw_repr["annotation columns"] = self.anno_cols
+        raw_str = super(ReportLayout, self).get_raw_obj_str(*args, **kwargs)
+        raw_str["annotated tabix file"] = self.annotated_vcf_tabix
+        raw_str["annotation columns"] = self.anno_cols
         if self.anno_excl_tags is not None and len(self.anno_excl_tags) > 0:
-            raw_repr["annotation exclusion tags"] = self.anno_excl_tags
-        raw_repr["genotyping calling detail"] = self.call_detail
-        raw_repr["genotyping calling quality"] = self.call_gq
-        raw_repr[RPT_LAYOUT_CAPTION_FREQ_RATIOS] = self.freq_ratios
+            raw_str["annotation exclusion tags"] = self.anno_excl_tags
+        raw_str["genotyping calling detail"] = self.call_detail
+        raw_str["genotyping calling quality"] = self.call_gq
+        raw_str[RPT_LAYOUT_CAPTION_FREQ_RATIOS] = self.freq_ratios
         if self.exprs is not None:
-            raw_repr["expression actions"] = self.exprs.actions
-        raw_repr["genes list"] = self.filter_genes
+            raw_str["expression actions"] = self.exprs.actions
+        raw_str["genes list"] = self.filter_genes
         if self.report_regions is None:
-            raw_repr[RPT_LAYOUT_CAPTION_RPT_REGIONS] = "ALL"
+            raw_str[RPT_LAYOUT_CAPTION_RPT_REGIONS] = "ALL"
         else:
-            raw_repr[RPT_LAYOUT_CAPTION_RPT_REGIONS] = self.report_regions
-        raw_repr["split chromosome"] = self.split_chrom
+            raw_str[RPT_LAYOUT_CAPTION_RPT_REGIONS] = self.report_regions
+        raw_str["split chromosome"] = self.split_chrom
+        raw_str['coloring shared variants'] = self.coloring_shared
+        raw_str['coloring variant zygosities'] = self.coloring_zygosity
+        raw_str['show shared mutations'] = self.show_shared_variants
         filter_actions = OrderedDict()
         filter_actions[FILTER_RARE] = self.filter_rare
         filter_actions[FILTER_PASS_VQSR] = self.filter_pass_vqsr
@@ -327,8 +330,8 @@ class ReportLayout(CMMParams):
         filter_actions[FILTER_HAS_MUTATION] = self.filter_has_mutation
         filter_actions[FILTER_HAS_SHARED] = self.filter_has_shared
         filter_actions[FILTER_NON_RECESSIVE_GENE] = self.filter_non_recessive_gene
-        raw_repr[RPT_LAYOUT_CAPTION_FILTER_ACTIONS] = filter_actions
-        return raw_repr
+        raw_str[RPT_LAYOUT_CAPTION_FILTER_ACTIONS] = filter_actions
+        return raw_str
 
     def __init_properties(self):
         self.__anno_cols = None
@@ -584,8 +587,8 @@ class ReportLayout(CMMParams):
         return self.__cell_colors[CELL_TYPE_SEPARATOR]
 
     @property
-    def show_shared_mutations(self):
-        return self._get_job_config(JOBS_SETUP_RPT_SHOW_SHARED_MUTATIONS,
+    def show_shared_variants(self):
+        return self._get_job_config(JOBS_SETUP_RPT_SHOW_SHARED_VARIANTS,
                                     default_val=False)
 
 class MutRepPipeline(CMMPipeline):
@@ -596,8 +599,8 @@ class MutRepPipeline(CMMPipeline):
         self.__init_properties()
 
     def get_raw_obj_str(self, *args, **kwargs):
-        raw_repr = super(MutRepPipeline, self).get_raw_obj_str(*args, **kwargs)
-        return raw_repr
+        raw_str = super(MutRepPipeline, self).get_raw_obj_str(*args, **kwargs)
+        return raw_str
 
     def get_third_party_software_version(self):
         vm = VersionManager()
@@ -697,7 +700,7 @@ class MutRepPipeline(CMMPipeline):
               len(self.datasets) > 0): 
             next_col = sample_start_col
             for dataset in self.datasets.values():
-                if self.report_layout.show_shared_mutations:
+                if self.report_layout.show_shared_variants:
                     for family in dataset.families.values():
                         next_col = self.__write_sample(ws,
                                                        0,
@@ -879,7 +882,7 @@ class MutRepPipeline(CMMPipeline):
             sep_color = self.report_layout.cell_color_separator
             sep_fmt = self.plain_fmts[sep_color]
             for dataset in self.datasets.values():
-                if self.report_layout.show_shared_mutations:
+                if self.report_layout.show_shared_variants:
                     het_shared_color = self.report_layout.cell_color_het_shared
                     het_fmt = self.plain_fmts[het_shared_color]
                     for family in dataset.families.values():
@@ -933,6 +936,14 @@ class MutRepPipeline(CMMPipeline):
                          fam_id,
 #                         check_shared,
                          ):
+        if fam_id is not None:
+            # reserved for handling displaying some specific samples
+            pass
+        elif not self.has_samples_info:
+            samples_id = self.vcf_reader.samples
+        else:
+            samples_id = map(lambda x: x.sample_id,
+                             self.samples_list)
         for vcf_record in vcf_records:
             for allele_idx in xrange(1, len(vcf_record.alleles)):
 # *********************** has to rework *************************
@@ -964,11 +975,9 @@ class MutRepPipeline(CMMPipeline):
                 if (self.report_layout.filter_non_synonymous and
                     vcf_record.is_synonymous[allele_idx]):
                     continue
-# *********************** has to rework *************************
-#                if (self.report_layout.filter_has_mutation and
-#                    not vcf_record.has_mutation(samples_id, allele_idx)):
-#                    continue
-# ***************************************************************
+                if (self.report_layout.filter_has_mutation and
+                    not vcf_record.has_mutation(samples_id, allele_idx)):
+                    continue
                 if (self.report_layout.filter_has_shared and
                     not vcf_record.has_shared(allele_idx)):
                     continue
@@ -1358,10 +1367,10 @@ def create_jobs_setup_file(*args, **kwargs):
         if call_gq:
             extra_anno_cols.append(JOBS_SETUP_RPT_EXTRA_ANNO_CALL_GQ)
         rpt_cfg[JOBS_SETUP_RPT_EXTRA_ANNO_COLS_KEY] = extra_anno_cols
-    rpt_cfg[JOBS_SETUP_RPT_SHOW_SHARED_MUTATIONS] = get_func_arg('show_shared_mutations',
-                                                                 kwargs,
-                                                                 default_val=False,
-                                                                 )
+    rpt_cfg[JOBS_SETUP_RPT_SHOW_SHARED_VARIANTS] = get_func_arg('show_shared_variants',
+                                                                kwargs,
+                                                                default_val=False,
+                                                                )
     coloring_shared = get_func_arg('coloring_shared', kwargs, default_val=False)
     coloring_zygosity = get_func_arg('coloring_zygosity', kwargs, default_val=False)
     if coloring_shared or coloring_zygosity:
