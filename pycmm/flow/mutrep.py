@@ -34,7 +34,6 @@ from pycmm.utils import DefaultOrderedDict
 from pycmm.utils import is_number
 from pycmm.utils.ver import VersionManager
 from pycmm.cmmlib import CMMParams
-#from pycmm.cmmlib.samplelib import SamplesGroup
 from pycmm.cmmlib.samplelib import SAMPLE_GROUP_MISSING
 from pycmm.cmmlib.taparser import TAVcfReader as VcfReader
 from pycmm.cmmlib.xlslib import CMMWorkbook as Workbook
@@ -65,6 +64,8 @@ CELL_TYPE_HET_RECESSIVE = 'HET_RECESSIVE'
 CELL_TYPE_HOM_RECESSIVE = 'HOM_RECESSIVE'
 DFLT_COLOR_SEPARATOR = 'XLS_GRAY1_2'
 CELL_TYPE_SEPARATOR = 'SEPARATOR'
+DFLT_COLOR_COLOR_GENE = 'XLS_GREEN'
+CELL_TYPE_COLOR_GENE = 'COLOR_GENE'
 
 RECORDS_LOG_INTERVAL = 1000
 
@@ -106,6 +107,7 @@ JOBS_SETUP_RPT_FILTER_HAS_MUTATION = "Has-Mutation"
 JOBS_SETUP_RPT_FILTER_HAS_SHARED = "Has-Shared"
 JOBS_SETUP_RPT_FILTER_NON_RECESSIVE_GENE = "Non-Recessive-Gene"
 JOBS_SETUP_RPT_FILTER_GENES_KEY = "FILTER_GENES"
+JOBS_SETUP_RPT_COLOR_GENES_KEY = "COLOR_GENES"
 JOBS_SETUP_RPT_COLORING_SAMPLES_KEY = "COLORING_SAMPLES"
 JOBS_SETUP_RPT_COLORING_SHARED = "Shared"
 JOBS_SETUP_RPT_COLORING_ZYGOSITY = "Zygosity"
@@ -309,7 +311,8 @@ class ReportLayout(CMMParams):
         raw_str[RPT_LAYOUT_CAPTION_FREQ_RATIOS] = self.freq_ratios
         if self.exprs is not None:
             raw_str["expression actions"] = self.exprs.actions
-        raw_str["genes list"] = self.filter_genes
+        raw_str["filter genes list"] = self.filter_genes
+        raw_str["color genes list"] = self.color_genes
         if self.report_regions is None:
             raw_str[RPT_LAYOUT_CAPTION_RPT_REGIONS] = "ALL"
         else:
@@ -548,6 +551,10 @@ class ReportLayout(CMMParams):
     def filter_genes(self):
         return self._get_job_config(JOBS_SETUP_RPT_FILTER_GENES_KEY)
 
+    @property
+    def color_genes(self):
+        return self._get_job_config(JOBS_SETUP_RPT_COLOR_GENES_KEY)
+
     def __init_cell_colors(self):
         self.__cell_colors = {}
         self.__cell_colors[CELL_TYPE_HET_SHARED] = DFLT_COLOR_HET_SHARED
@@ -557,6 +564,7 @@ class ReportLayout(CMMParams):
         self.__cell_colors[CELL_TYPE_HET_RECESSIVE] = DFLT_COLOR_HET_RECESSIVE
         self.__cell_colors[CELL_TYPE_HOM_RECESSIVE] = DFLT_COLOR_HOM_RECESSIVE
         self.__cell_colors[CELL_TYPE_SEPARATOR] = DFLT_COLOR_SEPARATOR
+        self.__cell_colors[CELL_TYPE_COLOR_GENE] = DFLT_COLOR_COLOR_GENE
 
     @property
     def cell_color_het_shared(self):
@@ -585,6 +593,10 @@ class ReportLayout(CMMParams):
     @property
     def cell_color_separator(self):
         return self.__cell_colors[CELL_TYPE_SEPARATOR]
+
+    @property
+    def cell_color_color_gene(self):
+        return self.__cell_colors[CELL_TYPE_COLOR_GENE]
 
     @property
     def show_shared_variants(self):
@@ -845,6 +857,15 @@ class MutRepPipeline(CMMPipeline):
                 continue
             if anno_col_name in PREDICTION_COLS:
                 info = info.description
+            # If color_genes is defined, color the genes found in color_genes
+            if (anno_col_name == GENE_REFGENE_COL_NAME and
+                self.report_layout.color_genes is not None): 
+                gene_refgenes = vcf_record.get_info(GENE_REFGENE_COL_NAME,
+                                                    allele_idx).split(',')
+                for color_gene in self.report_layout.color_genes:
+                    if color_gene in gene_refgenes:
+                        info_cell_fmt = self.plain_fmts[self.report_layout.cell_color_color_gene]
+                        break
             # determine cell format
             if (anno_col_name in FORMAT_COLS and
                 FORMAT_COLS[anno_col_name] == FORMAT_COL_FLOAT and
@@ -934,7 +955,6 @@ class MutRepPipeline(CMMPipeline):
                          row,
                          vcf_records,
                          fam_id,
-#                         check_shared,
                          ):
         if fam_id is not None:
             # reserved for handling displaying some specific samples
@@ -946,11 +966,6 @@ class MutRepPipeline(CMMPipeline):
                              self.samples_list)
         for vcf_record in vcf_records:
             for allele_idx in xrange(1, len(vcf_record.alleles)):
-# *********************** has to rework *************************
-#                if (check_shared and
-#                    not vcf_record.is_shared(samples_id, allele_idx)):
-#                    continue
-# ***************************************************************
                 if (self.report_layout.filter_rare and
                     not vcf_record.is_rare(allele_idx=allele_idx)):
                     continue
@@ -1013,7 +1028,6 @@ class MutRepPipeline(CMMPipeline):
 
     def __set_layout(self, ws, sample_start_idx, record_size):
         ws.autofilter(0, 0, 0, sample_start_idx-1)
-#        ws.autofilter(0, 0, 0, record_size-1)
         ws.set_column(XLS_CHROM_COL_IDX, XLS_CHROM_COL_IDX, 2.5)
         ws.set_column(XLS_POS_COL_IDX, XLS_POS_COL_IDX, 9)
         ws.set_column(XLS_REF_COL_IDX, XLS_REF_COL_IDX, 3.5)
@@ -1032,7 +1046,6 @@ class MutRepPipeline(CMMPipeline):
                          sheet_name,
                          report_regions,
                          fam_id=None,
-#                         check_shared=False,
                          ):
         wb = self.__wb
         annotated_vcf_tabix = self.report_layout.annotated_vcf_tabix
@@ -1045,8 +1058,6 @@ class MutRepPipeline(CMMPipeline):
         else:
             self.thrown(annotated_vcf_tabix + ' does not endswith .vcf.gz')
         row = 1
-#        if samples_id is None:
-#            samples_id = vcf_reader.samples
         ws = self.__add_sheet(sheet_name)
         sample_start_idx, ncol = self.__write_header(ws,
                                                      fam_id,
@@ -1056,7 +1067,6 @@ class MutRepPipeline(CMMPipeline):
                                         row,
                                         self.vcf_reader,
                                         fam_id,
-#                                        check_shared
                                         )
         else:
             for report_region in report_regions:
@@ -1073,7 +1083,6 @@ class MutRepPipeline(CMMPipeline):
                                             row,
                                             vcf_records,
                                             fam_id,
-#                                            check_shared
                                             )
         log_msg = "Finish .. "
         log_msg += " total of " + str(row-1)
@@ -1152,7 +1161,6 @@ class MutRepPipeline(CMMPipeline):
         self.info(" >> add 'summary_all' sheet")
         self.__add_muts_sheet("summary_all",
                               report_regions,
-#                              samples_id=self.samples_id,
                               )
         self.__add_criteria_sheet()
         self.__wb.close()
@@ -1248,7 +1256,6 @@ class MutRepPipeline(CMMPipeline):
             self.__add_muts_sheet(samples_id[0],
                                   report_regions,
                                   samples_id=samples_id,
-#                                  check_shared=True,
                                   )
         else:
             self.info("")
@@ -1256,7 +1263,6 @@ class MutRepPipeline(CMMPipeline):
             self.__add_muts_sheet("shared",
                                   report_regions,
                                   samples_id=samples_id,
-#                                  check_shared=True)
                                   )
             for sample_name in samples_id:
                 self.info("")
@@ -1264,7 +1270,6 @@ class MutRepPipeline(CMMPipeline):
                 self.__add_muts_sheet(sample_name,
                                       report_regions,
                                       samples_id=[sample_name],
-#                                      check_shared=True)
                                       )
         self.__wb.close()
 
@@ -1421,5 +1426,8 @@ def create_jobs_setup_file(*args, **kwargs):
     filter_genes = get_func_arg('filter_genes', kwargs)
     if filter_genes is not None:
         rpt_cfg[JOBS_SETUP_RPT_FILTER_GENES_KEY] = filter_genes.split(",")
+    color_genes = get_func_arg('color_genes', kwargs)
+    if color_genes is not None:
+        rpt_cfg[JOBS_SETUP_RPT_COLOR_GENES_KEY] = color_genes.split(",")
     job_setup_document[JOBS_SETUP_RPT_LAYOUT_SECTION] = rpt_cfg
     pyaml.dump(job_setup_document, stream)

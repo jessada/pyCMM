@@ -81,7 +81,6 @@ DFLT_TEST_ANNO_EXCL_TAGS += "," + EXAC_CONSTRAINT_COLS_TAG
 DFLT_TEST_ANNO_EXCL_TAGS += "," + UNKNOWN_COLS_TAG
 
 MUTREP_TEST = False
-MUTREP_TEST = True
 
 RGB_NO_FILL = "00000000"
 
@@ -163,6 +162,8 @@ class TestMutRepPipeline(SafeTester):
                          "MutRepPipeline cannot correctly read report layout info 'filter non-recessive-gene' from jobs setup file")
         self.assertTrue(pl.report_layout.filter_genes is None,
                         "MutRepPipeline cannot correctly read report layout info 'filter genes' from jobs setup file")
+        self.assertTrue(pl.report_layout.color_genes is None,
+                        "MutRepPipeline cannot correctly read report layout info 'color genes' from jobs setup file")
         self.assertFalse(pl.report_layout.coloring_shared,
                          "MutRepPipeline cannot correctly read report layout info 'coloring shared' from jobs setup file")
         self.assertFalse(pl.report_layout.coloring_zygosity,
@@ -187,6 +188,7 @@ class TestMutRepPipeline(SafeTester):
                                                         report_regions="6:78161823-78164117,"+DFLT_TEST_REPORT_REGIONS+",22",
                                                         frequency_ratios=None,
                                                         filter_genes="CHEK2",
+                                                        color_genes="BRCA1",
                                                         expression_patterns="test1:1>0",
                                                         expression_usages="test1:DELETE_ROW,test1:COLOR_COLUMN:cytoBand:yellow",
                                                         split_chrom=True,
@@ -263,6 +265,9 @@ class TestMutRepPipeline(SafeTester):
         self.assertEqual(pl.report_layout.filter_genes[0],
                          'CHEK2',
                          "MutRepPipeline cannot correctly read report layout info 'filter genes' from jobs setup file")
+        self.assertEqual(pl.report_layout.color_genes[0],
+                         'BRCA1',
+                         "MutRepPipeline cannot correctly read report layout info 'color genes' from jobs setup file")
         self.assertTrue(pl.report_layout.coloring_shared,
                         "MutRepPipeline cannot correctly read report layout info 'coloring shared' from jobs setup file")
         self.assertTrue(pl.report_layout.coloring_zygosity,
@@ -276,6 +281,7 @@ class TestMutRepPipeline(SafeTester):
                                                         header_corrections="old_header1:new_header1,old_header2:new_header2",
                                                         frequency_ratios="ExAC:0.5",
                                                         filter_genes="CHEK2,NOTCH1,NOTCH4",
+                                                        color_genes="BRCA1,MSH2,SRC",
                                                         expression_patterns='expr_with_key:"abc" < 4,expr_wo:jkl>5, expr78 : 2>3',
                                                         expression_usages="expr_with_key:DELETE_ROW,expr_wo:COLOR_COLUMN:F_U_8:red,expr_wo:COLOR_ROW:green,expr78:COLOR_ROW:orange",
                                                         )
@@ -322,6 +328,12 @@ class TestMutRepPipeline(SafeTester):
         self.assertEqual(pl.report_layout.filter_genes[2],
                          'NOTCH4',
                          "MutRepPipeline cannot correctly read report layout info 'filter genes' from jobs setup file")
+        self.assertEqual(pl.report_layout.color_genes[0],
+                         'BRCA1',
+                         "MutRepPipeline cannot correctly read report layout info 'color genes' from jobs setup file")
+        self.assertEqual(pl.report_layout.color_genes[2],
+                         'SRC',
+                         "MutRepPipeline cannot correctly read report layout info 'color genes' from jobs setup file")
 
     @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST, "taking too long time to test")
     def test_summary_report_1(self):
@@ -966,7 +978,7 @@ class TestMutRepPipeline(SafeTester):
                          "Incorrect number of rows"
                          )
 
-#    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST, "taking too long time to test")
+    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST, "taking too long time to test")
     def test_expression_action_del_row_4(self):
         """
         test if expreesion patterns and expression actions can be used
@@ -984,9 +996,7 @@ class TestMutRepPipeline(SafeTester):
         jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
                                                         annotated_vcf_tabix=annotated_vcf_tabix,
                                                         report_regions="1",
-#                                                        expression_patterns='exp_OAF0:"OAF_EARLYONSET_AF"==\'0.0000\',exp_OAF1:"OAF_EARLYONSET_AF"==\'1.0000\',exp_OAF_empty:"OAF_EARLYONSET_AF"==\'\',exp_OAF_NA:"OAF_EARLYONSET_AF"==\'NA\'',
                                                         expression_patterns='true_synonymous:("dpsi_zscore"!=\'\')and(float("dpsi_zscore")>-2)and("ExonicFunc.refGene"==\'synonymous_SNV\')and(float("dpsi_zscore")<2)',
-#                                                        expression_usages="exp_OAF0:DELETE_ROW,exp_OAF1:DELETE_ROW,exp_OAF_empty:DELETE_ROW,exp_OAF_NA:DELETE_ROW",
                                                         expression_usages="true_synonymous:DELETE_ROW",
                                                         anno_cols=anno_cols,
                                                         )
@@ -1486,6 +1496,80 @@ class TestMutRepPipeline(SafeTester):
         self.assertEqual(xu.count_rows(sheet_idx=0),
                          37,
                          "Incorrect number of rows in the variants sheet"
+                         )
+
+    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST, "taking too long time to test")
+    def test_color_genes_1(self):
+        """
+        test if basic gene search (one gene, full name) can be done correctly
+        both inside the genes and surrounding.
+        """
+
+        self.init_test(self.current_func_name)
+        annotated_vcf_tabix = join_path(self.data_dir,
+                                        "input.vcf.gz")
+        project_name = self.test_function
+        color_genes = "ANKRD19P"
+        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
+                                                        annotated_vcf_tabix=annotated_vcf_tabix,
+                                                        sample_info="8:Co-35:Co-37,13:Co-95,275:Co-1262:Co-618,296:Co-793:Co-876",
+                                                        report_regions="9",
+                                                        color_genes=color_genes,
+                                                        )
+        pl = MutRepPipeline(jobs_setup_file=jobs_setup_file)
+        pl.gen_summary_report(pl.report_layout.report_regions)
+        xls_file = join_path(self.working_dir,
+                             "rpts",
+                             project_name+"_summary.xlsx")
+        xu = XlsUtils(xls_file)
+        refgene_col_idx = xu.get_col_idx(GENE_REFGENE_COL_NAME)
+        exp_rgb = "FF" + COLORS_RGB["XLS_GREEN"][-6:]
+        self.assertEqual(xu.get_cell_rgb(2, refgene_col_idx),
+                         RGB_NO_FILL,
+                         "Incorrect color"
+                         )
+        self.assertEqual(xu.get_cell_rgb(50, refgene_col_idx),
+                         exp_rgb,
+                         "Incorrect color"
+                         )
+
+    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST, "taking too long time to test")
+    def test_color_genes_2(self):
+        """
+        test if a little advance gene search (two genes, full name) can be done correctly
+        both inside the genes and surrounding.
+        """
+
+        self.init_test(self.current_func_name)
+        annotated_vcf_tabix = join_path(self.data_dir,
+                                        "input.vcf.gz")
+        project_name = self.test_function
+        color_genes = "ANKRD19P,IPPK"
+        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
+                                                        annotated_vcf_tabix=annotated_vcf_tabix,
+                                                        sample_info="8:Co-35:Co-37,13:Co-95,275:Co-1262:Co-618,296:Co-793:Co-876",
+                                                        report_regions="9",
+                                                        color_genes=color_genes,
+                                                        )
+        pl = MutRepPipeline(jobs_setup_file=jobs_setup_file)
+        pl.gen_summary_report(pl.report_layout.report_regions)
+        xls_file = join_path(self.working_dir,
+                             "rpts",
+                             project_name+"_summary.xlsx")
+        xu = XlsUtils(xls_file)
+        refgene_col_idx = xu.get_col_idx(GENE_REFGENE_COL_NAME)
+        exp_rgb = "FF" + COLORS_RGB["XLS_GREEN"][-6:]
+        self.assertEqual(xu.get_cell_rgb(2, refgene_col_idx),
+                         exp_rgb,
+                         "Incorrect color"
+                         )
+        self.assertEqual(xu.get_cell_rgb(20, refgene_col_idx),
+                         RGB_NO_FILL,
+                         "Incorrect color"
+                         )
+        self.assertEqual(xu.get_cell_rgb(50, refgene_col_idx),
+                         exp_rgb,
+                         "Incorrect color"
                          )
 
     @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST, "taking too long time to test")

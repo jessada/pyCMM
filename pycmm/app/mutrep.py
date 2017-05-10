@@ -133,6 +133,8 @@ def app_pycmm_mutrep_create_jobs_setup_file(*args, **kwargs):
         layout_params['rare frequency ratios (-f)'] = OrderedDict(item.split(":") for item in kwargs['frequency_ratios'].split(","))
     if kwargs['filter_genes'] is not None:
         layout_params['filter genes (--filter_genes)'] = kwargs['filter_genes'].split(',')
+    if kwargs['color_genes'] is not None:
+        layout_params['color genes (--color_genes)'] = kwargs['color_genes'].split(',')
     layout_params['split chromosome (--split_chrom)'] = kwargs['split_chrom']
     layout_params['summary_families sheet (--summary_families)'] = kwargs['summary_families_sheet']
     extra_anno_cols = {}
