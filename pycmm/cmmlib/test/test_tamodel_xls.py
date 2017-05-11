@@ -9,6 +9,8 @@ from pycmm.settings import PATHOGENIC_COUNT_COL_NAME
 from pycmm.settings import EXAC03_CONSTRAINT_SYN_Z_COL_NAME
 from pycmm.settings import INTERVAR_CLASS_COL_NAME
 from pycmm.settings import INTERVAR_EVIDENCE_COL_NAME
+from pycmm.settings import MAX_REF_MAF_COL_NAME
+from pycmm.settings import REF_MAF_COL_NAMES
 from pycmm.settings import FULL_SYSTEM_TEST
 from pycmm.settings import AXEQ_CHR9_COLS_TAG
 from pycmm.settings import AXEQ_CHR3_6_14_18_COLS_TAG
@@ -36,6 +38,7 @@ from pycmm.flow.mutrep import JOBS_SETUP_RPT_FILTER_HAS_SHARED
 from pycmm.flow.test.test_mutrep import DFLT_TEST_MUTREP_COLS
 from pycmm.flow.test.test_mutrep import DFLT_TEST_ANNO_EXCL_TAGS
 
+TAMODEL_XLS_TEST = False
 
 class TestTAVcfCallXls(SafeTester):
 
@@ -74,39 +77,38 @@ class TestTAVcfCallXls(SafeTester):
                                )
         return jobs_setup_file
 
-    @unittest.skipUnless(FULL_SYSTEM_TEST, "taking too long time to test")
-    def test_parse_mutated_xls_3_2(self):
-        """
-        - test if shared mutations in an xls sheet with a family with 2 members 
-        can be detected
-        - this test is corresponding to 'test_parse_mutated_3_2' in 'test_tamodel'
-        """
-
-        self.init_test(self.current_func_name)
-        annotated_vcf_tabix = join_path(self.data_dir,
-                                        "input.vcf.gz")
-        project_name = self.test_function
-        sample_info = []
-        sample_info.append("24:Co-166:Co-213")
-        frequency_ratios = PRIMARY_MAF_VAR + ":0.2"
-        frequency_ratios += "," + ILL_BR_PF_COL_NAME + ":0.3"
-        frequency_ratios += "," + EXAC_ALL_COL_NAME + ":0.3"
-        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
-                                                        annotated_vcf_tabix=annotated_vcf_tabix,
-                                                        anno_cols=DFLT_TEST_MUTREP_COLS,
-                                                        anno_excl_tags=DFLT_TEST_ANNO_EXCL_TAGS,
-                                                        frequency_ratios=frequency_ratios,
-                                                        sample_info=",".join(sample_info),
-                                                        )
-        pl = MutRepPipeline(jobs_setup_file)
-        pl.gen_family_report('24', pl.report_layout.report_regions)
-        xls_file = join_path(self.working_dir,
-                             "rpts",
-                             project_name+"_fam24.xlsx")
-        xu = XlsUtils(xls_file)
-        self.assertEqual(xu.count_rows(),
-                         1,
-                         "shared mutations cannot be correctly determined")
+#    @unittest.skipUnless(FULL_SYSTEM_TEST or TAMODEL_XLS_TEST, "taking too long time to test")
+#    def test_parse_mutated_xls_3_2(self):
+#        """
+#        - test if shared mutations in an xls sheet with a family with 2 members 
+#        can be detected
+#        - this test is corresponding to 'test_parse_mutated_3_2' in 'test_tamodel'
+#        """
+#
+#        self.init_test(self.current_func_name)
+#        annotated_vcf_tabix = join_path(self.data_dir,
+#                                        "input.vcf.gz")
+#        project_name = self.test_function
+#        sample_info = []
+#        sample_info.append("24:Co-166:Co-213")
+#        frequency_ratios = PRIMARY_MAF_VAR + ":0.2"
+#        frequency_ratios += "," + EXAC_ALL_COL_NAME + ":0.3"
+#        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
+#                                                        annotated_vcf_tabix=annotated_vcf_tabix,
+#                                                        anno_cols=DFLT_TEST_MUTREP_COLS,
+#                                                        anno_excl_tags=DFLT_TEST_ANNO_EXCL_TAGS,
+#                                                        frequency_ratios=frequency_ratios,
+#                                                        sample_info=",".join(sample_info),
+#                                                        )
+#        pl = MutRepPipeline(jobs_setup_file)
+#        pl.gen_family_report('24', pl.report_layout.report_regions)
+#        xls_file = join_path(self.working_dir,
+#                             "rpts",
+#                             project_name+"_fam24.xlsx")
+#        xu = XlsUtils(xls_file)
+#        self.assertEqual(xu.count_rows(),
+#                         1,
+#                         "shared mutations cannot be correctly determined")
 
 class TestTAVcfRecordXls(SafeTester):
 
@@ -118,34 +120,21 @@ class TestTAVcfRecordXls(SafeTester):
     def setUp(self):
         pass
 
-    def __create_jobs_setup_file(self,
-                                 project_name=None,
-                                 sample_info=None,
-                                 anno_cols=DFLT_TEST_MUTREP_COLS,
-                                 anno_excl_tags=None,
-                                 annotated_vcf_tabix=None,
-                                 summary_families_sheet=False,
-                                 frequency_ratios=None,
-                                 rows_filter_actions=None,
-                                 ):
-        jobs_setup_file = join_path(self.working_dir,
-                                    self.test_function+'_jobs_setup.txt')
-        if project_name is None:
-            project_name = self.test_function
-        create_jobs_setup_file(project_name=project_name,
-                               project_out_dir=self.working_dir,
-                               sample_info=sample_info,
-                               anno_cols=",".join(anno_cols),
-                               anno_excl_tags=anno_excl_tags,
-                               annotated_vcf_tabix=annotated_vcf_tabix,
-                               summary_families_sheet=summary_families_sheet,
-                               frequency_ratios=frequency_ratios,
-                               rows_filter_actions=rows_filter_actions,
-                               out_jobs_setup_file=jobs_setup_file,
-                               )
-        return jobs_setup_file
+    def __create_jobs_setup_file(self, *args, **kwargs):
+        if 'project_name' not in kwargs:
+            kwargs['project_name'] = self.test_function
+        if 'anno_cols' not in kwargs:
+            anno_cols = DFLT_TEST_MUTREP_COLS
+        else:
+            anno_cols = kwargs['anno_cols']
+        kwargs['anno_cols'] = ",".join(anno_cols)
+        kwargs['project_out_dir'] = self.working_dir
+        kwargs['out_jobs_setup_file'] = join_path(self.working_dir,
+                                                  self.test_function+'_jobs_setup.txt')
+        create_jobs_setup_file(*args, **kwargs)
+        return kwargs['out_jobs_setup_file']
 
-    @unittest.skipUnless(FULL_SYSTEM_TEST, "taking too long time to test")
+    @unittest.skipUnless(FULL_SYSTEM_TEST or TAMODEL_XLS_TEST, "taking too long time to test")
     def test_has_mutation_xls_4(self):
         """
         - test report that show only mutation
@@ -190,97 +179,94 @@ class TestTAVcfRecordXls(SafeTester):
                          13,
                          "shared mutation cannot be correctly determined")
 
-    @unittest.skipUnless(FULL_SYSTEM_TEST, "taking too long time to test")
-    def test_has_shared_xls_4(self):
-        """
-        - test if shared mutations in an xls sheet with a family with 2 members 
-        can be detected
-        - this test doesn't corresponding to any other tests
-        """
+#    @unittest.skipUnless(FULL_SYSTEM_TEST or TAMODEL_XLS_TEST, "taking too long time to test")
+#    def test_has_shared_xls_4(self):
+#        """
+#        - test if shared mutations in an xls sheet with a family with 2 members 
+#        can be detected
+#        - this test doesn't corresponding to any other tests
+#        """
+#
+#        self.init_test(self.current_func_name)
+#        annotated_vcf_tabix = join_path(self.data_dir,
+#                                        "input.vcf.gz")
+#        project_name = self.test_function
+#        rows_filter_actions = JOBS_SETUP_RPT_FILTER_RARE
+#        rows_filter_actions += "," + JOBS_SETUP_RPT_FILTER_NON_INTRONIC
+#        rows_filter_actions += "," + JOBS_SETUP_RPT_FILTER_NON_INTERGENIC
+#        rows_filter_actions += "," + JOBS_SETUP_RPT_FILTER_NON_UPSTREAM
+#        rows_filter_actions += "," + JOBS_SETUP_RPT_FILTER_NON_DOWNSTREAM
+#        rows_filter_actions += "," + JOBS_SETUP_RPT_FILTER_NON_UTR
+#        rows_filter_actions += "," + JOBS_SETUP_RPT_FILTER_NON_SYNONYMOUS
+#        rows_filter_actions += "," + JOBS_SETUP_RPT_FILTER_HAS_MUTATION
+#        sample_info = []
+#        sample_info.append("24:Co-166:Co-213")
+#        frequency_ratios = PRIMARY_MAF_VAR + ":0.2"
+#        frequency_ratios += "," + EXAC_ALL_COL_NAME + ":0.3"
+#        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
+#                                                        annotated_vcf_tabix=annotated_vcf_tabix,
+#                                                        anno_cols=DFLT_TEST_MUTREP_COLS,
+#                                                        anno_excl_tags=DFLT_TEST_ANNO_EXCL_TAGS,
+#                                                        rows_filter_actions=rows_filter_actions,
+#                                                        frequency_ratios=frequency_ratios,
+#                                                        sample_info=",".join(sample_info),
+#                                                        summary_families_sheet=True,
+#                                                        )
+#        pl = MutRepPipeline(jobs_setup_file)
+#        pl.gen_family_report('24', pl.report_layout.report_regions)
+#        xls_file = join_path(self.working_dir,
+#                             "rpts",
+#                             project_name+"_fam24.xlsx")
+#        xu = XlsUtils(xls_file)
+#        self.assertEqual(xu.count_rows(),
+#                         5,
+#                         "shared mutations cannot be correctly determined")
 
-        self.init_test(self.current_func_name)
-        annotated_vcf_tabix = join_path(self.data_dir,
-                                        "input.vcf.gz")
-        project_name = self.test_function
-        rows_filter_actions = JOBS_SETUP_RPT_FILTER_RARE
-        rows_filter_actions += "," + JOBS_SETUP_RPT_FILTER_NON_INTRONIC
-        rows_filter_actions += "," + JOBS_SETUP_RPT_FILTER_NON_INTERGENIC
-        rows_filter_actions += "," + JOBS_SETUP_RPT_FILTER_NON_UPSTREAM
-        rows_filter_actions += "," + JOBS_SETUP_RPT_FILTER_NON_DOWNSTREAM
-        rows_filter_actions += "," + JOBS_SETUP_RPT_FILTER_NON_UTR
-        rows_filter_actions += "," + JOBS_SETUP_RPT_FILTER_NON_SYNONYMOUS
-        rows_filter_actions += "," + JOBS_SETUP_RPT_FILTER_HAS_MUTATION
-        sample_info = []
-        sample_info.append("24:Co-166:Co-213")
-        frequency_ratios = PRIMARY_MAF_VAR + ":0.2"
-        frequency_ratios += "," + ILL_BR_PF_COL_NAME + ":0.3"
-        frequency_ratios += "," + EXAC_ALL_COL_NAME + ":0.3"
-        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
-                                                        annotated_vcf_tabix=annotated_vcf_tabix,
-                                                        anno_cols=DFLT_TEST_MUTREP_COLS,
-                                                        anno_excl_tags=DFLT_TEST_ANNO_EXCL_TAGS,
-                                                        rows_filter_actions=rows_filter_actions,
-                                                        frequency_ratios=frequency_ratios,
-                                                        sample_info=",".join(sample_info),
-                                                        summary_families_sheet=True,
-                                                        )
-        pl = MutRepPipeline(jobs_setup_file)
-        pl.gen_family_report('24', pl.report_layout.report_regions)
-        xls_file = join_path(self.working_dir,
-                             "rpts",
-                             project_name+"_fam24.xlsx")
-        xu = XlsUtils(xls_file)
-        self.assertEqual(xu.count_rows(),
-                         5,
-                         "shared mutations cannot be correctly determined")
+#    @unittest.skipUnless(FULL_SYSTEM_TEST or TAMODEL_XLS_TEST, "taking too long time to test")
+#    def test_is_rare_xls_3(self):
+#        """
+#        - test filter rare feature with xls records
+#        - this test doesn't corresponding to any other tests
+#        """
+#
+#        self.init_test(self.current_func_name)
+#        annotated_vcf_tabix = join_path(self.data_dir,
+#                                        "input.vcf.gz")
+#        project_name = self.test_function + '_with_common'
+#        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
+#                                                        anno_cols=ALL_MUTREP_ANNO_COLS,
+#                                                        annotated_vcf_tabix=annotated_vcf_tabix,
+#                                                        )
+#        pl = MutRepPipeline(jobs_setup_file)
+#        pl.gen_summary_report(pl.report_layout.report_regions)
+#        xls_file = join_path(self.working_dir,
+#                             "rpts",
+#                             project_name+"_summary.xlsx")
+#        xu = XlsUtils(xls_file)
+#        self.assertEqual(xu.count_rows(),
+#                         88,
+#                         "rare mutations cannot be correctly determined")
+#        project_name = self.test_function
+#        frequency_ratios = PRIMARY_MAF_VAR + ":0.2"
+#        frequency_ratios += "," + EXAC_ALL_COL_NAME + ":0.3"
+#        rows_filter_actions = JOBS_SETUP_RPT_FILTER_RARE
+#        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
+#                                                        annotated_vcf_tabix=annotated_vcf_tabix,
+#                                                        anno_cols=ALL_MUTREP_ANNO_COLS,
+#                                                        frequency_ratios=frequency_ratios,
+#                                                        rows_filter_actions=rows_filter_actions,
+#                                                        )
+#        pl = MutRepPipeline(jobs_setup_file)
+#        pl.gen_summary_report(pl.report_layout.report_regions)
+#        xls_file = join_path(self.working_dir,
+#                             "rpts",
+#                             project_name+"_summary.xlsx")
+#        xu = XlsUtils(xls_file)
+#        self.assertEqual(xu.count_rows(),
+#                         54,
+#                         "rare mutations cannot be correctly determined")
 
-
-    @unittest.skipUnless(FULL_SYSTEM_TEST, "taking too long time to test")
-    def test_is_rare_xls_3(self):
-        """
-        - test filter rare feature with xls records
-        - this test doesn't corresponding to any other tests
-        """
-
-        self.init_test(self.current_func_name)
-        annotated_vcf_tabix = join_path(self.data_dir,
-                                        "input.vcf.gz")
-        project_name = self.test_function + '_with_common'
-        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
-                                                        anno_cols=ALL_MUTREP_ANNO_COLS,
-                                                        annotated_vcf_tabix=annotated_vcf_tabix,
-                                                        )
-        pl = MutRepPipeline(jobs_setup_file)
-        pl.gen_summary_report(pl.report_layout.report_regions)
-        xls_file = join_path(self.working_dir,
-                             "rpts",
-                             project_name+"_summary.xlsx")
-        xu = XlsUtils(xls_file)
-        self.assertEqual(xu.count_rows(),
-                         88,
-                         "rare mutations cannot be correctly determined")
-        project_name = self.test_function
-        frequency_ratios = PRIMARY_MAF_VAR + ":0.2"
-        frequency_ratios += "," + ILL_BR_PF_COL_NAME + ":0.3"
-        frequency_ratios += "," + EXAC_ALL_COL_NAME + ":0.3"
-        rows_filter_actions = JOBS_SETUP_RPT_FILTER_RARE
-        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
-                                                        annotated_vcf_tabix=annotated_vcf_tabix,
-                                                        anno_cols=ALL_MUTREP_ANNO_COLS,
-                                                        frequency_ratios=frequency_ratios,
-                                                        rows_filter_actions=rows_filter_actions,
-                                                        )
-        pl = MutRepPipeline(jobs_setup_file)
-        pl.gen_summary_report(pl.report_layout.report_regions)
-        xls_file = join_path(self.working_dir,
-                             "rpts",
-                             project_name+"_summary.xlsx")
-        xu = XlsUtils(xls_file)
-        self.assertEqual(xu.count_rows(),
-                         54,
-                         "rare mutations cannot be correctly determined")
-
-    @unittest.skipUnless(FULL_SYSTEM_TEST, "taking too long time to test")
+    @unittest.skipUnless(FULL_SYSTEM_TEST or TAMODEL_XLS_TEST, "taking too long time to test")
     def test_is_pass_vqsr_xls_2(self):
         """
         - test filter SNPs that pass QC (VQSR)
@@ -320,7 +306,7 @@ class TestTAVcfRecordXls(SafeTester):
                          5,
                          "number of mutations that pass VQSR cannot be correctly determined")
 
-    @unittest.skipUnless(FULL_SYSTEM_TEST, "taking too long time to test")
+    @unittest.skipUnless(FULL_SYSTEM_TEST or TAMODEL_XLS_TEST, "taking too long time to test")
     def test_is_intergenic_xls_3(self):
         """
         - test filter non-intergenic feature with xls record
@@ -359,7 +345,7 @@ class TestTAVcfRecordXls(SafeTester):
                          11,
                          "intergenic mutations cannot be correctly determined")
 
-    @unittest.skipUnless(FULL_SYSTEM_TEST, "taking too long time to test")
+    @unittest.skipUnless(FULL_SYSTEM_TEST or TAMODEL_XLS_TEST, "taking too long time to test")
     def test_is_intronic_xls_3(self):
         """
         - test filter non-intronic feature with xls records
@@ -402,7 +388,7 @@ class TestTAVcfRecordXls(SafeTester):
                          9,
                          "intronic mutations cannot be correctly determined")
 
-    @unittest.skipUnless(FULL_SYSTEM_TEST, "taking too long time to test")
+    @unittest.skipUnless(FULL_SYSTEM_TEST or TAMODEL_XLS_TEST, "taking too long time to test")
     def test_is_upstream_xls_3(self):
         """
         - test filter non-upstream feature with xls records
@@ -445,7 +431,7 @@ class TestTAVcfRecordXls(SafeTester):
                          28,
                          "upstream mutations cannot be correctly determined")
 
-    @unittest.skipUnless(FULL_SYSTEM_TEST, "taking too long time to test")
+    @unittest.skipUnless(FULL_SYSTEM_TEST or TAMODEL_XLS_TEST, "taking too long time to test")
     def test_is_downstream_xls_3(self):
         """
         - test filter non-downstream feature with xls records
@@ -488,7 +474,7 @@ class TestTAVcfRecordXls(SafeTester):
                          31,
                          "downstream mutations cannot be correctly determined")
 
-    @unittest.skipUnless(FULL_SYSTEM_TEST, "taking too long time to test")
+    @unittest.skipUnless(FULL_SYSTEM_TEST or TAMODEL_XLS_TEST, "taking too long time to test")
     def test_is_utr_xls_3(self):
         """
         - test filter non-UTR feature with xls records
@@ -531,7 +517,7 @@ class TestTAVcfRecordXls(SafeTester):
                          20,
                          "UTR mutations cannot be correctly determined")
 
-    @unittest.skipUnless(FULL_SYSTEM_TEST, "taking too long time to test")
+    @unittest.skipUnless(FULL_SYSTEM_TEST or TAMODEL_XLS_TEST, "taking too long time to test")
     def test_is_synonymous_xls_3(self):
         """
         - test filter non-synonymous feature with xls records
@@ -574,7 +560,7 @@ class TestTAVcfRecordXls(SafeTester):
                          28,
                          "synonymous mutations cannot be correctly determined")
 
-    @unittest.skipUnless(FULL_SYSTEM_TEST, "taking too long time to test")
+    @unittest.skipUnless(FULL_SYSTEM_TEST or TAMODEL_XLS_TEST, "taking too long time to test")
     def test_pathogenic_count_xls_2(self):
         """
         - test if number of pathogenic count can be correctly displayed
@@ -622,7 +608,7 @@ class TestTAVcfRecordXls(SafeTester):
                          "Incorect number of harmful pathogenic predictions"
                          )
 
-    @unittest.skipUnless(FULL_SYSTEM_TEST, "taking too long time to test")
+    @unittest.skipUnless(FULL_SYSTEM_TEST or TAMODEL_XLS_TEST, "taking too long time to test")
     def test_parse_exac_constraint_xls_3(self):
         """
         - test if exac constraints can be correctly parsed and displayed
@@ -652,8 +638,8 @@ class TestTAVcfRecordXls(SafeTester):
                          "Incorect number of ExAC constraint value"
                          )
 
-    @unittest.skipUnless(FULL_SYSTEM_TEST, "taking too long time to test")
-    def test_intervar_1(self):
+    @unittest.skipUnless(FULL_SYSTEM_TEST or TAMODEL_XLS_TEST, "taking too long time to test")
+    def test_intervar_xls_1(self):
         """
         - test if intervar classification and evidence can be parsed
         """
@@ -726,6 +712,74 @@ class TestTAVcfRecordXls(SafeTester):
                          "Incorect intervar value"
                          )
 
+    @unittest.skipUnless(FULL_SYSTEM_TEST or TAMODEL_XLS_TEST, "taking too long time to test")
+    def test_max_ref_maf_xls_2(self):
+        """
+        test finding maximum reference minor allele frequency
+        """
+
+        self.init_test(self.current_func_name)
+        annotated_vcf_tabix = join_path(self.data_dir,
+                                        "input.vcf.gz")
+        project_name = self.test_function
+        anno_cols = list(DFLT_TEST_MUTREP_COLS)
+        anno_cols.append(MAX_REF_MAF_COL_NAME)
+        anno_cols += REF_MAF_COL_NAMES
+        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
+                                                        annotated_vcf_tabix=annotated_vcf_tabix,
+                                                        anno_cols=anno_cols,
+                                                        )
+        pl = MutRepPipeline(jobs_setup_file=jobs_setup_file)
+        pl.gen_summary_report(pl.report_layout.report_regions)
+        xls_file = join_path(self.working_dir,
+                             "rpts",
+                             project_name+"_summary.xlsx")
+        xu = XlsUtils(xls_file)
+        max_ref_maf_col_idx = xu.get_col_idx(pl.correct_header(MAX_REF_MAF_COL_NAME))
+        self.assertEqual(xu.get_cell_value(2, max_ref_maf_col_idx),
+                         0.0008,
+                         "Incorect maximum reference allele frequency value"
+                         )
+        self.assertEqual(xu.get_cell_value(3, max_ref_maf_col_idx),
+                         0.095,
+                         "Incorect maximum reference allele frequency value"
+                         )
+        self.assertEqual(xu.get_cell_value(4, max_ref_maf_col_idx),
+                         0.00119808,
+                         "Incorect maximum reference allele frequency value"
+                         )
+        self.assertEqual(xu.get_cell_value(5, max_ref_maf_col_idx),
+                         0.0035,
+                         "Incorect maximum reference allele frequency value"
+                         )
+        self.assertEqual(xu.get_cell_value(6, max_ref_maf_col_idx),
+                         0.0125,
+                         "Incorect maximum reference allele frequency value"
+                         )
+        self.assertEqual(xu.get_cell_value(7, max_ref_maf_col_idx),
+                         0.0377,
+                         "Incorect maximum reference allele frequency value"
+                         )
+        self.assertEqual(xu.get_cell_value(8, max_ref_maf_col_idx),
+                         0.0441,
+                         "Incorect maximum reference allele frequency value"
+                         )
+        self.assertEqual(xu.get_cell_value(9, max_ref_maf_col_idx),
+                         0.0924,
+                         "Incorect maximum reference allele frequency value"
+                         )
+        self.assertEqual(xu.get_cell_value(10, max_ref_maf_col_idx),
+                         0.3711,
+                         "Incorect maximum reference allele frequency value"
+                         )
+        self.assertEqual(xu.get_cell_value(11, max_ref_maf_col_idx),
+                         0.075,
+                         "Incorect maximum reference allele frequency value"
+                         )
+        self.assertEqual(xu.get_cell_value(12, max_ref_maf_col_idx),
+                         0.2785,
+                         "Incorect maximum reference allele frequency value"
+                         )
 
     def tearDown(self):
         self.remove_working_dir()

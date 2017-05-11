@@ -14,13 +14,14 @@ from pycmm.settings import EXAC03_CONSTRAINT_MIS_Z_COL_NAME
 from pycmm.settings import EXAC03_CONSTRAINT_EXP_LOF_COL_NAME
 from pycmm.settings import EXAC03_CONSTRAINT_N_LOF_COL_NAME
 from pycmm.settings import EXAC03_CONSTRAINT_PLI_COL_NAME
+from pycmm.settings import MAX_REF_MAF_COL_NAME
+from pycmm.settings import WES294_OAF_EARLYONSET_AF_COL_NAME
+from pycmm.settings import WES294_OAF_BRCS_AF_COL_NAME
 from pycmm.cmmlib.taparser import TAVcfReader
 from pycmm.flow.mutrep import MutRepPipeline
 from pycmm.flow.test.test_mutrep import DFLT_TEST_MUTREP_COLS
 from pycmm.flow.cmmdb import create_jobs_setup_file
 
-from pycmm.settings import WES294_OAF_EARLYONSET_AF_COL_NAME
-from pycmm.settings import WES294_OAF_BRCS_AF_COL_NAME
 
 class TestTAVcfCall(SafeTester):
 
@@ -2677,6 +2678,40 @@ class TestTAVcfRecord(SafeTester):
         self.assertEqual(vcf_record.get_info(EXAC03_CONSTRAINT_PLI_COL_NAME, 2),
                          '',
                          "values of ExAC constraint cannot be correctly determined")
+
+    def test_max_ref_maf_1(self):
+        """
+        test finding maximum reference minor allele frequency
+        """
+
+        self.init_test(self.current_func_name)
+        in_file = join_path(self.data_dir,
+                            'input.vcf.gz')
+        vcf_reader = TAVcfReader(filename=in_file)
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.get_info(MAX_REF_MAF_COL_NAME, 1),
+                         0.0008,
+                         "values of MAX_REF_MAF constraint cannot be correctly determined")
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.get_info(MAX_REF_MAF_COL_NAME, 1),
+                         0.095,
+                         "values of MAX_REF_MAF constraint cannot be correctly determined")
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.get_info(MAX_REF_MAF_COL_NAME, 1),
+                         0.00119808,
+                         "values of MAX_REF_MAF constraint cannot be correctly determined")
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.get_info(MAX_REF_MAF_COL_NAME, 1),
+                         0.0035,
+                         "values of MAX_REF_MAF constraint cannot be correctly determined")
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.get_info(MAX_REF_MAF_COL_NAME, 1),
+                         0.0125,
+                         "values of MAX_REF_MAF constraint cannot be correctly determined")
+        vcf_record = vcf_reader.next()
+        self.assertEqual(vcf_record.get_info(MAX_REF_MAF_COL_NAME, 1),
+                         0.0377,
+                         "values of MAX_REF_MAF constraint cannot be correctly determined")
 
     def tearDown(self):
         self.remove_working_dir()

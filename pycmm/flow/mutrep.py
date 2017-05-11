@@ -26,6 +26,7 @@ from pycmm.settings import INTERVAR_EVIDENCE_COL_NAME
 from pycmm.settings import DFLT_HEADER_CORRECTIONS
 from pycmm.settings import EXAC03_CONSTRAINT_COL_NAMES
 from pycmm.settings import EXAC03_CONSTRAINT_COL_NAME
+from pycmm.settings import MAX_REF_MAF_COL_NAME
 from pycmm.settings import FORMAT_COLS
 from pycmm.settings import FORMAT_COL_FLOAT
 from pycmm.settings import FORMAT_COL_INT
@@ -378,10 +379,11 @@ class ReportLayout(CMMParams):
                 col_name not in EXAC03_CONSTRAINT_COL_NAMES and
                 col_name not in EST_KVOT_COLS and
                 col_name != PATHOGENIC_COUNT_COL_NAME and
+                col_name != MAX_REF_MAF_COL_NAME and
                 col_name != INTERVAR_CLASS_COL_NAME and
                 col_name != INTERVAR_EVIDENCE_COL_NAME
                 ):
-                self.warning("Columns " + col_name + " is missing")
+                self.warning("Column " + col_name + " is missing")
                 continue
             if ((col_name == EST_KVOT_EARLYONSET_VS_BRC_COL_NAME) and
                 ((WES294_OAF_EARLYONSET_AF_COL_NAME not in vcf_record.INFO.keys()) or

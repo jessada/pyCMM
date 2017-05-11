@@ -38,6 +38,8 @@ from pycmm.settings import EST_KVOT_EARLYONSET_VS_EXAC_NFE_COL_NAME
 from pycmm.settings import EST_KVOT_EARLYONSET_VS_KG_EUR_COL_NAME
 from pycmm.settings import WES294_OAF_BRCS_AF_COL_NAME
 from pycmm.settings import SWEGEN_AF_COL_NAME
+from pycmm.settings import MAX_REF_MAF_COL_NAME
+from pycmm.settings import REF_MAF_COL_NAMES
 from pycmm.flow.mutrep import MutRepPipeline
 from pycmm.flow.mutrep import create_jobs_setup_file
 from pycmm.flow.mutrep import JOBS_SETUP_RPT_FILTER_RARE
@@ -387,7 +389,6 @@ class TestMutRepPipeline(SafeTester):
         is correctly generated
         """
 
-        self.individual_debug = True
         self.init_test(self.current_func_name)
         annotated_vcf_tabix = join_path(self.data_dir,
                                         "input.vcf.gz")
@@ -985,7 +986,6 @@ class TestMutRepPipeline(SafeTester):
         for deleting rows with "true synonymous" variants
         """
 
-        self.individual_debug = True
         self.init_test(self.current_func_name)
         annotated_vcf_tabix = join_path(self.data_dir,
                                         "input.vcf.gz")
@@ -1008,6 +1008,37 @@ class TestMutRepPipeline(SafeTester):
         xu = XlsUtils(xls_file)
         self.assertEqual(xu.count_rows(sheet_idx=0),
                          2,
+                         "Incorrect number of rows"
+                         )
+
+    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST, "taking too long time to test")
+    def test_expression_action_del_row_5(self):
+        """
+        test deleting rows using max_ref_maf column
+        """
+
+        self.init_test(self.current_func_name)
+        annotated_vcf_tabix = join_path(self.data_dir,
+                                        "input.vcf.gz")
+        project_name = self.test_function
+        anno_cols = list(DFLT_TEST_MUTREP_COLS)
+        anno_cols.append(MAX_REF_MAF_COL_NAME)
+        anno_cols += REF_MAF_COL_NAMES
+        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
+                                                        annotated_vcf_tabix=annotated_vcf_tabix,
+                                                        report_regions="1,12,17",
+                                                        expression_patterns='max_ref_maf_10percent:float("MAX_REF_MAF")>0.1',
+                                                        expression_usages="max_ref_maf_10percent:DELETE_ROW",
+                                                        anno_cols=anno_cols,
+                                                        )
+        pl = MutRepPipeline(jobs_setup_file=jobs_setup_file)
+        pl.gen_summary_report(pl.report_layout.report_regions)
+        xls_file = join_path(self.working_dir,
+                             "rpts",
+                             project_name+"_summary.xlsx")
+        xu = XlsUtils(xls_file)
+        self.assertEqual(xu.count_rows(sheet_idx=0),
+                         10,
                          "Incorrect number of rows"
                          )
 
@@ -1576,7 +1607,6 @@ class TestMutRepPipeline(SafeTester):
     def test_coloring_shared_1(self):
         """ test coloring shared samples when the option is off """
 
-        self.individual_debug = True
         self.init_test(self.current_func_name)
         annotated_vcf_tabix = join_path(self.data_dir,
                                         "input.vcf.gz")
@@ -2152,7 +2182,6 @@ class TestMutRepPipeline(SafeTester):
     def test_show_shared_variants_1(self):
         """ test if shared mutations can be shown """
 
-        self.individual_debug = True
         self.init_test(self.current_func_name)
         annotated_vcf_tabix = join_path(self.data_dir,
                                         "input.vcf.gz")
