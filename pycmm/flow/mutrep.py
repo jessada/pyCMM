@@ -13,10 +13,11 @@ from pycmm.settings import MUTREP_SUMMARY_REPORT_BIN
 from pycmm.settings import EST_KVOT_EARLYONSET_VS_BRC_COL_NAME
 from pycmm.settings import EST_KVOT_EARLYONSET_VS_EXAC_NFE_COL_NAME
 from pycmm.settings import EST_KVOT_EARLYONSET_VS_KG_EUR_COL_NAME
-#from pycmm.settings import EST_KVOT_EARLYONSET_VS_SWEGEN_COL_NAME
+from pycmm.settings import EST_KVOT_EARLYONSET_VS_SWEGEN_COL_NAME
 from pycmm.settings import WES294_OAF_EARLYONSET_AF_COL_NAME
 from pycmm.settings import WES294_OAF_BRCS_AF_COL_NAME
 from pycmm.settings import EXAC_NFE_COL_NAME
+from pycmm.settings import SWEGEN_AF_COL_NAME
 from pycmm.settings import KG2014OCT_EUR_COL_NAME
 from pycmm.settings import GENE_REFGENE_COL_NAME
 from pycmm.settings import PATHOGENIC_COUNT_COL_NAME
@@ -388,6 +389,13 @@ class ReportLayout(CMMParams):
             if ((col_name == EST_KVOT_EARLYONSET_VS_BRC_COL_NAME) and
                 ((WES294_OAF_EARLYONSET_AF_COL_NAME not in vcf_record.INFO.keys()) or
                  (WES294_OAF_BRCS_AF_COL_NAME not in vcf_record.INFO.keys())
+                 )
+                ):
+                self.warning(col_name + " cannot be calculated")
+                continue
+            if ((col_name == EST_KVOT_EARLYONSET_VS_SWEGEN_COL_NAME) and
+                ((WES294_OAF_EARLYONSET_AF_COL_NAME not in vcf_record.INFO.keys()) or
+                 (SWEGEN_AF_COL_NAME not in vcf_record.INFO.keys())
                  )
                 ):
                 self.warning(col_name + " cannot be calculated")

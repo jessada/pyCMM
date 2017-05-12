@@ -10,10 +10,12 @@ from pycmm.settings import FUNC_REFGENE_VAR
 from pycmm.settings import EXONICFUNC_REFGENE_VAR
 from pycmm.settings import EST_KVOT_EARLYONSET_VS_BRC_COL_NAME
 from pycmm.settings import EST_KVOT_EARLYONSET_VS_EXAC_NFE_COL_NAME
+from pycmm.settings import EST_KVOT_EARLYONSET_VS_SWEGEN_COL_NAME
 from pycmm.settings import EST_KVOT_EARLYONSET_VS_KG_EUR_COL_NAME
 from pycmm.settings import PATHOGENIC_COUNT_COL_NAME
 from pycmm.settings import WES294_OAF_EARLYONSET_AF_COL_NAME
 from pycmm.settings import WES294_OAF_BRCS_AF_COL_NAME
+from pycmm.settings import SWEGEN_AF_COL_NAME
 from pycmm.settings import EXAC_NFE_COL_NAME
 from pycmm.settings import KG2014OCT_EUR_COL_NAME
 from pycmm.settings import EXAC03_CONSTRAINT_EXP_SYN_COL_NAME
@@ -365,6 +367,13 @@ class _TAVcfRecord(_VcfRecord, pyCMMBase):
             info = cal_est_ors(cases_freq=self.get_info(WES294_OAF_EARLYONSET_AF_COL_NAME,
                                                         allele_idx),
                                ctrls_freq=self.get_info(WES294_OAF_BRCS_AF_COL_NAME,
+                                                        allele_idx),
+                               ref_is_mutated=self.ref_is_mutated[allele_idx],
+                               )
+        elif var_name == EST_KVOT_EARLYONSET_VS_SWEGEN_COL_NAME:
+            info = cal_est_ors(cases_freq=self.get_info(WES294_OAF_EARLYONSET_AF_COL_NAME,
+                                                        allele_idx),
+                               ctrls_freq=self.get_info(SWEGEN_AF_COL_NAME,
                                                         allele_idx),
                                ref_is_mutated=self.ref_is_mutated[allele_idx],
                                )
