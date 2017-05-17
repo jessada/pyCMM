@@ -17,6 +17,7 @@ from pycmm.settings import EXAC_CONSTRAINT_COLS_TAG
 from pycmm.settings import SWEGEN_OTH_COLS_TAG
 from pycmm.settings import KVOT_COLS_TAG
 from pycmm.settings import UNKNOWN_COLS_TAG
+from pycmm.flow.mutrep import JOBS_SETUP_RPT_FILTER_PASS_VQSR
 from pycmm.flow.mutrep import JOBS_SETUP_RPT_FILTER_RARE
 from pycmm.flow.mutrep import JOBS_SETUP_RPT_FILTER_NON_INTERGENIC
 from pycmm.flow.mutrep import JOBS_SETUP_RPT_FILTER_NON_INTRONIC
@@ -26,6 +27,7 @@ from pycmm.flow.mutrep import JOBS_SETUP_RPT_FILTER_NON_UTR
 from pycmm.flow.mutrep import JOBS_SETUP_RPT_FILTER_NON_SYNONYMOUS
 from pycmm.flow.mutrep import JOBS_SETUP_RPT_FILTER_HAS_MUTATION
 from pycmm.flow.mutrep import JOBS_SETUP_RPT_FILTER_HAS_SHARED
+from pycmm.flow.mutrep import JOBS_SETUP_RPT_FILTER_NON_RECESSIVE_GENE
 
 argp = argparse.ArgumentParser(description=MUTREP_CREATE_JOB_SETUP_FILE_DESCRIPTION,
                                formatter_class=RawTextHelpFormatter,
@@ -100,6 +102,7 @@ mutrep_group.add_argument('-E',
                           )
 help_txt = 'Criteria of rows to be filtered. The list are as follows:\n'
 help_txt += '\n'
+help_txt += '\t' + JOBS_SETUP_RPT_FILTER_PASS_VQSR + '\n'
 help_txt += '\t' + JOBS_SETUP_RPT_FILTER_RARE + '\n'
 help_txt += '\t' + JOBS_SETUP_RPT_FILTER_NON_INTERGENIC + '\n'
 help_txt += '\t' + JOBS_SETUP_RPT_FILTER_NON_INTRONIC + '\n'
@@ -107,6 +110,7 @@ help_txt += '\t' + JOBS_SETUP_RPT_FILTER_NON_UPSTREAM + '\n'
 help_txt += '\t' + JOBS_SETUP_RPT_FILTER_NON_DOWNSTREAM + '\n'
 help_txt += '\t' + JOBS_SETUP_RPT_FILTER_NON_UTR + '\n'
 help_txt += '\t' + JOBS_SETUP_RPT_FILTER_NON_SYNONYMOUS + '\n'
+help_txt += '\t' + JOBS_SETUP_RPT_FILTER_NON_RECESSIVE_GENE + '\n'
 help_txt += '\t' + JOBS_SETUP_RPT_FILTER_HAS_MUTATION + '\n'
 help_txt += '\t' + JOBS_SETUP_RPT_FILTER_HAS_SHARED + '\n'
 help_txt += '\n'

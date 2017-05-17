@@ -40,6 +40,10 @@ from pycmm.settings import WES294_OAF_BRCS_AF_COL_NAME
 from pycmm.settings import SWEGEN_AF_COL_NAME
 from pycmm.settings import MAX_REF_MAF_COL_NAME
 from pycmm.settings import REF_MAF_COL_NAMES
+from pycmm.settings import COMPOUND_HETEROZYGOTE_AFFECTED_COUNT_COL_NAME
+from pycmm.settings import COMPOUND_HETEROZYGOTE_FREQ_RATIO_COL_NAME
+from pycmm.settings import HOMOZYGOTE_AFFECTED_COUNT_COL_NAME
+from pycmm.settings import HOMOZYGOTE_FREQ_RATIO_COL_NAME
 from pycmm.flow.mutrep import MutRepPipeline
 from pycmm.flow.mutrep import create_jobs_setup_file
 from pycmm.flow.mutrep import JOBS_SETUP_RPT_FILTER_RARE
@@ -56,10 +60,6 @@ from pycmm.flow.mutrep import JOBS_SETUP_RPT_FILTER_NON_RECESSIVE_GENE
 from pycmm.flow.mutrep import ACTION_DELETE_ROW
 from pycmm.flow.mutrep import ACTION_COLOR_ROW
 from pycmm.flow.mutrep import ACTION_COLOR_COL
-from pycmm.flow.mutrep import TXT_COMPOUND_HETEROZYGOTE_CASES_COUNT
-from pycmm.flow.mutrep import TXT_COMPOUND_HETEROZYGOTE_FREQ_RATIO
-from pycmm.flow.mutrep import TXT_HOMOZYGOTE_CASES_COUNT
-from pycmm.flow.mutrep import TXT_HOMOZYGOTE_FREQ_RATIO
 
 DFLT_TEST_MUTREP_COLS = OrderedDict()
 DFLT_TEST_MUTREP_COLS[FUNC_REFGENE_COL_NAME] = ALL_MUTREP_ANNO_COLS[FUNC_REFGENE_COL_NAME]
@@ -212,7 +212,7 @@ class TestMutRepPipeline(SafeTester):
                          AXEQ_CHR5_19_GF_COL_NAME,
                          "MutRepPipeline cannot correctly read report layout info 'layout columns' from jobs setup file")
         self.assertEqual(len(pl.report_layout.anno_cols),
-                         7,
+                         13,
                          "MutRepPipeline cannot correctly read report layout info 'layout columns' from jobs setup file")
         self.assertEqual(len(pl.report_layout.anno_excl_tags),
                          6,
@@ -2223,6 +2223,107 @@ class TestMutRepPipeline(SafeTester):
         exp_rgb = "FF" + COLORS_RGB["LIGHT_BLUE"][-6:]
         self.assertEqual(xu.get_cell_rgb(3, fam_col_idx),
                          exp_rgb,
+                         "Incorrect color"
+                         )
+
+#    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST, "taking too long time to test")
+    def test_filter_non_recessive_gene_1(self):
+        """ test basic filtering non-recessive gene """
+
+        self.individual_debug = True
+        self.init_test(self.current_func_name)
+        annotated_vcf_tabix = join_path(self.data_dir,
+                                        "input.vcf.gz")
+        project_name = self.test_function
+        custom_excl_tags = DFLT_TEST_ANNO_EXCL_TAGS
+        custom_excl_tags += "," + AXEQ_CHR3_6_14_18_COLS_TAG
+        custom_excl_tags += "," + AXEQ_CHR5_19_COLS_TAG
+        custom_excl_tags += "," + LJB_SCORE_COLS_TAG
+        rows_filter_actions = JOBS_SETUP_RPT_FILTER_PASS_VQSR
+        rows_filter_actions += ',' + JOBS_SETUP_RPT_FILTER_NON_INTERGENIC
+        rows_filter_actions += ',' + JOBS_SETUP_RPT_FILTER_NON_INTRONIC
+        rows_filter_actions += ',' + JOBS_SETUP_RPT_FILTER_NON_UPSTREAM
+        rows_filter_actions += ',' + JOBS_SETUP_RPT_FILTER_NON_DOWNSTREAM
+        rows_filter_actions += ',' + JOBS_SETUP_RPT_FILTER_NON_UTR
+        rows_filter_actions += ',' + JOBS_SETUP_RPT_FILTER_NON_SYNONYMOUS
+        rows_filter_actions += ',' + JOBS_SETUP_RPT_FILTER_NON_RECESSIVE_GENE
+        expression_patterns = OrderedDict()
+        expression_patterns['filter_NA_young'] = '"' + WES294_OAF_EARLYONSET_AF_COL_NAME + '"==\'NA\''
+        expression_patterns['filter_unique_young'] = 'float("' + WES294_OAF_EARLYONSET_AF_COL_NAME + '")<0.0196'
+        expression_patterns['filter_kvot_young_vs_exac'] = '("' + EST_KVOT_EARLYONSET_VS_EXAC_NFE_COL_NAME + '"!=\'INF\')'
+        expression_patterns['filter_kvot_young_vs_exac'] += 'and("' + EST_KVOT_EARLYONSET_VS_EXAC_NFE_COL_NAME + '"!=\'\')'
+        expression_patterns['filter_kvot_young_vs_exac'] += 'and("' + EST_KVOT_EARLYONSET_VS_EXAC_NFE_COL_NAME + '"!=\'NA\')'
+        expression_patterns['filter_kvot_young_vs_exac'] += 'and(float("' + EST_KVOT_EARLYONSET_VS_EXAC_NFE_COL_NAME + '")<1.3)'
+        expression_patterns['filter_kvot_young_vs_brc'] = '("' + EST_KVOT_EARLYONSET_VS_BRC_COL_NAME + '"!=\'INF\')'
+        expression_patterns['filter_kvot_young_vs_brc'] += 'and("' + EST_KVOT_EARLYONSET_VS_BRC_COL_NAME + '"!=\'\')'
+        expression_patterns['filter_kvot_young_vs_brc'] += 'and(float("' + EST_KVOT_EARLYONSET_VS_BRC_COL_NAME + '")<1.3)'
+        expression_patterns['filter_ncRNA_exonic'] = '"' + FUNC_REFGENE_COL_NAME + '"==\'ncRNA_exonic\''
+        sample_info = join_path(self.data_dir,
+                                "sample.info")
+        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
+                                                        annotated_vcf_tabix=annotated_vcf_tabix,
+                                                        anno_cols=ALL_MUTREP_ANNO_COLS,
+                                                        anno_excl_tags=custom_excl_tags,
+                                                        sample_info=sample_info,
+                                                        report_regions="2,6,7,19",
+                                                        rows_filter_actions=rows_filter_actions,
+                                                        expression_patterns=",".join(map(lambda x: x+":"+expression_patterns[x], expression_patterns)),
+                                                        expression_usages=",".join(map(lambda x: x+":DELETE_ROW", expression_patterns)),
+                                                        )
+        pl = MutRepPipeline(jobs_setup_file=jobs_setup_file)
+        pl.gen_summary_report(pl.report_layout.report_regions)
+        xls_file = join_path(self.working_dir,
+                             "rpts",
+                             project_name+"_summary.xlsx")
+        xu = XlsUtils(xls_file)
+        self.assertEqual(xu.count_rows(sheet_idx=0),
+                         12,
+                         "Incorrect number of rows in the variants sheet"
+                         )
+        info_col_idx = xu.get_col_idx(COMPOUND_HETEROZYGOTE_AFFECTED_COUNT_COL_NAME)
+        self.assertEqual(xu.get_cell_value(2, info_col_idx),
+                         23,
+                         "Incorrect cell value",
+                         )
+        self.assertEqual(xu.get_cell_value(7, info_col_idx),
+                         23,
+                         "Incorrect cell value",
+                         )
+        self.assertEqual(xu.get_cell_value(8, info_col_idx),
+                         1,
+                         "Incorrect cell value",
+                         )
+        info_col_idx = xu.get_col_idx(COMPOUND_HETEROZYGOTE_FREQ_RATIO_COL_NAME)
+        self.assertEqual(xu.get_cell_value(8, info_col_idx),
+                         "0.02 vs 0.00",
+                         "Incorrect cell value",
+                         )
+        info_col_idx = xu.get_col_idx(HOMOZYGOTE_AFFECTED_COUNT_COL_NAME)
+        self.assertEqual(xu.get_cell_value(10, info_col_idx),
+                         9,
+                         "Incorrect cell value",
+                         )
+        info_col_idx = xu.get_col_idx(HOMOZYGOTE_FREQ_RATIO_COL_NAME)
+        self.assertEqual(xu.get_cell_value(10, info_col_idx),
+                         "0.18 vs 0.05",
+                         "Incorrect cell value",
+                         )
+        sample_col_idx = xu.get_col_idx("1199-05o")
+        exp_rgb = "FF" + COLORS_RGB["XLS_GREEN"][-6:]
+        self.assertEqual(xu.get_cell_value(7, sample_col_idx),
+                         "het",
+                         "Incorrect cell value"
+                         )
+        self.assertEqual(xu.get_cell_rgb(7, sample_col_idx),
+                         exp_rgb,
+                         "Incorrect color"
+                         )
+        self.assertEqual(xu.get_cell_value(9, sample_col_idx),
+                         "het",
+                         "Incorrect cell value"
+                         )
+        self.assertEqual(xu.get_cell_rgb(9, sample_col_idx),
+                         RGB_NO_FILL,
                          "Incorrect color"
                          )
 

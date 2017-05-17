@@ -240,6 +240,7 @@ class _TAVcfRecord(_VcfRecord, pyCMMBase):
         self.__pathogenic_counts = {}
         self.__exac_constraints = defaultdict(dict)
         self.__max_ref_maf = {}
+        self.__added_info = {}
 
         if (type(self.FILTER) is list) and (len(self.FILTER) == 0):
             self.FILTER = "PASS"
@@ -314,6 +315,9 @@ class _TAVcfRecord(_VcfRecord, pyCMMBase):
                     self.__ref_is_mutated.append(True)
         return self.__ref_is_mutated
 
+    def add_info(self, var_name, value):
+        self.__added_info[var_name] = value
+
     def __get_info(self, var_name):
         """
         for internal call
@@ -322,6 +326,8 @@ class _TAVcfRecord(_VcfRecord, pyCMMBase):
         """
         if var_name in self.INFO:
             return self.INFO[var_name]
+        if var_name in self.__added_info:
+            return self.__added_info[var_name]
         return None
 
     def get_info(self, var_name, allele_idx=1):

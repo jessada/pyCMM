@@ -28,6 +28,13 @@ from pycmm.settings import DFLT_HEADER_CORRECTIONS
 from pycmm.settings import EXAC03_CONSTRAINT_COL_NAMES
 from pycmm.settings import EXAC03_CONSTRAINT_COL_NAME
 from pycmm.settings import MAX_REF_MAF_COL_NAME
+from pycmm.settings import COMPOUND_HETEROZYGOTE_AFFECTED_COUNT_COL_NAME
+from pycmm.settings import COMPOUND_HETEROZYGOTE_UNAFFECTED_COUNT_COL_NAME
+from pycmm.settings import COMPOUND_HETEROZYGOTE_FREQ_RATIO_COL_NAME
+from pycmm.settings import HOMOZYGOTE_AFFECTED_COUNT_COL_NAME
+from pycmm.settings import HOMOZYGOTE_UNAFFECTED_COUNT_COL_NAME
+from pycmm.settings import HOMOZYGOTE_FREQ_RATIO_COL_NAME
+from pycmm.settings import RECESSIVE_STUDY_COL_NAMES
 from pycmm.settings import FORMAT_COLS
 from pycmm.settings import FORMAT_COL_FLOAT
 from pycmm.settings import FORMAT_COL_INT
@@ -37,6 +44,7 @@ from pycmm.utils import is_number
 from pycmm.utils.ver import VersionManager
 from pycmm.cmmlib import CMMParams
 from pycmm.cmmlib.samplelib import SAMPLE_GROUP_MISSING
+from pycmm.cmmlib.samplelib import Sample
 from pycmm.cmmlib.taparser import TAVcfReader as VcfReader
 from pycmm.cmmlib.xlslib import CMMWorkbook as Workbook
 from pycmm.cmmlib.xlslib import NO_COLOR
@@ -138,27 +146,12 @@ XLS_ALT_COL_IDX = 3
 XLS_FILTER_COL_IDX = 4
 LAYOUT_VCF_COLS = XLS_FILTER_COL_IDX + 1
 
-RECESSIVE_CPD_HET_CASES_COUNT_COL_IDX = 0
-RECESSIVE_CPD_HET_CTRLS_COUNT_COL_IDX = 1
-RECESSIVE_CPD_HET_FREQ_RATIO_COL_IDX = 2
-RECESSIVE_HOM_CASES_COUNT_COL_IDX = 3
-RECESSIVE_HOM_CTRLS_COUNT_COL_IDX = 4
-RECESSIVE_HOM_FREQ_RATIO_COL_IDX = 5
-RECESSIVE_LAST_COL_IDX = RECESSIVE_HOM_FREQ_RATIO_COL_IDX
+RECESSIVE_INFO_IS_RECESSIVE = "is_recessive"
 
-CPD_HET_COUNT = 'cpd_het_count'
-HOM_COUNT = 'hom_count'
-RECESSIVE_SAMPLES_ID = 'recessive_samples_id'
-
-TXT_COMPOUND_HETEROZYGOTE_CASES_COUNT = "compound heterozygote cases count"
-TXT_COMPOUND_HETEROZYGOTE_FREQ_RATIO = "compound heterozygote frequency ratio"
-TXT_HOMOZYGOTE_CASES_COUNT = "homozygote cases count"
-TXT_HOMOZYGOTE_FREQ_RATIO = "homozygote frequency ratio"
+AR_SAMPLES_ID = "ar_samples_id"
 
 VcfRecordBuffer = namedtuple('VcfRecordBuffer',
                              'vcf_record allele_idx')
-RecessiveAnalysisResult = namedtuple('RecessiveAnalysisResult',
-                                     'affected unaffected filtered_buffer_idxs')
 
 class ActionDelRow(pyCMMBase):
     """ A structure to parse action to delete a row from a mutation report sheet """
@@ -427,6 +420,8 @@ class ReportLayout(CMMParams):
                 continue
             # here are the columns that can be shown without errors
             anno_cols.append(col_name)
+        if self.recessive_analysis:
+            anno_cols += RECESSIVE_STUDY_COL_NAMES
         return anno_cols
 
     @property
@@ -536,6 +531,10 @@ class ReportLayout(CMMParams):
     def coloring_zygosity(self):
         return JOBS_SETUP_RPT_COLORING_ZYGOSITY in self._get_job_config(JOBS_SETUP_RPT_COLORING_SAMPLES_KEY,
                                                                         default_val=[])
+
+    @property
+    def recessive_analysis(self):
+        return self.filter_non_recessive_gene
 
     @property
     def header_corrections(self):
@@ -674,28 +673,32 @@ class MutRepPipeline(CMMPipeline):
 
     def __write_header(self, ws, fam_id):
         def write_samples_header(start_col,
-                                 samples_header,
+                                 samples,
                                  cell_fmt,
                                  ):
             next_col = start_col
-            for hdr in samples_header:
-                next_col = self.__write_sample(ws, 0, next_col, hdr, cell_fmt)
+            affected_samples_id = map(lambda x: x.sample_id,
+                                      self.affected_samples_list)
+            unaffected_samples_id = map(lambda x: x.sample_id,
+                                        self.unaffected_samples_list)
+            for sample in samples:
+                hdr_fmt = cell_fmt
+                if isinstance(sample, Sample):
+                    hdr = sample.sample_id_w_fam_pref
+                    if (self.report_layout.recessive_analysis and
+                        (sample.sample_id in affected_samples_id or
+                         sample.sample_id in unaffected_samples_id)
+                        ):
+                        unaffected_sample_color = self.report_layout.cell_color_separator
+                        hdr_fmt = self.plain_fmts[unaffected_sample_color]
+                else:
+                    hdr = sample
+                next_col = self.__write_sample(ws, 0, next_col, hdr, hdr_fmt)
                 if self.report_layout.call_gq:
-                    next_col = self.__write_sample(ws, 0, next_col, hdr+"_GQ", cell_fmt)
+                    next_col = self.__write_sample(ws, 0, next_col, hdr+"_GQ", hdr_fmt)
                 if self.report_layout.call_detail:
-                    next_col = self.__write_sample(ws, 0, next_col, hdr+"(detail)", cell_fmt)
+                    next_col = self.__write_sample(ws, 0, next_col, hdr+"(detail)", hdr_fmt)
             return next_col
-
-        def write_samples(start_col,
-                          samples,
-                          cell_fmt,
-                          ):
-            samples_header = map(lambda x: x.sample_id_w_fam_pref, 
-                                 samples)
-            return write_samples_header(start_col,
-                                        samples_header,
-                                        cell_fmt,
-                                        )
 
         anno_cols = self.report_layout.anno_cols
         cell_fmt = self.plain_fmts[NO_COLOR]
@@ -737,11 +740,16 @@ class MutRepPipeline(CMMPipeline):
                                                         cell_fmt,
                                                         )
                 else:
-                    next_col += 1
-                    next_col = write_samples(next_col,
-                                             dataset.samples_list,
-                                             cell_fmt,
-                                             )
+                    next_col = self.__write_sample(ws,
+                                                   0,
+                                                   next_col,
+                                                   ".",
+                                                   cell_fmt,
+                                                   )
+                    next_col = write_samples_header(next_col,
+                                                    dataset.samples_list,
+                                                    cell_fmt,
+                                                    )
         return sample_start_col, next_col
 
     def __format_call_detail(self, call, call_fmt):
@@ -766,9 +774,9 @@ class MutRepPipeline(CMMPipeline):
                            allele_idx,
                            samples_id,
                            dflt_cell_fmt,
-                           recessive_samples_id=None,
                            ):
         next_col = start_col
+        ar_samples_id = vcf_record.get_info(AR_SAMPLES_ID)
         for sample_idx in xrange(len(samples_id)):
             sample_id = samples_id[sample_idx]
             call = vcf_record.genotype(sample_id)
@@ -797,6 +805,14 @@ class MutRepPipeline(CMMPipeline):
                     zygo_fmt = dflt_cell_fmt
             else:
                 zygo_fmt = dflt_cell_fmt
+            if (self.report_layout.recessive_analysis and
+                sample_id in ar_samples_id):
+                if call.actual_gts[allele_idx] == CMMGT_HOMOZYGOTE:
+                    hom_zygo_color = self.report_layout.cell_color_hom_recessive
+                    zygo_fmt = self.plain_fmts[hom_zygo_color]
+                elif call.actual_gts[allele_idx] == CMMGT_HETEROZYGOTE:
+                    het_zygo_color = self.report_layout.cell_color_het_recessive
+                    zygo_fmt = self.plain_fmts[het_zygo_color]
 
             # write content to cell(s)
             next_col = self.__write_sample(ws, row, next_col, zygo, zygo_fmt)
@@ -901,13 +917,13 @@ class MutRepPipeline(CMMPipeline):
             # if no info provided, just show all samples in vcf
             samples_id = self.vcf_reader.samples
             next_col = self.__write_zygosities(ws,
-                                                   row,
-                                                   next_col,
-                                                   vcf_record,
-                                                   allele_idx,
-                                                   samples_id,
-                                                   dflt_cell_fmt,
-                                                   )
+                                               row,
+                                               next_col,
+                                               vcf_record,
+                                               allele_idx,
+                                               samples_id,
+                                               dflt_cell_fmt,
+                                               )
         elif (self.datasets is not None and
               len(self.datasets) > 0): 
             sep_color = self.report_layout.cell_color_separator
@@ -944,7 +960,12 @@ class MutRepPipeline(CMMPipeline):
                 else:
                     samples_id = map(lambda x: x.sample_id,
                                      dataset.samples_list)
-                    next_col += 1
+                    next_col = self.__write_sample(ws,
+                                                   row,
+                                                   next_col,
+                                                   "",
+                                                   sep_fmt,
+                                                   )
                     next_col = self.__write_zygosities(ws,
                                                        row,
                                                        next_col,
@@ -966,6 +987,25 @@ class MutRepPipeline(CMMPipeline):
                          vcf_records,
                          fam_id,
                          ):
+        def run_recessive_analysis(ws,
+                                   row,
+                                   vcf_record_buffers,
+                                   ):
+            self.__filter_non_recessive_gene(vcf_record_buffers)
+            for vcf_record_buffer in vcf_record_buffers:
+                vcf_record = vcf_record_buffer.vcf_record
+                allele_idx = vcf_record_buffer.allele_idx
+                if vcf_record.get_info(RECESSIVE_INFO_IS_RECESSIVE): 
+                    row = self.__write_content(ws,
+                                               row,
+                                               vcf_record,
+                                               allele_idx,
+                                               None,
+                                               )
+            del vcf_record_buffers[:]
+            return row
+
+        # __write_contents start
         if fam_id is not None:
             # reserved for handling displaying some specific samples
             pass
@@ -974,6 +1014,9 @@ class MutRepPipeline(CMMPipeline):
         else:
             samples_id = map(lambda x: x.sample_id,
                              self.samples_list)
+        previous_gene = None
+        current_gene = None
+        vcf_record_buffers = []
         for vcf_record in vcf_records:
             for allele_idx in xrange(1, len(vcf_record.alleles)):
                 if (self.report_layout.filter_rare and
@@ -1029,12 +1072,120 @@ class MutRepPipeline(CMMPipeline):
                             break
                     if not gene_found:
                         continue
-                row = self.__write_content(ws,
-                                           row,
-                                           vcf_record,
-                                           allele_idx,
-                                           fam_id)
+                if self.report_layout.recessive_analysis:
+                    current_gene = vcf_record.get_info(GENE_REFGENE_COL_NAME,
+                                                       allele_idx)
+                    # check ing if the current record is a new gene 
+                    # if yes then filter non recessive variants in the previous gene
+                    if (previous_gene is not None) and (current_gene != previous_gene):
+                        row = run_recessive_analysis(ws,
+                                                     row,
+                                                     vcf_record_buffers,
+                                                     )
+                    # accumulate data for the current gene
+                    buffer = VcfRecordBuffer(vcf_record=vcf_record,
+                                             allele_idx=allele_idx)
+                    vcf_record_buffers.append(buffer)
+                    previous_gene = current_gene
+                else:
+                    row = self.__write_content(ws,
+                                               row,
+                                               vcf_record,
+                                               allele_idx,
+                                               fam_id)
+        # check if filter non recessive gene should be applied with the
+        # last gene in the chromosome
+        if (self.report_layout.recessive_analysis and
+            current_gene is not None):
+            row = run_recessive_analysis(ws,
+                                         row,
+                                         vcf_record_buffers,
+                                         )
         return row
+
+    def __filter_non_recessive_gene(self,
+                                    vcf_record_buffers,
+                                    ):
+        AnalysisResult = namedtuple('AnalysisResult',
+                                    'ar_samples_id cpd_het_count hom_count')
+        def analyse_samples(vcf_record_buffers,
+                            samples_id,
+                            ):
+            ar_samples_id = []
+            cpd_het_count = 0
+            hom_count = 0
+            for sample_id in samples_id:
+                recessive_count = 0
+                cpd_het_found = 0
+                hom_found = False
+                # go through vcf_record for the first round
+                # to check if the sample has recessive variants
+                for vcf_record_buffer in vcf_record_buffers:
+                    vcf_record = vcf_record_buffer.vcf_record
+                    allele_idx = vcf_record_buffer.allele_idx
+                    call = vcf_record.genotype(sample_id)
+                    if call.actual_gts[allele_idx] == CMMGT_HOMOZYGOTE:
+                        recessive_count += 2
+                        hom_found = True
+                        cpd_het_found += 1
+                    elif call.actual_gts[allele_idx] == CMMGT_HETEROZYGOTE:
+                        recessive_count += 1
+                        cpd_het_found += 1
+                if recessive_count > 1:
+                    ar_samples_id.append(sample_id)
+                if cpd_het_found > 1:
+                    cpd_het_count += 1
+                if hom_found:
+                    hom_count += 1
+            return AnalysisResult(ar_samples_id=ar_samples_id,
+                                  cpd_het_count=cpd_het_count,
+                                  hom_count=hom_count)
+
+        # __filter_non_recessive_gene start
+        # go through all variants of every samples in the gene
+        # and see if any compound heterozygote and homozygote can be found
+        affected_samples_id = map(lambda x: x.sample_id,
+                                  self.affected_samples_list)
+        n_affected_samples = len(affected_samples_id)
+        affected_result = analyse_samples(vcf_record_buffers,
+                                           affected_samples_id,
+                                           )
+        unaffected_samples_id = map(lambda x: x.sample_id,
+                                    self.unaffected_samples_list)
+        n_unaffected_samples = len(unaffected_samples_id)
+        unaffected_result = analyse_samples(vcf_record_buffers,
+                                             unaffected_samples_id,
+                                             )
+        # go through vcf_record for the second round
+        # mark the buffer idx with any affected recessive variants
+        for vcf_record_buffer in vcf_record_buffers:
+            vcf_record = vcf_record_buffer.vcf_record
+            allele_idx = vcf_record_buffer.allele_idx
+            for sample_id in affected_result.ar_samples_id:
+                call = vcf_record.genotype(sample_id)
+                if (call.actual_gts[allele_idx] == CMMGT_HOMOZYGOTE or
+                    call.actual_gts[allele_idx] == CMMGT_HETEROZYGOTE):
+                    vcf_record.add_info(RECESSIVE_INFO_IS_RECESSIVE,
+                                        True)
+                    vcf_record.add_info(AR_SAMPLES_ID,
+                                        [affected_result.ar_samples_id+unaffected_result.ar_samples_id])
+                    vcf_record.add_info(COMPOUND_HETEROZYGOTE_AFFECTED_COUNT_COL_NAME,
+                                        affected_result.cpd_het_count)
+                    vcf_record.add_info(COMPOUND_HETEROZYGOTE_UNAFFECTED_COUNT_COL_NAME,
+                                        unaffected_result.cpd_het_count)
+                    affected_cpd_het_freq = "{:.2f}".format(float(affected_result.cpd_het_count)/float(n_affected_samples))
+                    unaffected_cpd_het_freq = "{:.2f}".format(float(unaffected_result.cpd_het_count)/float(n_unaffected_samples))
+                    vcf_record.add_info(COMPOUND_HETEROZYGOTE_FREQ_RATIO_COL_NAME,
+                                        affected_cpd_het_freq+" vs "+unaffected_cpd_het_freq)
+                    vcf_record.add_info(HOMOZYGOTE_AFFECTED_COUNT_COL_NAME,
+                                        affected_result.hom_count)
+                    vcf_record.add_info(HOMOZYGOTE_UNAFFECTED_COUNT_COL_NAME,
+                                        unaffected_result.hom_count)
+                    affected_hom_freq = "{:.2f}".format(float(affected_result.hom_count)/float(n_affected_samples))
+                    unaffected_hom_freq = "{:.2f}".format(float(unaffected_result.hom_count)/float(n_unaffected_samples))
+                    vcf_record.add_info(HOMOZYGOTE_FREQ_RATIO_COL_NAME,
+                                        affected_hom_freq+" vs "+unaffected_hom_freq)
+                    break
 
     def __set_layout(self, ws, sample_start_idx, record_size):
         ws.autofilter(0, 0, 0, sample_start_idx-1)

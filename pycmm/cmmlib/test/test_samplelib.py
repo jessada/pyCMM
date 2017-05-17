@@ -486,42 +486,42 @@ class TestSamplesInfo(SafeTester):
                          True,
                          "familiylib can't handle families information")
 
-#    def test_samples_phenotype_1(self):
-#        """ test if sample phenotype can be determined if there is no information """
-#
-#        self.init_test(self.current_func_name)
-#        jobs_setup_file = self.__create_jobs_setup_file(sample_info="18:Co-345:Co-37,12:Co-890:Co-290,13:Co-95,266:Co-131:Co-1355,314:1793-11o,987:Co-218:Co-2588,911:Co-1454:Co-4700,prostate:Pro001:Pro002:Pro003")
-#        pl = CMMPipeline(jobs_setup_file=jobs_setup_file)
-#        self.assertEqual(len(pl.affected_samples),
-#                         0,
-#                         "incorrect number of affected samples")
-#
-#    def test_samples_phenotype_2(self):
-#        """ test backward compatible if loading from file (no phenotype) """
-#
-#        self.init_test(self.current_func_name)
-#        sample_info = join_path(self.data_dir,
-#                                "sample.info")
-#        jobs_setup_file = self.__create_jobs_setup_file(sample_info=sample_info)
-#        pl = CMMPipeline(jobs_setup_file=jobs_setup_file)
-#        self.assertEqual(len(pl.affected_samples),
-#                         0,
-#                         "incorrect number of affected samples")
-#
-#    def test_samples_phenotype_3(self):
-#        """ test sample phenotype can be loaded if they are identified """
-#
-#        self.init_test(self.current_func_name)
-#        sample_info = join_path(self.data_dir,
-#                                "sample.info")
-#        jobs_setup_file = self.__create_jobs_setup_file(sample_info=sample_info)
-#        pl = CMMPipeline(jobs_setup_file=jobs_setup_file)
-#        self.assertEqual(len(pl.affected_samples),
-#                         8,
-#                         "incorrect number of affected samples")
-#        self.assertEqual(len(pl.unaffected_samples),
-#                         7,
-#                         "incorrect number of unaffected samples")
+    def test_samples_phenotype_1(self):
+        """ test if sample phenotype can be determined if there is no information """
+
+        self.init_test(self.current_func_name)
+        jobs_setup_file = self.__create_jobs_setup_file(sample_info="18:Co-345:Co-37,12:Co-890:Co-290,13:Co-95,266:Co-131:Co-1355,314:1793-11o,987:Co-218:Co-2588,911:Co-1454:Co-4700,prostate:Pro001:Pro002:Pro003")
+        pl = CMMPipeline(jobs_setup_file=jobs_setup_file)
+        self.assertEqual(len(pl.affected_samples_list),
+                         0,
+                         "incorrect number of affected samples")
+
+    def test_samples_phenotype_2(self):
+        """ test backward compatible if loading from file (no phenotype) """
+
+        self.init_test(self.current_func_name)
+        sample_info = join_path(self.data_dir,
+                                "sample.info")
+        jobs_setup_file = self.__create_jobs_setup_file(sample_info=sample_info)
+        pl = CMMPipeline(jobs_setup_file=jobs_setup_file)
+        self.assertEqual(len(pl.affected_samples_list),
+                         0,
+                         "incorrect number of affected samples")
+
+    def test_samples_phenotype_3(self):
+        """ test sample phenotype can be loaded if they are identified """
+
+        self.init_test(self.current_func_name)
+        sample_info = join_path(self.data_dir,
+                                "sample.info")
+        jobs_setup_file = self.__create_jobs_setup_file(sample_info=sample_info)
+        pl = CMMPipeline(jobs_setup_file=jobs_setup_file)
+        self.assertEqual(len(pl.affected_samples_list),
+                         8,
+                         "incorrect number of affected samples")
+        self.assertEqual(len(pl.unaffected_samples_list),
+                         7,
+                         "incorrect number of unaffected samples")
 #        self.assertEqual(len(pl.samples_groups[1].affected),
 #                         8,
 #                         "incorrect number of affected samples")
@@ -546,7 +546,7 @@ class TestSamplesInfo(SafeTester):
 #        self.assertEqual(len(pl.samples_groups[4].unaffected),
 #                         2,
 #                         "incorrect number of unaffected samples")
-#
+
 #    def test_samples_groups_1(self):
 #        """ test if sample group; can be determined if there is no information """
 #

@@ -231,6 +231,8 @@ class SamplesInfo(pyCMMBase):
         super(SamplesInfo, self).__init__(*args, **kwargs)
         self.__parse_items(samples_info, item_template)
         self.__samples_list = self.__parse_samples_list()
+        self.__affected_samples_list = self.__parse_affected_samples_list()
+        self.__unaffected_samples_list = self.__parse_unaffected_samples_list()
 #        self.__samples_groups = self.__parse_samples_groups()
 
     def __parse_items(self, samples_info, item_template):
@@ -251,6 +253,22 @@ class SamplesInfo(pyCMMBase):
                                   )
                               )
         return samples_list
+
+    def __parse_affected_samples_list(self):
+        if self.samples_list is None:
+            return None
+        affected_samples_list = filter(lambda x: x.phenotype==PHENOTYPE_AFFECTED, 
+                                  self.samples_list
+                                  )
+        return affected_samples_list
+
+    def __parse_unaffected_samples_list(self):
+        if self.samples_list is None:
+            return None
+        unaffected_samples_list = filter(lambda x: x.phenotype==PHENOTYPE_UNAFFECTED, 
+                                    self.samples_list
+                                    )
+        return unaffected_samples_list
 
 #    def __parse_samples_groups(self):
 #        if self.samples_list is None:
@@ -301,14 +319,14 @@ class SamplesInfo(pyCMMBase):
     def families(self):
         return self.__items
 
-#    @property
-#    def affected_samples(self):
-#        return self.samples_list.affected
-#
-#    @property
-#    def unaffected_samples(self):
-#        return self.samples_list.unaffected
-#
+    @property
+    def affected_samples_list(self):
+        return self.__affected_samples_list
+
+    @property
+    def unaffected_samples_list(self):
+        return self.__unaffected_samples_list
+
 class MutRepSamplesInfo(SamplesInfo):
     """  To parse and structure all samples information for mutation report """
 
