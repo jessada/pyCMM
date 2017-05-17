@@ -13,6 +13,7 @@ from pycmm.cmmlib.samplelib import JOBS_SETUP_MEMBERS_LIST_KEY
 from pycmm.cmmlib.samplelib import NO_FAMILY
 from pycmm.cmmlib.samplelib import Sample
 from pycmm.cmmlib.samplelib import Family
+from pycmm.cmmlib.samplelib import SamplesInfo
 from pycmm.cmmlib.fastqlib import Fastq
 from pycmm.cmmlib.fastqlib import is_r1
 from pycmm.cmmlib.fastqlib import is_r2
@@ -137,12 +138,48 @@ class GATKSample(Sample):
         return join_path(self.gvcf_out_dir,
                          self.sample_id+".g.vcf.gz")
 
-class GATKFamily(Family):
+class GATKBPSamplesInfo(SamplesInfo):
+    """  To parse and structure all samples information for mutation report """
+
+    def __init__(self,
+                 samples_info,
+                 *args,
+                 **kwargs
+                 ):
+        super(GATKBPSamplesInfo, self).__init__(samples_info,
+                                                GATKBPFamily,
+                                                *args,
+                                                **kwargs)
+#        self.__parse_families()
+#
+#    def __parse_families(self):
+#        if self.datasets is None:
+#            self.__families = None
+#            return
+#        self.__families = OrderedDict()
+#        for dataset in self.datasets.values():
+#            for fam_id in dataset.families:
+#                family = dataset.families[fam_id]
+#                self.__families[fam_id] = family
+#
+#    @property
+#    def datasets(self):
+#        return self.items
+#
+#    @property
+#    def families(self):
+#        return self.__families
+
+class GATKBPFamily(Family):
     """  To parse and structure GATK dummy family """
 
     def __init__(self, *args, **kwargs):
         self.__members = None
-        super(GATKFamily, self).__init__(*args, **kwargs)
+        super(GATKBPFamily, self).__init__(*args, **kwargs)
+
+    @property
+    def _id(self):
+        return self.fam_id
 
     @property
     def members(self):
@@ -218,7 +255,7 @@ class GATKBPPipeline(CMMPipeline):
     """ A class to control GATK best practice pipeline """
 
     def __init__(self, *args, **kwargs):
-        kwargs['family_template'] = GATKFamily
+        kwargs['info_template'] = GATKBPSamplesInfo
         super(GATKBPPipeline, self).__init__(*args, **kwargs)
         self.__init_properties()
 

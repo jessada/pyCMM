@@ -10,10 +10,12 @@ from pycmm.settings import FUNC_REFGENE_VAR
 from pycmm.settings import EXONICFUNC_REFGENE_VAR
 from pycmm.settings import EST_KVOT_EARLYONSET_VS_BRC_COL_NAME
 from pycmm.settings import EST_KVOT_EARLYONSET_VS_EXAC_NFE_COL_NAME
+from pycmm.settings import EST_KVOT_EARLYONSET_VS_SWEGEN_COL_NAME
 from pycmm.settings import EST_KVOT_EARLYONSET_VS_KG_EUR_COL_NAME
 from pycmm.settings import PATHOGENIC_COUNT_COL_NAME
 from pycmm.settings import WES294_OAF_EARLYONSET_AF_COL_NAME
 from pycmm.settings import WES294_OAF_BRCS_AF_COL_NAME
+from pycmm.settings import SWEGEN_AF_COL_NAME
 from pycmm.settings import EXAC_NFE_COL_NAME
 from pycmm.settings import KG2014OCT_EUR_COL_NAME
 from pycmm.settings import EXAC03_CONSTRAINT_EXP_SYN_COL_NAME
@@ -25,6 +27,8 @@ from pycmm.settings import EXAC03_CONSTRAINT_MIS_Z_COL_NAME
 from pycmm.settings import EXAC03_CONSTRAINT_EXP_LOF_COL_NAME
 from pycmm.settings import EXAC03_CONSTRAINT_N_LOF_COL_NAME
 from pycmm.settings import EXAC03_CONSTRAINT_PLI_COL_NAME
+from pycmm.settings import REF_MAF_COL_NAMES
+from pycmm.settings import MAX_REF_MAF_COL_NAME
 from pycmm.settings import EXAC03_CONSTRAINT_COL_NAMES
 from pycmm.settings import EXAC03_CONSTRAINT_COL_NAME
 from pycmm.settings import PREDICTION_COLS
@@ -235,6 +239,8 @@ class _TAVcfRecord(_VcfRecord, pyCMMBase):
         self.__shared_cal = False
         self.__pathogenic_counts = {}
         self.__exac_constraints = defaultdict(dict)
+        self.__max_ref_maf = {}
+        self.__added_info = {}
 
         if (type(self.FILTER) is list) and (len(self.FILTER) == 0):
             self.FILTER = "PASS"
@@ -309,6 +315,9 @@ class _TAVcfRecord(_VcfRecord, pyCMMBase):
                     self.__ref_is_mutated.append(True)
         return self.__ref_is_mutated
 
+    def add_info(self, var_name, value):
+        self.__added_info[var_name] = value
+
     def __get_info(self, var_name):
         """
         for internal call
@@ -317,6 +326,8 @@ class _TAVcfRecord(_VcfRecord, pyCMMBase):
         """
         if var_name in self.INFO:
             return self.INFO[var_name]
+        if var_name in self.__added_info:
+            return self.__added_info[var_name]
         return None
 
     def get_info(self, var_name, allele_idx=1):
@@ -365,6 +376,13 @@ class _TAVcfRecord(_VcfRecord, pyCMMBase):
                                                         allele_idx),
                                ref_is_mutated=self.ref_is_mutated[allele_idx],
                                )
+        elif var_name == EST_KVOT_EARLYONSET_VS_SWEGEN_COL_NAME:
+            info = cal_est_ors(cases_freq=self.get_info(WES294_OAF_EARLYONSET_AF_COL_NAME,
+                                                        allele_idx),
+                               ctrls_freq=self.get_info(SWEGEN_AF_COL_NAME,
+                                                        allele_idx),
+                               ref_is_mutated=self.ref_is_mutated[allele_idx],
+                               )
         elif var_name == EST_KVOT_EARLYONSET_VS_EXAC_NFE_COL_NAME:
             info = cal_est_ors(cases_freq=self.get_info(WES294_OAF_EARLYONSET_AF_COL_NAME,
                                                         allele_idx),
@@ -381,6 +399,8 @@ class _TAVcfRecord(_VcfRecord, pyCMMBase):
                                )
         elif var_name in EXAC03_CONSTRAINT_COL_NAMES:
             info = self.__get_exac_constraint_val(var_name, allele_idx)
+        elif var_name == MAX_REF_MAF_COL_NAME:
+            info = self.__get_max_ref_maf(allele_idx)
         elif var_name == INTERVAR_CLASS_COL_NAME:
             info = parse_intervar_class(self.get_info(INTERVAR_AND_EVIDENCE_COL_NAME,
                                                       allele_idx))
@@ -571,7 +591,6 @@ class _TAVcfRecord(_VcfRecord, pyCMMBase):
         self.__parse_exac_constraint(exac_constraint_vals, allele_idx)
         return self.__exac_constraints[allele_idx][var_name]
 
-
     def __parse_exac_constraint(self, exac_constraint_vals, allele_idx):
         exac_constaints = exac_constraint_vals.split('#')
         for exac_constaint in exac_constaints:
@@ -579,6 +598,21 @@ class _TAVcfRecord(_VcfRecord, pyCMMBase):
             var_name = match.group('var_name')
             value = match.group('value')
             self.__exac_constraints[allele_idx][var_name] = value
+
+    def __get_max_ref_maf(self, allele_idx=1):
+        if allele_idx not in self.__max_ref_maf:
+            max_ref_maf = 0
+            for ref_maf_col_name in REF_MAF_COL_NAMES:
+                ref_maf = self.get_info(ref_maf_col_name, allele_idx)
+                if ref_maf == "":
+                    continue
+                ref_maf = float(ref_maf)
+                if ref_maf > 0.5:
+                    ref_maf = 1 - ref_maf
+                if ref_maf > max_ref_maf:
+                    max_ref_maf = ref_maf
+            self.__max_ref_maf[allele_idx] = max_ref_maf
+        return self.__max_ref_maf[allele_idx]
 
     def vcf_eval(self, expr, allele_idx):
         def info_repl(match_obj):
@@ -588,10 +622,18 @@ class _TAVcfRecord(_VcfRecord, pyCMMBase):
             repl_txt += ")"
             return repl_txt
 
-        info_field = re.search(r'(\".+?\")', expr).group(0)
-        info_val = eval(re.sub(r'(\".+?\")',
-                               info_repl,
-                               info_field)) 
-        return eval(re.sub(r'(\".+?\")',
-                           "info_val",
-                           expr))
+        # look for annotated fields
+        info_fields = {}
+        for match in re.finditer(r'(\".+?\")', expr):
+            info_fields[match.group(1)] = 1
+        # replace the annotated fields with the actual values
+        repl_expr = expr
+        for info_field in info_fields:
+            info_val = eval(re.sub(r'(\".+?\")',
+                                   info_repl,
+                                   info_field)) 
+            repl_expr = re.sub(info_field,
+                               "'"+str(info_val)+"'",
+                               repl_expr)
+        # then eval the expression
+        return eval(repl_expr)

@@ -6,8 +6,7 @@ from pycmm.settings import DFLT_JOB_ALLOC_TIME
 from pycmm.utils import get_dict_val
 from pycmm.utils.jobman import JobManager
 from pycmm.cmmlib.samplelib import params_to_yaml_doc
-from pycmm.cmmlib.samplelib import SamplesInfo
-from pycmm.cmmlib.samplelib import Family
+from pycmm.cmmlib.samplelib import MutRepSamplesInfo
 from pycmm.cmmlib.samplelib import JOBS_SETUP_SAMPLES_INFOS_KEY
 from pycmm.cmmlib.samplelib import NO_FAMILY
 
@@ -23,12 +22,12 @@ class CMMPipeline(JobManager):
 
     def __init__(self,
                  jobs_setup_file,
-                 family_template=Family,
+                 info_template=MutRepSamplesInfo,
                  *args,
                  **kwargs
                  ):
         self.__load_jobs_info(jobs_setup_file)
-        self.__init_properties(family_template)
+        self.__init_properties(info_template)
         kwargs['jobs_report_file'] = self.jobs_report_file
         super(CMMPipeline, self).__init__(*args, **kwargs)
 
@@ -63,10 +62,9 @@ class CMMPipeline(JobManager):
         stream = file(jobs_setup_file, "r")
         self.__jobs_info = yaml.safe_load(stream)
 
-    def __init_properties(self, family_template):
+    def __init_properties(self, info_template):
         self.__project_out_dir = None
-        self.__samples_info = SamplesInfo(self._get_job_config(JOBS_SETUP_SAMPLES_INFOS_KEY),
-                                          family_template=family_template)
+        self.__samples_info = info_template(self._get_job_config(JOBS_SETUP_SAMPLES_INFOS_KEY))
 
     def _get_sub_project_dir(self, sub_dir):
         attr_name = "_"
@@ -234,21 +232,28 @@ class CMMPipeline(JobManager):
         return self.__samples_info.samples_id_w_fam_pref
 
     @property
-    def affected_samples(self):
-        return self.__samples_info.affected_samples
+    def affected_samples_list(self):
+        return self.__samples_info.affected_samples_list
 
     @property
-    def unaffected_samples(self):
-        return self.__samples_info.unaffected_samples
+    def unaffected_samples_list(self):
+        return self.__samples_info.unaffected_samples_list
 
 #    @property
-#    def affected_samples_id(self):
-#        return self.__samples_info.affected_samples_id
+#    def samples_groups(self):
+#        return self.__samples_info.samples_groups
 #
     @property
-    def samples_groups(self):
-        return self.__samples_info.samples_groups
+    def samples_list(self):
+        return self.__samples_info.samples_list
 
+    @property
+    def has_samples_info(self):
+        return self.__samples_info.has_info
+
+    @property
+    def datasets(self):
+        return self.__samples_info.datasets
 
     def monitor_init(self, *args, **kwargs):
         super(CMMPipeline, self).monitor_init(*args, **kwargs)
