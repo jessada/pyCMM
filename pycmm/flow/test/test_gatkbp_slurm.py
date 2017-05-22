@@ -1,13 +1,14 @@
 import unittest
 from os.path import exists as path_exists
 from os.path import join as join_path
-from pycmm.settings import SLURM_GATKBP_TEST
 from pycmm.settings import FULL_SYSTEM_TEST
 from pycmm.template import SafeTester
 from pycmm.settings import TEST_PROJECT_CODE
 from pycmm.flow.gatkbp import GATKBPPipeline
 from pycmm.flow.test.test_gatkbp import create_gatk_jobs_setup_file
 
+
+SLURM_GATKBP_TEST = False
 
 class TestGATKBPPipelineSlurm(SafeTester):
 

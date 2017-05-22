@@ -5,7 +5,6 @@ from os.path import dirname
 from collections import OrderedDict
 from pycmm.template import SafeTester
 from pycmm.cmmlib.xlslib import XlsUtils
-from pycmm.settings import SLURM_MUTREP_TEST
 from pycmm.settings import TEST_PROJECT_CODE
 from pycmm.settings import ALL_MUTREP_ANNO_COLS
 from pycmm.settings import FUNC_REFGENE_COL_NAME
@@ -41,6 +40,8 @@ DFLT_TEST_MUTREP_COLS[AXEQ_CHR5_19_GF_COL_NAME] = ALL_MUTREP_ANNO_COLS[AXEQ_CHR5
 #DFLT_TEST_MUTREP_COLS[CRC_CRC_PF_COL_NAME] = ALL_MUTREP_ANNO_COLS[CRC_CRC_PF_COL_NAME]
 
 DFLT_TEST_REPORT_REGIONS = "18:12512255-14542551"
+
+SLURM_MUTREP_TEST = False
 
 #class TestMutRepPipelineSlurm(SafeTester):
 #

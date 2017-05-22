@@ -6,6 +6,7 @@ from collections import OrderedDict
 from pycmm.template import SafeTester
 from pycmm.cmmlib.xlslib import XlsUtils
 from pycmm.cmmlib.colorlib import COLORS_RGB
+from pycmm.settings import XLS_TEST
 from pycmm.settings import DFLT_MUTREP_FREQ_RATIOS
 from pycmm.settings import ALL_MUTREP_ANNO_COLS
 from pycmm.settings import MT_COLS_TAG
@@ -174,7 +175,6 @@ class TestMutRepPipeline(SafeTester):
     def test_load_jobs_info_2(self):
         """ test if non-default layout configurations are loaded correctly """
 
-        self.individual_debug = True
         self.init_test(self.current_func_name)
         dummy_annotated_vcf_tabix = join_path(self.data_dir,
                                               "input.vcf.gz")
@@ -337,7 +337,7 @@ class TestMutRepPipeline(SafeTester):
                          'SRC',
                          "MutRepPipeline cannot correctly read report layout info 'color genes' from jobs setup file")
 
-    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST, "taking too long time to test")
+    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST, "taking too long time to test")
     def test_summary_report_1(self):
         """ test if summary report with default configuration can be correctly generated """
 
@@ -359,7 +359,7 @@ class TestMutRepPipeline(SafeTester):
                          18,
                          "shared mutations cannot be correctly determined")
 
-    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST, "taking too long time to test")
+    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST, "taking too long time to test")
     def test_summary_report_2(self):
         """ test summary with multiple report_regions """
 
@@ -382,7 +382,7 @@ class TestMutRepPipeline(SafeTester):
                          10,
                          "shared mutations cannot be correctly determined")
 
-    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST, "taking too long time to test")
+    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST, "taking too long time to test")
     def test_summary_report_3(self):
         """
         test if mutations with more than one alternate alleles in summary
@@ -411,7 +411,7 @@ class TestMutRepPipeline(SafeTester):
                          "information of mutations with more than one alternate alleles are incorrect"
                          )
 
-    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST, "taking too long time to test")
+    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST, "taking too long time to test")
     def test_summary_report_4(self):
         """ test summary with multiple report_regions and many sample infos """
 
@@ -446,7 +446,7 @@ class TestMutRepPipeline(SafeTester):
                          "Incorrect number of sheets"
                          )
 
-    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST, "taking too long time to test")
+    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST, "taking too long time to test")
     def test_summary_report_5(self):
         """ test summary report of CRC samples """
 
@@ -471,7 +471,7 @@ class TestMutRepPipeline(SafeTester):
                          "CRC report cannot be generated correctly"
                          )
 
-    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST, "taking too long time to test")
+    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST, "taking too long time to test")
     def test_summary_report_6(self):
         """ test if unicode character 'ö' is allowed in the report """
 
@@ -498,7 +498,7 @@ class TestMutRepPipeline(SafeTester):
                          "report with swedish unicode character cannot be generated correctly"
                          )
 
-    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST, "taking too long time to test")
+    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST, "taking too long time to test")
     def test_summary_report_7(self):
         """ test excluding "*" allele """
 
@@ -523,7 +523,7 @@ class TestMutRepPipeline(SafeTester):
                          "mutation report cannot exclude '*' allele"
                          )
 
-#    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST, "taking too long time to test")
+#    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST, "taking too long time to test")
 #    def test_family_report_1(self):
 #        """ test with only one family which has only one members """
 #
@@ -550,7 +550,7 @@ class TestMutRepPipeline(SafeTester):
 #                         0,
 #                         "invalid sheet name")
 #
-#    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST, "taking too long time to test")
+#    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST, "taking too long time to test")
 #    def test_family_report_2(self):
 #        """ test with only one family which has two members """
 #
@@ -583,7 +583,7 @@ class TestMutRepPipeline(SafeTester):
 #                         2,
 #                         "invalid sheet name")
 #
-#    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST, "taking too long time to test")
+#    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST, "taking too long time to test")
 #    def test_family_report_3(self):
 #        """ test with only one family which has three members """
 #
@@ -619,7 +619,7 @@ class TestMutRepPipeline(SafeTester):
 #                         3,
 #                         "invalid sheet name")
 #
-#    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST, "taking too long time to test")
+#    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST, "taking too long time to test")
 #    def test_family_report_4(self):
 #        """
 #        test with number of mutations are correct in each tab
@@ -658,7 +658,7 @@ class TestMutRepPipeline(SafeTester):
 #                         13,
 #                         "incorrect number of mutations")
 #
-#    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST, "taking too long time to test")
+#    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST, "taking too long time to test")
 #    def test_family_report_5(self):
 #        """ test if report can be run with missing columns """
 #
@@ -688,7 +688,7 @@ class TestMutRepPipeline(SafeTester):
 #                         13,
 #                         "incorrect number of mutations")
 #
-#    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST, "taking too long time to test")
+#    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST, "taking too long time to test")
 #    def test_families_reports_1(self):
 #        """ test generating offline families reports (1 family)"""
 #
@@ -724,7 +724,7 @@ class TestMutRepPipeline(SafeTester):
 #                         7,
 #                         "incorrect number of mutations")
 #
-#    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST, "taking too long time to test")
+#    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST, "taking too long time to test")
 #    def test_families_reports_2(self):
 #        """ test generating offline families reports (3 families)"""
 #
@@ -762,7 +762,7 @@ class TestMutRepPipeline(SafeTester):
 #                         1,
 #                         "invalid number of sheets")
 #
-#    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST, "taking too long time to test")
+#    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST, "taking too long time to test")
 #    def test_families_reports_3(self):
 #        """ test generating 101 CRC families reports """
 #
@@ -807,7 +807,7 @@ class TestMutRepPipeline(SafeTester):
 #                         4,
 #                         "invalid number of sheets")
 #
-#    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST, "taking too long time to test")
+#    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST, "taking too long time to test")
 #    def test_families_reports_4(self):
 #        """ test generating NK64 fam24 families reports """
 #
@@ -840,7 +840,7 @@ class TestMutRepPipeline(SafeTester):
 #                         3,
 #                         "incorrect number of mutations")
 #
-#    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST, "taking too long time to test")
+#    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST, "taking too long time to test")
 #    def test_families_reports_5(self):
 #        """ test generating NK64 PMS2 families reports """
 #
@@ -891,7 +891,7 @@ class TestMutRepPipeline(SafeTester):
 #                         1,
 #                         "invalid number of sheets")
 
-    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST, "taking too long time to test")
+    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST, "taking too long time to test")
     def test_expression_action_del_row_1(self):
         """
         test if expreesion patterns and expression actions can be used
@@ -920,7 +920,7 @@ class TestMutRepPipeline(SafeTester):
                          "Incorrect number of rows"
                          )
 
-    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST, "taking too long time to test")
+    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST, "taking too long time to test")
     def test_expression_action_del_row_2(self):
         """
         test if expreesion patterns and expression actions can be used
@@ -948,7 +948,7 @@ class TestMutRepPipeline(SafeTester):
                          "Incorrect number of rows"
                          )
 
-    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST, "taking too long time to test")
+    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST, "taking too long time to test")
     def test_expression_action_del_row_3(self):
         """
         test if expreesion patterns and expression actions can be used
@@ -979,7 +979,7 @@ class TestMutRepPipeline(SafeTester):
                          "Incorrect number of rows"
                          )
 
-    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST, "taking too long time to test")
+    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST, "taking too long time to test")
     def test_expression_action_del_row_4(self):
         """
         test if expreesion patterns and expression actions can be used
@@ -1011,7 +1011,7 @@ class TestMutRepPipeline(SafeTester):
                          "Incorrect number of rows"
                          )
 
-    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST, "taking too long time to test")
+    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST, "taking too long time to test")
     def test_expression_action_del_row_5(self):
         """
         test deleting rows using max_ref_maf column
@@ -1021,6 +1021,7 @@ class TestMutRepPipeline(SafeTester):
         annotated_vcf_tabix = join_path(self.data_dir,
                                         "input.vcf.gz")
         project_name = self.test_function
+        anno_cols = ALL_MUTREP_ANNO_COLS
         anno_cols = list(DFLT_TEST_MUTREP_COLS)
         anno_cols.append(MAX_REF_MAF_COL_NAME)
         anno_cols += REF_MAF_COL_NAMES
@@ -1038,11 +1039,11 @@ class TestMutRepPipeline(SafeTester):
                              project_name+"_summary.xlsx")
         xu = XlsUtils(xls_file)
         self.assertEqual(xu.count_rows(sheet_idx=0),
-                         10,
+                         9,
                          "Incorrect number of rows"
                          )
 
-    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST, "taking too long time to test")
+    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST, "taking too long time to test")
     def test_expression_action_color_row_1(self):
         """
         test if expreesion patterns and expression actions can be used
@@ -1085,7 +1086,7 @@ class TestMutRepPipeline(SafeTester):
                             "Incorrect color"
                             )
 
-    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST, "taking too long time to test")
+    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST, "taking too long time to test")
     def test_expression_action_color_col_1(self):
         """
         test if expreesion patterns and expression actions can be used
@@ -1140,7 +1141,7 @@ class TestMutRepPipeline(SafeTester):
                          "Incorrect color"
                          )
 
-    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST, "taking too long time to test")
+    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST, "taking too long time to test")
     def test_expression_action_color_col_2(self):
         """
         test multiple coloring in one column with different expression
@@ -1200,7 +1201,7 @@ class TestMutRepPipeline(SafeTester):
                          "Incorrect color"
                          )
 
-    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST, "taking too long time to test")
+    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST, "taking too long time to test")
     def test_color_shared_mutations_1(self):
         """
         test if shared mutation can be colored correctly
@@ -1233,7 +1234,7 @@ class TestMutRepPipeline(SafeTester):
                          "Incorrect color"
                          )
 
-    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST, "taking too long time to test")
+    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST, "taking too long time to test")
     def test_cal_est_kvot_1(self):
         """
         test variable type handling in test_cal_ors
@@ -1264,7 +1265,7 @@ class TestMutRepPipeline(SafeTester):
                          "Incorrect number of rows"
                          )
 
-    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST, "taking too long time to test")
+    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST, "taking too long time to test")
     def test_cal_est_kvot_2(self):
         """
         test if there is mutation in reference for cal_est_ors
@@ -1336,7 +1337,7 @@ class TestMutRepPipeline(SafeTester):
                          "Incorect ORS estimation"
                          )
 
-    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST, "taking too long time to test")
+    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST, "taking too long time to test")
     def test_criteria_sheet_1(self):
         """ test summary with multiple report_regions and many sample infos """
 
@@ -1377,7 +1378,7 @@ class TestMutRepPipeline(SafeTester):
                          "Incorrect number of rows the criteria sheet"
                          )
 
-    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST, "taking too long time to test")
+    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST, "taking too long time to test")
     def test_header_corrections_1(self):
         """ test if column headers can be replaced with better names  """
 
@@ -1416,7 +1417,7 @@ class TestMutRepPipeline(SafeTester):
                          "Incorect ORS estimation"
                          )
 
-    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST, "taking too long time to test")
+    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST, "taking too long time to test")
     def test_calling_gq_1(self):
         """ test if calling genotyping quality can be displayed correctly in general cases """
 
@@ -1471,7 +1472,7 @@ class TestMutRepPipeline(SafeTester):
                          "Incorect GQ value"
                          )
 
-    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST, "taking too long time to test")
+    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST, "taking too long time to test")
     def test_filter_genes_1(self):
         """
         test if basic gene search (one gene, full name) can be done correctly
@@ -1500,7 +1501,7 @@ class TestMutRepPipeline(SafeTester):
                          "Incorrect number of rows in the variants sheet"
                          )
 
-    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST, "taking too long time to test")
+    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST, "taking too long time to test")
     def test_filter_genes_2(self):
         """
         test if a little advance gene search (two genes, full name) can be done correctly
@@ -1529,7 +1530,7 @@ class TestMutRepPipeline(SafeTester):
                          "Incorrect number of rows in the variants sheet"
                          )
 
-    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST, "taking too long time to test")
+    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST, "taking too long time to test")
     def test_color_genes_1(self):
         """
         test if basic gene search (one gene, full name) can be done correctly
@@ -1564,7 +1565,7 @@ class TestMutRepPipeline(SafeTester):
                          "Incorrect color"
                          )
 
-    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST, "taking too long time to test")
+    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST, "taking too long time to test")
     def test_color_genes_2(self):
         """
         test if a little advance gene search (two genes, full name) can be done correctly
@@ -1603,7 +1604,7 @@ class TestMutRepPipeline(SafeTester):
                          "Incorrect color"
                          )
 
-    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST, "taking too long time to test")
+    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST, "taking too long time to test")
     def test_coloring_shared_1(self):
         """ test coloring shared samples when the option is off """
 
@@ -1707,7 +1708,7 @@ class TestMutRepPipeline(SafeTester):
                          "Incorrect color"
                          )
 
-    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST, "taking too long time to test")
+    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST, "taking too long time to test")
     def test_coloring_shared_2(self):
         """ test coloring shared samples when the option is on """
 
@@ -1814,7 +1815,7 @@ class TestMutRepPipeline(SafeTester):
                          "Incorrect color"
                          )
 
-    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST, "taking too long time to test")
+    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST, "taking too long time to test")
     def test_coloring_zygosity_1(self):
         """ test coloring shared samples when the option is off """
 
@@ -1922,7 +1923,7 @@ class TestMutRepPipeline(SafeTester):
                          "Incorrect color"
                          )
 
-    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST, "taking too long time to test")
+    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST, "taking too long time to test")
     def test_coloring_zygosity_2(self):
         """ test coloring shared samples when the option is on """
 
@@ -2024,7 +2025,7 @@ class TestMutRepPipeline(SafeTester):
                          "Incorrect color"
                          )
 
-    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST, "taking too long time to test")
+    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST, "taking too long time to test")
     def test_datasets_1(self):
         """
         test if samples in mutation report can be displayed in groups
@@ -2101,7 +2102,7 @@ class TestMutRepPipeline(SafeTester):
                          "Incorrect cell value"
                          )
 
-    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST, "taking too long time to test")
+    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST, "taking too long time to test")
     def test_datasets_2(self):
         """
         test if samples in mutation report can be displayed in groups
@@ -2178,7 +2179,7 @@ class TestMutRepPipeline(SafeTester):
                          "Incorrect cell value"
                          )
 
-    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST, "taking too long time to test")
+    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST, "taking too long time to test")
     def test_show_shared_variants_1(self):
         """ test if shared mutations can be shown """
 
@@ -2226,11 +2227,10 @@ class TestMutRepPipeline(SafeTester):
                          "Incorrect color"
                          )
 
-#    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST, "taking too long time to test")
+    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST, "taking too long time to test")
     def test_filter_non_recessive_gene_1(self):
         """ test basic filtering non-recessive gene """
 
-        self.individual_debug = True
         self.init_test(self.current_func_name)
         annotated_vcf_tabix = join_path(self.data_dir,
                                         "input.vcf.gz")

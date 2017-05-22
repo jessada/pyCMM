@@ -6,7 +6,6 @@ from os.path import join as join_path
 from os.path import dirname
 from os.path import isdir
 from pycmm.template import SafeTester
-from pycmm.settings import SLURM_CMMDB_TEST
 from pycmm.settings import FULL_SYSTEM_TEST
 from pycmm.settings import DFLT_ANV_DB_DIR
 from pycmm.settings import DFLT_ANV_DB_NAMES
@@ -31,6 +30,7 @@ DFLT_ANV_TEST_DB_OPS += ",r"
 DFLT_ANV_TEST_DB_NAMES += ",genomicSuperDups"
 DFLT_ANV_TEST_DB_OPS += ",r"
 
+SLURM_CMMDB_TEST = False
 
 #class TestCMMDBPipeline(SafeTester):
 #

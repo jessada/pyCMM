@@ -677,10 +677,13 @@ class MutRepPipeline(CMMPipeline):
                                  cell_fmt,
                                  ):
             next_col = start_col
-            affected_samples_id = map(lambda x: x.sample_id,
-                                      self.affected_samples_list)
-            unaffected_samples_id = map(lambda x: x.sample_id,
-                                        self.unaffected_samples_list)
+            
+            # only get the (un)affected ids when the info is provided
+            if isinstance(samples[0], Sample):
+                affected_samples_id = map(lambda x: x.sample_id,
+                                          self.affected_samples_list)
+                unaffected_samples_id = map(lambda x: x.sample_id,
+                                            self.unaffected_samples_list)
             for sample in samples:
                 hdr_fmt = cell_fmt
                 if isinstance(sample, Sample):

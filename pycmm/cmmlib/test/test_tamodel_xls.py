@@ -2,6 +2,7 @@ import unittest
 from os.path import join as join_path
 from os.path import dirname
 from pycmm.template import SafeTester
+from pycmm.settings import XLS_TEST
 from pycmm.settings import ALL_MUTREP_ANNO_COLS
 from pycmm.settings import PRIMARY_MAF_VAR
 from pycmm.settings import EXAC_ALL_COL_NAME
@@ -77,7 +78,7 @@ class TestTAVcfCallXls(SafeTester):
                                )
         return jobs_setup_file
 
-#    @unittest.skipUnless(FULL_SYSTEM_TEST or TAMODEL_XLS_TEST, "taking too long time to test")
+#    @unittest.skipUnless(FULL_SYSTEM_TEST or TAMODEL_XLS_TEST or XLS_TEST, "taking too long time to test")
 #    def test_parse_mutated_xls_3_2(self):
 #        """
 #        - test if shared mutations in an xls sheet with a family with 2 members 
@@ -134,7 +135,7 @@ class TestTAVcfRecordXls(SafeTester):
         create_jobs_setup_file(*args, **kwargs)
         return kwargs['out_jobs_setup_file']
 
-    @unittest.skipUnless(FULL_SYSTEM_TEST or TAMODEL_XLS_TEST, "taking too long time to test")
+    @unittest.skipUnless(FULL_SYSTEM_TEST or TAMODEL_XLS_TEST or XLS_TEST, "taking too long time to test")
     def test_has_mutation_xls_4(self):
         """
         - test report that show only mutation
@@ -179,7 +180,7 @@ class TestTAVcfRecordXls(SafeTester):
                          13,
                          "shared mutation cannot be correctly determined")
 
-#    @unittest.skipUnless(FULL_SYSTEM_TEST or TAMODEL_XLS_TEST, "taking too long time to test")
+#    @unittest.skipUnless(FULL_SYSTEM_TEST or TAMODEL_XLS_TEST or XLS_TEST, "taking too long time to test")
 #    def test_has_shared_xls_4(self):
 #        """
 #        - test if shared mutations in an xls sheet with a family with 2 members 
@@ -222,7 +223,7 @@ class TestTAVcfRecordXls(SafeTester):
 #                         5,
 #                         "shared mutations cannot be correctly determined")
 
-#    @unittest.skipUnless(FULL_SYSTEM_TEST or TAMODEL_XLS_TEST, "taking too long time to test")
+#    @unittest.skipUnless(FULL_SYSTEM_TEST or TAMODEL_XLS_TEST or XLS_TEST, "taking too long time to test")
 #    def test_is_rare_xls_3(self):
 #        """
 #        - test filter rare feature with xls records
@@ -266,7 +267,7 @@ class TestTAVcfRecordXls(SafeTester):
 #                         54,
 #                         "rare mutations cannot be correctly determined")
 
-    @unittest.skipUnless(FULL_SYSTEM_TEST or TAMODEL_XLS_TEST, "taking too long time to test")
+    @unittest.skipUnless(FULL_SYSTEM_TEST or TAMODEL_XLS_TEST or XLS_TEST, "taking too long time to test")
     def test_is_pass_vqsr_xls_2(self):
         """
         - test filter SNPs that pass QC (VQSR)
@@ -306,7 +307,7 @@ class TestTAVcfRecordXls(SafeTester):
                          5,
                          "number of mutations that pass VQSR cannot be correctly determined")
 
-    @unittest.skipUnless(FULL_SYSTEM_TEST or TAMODEL_XLS_TEST, "taking too long time to test")
+    @unittest.skipUnless(FULL_SYSTEM_TEST or TAMODEL_XLS_TEST or XLS_TEST, "taking too long time to test")
     def test_is_intergenic_xls_3(self):
         """
         - test filter non-intergenic feature with xls record
@@ -345,7 +346,7 @@ class TestTAVcfRecordXls(SafeTester):
                          11,
                          "intergenic mutations cannot be correctly determined")
 
-    @unittest.skipUnless(FULL_SYSTEM_TEST or TAMODEL_XLS_TEST, "taking too long time to test")
+    @unittest.skipUnless(FULL_SYSTEM_TEST or TAMODEL_XLS_TEST or XLS_TEST, "taking too long time to test")
     def test_is_intronic_xls_3(self):
         """
         - test filter non-intronic feature with xls records
@@ -388,7 +389,7 @@ class TestTAVcfRecordXls(SafeTester):
                          9,
                          "intronic mutations cannot be correctly determined")
 
-    @unittest.skipUnless(FULL_SYSTEM_TEST or TAMODEL_XLS_TEST, "taking too long time to test")
+    @unittest.skipUnless(FULL_SYSTEM_TEST or TAMODEL_XLS_TEST or XLS_TEST, "taking too long time to test")
     def test_is_upstream_xls_3(self):
         """
         - test filter non-upstream feature with xls records
@@ -431,7 +432,7 @@ class TestTAVcfRecordXls(SafeTester):
                          28,
                          "upstream mutations cannot be correctly determined")
 
-    @unittest.skipUnless(FULL_SYSTEM_TEST or TAMODEL_XLS_TEST, "taking too long time to test")
+    @unittest.skipUnless(FULL_SYSTEM_TEST or TAMODEL_XLS_TEST or XLS_TEST, "taking too long time to test")
     def test_is_downstream_xls_3(self):
         """
         - test filter non-downstream feature with xls records
@@ -474,7 +475,7 @@ class TestTAVcfRecordXls(SafeTester):
                          31,
                          "downstream mutations cannot be correctly determined")
 
-    @unittest.skipUnless(FULL_SYSTEM_TEST or TAMODEL_XLS_TEST, "taking too long time to test")
+    @unittest.skipUnless(FULL_SYSTEM_TEST or TAMODEL_XLS_TEST or XLS_TEST, "taking too long time to test")
     def test_is_utr_xls_3(self):
         """
         - test filter non-UTR feature with xls records
@@ -517,7 +518,7 @@ class TestTAVcfRecordXls(SafeTester):
                          20,
                          "UTR mutations cannot be correctly determined")
 
-    @unittest.skipUnless(FULL_SYSTEM_TEST or TAMODEL_XLS_TEST, "taking too long time to test")
+    @unittest.skipUnless(FULL_SYSTEM_TEST or TAMODEL_XLS_TEST or XLS_TEST, "taking too long time to test")
     def test_is_synonymous_xls_3(self):
         """
         - test filter non-synonymous feature with xls records
@@ -560,7 +561,7 @@ class TestTAVcfRecordXls(SafeTester):
                          28,
                          "synonymous mutations cannot be correctly determined")
 
-    @unittest.skipUnless(FULL_SYSTEM_TEST or TAMODEL_XLS_TEST, "taking too long time to test")
+    @unittest.skipUnless(FULL_SYSTEM_TEST or TAMODEL_XLS_TEST or XLS_TEST, "taking too long time to test")
     def test_pathogenic_count_xls_2(self):
         """
         - test if number of pathogenic count can be correctly displayed
@@ -608,7 +609,7 @@ class TestTAVcfRecordXls(SafeTester):
                          "Incorect number of harmful pathogenic predictions"
                          )
 
-    @unittest.skipUnless(FULL_SYSTEM_TEST or TAMODEL_XLS_TEST, "taking too long time to test")
+    @unittest.skipUnless(FULL_SYSTEM_TEST or TAMODEL_XLS_TEST or XLS_TEST, "taking too long time to test")
     def test_parse_exac_constraint_xls_3(self):
         """
         - test if exac constraints can be correctly parsed and displayed
@@ -638,7 +639,7 @@ class TestTAVcfRecordXls(SafeTester):
                          "Incorect number of ExAC constraint value"
                          )
 
-    @unittest.skipUnless(FULL_SYSTEM_TEST or TAMODEL_XLS_TEST, "taking too long time to test")
+    @unittest.skipUnless(FULL_SYSTEM_TEST or TAMODEL_XLS_TEST or XLS_TEST, "taking too long time to test")
     def test_intervar_xls_1(self):
         """
         - test if intervar classification and evidence can be parsed
@@ -712,7 +713,7 @@ class TestTAVcfRecordXls(SafeTester):
                          "Incorect intervar value"
                          )
 
-    @unittest.skipUnless(FULL_SYSTEM_TEST or TAMODEL_XLS_TEST, "taking too long time to test")
+    @unittest.skipUnless(FULL_SYSTEM_TEST or TAMODEL_XLS_TEST or XLS_TEST, "taking too long time to test")
     def test_max_ref_maf_xls_2(self):
         """
         test finding maximum reference minor allele frequency
