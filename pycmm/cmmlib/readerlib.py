@@ -9,6 +9,8 @@ class Reader(pyCMMBase):
     def __init__(self, 
                  file_name,
                  parser,
+                 header_exist=False,
+                 *args,
                  **kwargs
                  ):
         self.__file_name = file_name
@@ -17,9 +19,13 @@ class Reader(pyCMMBase):
             self.__reader = gzip.open(file_name, 'rt')
         else:
             self.__reader = open(file_name, 'rt')
+        if header_exist:
+            self.__header = self.__reader.next()
+        else:
+            self.__header = None
         self.__row_count = 0
         self.__parser = parser
-        super(Reader, self).__init__(**kwargs)
+        super(Reader, self).__init__(*args, **kwargs)
 
     def get_raw_obj_str(self):
         raw_repr = OrderedDict()
@@ -31,6 +37,10 @@ class Reader(pyCMMBase):
     @property
     def reader(self):
         return self.__reader
+
+    @property
+    def header(self):
+        return self.__header
 
     def __iter__(self):
         return self

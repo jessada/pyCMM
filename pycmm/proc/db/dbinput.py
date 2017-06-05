@@ -1,0 +1,465 @@
+import ntpath
+import itertools
+import re
+import os.path
+from collections import OrderedDict
+from vcf.model import _Call
+from vcf.model import _Record as _VcfRecord
+from vcf import Reader as VcfReader
+from pycmm.template import pyCMMBase
+from pycmm.cmmlib.readerlib import Reader
+
+AVDB_CHR_IDX = 0
+AVDB_START_IDX = 1
+AVDB_END_IDX = 2
+AVDB_REF_IDX = 3
+AVDB_ALT_IDX = 4
+AVDB_ANNOS_IDX = 5
+
+class AVDBParser(pyCMMBase):
+    """ To parse a record in Annovar AVDB file """
+
+    def __init__(self, rec, *args, **kwargs):
+        self.__items = rec.strip().split()
+        if len(self.__items) < 6:
+            raise IOError("Invalid avdb file")
+        super(AVDBParser, self).__init__(*args, **kwargs)
+
+    def get_raw_obj_str(self):
+        raw_str = OrderedDict()
+        raw_str["Chrom"] = self.chrom
+        raw_str["Start"] = self.start
+        raw_str["End"] = self.end
+        raw_str["Ref"] = self.ref
+        raw_str["Alt"] = self.alt
+        raw_str["Annotations"] = self.annotations
+        return raw_str
+
+    @property
+    def chrom(self):
+        return self.__items[AVDB_CHR_IDX]
+
+    @property
+    def start(self):
+        return int(self.__items[AVDB_START_IDX])
+
+    @property
+    def end(self):
+        return int(self.__items[AVDB_END_IDX])
+
+    @property
+    def ref(self):
+        return self.__items[AVDB_REF_IDX]
+
+    @property
+    def alt(self):
+        return self.__items[AVDB_ALT_IDX]
+
+    @property
+    def annotations(self):
+        return self.__items[AVDB_ANNOS_IDX:]
+
+    def as_tuple(self):
+        res = []
+        res.append(self.chrom)
+        res.append(self.start)
+        res.append(self.end)
+        res.append(self.ref)
+        res.append(self.alt)
+        res += self.annotations
+        return tuple(res)
+
+class AVDBReader(Reader):
+    """ To read and parse file plink map file """
+
+    def __init__(self, 
+                 *args,
+                 **kwargs
+                 ):
+        kwargs['parser'] = AVDBParser
+        file_name = kwargs['file_name']
+        super(AVDBReader, self).__init__(*args, **kwargs)
+        self.__header_cols = self.__parse_header_cols(file_name)
+
+    def __parse_header_cols(self, file_name):
+        header_cols = []
+        header_cols.append('Chr')
+        header_cols.append('Start')
+        header_cols.append('End')
+        header_cols.append('Ref')
+        header_cols.append('Alt')
+        if self.header is None:
+            header_cols.append(os.path.splitext(ntpath.basename(file_name).strip('hg19_'))[0]) 
+        else:
+            split_header_cols = self.header.split()
+            for col_idx in xrange(5, len(split_header_cols)):
+                header_cols.append(split_header_cols[col_idx])
+        return header_cols
+
+    @property
+    def header_cols(self):
+        return self.__header_cols
+
+    def next(self):
+        return super(AVDBReader, self).next().as_tuple()
+
+try:
+    import cparse
+except ImportError:
+    cparse = None
+
+class _TAVcfRecord(_VcfRecord, pyCMMBase):
+    """
+    An encapsulated version of vcf._Record from pyVCF package to
+      - determine if mutations are shared between samples
+      - understand if itself is a rare mutation given frequency ratio
+      - understand if itself is an intergenic mutation
+      - understand if itself is an intronic mutation
+    """
+
+    def __init__(self, CHROM, POS, ID, REF, ALT, QUAL, FILTER, INFO, FORMAT,
+            sample_indexes,
+            ):
+        _VcfRecord.__init__(self,
+                            CHROM,
+                            POS,
+                            ID,
+                            REF,
+                            ALT,
+                            QUAL,
+                            FILTER,
+                            INFO,
+                            FORMAT,
+                            sample_indexes,
+                            )
+        pyCMMBase.__init__(self)
+
+        if (type(self.FILTER) is list) and (len(self.FILTER) == 0):
+            self.FILTER = "PASS"
+        elif type(self.FILTER) is list:
+            self.FILTER = ";".join(self.FILTER)
+        else:
+            self.FILTER = "."
+
+    def __get_info(self, var_name):
+        """
+        for internal call
+        - return list of values of table_annovar column "var_name"
+        - number of entry in the list = 1 + number of alternate alleles
+        """
+        if var_name in self.INFO:
+            return self.INFO[var_name]
+        if var_name in self.__added_info:
+            return self.__added_info[var_name]
+        return None
+
+    def get_info(self, var_name, allele_idx=1):
+        """
+        parsed to be called by high-level function
+        - kvot is included
+        """
+
+        info = self.__get_info(var_name)
+        if info is not None:
+            if (type(info) is list) and (len(info) == 1):
+                info = info[0]
+            elif (type(info) is list) and (len(info) > 1):
+                info = info[allele_idx-1]
+        if (info == "" or
+            info is None or
+            info == [None] or
+            info == "."
+            ):
+           info = ""
+        return info
+
+    def as_annovar_tuple(self, annovar_cols):
+        if len(self.ALT) > 1:
+            raise Exception(self.ALT + ' has more than one alternate allele')
+        res = []
+        res.append(self.CHROM)
+        res.append(int(self.POS))
+        res.append(self.REF)
+        res.append(str(self.ALT[0]))
+        for annovar_col in annovar_cols:
+            res.append(self.INFO[annovar_col])
+        return tuple(res)
+
+class TAVcfReader(VcfReader, pyCMMBase):
+    """
+    An encapsulated version of vcf.Reader from pyVCF package to
+      - enable _parse_info to recognize INFO annotated by annovar
+        , <see _parse_info function>
+      - redirect _Call to TAVcfCall
+      - redirect _Record to TAVcfRecord
+    """
+
+    def __init__(self,
+                 fsock=None,
+                 file_name=None,
+                 compressed=None,
+                 prepend_chr=False,
+                 strict_whitespace=False,
+                 ):
+        super(TAVcfReader, self).__init__(fsock=fsock,
+                                          filename=file_name,
+                                          compressed=compressed,
+                                          prepend_chr=prepend_chr,
+                                          strict_whitespace=strict_whitespace,
+                                          )
+        pyCMMBase.__init__(self)
+        self.__parse_annovar_infos()
+        self.__header_cols = self.__parse_header_cols(file_name)
+
+    def __parse_header_cols(self, file_name):
+        header_cols = []
+        header_cols.append('CHROM')
+        header_cols.append('POS')
+        header_cols.append('REF')
+        header_cols.append('ALT')
+        annovar_date_idx = self.infos.keys().index("ANNOVAR_DATE")
+        anno_fields = self.infos.keys()[annovar_date_idx+1:-1]
+        for anno_field in anno_fields:
+            header_cols.append(anno_field)
+        return header_cols
+
+    @property
+    def header_cols(self):
+        return self.__header_cols
+
+    @property
+    def annovar_infos(self):
+        return self.__annovar_infos
+
+    def __parse_annovar_infos(self):
+        """
+        To get the list of infos field annotated by ANNOVAR
+        by detecting any INFO in metaheader that end with "ANNOVAR"
+        """
+        self.__annovar_infos = OrderedDict()
+        for info_key in self.infos:
+            val = self.infos[info_key]
+            if (val.desc is not None) and (val.desc.endswith("ANNOVAR")):
+                self.__annovar_infos[info_key] = val
+        return self.__annovar_infos
+
+    def next(self):
+        '''
+        Remake version of pyVCF.parser._parse_info
+
+        Return the next record in the file.
+
+        ***** Remake part *****
+        - use custom _Record structure, _TAVcfRecord
+        '''
+        line = self.reader.next()
+        row = re.split(self._separator, line.rstrip())
+        chrom = row[0]
+        if self._prepend_chr:
+            chrom = 'chr' + chrom
+        pos = int(row[1])
+
+        if row[2] != '.':
+            ID = row[2]
+        else:
+            ID = None
+
+        ref = row[3]
+        alt = self._map(self._parse_alt, row[4].split(','))
+
+        try:
+            qual = int(row[5])
+        except ValueError:
+            try:
+                qual = float(row[5])
+            except ValueError:
+                qual = None
+
+        filt = row[6]
+        if filt == '.':
+            filt = None
+        elif filt == 'PASS':
+            filt = []
+        else:
+            filt = filt.split(';')
+        info = self._parse_info(row[7])
+
+        try:
+            fmt = row[8]
+        except IndexError:
+            fmt = None
+        else:
+            if fmt == '.':
+                fmt = None
+
+        record = _TAVcfRecord(chrom, pos, ID, ref, alt, qual, filt,
+                info, fmt,
+                self._sample_indexes,
+                )
+
+        if fmt is not None:
+            samples = self._parse_samples(row[9:], fmt, record)
+            record.samples = samples
+
+        return record.as_annovar_tuple(self.annovar_infos.keys())
+
+    def _parse_info(self, info_str):
+        """
+        Remake version of pyVCF.parser._parse_info
+
+        Parse the INFO field of a VCF entry into a dictionary of Python
+        types.
+
+        ***** Remake part *****
+        - convert list that unintentionally indicated by comma back to string
+        - decode hex value coded for reserved character (";", "=", etc.)
+        - detect if any 'info' entries are annotated by ANNOVAR more than once
+          , if yes convert them into 'list'
+        """
+        if info_str == '.':
+            return {}
+
+        entries = info_str.split(';')
+        retdict = OrderedDict()
+
+        for entry in entries:
+            entry = entry.split('=', 1)
+            ID = entry[0]
+            try:
+                entry_type = self.infos[ID].type
+            except KeyError:
+                try:
+                    entry_type = RESERVED_INFO[ID]
+                except KeyError:
+                    if entry[1:]:
+                        entry_type = 'String'
+                    else:
+                        entry_type = 'Flag'
+
+            if (ID in self.annovar_infos) and (entry_type in ('String', 'Character')):
+                val = entry[1]
+                # decode hex character
+                hex_idx = val.find("\\x")
+                while hex_idx > 0:
+                    hex_str = val[hex_idx:hex_idx+4]
+                    decode_chr = val[hex_idx+2:hex_idx+4].decode('hex')
+                    val = val.replace(hex_str, decode_chr)
+                    hex_idx = val.find("\\x")
+            elif entry_type == 'Integer':
+                vals = entry[1].split(',')
+                try:
+                    val = self._map(int, vals)
+                # Allow specified integers to be flexibly parsed as floats.
+                # Handles cases with incorrectly specified header types.
+                except ValueError:
+                    val = self._map(float, vals)
+            elif entry_type == 'Float':
+                vals = entry[1].split(',')
+                val = self._map(float, vals)
+            elif entry_type == 'Flag':
+                val = True
+            elif entry_type in ('String', 'Character'):
+                try:
+                    vals = entry[1].split(',') # commas are reserved characters indicating multiple values
+                    val = self._map(str, vals)
+                except IndexError:
+                    entry_type = 'Flag'
+                    val = True
+
+            try:
+                if self.infos[ID].num == 1 and entry_type not in ( 'Flag', ):
+                    val = val[0]
+            except KeyError:
+                pass
+
+            # Check if there are infos of more than one alternate alleles annotated by ANNOVAR
+            if (ID in self.annovar_infos) and (ID in retdict) and (type(retdict[ID]) is list):
+                retdict[ID].append(val)
+                val = retdict[ID]
+            elif (ID in self.annovar_infos) and (ID in retdict):
+                val = [retdict[ID], val]
+            retdict[ID] = val
+
+        return retdict
+
+    def _parse_samples(self, samples, samp_fmt, site):
+        '''
+        Remake version of pyVCF.parser._parse_samples
+
+        Parse a sample entry according to the format specified in the FORMAT
+        column.
+
+        NOTE: this method has a cython equivalent and care must be taken
+        to keep the two methods equivalent
+
+        ***** Remake part *****
+        - use custom _Call structure, _TAVcfCall
+        '''
+
+        # check whether we already know how to parse this format
+        if samp_fmt not in self._format_cache:
+            self._format_cache[samp_fmt] = self._parse_sample_format(samp_fmt)
+        samp_fmt = self._format_cache[samp_fmt]
+
+        if cparse:
+            return cparse.parse_samples(
+                self.samples, samples, samp_fmt, samp_fmt._types, samp_fmt._nums, site)
+
+        samp_data = []
+        _map = self._map
+
+        nfields = len(samp_fmt._fields)
+
+        for name, sample in itertools.izip(self.samples, samples):
+
+            # parse the data for this sample
+            sampdat = [None] * nfields
+
+            for i, vals in enumerate(sample.split(':')):
+
+                # short circuit the most common
+                if samp_fmt._fields[i] == 'GT':
+                    sampdat[i] = vals
+                    continue
+                elif vals == ".":
+                    sampdat[i] = None
+                    continue
+
+                entry_num = samp_fmt._nums[i]
+                entry_type = samp_fmt._types[i]
+
+                # we don't need to split single entries
+                if entry_num == 1 or ',' not in vals:
+
+                    if entry_type == 'Integer':
+                        try:
+                            sampdat[i] = int(vals)
+                        except ValueError:
+                            sampdat[i] = float(vals)
+                    elif entry_type == 'Float':
+                        sampdat[i] = float(vals)
+                    else:
+                        sampdat[i] = vals
+
+                    if entry_num != 1:
+                        sampdat[i] = (sampdat[i])
+
+                    continue
+
+                vals = vals.split(',')
+
+                if entry_type == 'Integer':
+                    try:
+                        sampdat[i] = _map(int, vals)
+                    except ValueError:
+                        sampdat[i] = _map(float, vals)
+                elif entry_type == 'Float' or entry_type == 'Numeric':
+                    sampdat[i] = _map(float, vals)
+                else:
+                    sampdat[i] = vals
+
+            # create a call object
+            call = _Call(site, name, samp_fmt(*sampdat))
+            samp_data.append(call)
+
+        return samp_data
