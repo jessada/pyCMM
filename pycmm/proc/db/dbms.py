@@ -10,6 +10,8 @@ from pycmm.proc import CMMPipeline
 from pycmm.proc import init_jobs_setup_file
 from pycmm.proc import get_func_arg
 from pycmm.proc.db.dbinput import AVDBReader
+from pycmm.proc.db.dbinput import TAVcfInfoReader as VcfInfoReader
+from pycmm.proc.db.dbinput import TAVcfGTZReader as VcfGTZReader
 #from pycmm.cmmlib.annovarlib import AnnovarParams
 #from pycmm.cmmlib.annovarlib import get_annovar_params_sections
 #from pycmm.cmmlib.dnalib import ALL_CHROMS
@@ -75,14 +77,17 @@ class SQLiteDB(pyCMMBase):
         self.__conn.commit()
         self.__conn.close()
 
-    def load_avdb_data(self,
-                       data_file,
-#                       reader,
-                       table_name,
-                       header_exist=False,
-                       drop_table=True,
-                       ):
-        rd = AVDBReader(file_name=data_file, header_exist=header_exist)
+    def __load_data_file(self,
+                         data_file,
+                         reader,
+                         table_name,
+                         header_exist=None,
+                         drop_table=True,
+                         ):
+        if header_exist is not None:
+            rd = reader(file_name=data_file, header_exist=header_exist)
+        else:
+            rd = reader(file_name=data_file)
         rec_len = len(rd.header_cols)
         c = self.__connect_db()
         if drop_table:
@@ -95,23 +100,72 @@ class SQLiteDB(pyCMMBase):
         sql_script += ' VALUES (' + ('?,'*(rec_len*2))[:rec_len*2-1] + ')'
         c.executemany(sql_script, rd)
         row_count = c.rowcount
-#        for rec in rd:
-#            c.execute(sql_script, rec.as_tuple())
         self.__close_connection() 
         return row_count
+
+    def load_avdb_data(self, *args, **kwargs):
+        kwargs['reader'] = AVDBReader
+        return self.__load_data_file(*args, **kwargs)
+
+    def load_annovar_vcf_data(self, *args, **kwargs):
+        kwargs['table_name'] = 'annovar_vcf'
+        kwargs['reader'] = VcfInfoReader
+        return self.__load_data_file(*args, **kwargs)
+
+    def load_gtz_vcf_data(self, *args, **kwargs):
+        kwargs['reader'] = VcfGTZReader
+        return self.__load_data_file(*args, **kwargs)
+
+#    def load_avdb_data(self, data_file, table_name, header_exist=False, drop_table=True):
+#        rd = AVDBReader(file_name=data_file, header_exist=header_exist)
+#        rec_len = len(rd.header_cols)
+#        c = self.__connect_db()
+#        if drop_table:
+#            sql_script = 'DROP TABLE if exists ' + table_name
+#            c.execute(sql_script)
+#        sql_script = 'CREATE TABLE if not exists ' + table_name
+#        sql_script += ' (' + ",".join(rd.header_cols) + ')' 
+#        c.execute(sql_script)
+#        sql_script = 'INSERT INTO ' + table_name
+#        sql_script += ' VALUES (' + ('?,'*(rec_len*2))[:rec_len*2-1] + ')'
+#        c.executemany(sql_script, rd)
+#        row_count = c.rowcount
+#        self.__close_connection() 
+#        return row_count
+#
+#    def load_annovar_vcf_data(self,
+#                              data_file,
+#                              drop_table=True,
+#                              ):
+#        table_name = 'annovar_vcf'
+#        rd = VcfInfoReader(file_name=data_file)
+#        rec_len = len(rd.header_cols)
+#        c = self.__connect_db()
+#        if drop_table:
+#            sql_script = 'DROP TABLE if exists ' + table_name
+#            c.execute(sql_script)
+#        sql_script = 'CREATE TABLE if not exists ' + table_name
+#        sql_script += ' (' + ",".join(rd.header_cols) + ')' 
+#        c.execute(sql_script)
+#        sql_script = 'INSERT INTO ' + table_name
+#        sql_script += ' VALUES (' + ('?,'*(rec_len*2))[:rec_len*2-1] + ')'
+#        c.executemany(sql_script, rd)
+#        row_count = c.rowcount
+#        self.__close_connection() 
+#        return row_count
 
 #    def load_avdb_data(self, data_file, table_name, header_exist=False,):
 #        return self.load_data(data_file, AVDBReader, table_name, header_exist)
 
-    def count_row(self, table_name):
-        # it works but people said that it has to go through the whole table
-        # might be very poor performance
-        c = self.__connect_db()
-        sql_script = 'SELECT Count(*) FROM ' + table_name
-        c.execute(sql_script)
-        row_count = c.fetchone()[0]
-        self.__close_connection() 
-        return row_count
+#    def count_row(self, table_name):
+#        # it works but people said that it has to go through the whole table
+#        # might be very poor performance
+#        c = self.__connect_db()
+#        sql_script = 'SELECT Count(*) FROM ' + table_name
+#        c.execute(sql_script)
+#        row_count = c.fetchone()[0]
+#        self.__close_connection() 
+#        return row_count
 #    @property
 #    def mutstat_params(self):
 #        return MutStatParams(entries=self._get_job_config(JOBS_SETUP_MUTSTAT_PARAMS_SECTION,

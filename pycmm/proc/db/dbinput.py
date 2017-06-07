@@ -3,8 +3,9 @@ import itertools
 import re
 import os.path
 from collections import OrderedDict
-from vcf.model import _Call
+from vcf.model import _Call as _VcfCall
 from vcf.model import _Record as _VcfRecord
+from vcf import RESERVED_INFO
 from vcf import Reader as VcfReader
 from pycmm.template import pyCMMBase
 from pycmm.cmmlib.readerlib import Reader
@@ -15,6 +16,12 @@ AVDB_END_IDX = 2
 AVDB_REF_IDX = 3
 AVDB_ALT_IDX = 4
 AVDB_ANNOS_IDX = 5
+
+CMMGT_WILDTYPE = 'wt'
+CMMGT_HOMOZYGOTE = 'hom'
+CMMGT_HETEROZYGOTE = 'het'
+CMMGT_OTHER = 'oth'
+CMM_DUMMY = 'dummy'
 
 class AVDBParser(pyCMMBase):
     """ To parse a record in Annovar AVDB file """
@@ -108,6 +115,66 @@ try:
 except ImportError:
     cparse = None
 
+class _TAVcfCall(_VcfCall, pyCMMBase):
+    """
+    An encapsulated version of vcf._Call from pyVCF package to
+      - add extra genotype translation, "cmm_gts", to handle record
+        with more than one alternate alleles
+      - add extra genotype translation, "actual_gts", to determine the
+        actual genotype based on "cmm_gts" and alleles frequency
+      - add an indicator, "mutated", to identify if each genotype is
+        actually mutated
+    """
+
+    def __init__(self, site, sample, data):
+        _VcfCall.__init__(self,
+                          site=site,
+                          sample=sample,
+                          data=data,
+                          )
+        pyCMMBase.__init__(self)
+        self.__cmm_gts = None
+
+    def __cal_cmm_gts(self):
+        """
+        to calculate type of genotype given allele index
+          - 0 -> REF
+          - 1 -> first ALT
+          - and so on
+
+        ** NOTE ** the calculation here based on GT value alone
+        """
+        raw_GT = self.data.GT
+        cmm_gts = [CMM_DUMMY]
+        for allele_idx in xrange(1, len(self.site.alleles)):
+            if (raw_GT == ".") or (raw_GT == "./."):
+                cmm_gts.append(".")
+                continue
+            raw_gts = raw_GT.split("/")
+            # 0/0 will be translated as "wild type" no matter what allele index is
+            if (raw_gts[0] == "0") and (raw_gts[1] == "0"):
+                cmm_gts.append(CMMGT_WILDTYPE)
+                continue
+            # The gt of which the allele index doesn't match will be considered
+            # as "other", ex. allele index = 1 but the gt is 2/3
+            if (raw_gts[0] != str(allele_idx)) and (raw_gts[1] != str(allele_idx)):
+                cmm_gts.append(CMMGT_OTHER)
+                continue
+            # The rest are in the cases one or both of the alleles match with
+            # allele index.
+            # So if they are different then "heterozygote" else "homozygote"
+            if raw_gts[0] != raw_gts[1]:
+                cmm_gts.append(CMMGT_HETEROZYGOTE)
+                continue
+            cmm_gts.append(CMMGT_HOMOZYGOTE)
+        return cmm_gts
+
+    @property
+    def cmm_gts(self):
+        if self.__cmm_gts is None:
+            self.__cmm_gts = self.__cal_cmm_gts()
+        return self.__cmm_gts
+
 class _TAVcfRecord(_VcfRecord, pyCMMBase):
     """
     An encapsulated version of vcf._Record from pyVCF package to
@@ -117,21 +184,11 @@ class _TAVcfRecord(_VcfRecord, pyCMMBase):
       - understand if itself is an intronic mutation
     """
 
-    def __init__(self, CHROM, POS, ID, REF, ALT, QUAL, FILTER, INFO, FORMAT,
-            sample_indexes,
-            ):
-        _VcfRecord.__init__(self,
-                            CHROM,
-                            POS,
-                            ID,
-                            REF,
-                            ALT,
-                            QUAL,
-                            FILTER,
-                            INFO,
-                            FORMAT,
-                            sample_indexes,
-                            )
+    def __init__(self,
+                 *args,
+                 **kwargs
+                 ):
+        super(_TAVcfRecord, self).__init__(*args, **kwargs)
         pyCMMBase.__init__(self)
 
         if (type(self.FILTER) is list) and (len(self.FILTER) == 0):
@@ -182,7 +239,21 @@ class _TAVcfRecord(_VcfRecord, pyCMMBase):
         res.append(self.REF)
         res.append(str(self.ALT[0]))
         for annovar_col in annovar_cols:
-            res.append(self.INFO[annovar_col])
+            res.append(self.get_info(annovar_col))
+        return tuple(res)
+
+    def as_gtz_tuple(self, samples_id):
+        if len(self.ALT) > 1:
+            raise Exception(self.ALT + ' has more than one alternate allele')
+        res = []
+        res.append(self.CHROM)
+        res.append(int(self.POS))
+        res.append(self.REF)
+        res.append(str(self.ALT[0]))
+        res.append(self.QUAL)
+        res.append(self.FILTER)
+        for sample_id in samples_id:
+            res.append(self.genotype(sample_id).cmm_gts[1])
         return tuple(res)
 
 class TAVcfReader(VcfReader, pyCMMBase):
@@ -195,37 +266,14 @@ class TAVcfReader(VcfReader, pyCMMBase):
     """
 
     def __init__(self,
-                 fsock=None,
                  file_name=None,
-                 compressed=None,
-                 prepend_chr=False,
-                 strict_whitespace=False,
+                 *args,
+                 **kwargs
                  ):
-        super(TAVcfReader, self).__init__(fsock=fsock,
-                                          filename=file_name,
-                                          compressed=compressed,
-                                          prepend_chr=prepend_chr,
-                                          strict_whitespace=strict_whitespace,
-                                          )
+        kwargs['filename'] = file_name
+        super(TAVcfReader, self).__init__(*args, **kwargs)
         pyCMMBase.__init__(self)
         self.__parse_annovar_infos()
-        self.__header_cols = self.__parse_header_cols(file_name)
-
-    def __parse_header_cols(self, file_name):
-        header_cols = []
-        header_cols.append('CHROM')
-        header_cols.append('POS')
-        header_cols.append('REF')
-        header_cols.append('ALT')
-        annovar_date_idx = self.infos.keys().index("ANNOVAR_DATE")
-        anno_fields = self.infos.keys()[annovar_date_idx+1:-1]
-        for anno_field in anno_fields:
-            header_cols.append(anno_field)
-        return header_cols
-
-    @property
-    def header_cols(self):
-        return self.__header_cols
 
     @property
     def annovar_infos(self):
@@ -301,7 +349,7 @@ class TAVcfReader(VcfReader, pyCMMBase):
             samples = self._parse_samples(row[9:], fmt, record)
             record.samples = samples
 
-        return record.as_annovar_tuple(self.annovar_infos.keys())
+        return record
 
     def _parse_info(self, info_str):
         """
@@ -459,7 +507,72 @@ class TAVcfReader(VcfReader, pyCMMBase):
                     sampdat[i] = vals
 
             # create a call object
-            call = _Call(site, name, samp_fmt(*sampdat))
+            call = _TAVcfCall(site, name, samp_fmt(*sampdat))
             samp_data.append(call)
 
         return samp_data
+
+class TAVcfInfoReader(TAVcfReader):
+    """
+    An encapsulated version of TAVcfReader to only read INFO field
+    """
+
+    def __init__(self,
+                 *args,
+                 **kwargs
+                 ):
+        super(TAVcfInfoReader, self).__init__(*args, **kwargs)
+        self.__header_cols = self.__parse_header_cols()
+
+    def __parse_header_cols(self):
+        header_cols = []
+        header_cols.append('CHROM')
+        header_cols.append('POS')
+        header_cols.append('REF')
+        header_cols.append('ALT')
+        annovar_date_idx = self.infos.keys().index("ANNOVAR_DATE")
+        anno_fields = self.infos.keys()[annovar_date_idx+1:-1]
+        for anno_field in anno_fields:
+            header_cols.append(anno_field.replace(".", "_"))
+        return header_cols
+
+    @property
+    def header_cols(self):
+        return self.__header_cols
+
+    def next(self):
+        return super(TAVcfInfoReader, self).next().as_annovar_tuple(self.annovar_infos.keys())
+
+class TAVcfGTZReader(TAVcfReader):
+    """
+    An encapsulated version of TAVcfReader to only read Call data
+    Note: It's not necessary to inherit from TAVcfReader but to make it
+    convinient for code maintainance
+    """
+
+    def __init__(self,
+                 *args,
+                 **kwargs
+                 ):
+        super(TAVcfGTZReader, self).__init__(*args, **kwargs)
+        self.__header_cols = self.__parse_header_cols()
+
+    def __parse_header_cols(self):
+        header_cols = []
+        header_cols.append('CHROM')
+        header_cols.append('POS')
+        header_cols.append('REF')
+        header_cols.append('ALT')
+        header_cols.append('QUAL')
+        header_cols.append('FILTER')
+        for sample_id in self.samples:
+#            header_cols.append(anno_field.replace(".", "_"))
+            header_cols.append("_"+sample_id.replace("-", "_"))
+        return header_cols
+
+    @property
+    def header_cols(self):
+        return self.__header_cols
+
+    def next(self):
+        return super(TAVcfGTZReader, self).next().as_gtz_tuple(self.samples)
