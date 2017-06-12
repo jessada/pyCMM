@@ -59,6 +59,8 @@ setup(
               'pycmm.utils',
               'pycmm.cmmlib',
               'pycmm.flow',
+              'pycmm.proc',
+              'pycmm.proc.db',
               ],
     scripts=['bin/'+DNASEQ_SLURM_MONITOR_PIPELINE_BIN,
              'bin/pyCMM-dnaseq-pipeline',
@@ -79,6 +81,8 @@ setup(
              'bin/'+PLINK_SLURM_MONITOR_PIPELINE_BIN,
              'bin/'+PLINK_HAP_ASSOCS_REPORT_BIN,
              'bin/'+PLINK_MERGE_HAP_ASSOCS_BIN,
+             'bin/pyCMM-dbms-create-job-setup-file',
+             'bin/pyCMM-dbms-execute-db-jobs',
              ],
     package=['pyCMM'],
 #    package_data={'': ['data/CBV/*.cbv']

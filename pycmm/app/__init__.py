@@ -40,6 +40,8 @@ def display_configs(func_name,
         disp.disp_params_set("report layout parameters", pl.report_layout.get_raw_obj_str())
     if hasattr(pl, "rpt_params"):
         disp.disp_params_set("report parameters", pl.rpt_params.get_raw_obj_str())
+    if hasattr(pl, "db_params"):
+        disp.disp_params_set("DBMS parameters", pl.db_params.get_raw_obj_str())
     if custom_params is not None:
         disp.disp_params_set("custom parameters", custom_params)
 

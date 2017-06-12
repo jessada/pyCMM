@@ -1,0 +1,11 @@
+DB_JOBS:
+  - Data_file: data_file4
+    Drop_table: No
+    Table_name: table1
+  - Data_file: test_file789
+    Drop_table: Yes
+    Table_name: tbl
+  - Data_file: sss
+    Drop_table: No
+    Data_type: non_type
+    Table_name: sss_table

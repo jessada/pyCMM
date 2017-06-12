@@ -1,58 +1,33 @@
-#import pyaml
-#from os.path import join as join_path
-#from collections import OrderedDict
+import yaml
+import pyaml
 import sqlite3
+from os.path import isfile
+from collections import OrderedDict
 from pycmm.template import pyCMMBase
-#from pycmm.utils import exec_sh
-#from pycmm.utils.ver import VersionManager
-#from pycmm.cmmlib import CMMParams
+from pycmm.utils.ver import VersionManager
+from pycmm.cmmlib import CMMParams
 from pycmm.proc import CMMPipeline
 from pycmm.proc import init_jobs_setup_file
 from pycmm.proc import get_func_arg
 from pycmm.proc.db.dbinput import AVDBReader
 from pycmm.proc.db.dbinput import TAVcfInfoReader as VcfInfoReader
 from pycmm.proc.db.dbinput import TAVcfGTZReader as VcfGTZReader
-#from pycmm.cmmlib.annovarlib import AnnovarParams
-#from pycmm.cmmlib.annovarlib import get_annovar_params_sections
-#from pycmm.cmmlib.dnalib import ALL_CHROMS
-#from pycmm.settings import DUMMY_TABLE_ANNOVAR_BIN
 
-## *************** mustat db section ***************
-#JOBS_SETUP_MUTSTAT_PARAMS_SECTION = "MUTSTAT_PARAMS"
-#JOBS_SETUP_VCF_TABIX_FILE_KEY = "VCF_TABIX_FILE"
-#JOBS_SETUP_DB_REGION_KEY = "DB_REGION"
-#JOBS_SETUP_VCF2AVDB_KEY_TABLE_KEY = "VCF2AVDB_KEY_TABLE"
-#
+## *************** DB params section ***************
+JOBS_SETUP_DB_PARAMS_SECTION = "DB_PARAMS"
+JOBS_SETUP_DB_FILE_KEY = "DB_FIlE"
+JOBS_SETUP_DB_JOBS = "DB_JOBS"
+JOBS_SETUP_DB_JOB_TABLE_NAME_KEY = "Table_name"
+JOBS_SETUP_DB_JOB_DROP_TABLE_KEY = "Drop_table"
+JOBS_SETUP_DB_JOB_DATA_FILE_KEY = "Data_file"
+JOBS_SETUP_DB_JOB_DATA_TYPE_KEY = "Data_type"
+JOBS_SETUP_DB_JOB_HEADER_EXIST_KEY = "Header_exist"
 ## *************** table_annovar db section ***************
-#JOBS_SETUP_ANV_PARAMS_SECTION = "ANNOVAR_PARAMS"
 
-#class MutStatParams(CMMParams):
-#    """ To handle and parse mutation statistics parameters """
-#
-#    def __init__(self, **kwargs):
-#        super(MutStatParams, self).__init__(**kwargs)
-#
-#    def get_raw_obj_str(self, **kwargs):
-#        raw_repr = super(MutStatParams, self).get_raw_obj_str(**kwargs)
-#        raw_repr["input vcf tabix file"] = self.input_vcf_tabix
-#        db_region = self.db_region
-#        if db_region is None:
-#            db_region = "ALL"
-#        raw_repr["input vcf database region"] = db_region
-#        return raw_repr
-#
-#    @property
-#    def input_vcf_tabix(self):
-#        return self._get_job_config(JOBS_SETUP_VCF_TABIX_FILE_KEY,
-#                                    required=True)
-#
-#    @property
-#    def db_region(self):
-#        return self._get_job_config(JOBS_SETUP_DB_REGION_KEY)
-#
-#    @property
-#    def vcf2avdb_key_table(self):
-#        return self._get_job_config(JOBS_SETUP_VCF2AVDB_KEY_TABLE_KEY)
+DATA_TYPE_AVDB = 'AVDB'
+DATA_TYPE_ANNOVAR_VCF = 'ANNOVAR_VCF'
+DATA_TYPE_GTZ_VCF = 'GTZ_VCF'
+
 
 class SQLiteDB(pyCMMBase):
     """ A class to provide APIs for conntecting to CMM custrom SQLite DB  """
@@ -68,6 +43,16 @@ class SQLiteDB(pyCMMBase):
     @property
     def db_path(self):
         return self.__db_path
+
+    def table_exist(self, table_name):
+        c = self.__connect_db()
+        qry = "SELECT name FROM sqlite_master WHERE type='table'"
+        qry += "AND name='" + table_name + "'"
+        tbl_exist = c.execute(qry).fetchone()
+        self.__close_connection() 
+        if tbl_exist:
+            return True
+        return False
 
     def __connect_db(self):
         self.__conn = sqlite3.connect(self.db_path)
@@ -116,202 +101,166 @@ class SQLiteDB(pyCMMBase):
         kwargs['reader'] = VcfGTZReader
         return self.__load_data_file(*args, **kwargs)
 
-#    def load_avdb_data(self, data_file, table_name, header_exist=False, drop_table=True):
-#        rd = AVDBReader(file_name=data_file, header_exist=header_exist)
-#        rec_len = len(rd.header_cols)
-#        c = self.__connect_db()
-#        if drop_table:
-#            sql_script = 'DROP TABLE if exists ' + table_name
-#            c.execute(sql_script)
-#        sql_script = 'CREATE TABLE if not exists ' + table_name
-#        sql_script += ' (' + ",".join(rd.header_cols) + ')' 
-#        c.execute(sql_script)
-#        sql_script = 'INSERT INTO ' + table_name
-#        sql_script += ' VALUES (' + ('?,'*(rec_len*2))[:rec_len*2-1] + ')'
-#        c.executemany(sql_script, rd)
-#        row_count = c.rowcount
-#        self.__close_connection() 
-#        return row_count
-#
-#    def load_annovar_vcf_data(self,
-#                              data_file,
-#                              drop_table=True,
-#                              ):
-#        table_name = 'annovar_vcf'
-#        rd = VcfInfoReader(file_name=data_file)
-#        rec_len = len(rd.header_cols)
-#        c = self.__connect_db()
-#        if drop_table:
-#            sql_script = 'DROP TABLE if exists ' + table_name
-#            c.execute(sql_script)
-#        sql_script = 'CREATE TABLE if not exists ' + table_name
-#        sql_script += ' (' + ",".join(rd.header_cols) + ')' 
-#        c.execute(sql_script)
-#        sql_script = 'INSERT INTO ' + table_name
-#        sql_script += ' VALUES (' + ('?,'*(rec_len*2))[:rec_len*2-1] + ')'
-#        c.executemany(sql_script, rd)
-#        row_count = c.rowcount
-#        self.__close_connection() 
-#        return row_count
+class DBJob(CMMParams):
+    """ A class to keep DB job information """
 
-#    def load_avdb_data(self, data_file, table_name, header_exist=False,):
-#        return self.load_data(data_file, AVDBReader, table_name, header_exist)
+    def __init__(self, *args, **kwargs):
+        super(DBJob, self).__init__(*args, **kwargs)
 
-#    def count_row(self, table_name):
-#        # it works but people said that it has to go through the whole table
-#        # might be very poor performance
-#        c = self.__connect_db()
-#        sql_script = 'SELECT Count(*) FROM ' + table_name
-#        c.execute(sql_script)
-#        row_count = c.fetchone()[0]
-#        self.__close_connection() 
-#        return row_count
-#    @property
-#    def mutstat_params(self):
-#        return MutStatParams(entries=self._get_job_config(JOBS_SETUP_MUTSTAT_PARAMS_SECTION,
-#                                                          required=True))
-#
-#    @property
-#    def annovar_params(self):
-#        return AnnovarParams(entries=self._get_job_config(JOBS_SETUP_ANV_PARAMS_SECTION,
-#                                                          required=True))
-#
-#    @property
-#    def out_files(self):
-#        return self.__out_files
-#
-#    def get_third_party_software_version(self):
-#        vm = VersionManager()
-#        versions = OrderedDict()
-#        versions['vcftools'] = vm.vcftools_version
-#        versions['table_annovar.pl'] = vm.table_annovar_version
-#        return versions
-#
-#    def __get_cmmdb_script_params(self,
-#                                  dataset_name,
-#                                  out_file,
-#                                  db_region=None,
-#                                  samples_id=None,
-#                                  ):
-#        params = " -k " + dataset_name
-#        params += " -i " + self.mutstat_params.input_vcf_tabix
-#        if self.mutstat_params.vcf2avdb_key_table is not None:
-#            params += " -t " + self.mutstat_params.vcf2avdb_key_table
-#        if db_region is not None:
-#            params += " -r " + db_region
-#        if samples_id is not None:
-#            if type(samples_id) is list:
-#                params += " -c " + ",".join(samples_id)
-#            else:
-#                params += " -c " + samples_id
-#        params += " -o " + out_file
-#        return params
-#
-#    def __run_cmm_script(self,
-#                         script_name,
-#                         out_suffix=".stat",
-#                         job_name_suffix="_cal_stat",
-#                         ):
-#        if self.project_code is None:
-#            self.__out_files = join_path(self.data_out_dir,
-#                                              self.dataset_name + out_suffix)
-#            params = self.__get_cmmdb_script_params(dataset_name=self.dataset_name,
-#                                                    out_file=self.out_files,
-#                                                    db_region=self.mutstat_params.db_region,
-#                                                    samples_id=self.samples_id,
-#                                                    )
-#            cmd = script_name + params
-#            exec_sh(cmd)
-#        elif self.mutstat_params.db_region is None:
-#            self.__out_files = []
-#            for chrom in ALL_CHROMS:
-#                dataset_name = self.dataset_name + "_" + chrom
-#                out_file = join_path(self.data_out_dir,
-#                                          dataset_name + out_suffix)
-#                params = self.__get_cmmdb_script_params(dataset_name=dataset_name,
-#                                                        out_file=out_file,
-#                                                        db_region=chrom,
-#                                                        samples_id=self.samples_id,
-#                                                        )
-#                self.__out_files.append(out_file)
-#                job_name = dataset_name + job_name_suffix
-#                self._submit_slurm_job(job_name,
-#                                       "1",
-#                                       script_name,
-#                                       params,
-#                                       )
-#        else:
-#            self.__out_files = join_path(self.data_out_dir,
-#                                              self.dataset_name + out_suffix)
-#            params = self.__get_cmmdb_script_params(dataset_name=self.dataset_name,
-#                                                    out_file=self.out_files,
-#                                                    db_region=self.mutstat_params.db_region,
-#                                                    samples_id=self.samples_id,
-#                                                    )
-#            job_name = self.dataset_name + job_name_suffix
-#            self._submit_slurm_job(job_name,
-#                                   "1",
-#                                   script_name,
-#                                   params,
-#                                   )
-#
-#    def cal_mut_stat(self):
-#        self.__run_cmm_script(CAL_MUTATIONS_STAT_CMMDB_SCRIPT)
-#
-#    def vcfaf_to_annovar(self):
-#        self.__run_cmm_script(VCF_AF_TO_ANNOVAR_CMMDB_SCRIPT)
-#
-#    def vcf2annovar_key(self):
-#        self.__run_cmm_script(VCF2AVDB_KEY_CMMDB_SCRIPT,
-#                              out_suffix=".key",
-#                              job_name_suffix="_key",
-#                              )
-#
-#    def table_annovar(self):
-#        # calling dummy table_annovar mainly because to clariy the configurations and for logging
-#        annovar_params = self.annovar_params
-#        table_annovar_cmd = DUMMY_TABLE_ANNOVAR_BIN
-#        table_annovar_params = " --dataset_name " + self.dataset_name
-#        table_annovar_params += " --input_file " + annovar_params.input_vcf_tabix
-#        table_annovar_params += " --db_folder " + annovar_params.db_dir
-#        table_annovar_params += " --buildver " + annovar_params.buildver
-#        table_annovar_params += " --protocols " + annovar_params.protocols
-#        table_annovar_params += " --operations " + annovar_params.operations
-#        table_annovar_params += " --nastring " + annovar_params.nastring
-#        table_annovar_params += " --data_out_folder " + self.data_out_dir
-#        if self.project_code is not None:
-#            job_name = self.dataset_name + "_ta"
-#            self._submit_slurm_job(job_name,
-#                                   "8",
-#                                   table_annovar_cmd,
-#                                   table_annovar_params,
-#                                   )
-#        else:
-#            exec_sh(table_annovar_cmd + table_annovar_params)
+    def get_raw_obj_str(self, *args, **kwargs):
+        raw_str = super(DBJob, self).get_raw_obj_str(*args, **kwargs)
+        raw_str["table name"] = self.table_name
+        raw_str["drop table"] = self.drop_table
+        raw_str["data file"] = self.data_file
+        raw_str["data type"] = self.data_type
+        raw_str["header exist"] = self.header_exist
+        return raw_str
 
+    @property
+    def table_name(self):
+        return self._get_job_config(JOBS_SETUP_DB_JOB_TABLE_NAME_KEY)
+
+    @property
+    def drop_table(self):
+        return self._get_job_config(JOBS_SETUP_DB_JOB_DROP_TABLE_KEY) is True
+
+    @property
+    def data_file(self):
+        return self._get_job_config(JOBS_SETUP_DB_JOB_DATA_FILE_KEY,
+                                    required=True)
+
+    @property
+    def data_type(self):
+        return self._get_job_config(JOBS_SETUP_DB_JOB_DATA_TYPE_KEY,
+                                    required=True)
+
+    @property
+    def header_exist(self):
+        return self._get_job_config(JOBS_SETUP_DB_JOB_HEADER_EXIST_KEY)
+
+class DBParams(CMMParams):
+    """ A class to keep all the job params related to db controller """
+
+    def __init__(self, *args, **kwargs):
+        super(DBParams, self).__init__(*args, **kwargs)
+        self.__db_jobs = self.__parse_db_jobs(self._get_job_config(JOBS_SETUP_DB_JOBS))
+
+    def get_raw_obj_str(self, *args, **kwargs):
+        raw_str = super(DBParams, self).get_raw_obj_str(*args, **kwargs)
+        raw_str["db file"] = self.db_file
+        raw_str["db jobs"] = self.db_jobs
+        return raw_str
+
+    def __parse_db_jobs(self, db_jobs_params):
+        return map(lambda x: DBJob(x), db_jobs_params)
+
+    @property
+    def db_file(self):
+        return self._get_job_config(JOBS_SETUP_DB_FILE_KEY,
+                                    required=True)
+
+    @property
+    def db_jobs(self):
+        return self.__db_jobs
+
+class SQLiteDBController(CMMPipeline):
+    """ A class to control all processes related to SQLiteDB """
+
+    def __init__(self, *args, **kwargs):
+        super(SQLiteDBController, self).__init__(*args, **kwargs)
+        self.__db_params = DBParams(self._get_job_config(JOBS_SETUP_DB_PARAMS_SECTION,
+                                                         required=True))
+        self.__db = SQLiteDB(self.db_params.db_file)
+
+
+    def get_raw_obj_str(self, *args, **kwargs):
+        raw_str = super(SQLiteDBController, self).get_raw_obj_str(*args, **kwargs)
+        return raw_str
+
+    def get_third_party_software_version(self):
+        vm = VersionManager()
+        versions = OrderedDict()
+#        versions['SQLite'] = vm.sqlite_version
+        return versions
+
+    @property
+    def db(self):
+        return self.__db
+
+    @property
+    def db_params(self):
+        return self.__db_params
+
+    def __execute_db_job(self, db_job):
+        info_msg = "executing db job ("
+        info_msg += " table_name = {table_name}"
+        info_msg += ", drop_table = {drop_table}"
+        info_msg += ", data_file = {data_file}"
+        info_msg += ", data_type = {data_type}"
+        info_msg += ", header_exist = {header_exist}"
+        info_msg += " )"
+        self.info()
+        self.info(info_msg.format(table_name=db_job.table_name,
+                                  drop_table=db_job.drop_table,
+                                  data_file=db_job.data_file,
+                                  data_type=db_job.data_type,
+                                  header_exist=db_job.header_exist,
+                                  ))
+        if db_job.data_type == DATA_TYPE_AVDB:
+            return self.db.load_avdb_data(data_file=db_job.data_file,
+                                          table_name=db_job.table_name,
+                                          header_exist=db_job.header_exist,
+                                          drop_table=db_job.drop_table,
+                                          )
+        elif db_job.data_type == DATA_TYPE_ANNOVAR_VCF:
+            return self.db.load_annovar_vcf_data(data_file=db_job.data_file,
+                                                 drop_table=db_job.drop_table,
+                                                 )
+        elif db_job.data_type == DATA_TYPE_GTZ_VCF:
+            return self.db.load_gtz_vcf_data(data_file=db_job.data_file,
+                                             table_name=db_job.table_name,
+                                             drop_table=db_job.drop_table,
+                                             )
+        else:
+            raise Exception('Unknown data type: ' + db_job.data_type)
+
+    def __execute_db_jobs(self):
+        for db_job in self.db_params.db_jobs:
+            n_records = self.__execute_db_job(db_job)
+            self.info("Finished: " + str(n_records) + " records are inserted")
+
+    def run_offline_pipeline(self):
+        self.__execute_db_jobs()
+
+def parse_db_jobs(db_jobs_params):
+    db_jobs_yaml = []
+    if db_jobs_params is None or db_jobs_params == "":
+        return db_jobs_yaml
+    if isfile(db_jobs_params):
+        s_stream = file(db_jobs_params, "r")
+        document = yaml.safe_load(s_stream)
+        return document[JOBS_SETUP_DB_JOBS]
+    # so the params are in text
+    db_jobs = db_jobs_params.split(",")
+    for db_job in db_jobs:
+        job_info = {}
+        job_details = db_job.split(":")
+        job_info[JOBS_SETUP_DB_JOB_TABLE_NAME_KEY] = job_details[0]
+        if len(job_details[1]) > 0:
+            job_info[JOBS_SETUP_DB_JOB_DROP_TABLE_KEY] = job_details[1]
+        job_info[JOBS_SETUP_DB_JOB_DATA_FILE_KEY] = job_details[2]
+        job_info[JOBS_SETUP_DB_JOB_DATA_TYPE_KEY] = job_details[3]
+        if len(job_details[4]) > 0:
+            job_info[JOBS_SETUP_DB_JOB_HEADER_EXIST_KEY] = job_details[4]
+        db_jobs_yaml.append(job_info)
+    return db_jobs_yaml
 
 def create_dbms_jobs_setup_file(*args, **kwargs):
     job_setup_document, stream = init_jobs_setup_file(*args, **kwargs)
 
-#    mutstat_params = {}
-#    vcf_tabix_file = get_func_arg('vcf_tabix_file', kwargs)
-#    if vcf_tabix_file is not None:
-#        mutstat_params[JOBS_SETUP_VCF_TABIX_FILE_KEY] = vcf_tabix_file
-#    db_region = get_func_arg('db_region', kwargs)
-#    if db_region is not None:
-#        mutstat_params[JOBS_SETUP_DB_REGION_KEY] = '"' + db_region + '"'
-#    job_setup_document[JOBS_SETUP_MUTSTAT_PARAMS_SECTION] = mutstat_params
-#
-#    vcf2avdb_key_table = get_func_arg('vcf2avdb_key_table', kwargs)
-#    if vcf2avdb_key_table is not None:
-#        mutstat_params[JOBS_SETUP_VCF2AVDB_KEY_TABLE_KEY] = vcf2avdb_key_table
-#
-#    anv_params = get_annovar_params_sections(*args, **kwargs)
-    job_setup_document[JOBS_SETUP_ANV_PARAMS_SECTION] = anv_params
-    return job_setup_document, stream
+    db_job_infos = {}
+    db_job_infos[JOBS_SETUP_DB_FILE_KEY] = get_func_arg('db_file', kwargs)
+    db_job_infos[JOBS_SETUP_DB_JOBS] = parse_db_jobs(get_func_arg('db_jobs', kwargs))
 
-## Right now no one actually want to use create_cmmdb_jobs_setup_file
-## But reserve it here in case it need to be a complete report and database pipeline
-#def create_jobs_setup_file(*args, **kwargs):
-#    job_setup_document, stream = create_cmmdb_jobs_setup_file(*args, **kwargs)
-#    pyaml.dump(job_setup_document, stream)
+    job_setup_document[JOBS_SETUP_DB_PARAMS_SECTION] = db_job_infos
+    pyaml.dump(job_setup_document, stream)

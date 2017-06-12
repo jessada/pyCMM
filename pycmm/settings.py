@@ -55,6 +55,18 @@ MUTREP_FAMILY_REPORT_DESCRIPTION = "An appliation to generate mutation report fo
 MUTREP_SUMMARY_REPORT_DESCRIPTION = "An appliation to generate summary report at given regions"
 MUTREP_CREATE_JOB_SETUP_FILE_DESCRIPTION = "An application to generate job setup file to process mutations report"
 
+## ******************************************************************************************* DBMS ********************************************************************************************
+#MUTREP_SLURM_MONITOR_PIPELINE_BIN = 'pyCMM-mutrep-slurm-monitor-pipeline'
+#MUTREP_FAMILY_REPORT_BIN = 'pyCMM-mutrep-family-report'
+#MUTREP_SUMMARY_REPORT_BIN = 'pyCMM-mutrep-summary-report'
+#
+#MUTREP_PIPELINE_DESCRIPTION = "A flow to control a pipeline to process mutations report"
+#MUTREP_PIPELINE_DFLT_LOG_FILE = "mutrep_pipeline"
+#
+#MUTREP_FAMILY_REPORT_DESCRIPTION = "An appliation to generate mutation report for a given family at given regions"
+DBMS_EXECUTE_DB_JOBS_DESCRIPTION = "An appliation to execute jobs related to SQLite DB"
+DBMS_CREATE_JOB_SETUP_FILE_DESCRIPTION = "An application to generate job setup file to handle database management"
+
 ## *********************************************************************************************** PLINK *************************************************************************************************
 PLINK_SLURM_MONITOR_PIPELINE_BIN = 'pyCMM-plink-slurm-monitor-pipeline'
 PLINK_PIPELINE_DESCRIPTION = "A flow to control a PLINK haplotype association study"
