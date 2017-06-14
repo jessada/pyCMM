@@ -23,6 +23,21 @@ def app_pycmm_dbms_execute_db_jobs(*args, **kwargs):
     mylogger.getLogger(__name__)
     disp.new_section_txt("F I N I S H <" + func_name + ">")
 
+def app_pycmm_dbms_run_controller(*args, **kwargs):
+    mylogger.getLogger(__name__)
+
+    func_name = sys._getframe().f_code.co_name
+    pl = SQLiteDBController(jobs_setup_file=kwargs['jobs_setup_file'])
+    mylogger.getLogger(__name__)
+    display_configs(func_name,
+                    DBMS_EXECUTE_DB_JOBS_DESCRIPTION,
+                    kwargs,
+                    pl,
+                    )
+    pl.run_controller()
+    mylogger.getLogger(__name__)
+    disp.new_section_txt("F I N I S H <" + func_name + ">")
+
 def app_pycmm_dbms_create_jobs_setup_file(*args, **kwargs):
     mylogger.getLogger(__name__)
     func_name = sys._getframe().f_code.co_name

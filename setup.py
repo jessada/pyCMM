@@ -12,6 +12,7 @@ from pycmm.settings import MUTREP_SUMMARY_REPORT_BIN
 from pycmm.settings import PLINK_SLURM_MONITOR_PIPELINE_BIN
 from pycmm.settings import PLINK_HAP_ASSOCS_REPORT_BIN
 from pycmm.settings import PLINK_MERGE_HAP_ASSOCS_BIN
+from pycmm.settings import DBMS_EXECUTE_DB_JOBS_BIN
 
 def opj(*args):
     path = os.path.join(*args)
@@ -81,8 +82,9 @@ setup(
              'bin/'+PLINK_SLURM_MONITOR_PIPELINE_BIN,
              'bin/'+PLINK_HAP_ASSOCS_REPORT_BIN,
              'bin/'+PLINK_MERGE_HAP_ASSOCS_BIN,
+             'bin/pyCMM-dbms-controller',
              'bin/pyCMM-dbms-create-job-setup-file',
-             'bin/pyCMM-dbms-execute-db-jobs',
+             'bin/'+DBMS_EXECUTE_DB_JOBS_BIN,
              ],
     package=['pyCMM'],
 #    package_data={'': ['data/CBV/*.cbv']

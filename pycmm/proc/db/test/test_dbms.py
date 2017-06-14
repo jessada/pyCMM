@@ -64,6 +64,27 @@ class TestSQLiteDB(SafeTester):
                          6,
                          "SQLiteDB cannot correctly load avdb data")
 
+    def test_calculate_hardy_weinberg(self):
+        """
+        test calculating Hardy-Weinberg equilibrium in avdb table
+        from MAF OAF data
+        """
+
+# *********************************************** Require proper testing **********************************************************
+# waiting for a good query engine to be implemented
+        self.individual_debug = True
+        self.init_test(self.current_func_name)
+        db_file_with_raw_maf = join_path(self.data_dir,
+                                         "input.db")
+        db_file = join_path(self.working_dir,
+                            self.current_func_name+".db")
+        self.copy_file(db_file_with_raw_maf,
+                       db_file)
+        table_name = "test_avdb"
+        db = SQLiteDB(db_file)
+        db.cal_hw(table_name)
+# *********************************************** Require proper testing **********************************************************
+
 class TestSQLiteDBController(SafeTester):
 
     def __init__(self, methodName):
@@ -114,7 +135,7 @@ class TestSQLiteDBController(SafeTester):
         self.assertEqual(pl.db_params.db_jobs[0].table_name,
                          'table1',
                          "SQLiteDBController cannot correctly read job info 'db job' from jobs setup file")
-        self.assertEqual(pl.db_params.db_jobs[0].data_type,
+        self.assertEqual(pl.db_params.db_jobs[0].operation,
                          'type1',
                          "SQLiteDBController cannot correctly read job info 'db job' from jobs setup file")
         self.assertEqual(pl.db_params.db_jobs[0].drop_table,
@@ -183,7 +204,7 @@ class TestSQLiteDBController(SafeTester):
         self.assertEqual(pl.db_params.db_jobs[2].data_file,
                          'sss',
                          "SQLiteDBController cannot correctly read job info 'db job' from jobs setup file")
-        self.assertEqual(pl.db_params.db_jobs[2].data_type,
+        self.assertEqual(pl.db_params.db_jobs[2].operation,
                          'non_type',
                          "SQLiteDBController cannot correctly read job info 'db job' from jobs setup file")
         self.assertEqual(pl.db_params.db_jobs[2].drop_table,

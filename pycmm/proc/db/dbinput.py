@@ -107,6 +107,15 @@ class AVDBReader(Reader):
     def header_cols(self):
         return self.__header_cols
 
+    @property
+    def pkeys(self):
+        pkeys = []
+        pkeys.append('Chr')
+        pkeys.append('Start')
+        pkeys.append('Ref')
+        pkeys.append('Alt')
+        return pkeys
+
     def next(self):
         return super(AVDBReader, self).next().as_tuple()
 
@@ -278,6 +287,15 @@ class TAVcfReader(VcfReader, pyCMMBase):
     @property
     def annovar_infos(self):
         return self.__annovar_infos
+
+    @property
+    def pkeys(self):
+        pkeys = []
+        pkeys.append('CHROM')
+        pkeys.append('POS')
+        pkeys.append('REF')
+        pkeys.append('ALT')
+        return pkeys
 
     def __parse_annovar_infos(self):
         """
@@ -566,7 +584,6 @@ class TAVcfGTZReader(TAVcfReader):
         header_cols.append('QUAL')
         header_cols.append('FILTER')
         for sample_id in self.samples:
-#            header_cols.append(anno_field.replace(".", "_"))
             header_cols.append("_"+sample_id.replace("-", "_"))
         return header_cols
 

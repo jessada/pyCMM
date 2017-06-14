@@ -129,6 +129,7 @@ class JobManager(pyCMMBase):
                 cmd += ":" + job_id
         if (job_rec.nodelist is not None) and (len(job_rec.nodelist) > 0):
             cmd += " --nodelist=" + job_rec.nodelist
+        cmd += " pydummy"
         cmd += " " + job_rec.job_script
         cmd += " " + job_rec.job_params
         return cmd

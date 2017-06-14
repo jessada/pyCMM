@@ -7,5 +7,5 @@ DB_JOBS:
     Table_name: tbl
   - Data_file: sss
     Drop_table: No
-    Data_type: non_type
+    Operation: non_type
     Table_name: sss_table

@@ -58,7 +58,7 @@ MUTREP_CREATE_JOB_SETUP_FILE_DESCRIPTION = "An application to generate job setup
 ## ******************************************************************************************* DBMS ********************************************************************************************
 #MUTREP_SLURM_MONITOR_PIPELINE_BIN = 'pyCMM-mutrep-slurm-monitor-pipeline'
 #MUTREP_FAMILY_REPORT_BIN = 'pyCMM-mutrep-family-report'
-#MUTREP_SUMMARY_REPORT_BIN = 'pyCMM-mutrep-summary-report'
+DBMS_EXECUTE_DB_JOBS_BIN = 'pyCMM-dbms-execute-db-jobs'
 #
 #MUTREP_PIPELINE_DESCRIPTION = "A flow to control a pipeline to process mutations report"
 #MUTREP_PIPELINE_DFLT_LOG_FILE = "mutrep_pipeline"

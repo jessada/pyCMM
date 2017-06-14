@@ -3,6 +3,7 @@ import pyaml
 import sqlite3
 from os.path import isfile
 from collections import OrderedDict
+from pycmm.settings import DBMS_EXECUTE_DB_JOBS_BIN
 from pycmm.template import pyCMMBase
 from pycmm.utils.ver import VersionManager
 from pycmm.cmmlib import CMMParams
@@ -20,13 +21,13 @@ JOBS_SETUP_DB_JOBS = "DB_JOBS"
 JOBS_SETUP_DB_JOB_TABLE_NAME_KEY = "Table_name"
 JOBS_SETUP_DB_JOB_DROP_TABLE_KEY = "Drop_table"
 JOBS_SETUP_DB_JOB_DATA_FILE_KEY = "Data_file"
-JOBS_SETUP_DB_JOB_DATA_TYPE_KEY = "Data_type"
+JOBS_SETUP_DB_JOB_OPERATION_KEY = "Operation"
 JOBS_SETUP_DB_JOB_HEADER_EXIST_KEY = "Header_exist"
 ## *************** table_annovar db section ***************
 
-DATA_TYPE_AVDB = 'AVDB'
-DATA_TYPE_ANNOVAR_VCF = 'ANNOVAR_VCF'
-DATA_TYPE_GTZ_VCF = 'GTZ_VCF'
+OPERATION_LOAD_AVDB = 'LOAD_AVDB'
+OPERATION_LOAD_ANNOVAR_VCF = 'LOAD_ANNOVAR_VCF'
+OPERATION_LOAD_GTZ_VCF = 'LOAD_GTZ_VCF'
 
 
 class SQLiteDB(pyCMMBase):
@@ -35,6 +36,7 @@ class SQLiteDB(pyCMMBase):
     def __init__(self, db_path, **kwargs):
         super(SQLiteDB, self).__init__(**kwargs)
         self.__db_path = db_path
+        self.info("connecting to database: " + db_path)
 
     def get_raw_obj_str(self, **kwargs):
         raw_repr = super(SQLiteDB, self).get_raw_obj_str(**kwargs)
@@ -44,19 +46,28 @@ class SQLiteDB(pyCMMBase):
     def db_path(self):
         return self.__db_path
 
-    def table_exist(self, table_name):
-        c = self.__connect_db()
-        qry = "SELECT name FROM sqlite_master WHERE type='table'"
-        qry += "AND name='" + table_name + "'"
-        tbl_exist = c.execute(qry).fetchone()
-        self.__close_connection() 
-        if tbl_exist:
-            return True
-        return False
+    def __exec_sql(self, sql):
+        # to encapsulate sqlite sql execution
+        # so far just for logging
+        conn = self.__connect_db() 
+        self.dbg("executing sql: " + sql)
+        result = conn.execute(sql)
+        self.__close_connection()
+        return result
+
+    def __exec_many_sql(self, sql, records):
+        # to encapsulate sqlite sql execution
+        # so far just for logging
+        conn = self.__connect_db() 
+        self.dbg("executing many sql: " + sql)
+        result = conn.executemany(sql, records)
+        self.__close_connection()
+        return result
 
     def __connect_db(self):
         self.__conn = sqlite3.connect(self.db_path)
-        return self.__conn.cursor()
+        return self.__conn
+#        return self.__conn.cursor()
 
     def __close_connection(self):
         self.__conn.commit()
@@ -74,18 +85,15 @@ class SQLiteDB(pyCMMBase):
         else:
             rd = reader(file_name=data_file)
         rec_len = len(rd.header_cols)
-        c = self.__connect_db()
         if drop_table:
-            sql_script = 'DROP TABLE if exists ' + table_name
-            c.execute(sql_script)
-        sql_script = 'CREATE TABLE if not exists ' + table_name
-        sql_script += ' (' + ",".join(rd.header_cols) + ')' 
-        c.execute(sql_script)
-        sql_script = 'INSERT INTO ' + table_name
-        sql_script += ' VALUES (' + ('?,'*(rec_len*2))[:rec_len*2-1] + ')'
-        c.executemany(sql_script, rd)
-        row_count = c.rowcount
-        self.__close_connection() 
+            sql = 'DROP TABLE if exists ' + table_name
+            self.__exec_sql(sql)
+        sql = 'CREATE TABLE if not exists ' + table_name
+        sql += ' (' + ",".join(rd.header_cols) + ')' 
+        self.__exec_sql(sql)
+        sql = 'INSERT INTO ' + table_name
+        sql += ' VALUES (' + ('?,'*(rec_len*2))[:rec_len*2-1] + ')'
+        row_count = self.__exec_many_sql(sql, rd).rowcount
         return row_count
 
     def load_avdb_data(self, *args, **kwargs):
@@ -101,6 +109,61 @@ class SQLiteDB(pyCMMBase):
         kwargs['reader'] = VcfGTZReader
         return self.__load_data_file(*args, **kwargs)
 
+    def __add_column(self, table_name, col_name, col_def=""):
+        sql = "ALTER TABLE " + table_name
+        sql += " ADD " + col_name
+        sql += " " + col_def
+        self.__exec_sql(sql)
+
+    def cal_hw(self, table_name):
+        # look for dataset name
+        cursor = self.__exec_sql('select * from ' + table_name + " LIMIT 1")
+        col_names = map(lambda x: x[0], cursor.description)
+        af_col_names = filter(lambda x: x.endswith("AF"),
+                              col_names)
+        if len(af_col_names) != 1:
+            raise Exception('cannot perform Hardy-Weinberg calculation for table ' + table_name)
+        dataset_name = af_col_names[0].replace("_AF","")
+        self.__add_column(table_name, "p")
+        self.__add_column(table_name, "q")
+        self.__add_column(table_name, "exp_wt")
+        self.__add_column(table_name, "exp_het")
+        self.__add_column(table_name, "exp_hom")
+        self.__add_column(table_name, "hw_chisq")
+        sql = "update " + table_name
+        sql += " set p = 1-" + dataset_name + "_AF"
+        sql += ", q = " + dataset_name + "_AF"
+        self.__exec_sql(sql)
+        sql = "update " + table_name
+        sql += " set exp_wt = p*p*" + dataset_name + "_GT"
+        sql += ", exp_het = 2*p*q*" + dataset_name + "_GT"
+        sql += ", exp_hom = q*q*" + dataset_name + "_GT"
+        self.__exec_sql(sql)
+        sql = "update " + table_name
+        sql += " set hw_chisq = 0.0"
+        sql += " where exp_wt = 0"
+        sql += " or exp_het = 0"
+        sql += " or exp_hom = 0"
+        self.__exec_sql(sql)
+        sql = "update " + table_name
+        sql += " set hw_chisq = (" + dataset_name + "_WT-exp_wt)*(" + dataset_name + "_WT-exp_wt)/exp_wt"
+        sql += " + (" + dataset_name + "_HET-exp_het)*(" + dataset_name + "_HET-exp_het)/exp_het"
+        sql += " + (" + dataset_name + "_HOM-exp_hOM)*(" + dataset_name + "_HOM-exp_hom)/exp_hom"
+        sql += " where exp_wt != 0"
+        sql += " and exp_het != 0"
+        sql += " and exp_hom != 0"
+        self.__exec_sql(sql)
+
+    def table_exist(self, table_name):
+        c = self.__connect_db()
+        sql = "SELECT name FROM sqlite_master WHERE type='table'"
+        sql += "AND name='" + table_name + "'"
+        tbl_exist = c.execute(sql).fetchone()
+        self.__close_connection() 
+        if tbl_exist:
+            return True
+        return False
+
 class DBJob(CMMParams):
     """ A class to keep DB job information """
 
@@ -112,7 +175,7 @@ class DBJob(CMMParams):
         raw_str["table name"] = self.table_name
         raw_str["drop table"] = self.drop_table
         raw_str["data file"] = self.data_file
-        raw_str["data type"] = self.data_type
+        raw_str["operation"] = self.operation
         raw_str["header exist"] = self.header_exist
         return raw_str
 
@@ -126,12 +189,11 @@ class DBJob(CMMParams):
 
     @property
     def data_file(self):
-        return self._get_job_config(JOBS_SETUP_DB_JOB_DATA_FILE_KEY,
-                                    required=True)
+        return self._get_job_config(JOBS_SETUP_DB_JOB_DATA_FILE_KEY)
 
     @property
-    def data_type(self):
-        return self._get_job_config(JOBS_SETUP_DB_JOB_DATA_TYPE_KEY,
+    def operation(self):
+        return self._get_job_config(JOBS_SETUP_DB_JOB_OPERATION_KEY,
                                     required=True)
 
     @property
@@ -172,7 +234,6 @@ class SQLiteDBController(CMMPipeline):
                                                          required=True))
         self.__db = SQLiteDB(self.db_params.db_file)
 
-
     def get_raw_obj_str(self, *args, **kwargs):
         raw_str = super(SQLiteDBController, self).get_raw_obj_str(*args, **kwargs)
         return raw_str
@@ -180,7 +241,6 @@ class SQLiteDBController(CMMPipeline):
     def get_third_party_software_version(self):
         vm = VersionManager()
         versions = OrderedDict()
-#        versions['SQLite'] = vm.sqlite_version
         return versions
 
     @property
@@ -196,33 +256,33 @@ class SQLiteDBController(CMMPipeline):
         info_msg += " table_name = {table_name}"
         info_msg += ", drop_table = {drop_table}"
         info_msg += ", data_file = {data_file}"
-        info_msg += ", data_type = {data_type}"
+        info_msg += ", operation = {operation}"
         info_msg += ", header_exist = {header_exist}"
         info_msg += " )"
         self.info()
         self.info(info_msg.format(table_name=db_job.table_name,
                                   drop_table=db_job.drop_table,
                                   data_file=db_job.data_file,
-                                  data_type=db_job.data_type,
+                                  operation=db_job.operation,
                                   header_exist=db_job.header_exist,
                                   ))
-        if db_job.data_type == DATA_TYPE_AVDB:
+        if db_job.operation == OPERATION_LOAD_AVDB:
             return self.db.load_avdb_data(data_file=db_job.data_file,
                                           table_name=db_job.table_name,
                                           header_exist=db_job.header_exist,
                                           drop_table=db_job.drop_table,
                                           )
-        elif db_job.data_type == DATA_TYPE_ANNOVAR_VCF:
+        elif db_job.operation == OPERATION_LOAD_ANNOVAR_VCF:
             return self.db.load_annovar_vcf_data(data_file=db_job.data_file,
                                                  drop_table=db_job.drop_table,
                                                  )
-        elif db_job.data_type == DATA_TYPE_GTZ_VCF:
+        elif db_job.operation == OPERATION_LOAD_GTZ_VCF:
             return self.db.load_gtz_vcf_data(data_file=db_job.data_file,
                                              table_name=db_job.table_name,
                                              drop_table=db_job.drop_table,
                                              )
         else:
-            raise Exception('Unknown data type: ' + db_job.data_type)
+            raise Exception('Unknown operation: ' + db_job.operation)
 
     def __execute_db_jobs(self):
         for db_job in self.db_params.db_jobs:
@@ -231,6 +291,19 @@ class SQLiteDBController(CMMPipeline):
 
     def run_offline_pipeline(self):
         self.__execute_db_jobs()
+
+    def run_controller(self):
+        if self.project_code is None:
+            self.run_offline_pipeline()
+        else:
+            job_name = self.dataset_name + "_exec_db"
+            params = " -j " + self.jobs_setup_file
+            self._submit_slurm_job(job_name,
+                                   "1",
+                                   DBMS_EXECUTE_DB_JOBS_BIN,
+                                   params,
+                                   )
+
 
 def parse_db_jobs(db_jobs_params):
     db_jobs_yaml = []
@@ -249,7 +322,7 @@ def parse_db_jobs(db_jobs_params):
         if len(job_details[1]) > 0:
             job_info[JOBS_SETUP_DB_JOB_DROP_TABLE_KEY] = job_details[1]
         job_info[JOBS_SETUP_DB_JOB_DATA_FILE_KEY] = job_details[2]
-        job_info[JOBS_SETUP_DB_JOB_DATA_TYPE_KEY] = job_details[3]
+        job_info[JOBS_SETUP_DB_JOB_OPERATION_KEY] = job_details[3]
         if len(job_details[4]) > 0:
             job_info[JOBS_SETUP_DB_JOB_HEADER_EXIST_KEY] = job_details[4]
         db_jobs_yaml.append(job_info)
