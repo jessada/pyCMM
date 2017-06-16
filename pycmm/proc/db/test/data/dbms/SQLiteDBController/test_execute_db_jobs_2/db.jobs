@@ -1,0 +1,78 @@
+DB_JOBS:
+  - Data_file: /proj/b2011117/nobackup/private/jessada/private/projects/pyCMM/pycmm/proc/db/test/data/dbms/SQLiteDBController/test_execute_db_jobs_2/test_hg19_gnomad_genome.txt
+    Drop_table: yes
+    Operation: LOAD_AVDB
+    Table_name: test_hg19_gnomad_genome
+    Header_exist: Yes
+  - Data_file: /proj/b2011117/nobackup/private/jessada/private/projects/pyCMM/pycmm/proc/db/test/data/dbms/SQLiteDBController/test_execute_db_jobs_2/test_hg19_clinvar_20150330.txt
+    Drop_table: yes
+    Operation: LOAD_AVDB
+    Table_name: test_hg19_clinvar_20150330
+    Header_exist: No
+  - Data_file: /proj/b2011117/nobackup/private/jessada/private/projects/pyCMM/pycmm/proc/db/test/data/dbms/SQLiteDBController/test_execute_db_jobs_2/test_hg19_clinvar_20170130.txt
+    Drop_table: yes
+    Operation: LOAD_AVDB
+    Table_name: test_hg19_clinvar_20170130
+    Header_exist: Yes
+  - Data_file: /proj/b2011117/nobackup/private/jessada/private/projects/pyCMM/pycmm/proc/db/test/data/dbms/SQLiteDBController/test_execute_db_jobs_2/test_hg19_CMM_Axeq_chr5_19.txt
+    Drop_table: yes
+    Operation: LOAD_AVDB
+    Table_name: test_hg19_CMM_Axeq_chr5_19
+    Header_exist: Yes
+  - Data_file: /proj/b2011117/nobackup/private/jessada/private/projects/pyCMM/pycmm/proc/db/test/data/dbms/SQLiteDBController/test_execute_db_jobs_2/test_hg19_CMM_OAF_BrC_CRC_prostate.txt
+    Drop_table: yes
+    Operation: LOAD_AVDB
+    Table_name: test_hg19_CMM_OAF_BrC_CRC_prostate
+    Header_exist: Yes
+  - Data_file: /proj/b2011117/nobackup/private/jessada/private/projects/pyCMM/pycmm/proc/db/test/data/dbms/SQLiteDBController/test_execute_db_jobs_2/test_hg19_CMM_OAF_familial_CRCs.txt
+    Drop_table: yes
+    Operation: LOAD_AVDB
+    Table_name: test_hg19_CMM_OAF_familial_CRCs
+    Header_exist: Yes
+  - Data_file: /proj/b2011117/nobackup/private/jessada/private/projects/pyCMM/pycmm/proc/db/test/data/dbms/SQLiteDBController/test_execute_db_jobs_2/test_hg19_CMM_OAF_CHEK2.txt
+    Drop_table: yes
+    Operation: LOAD_AVDB
+    Table_name: test_hg19_CMM_OAF_CHEK2
+    Header_exist: Yes
+  - Data_file: /proj/b2011117/nobackup/private/jessada/private/projects/pyCMM/pycmm/proc/db/test/data/dbms/SQLiteDBController/test_execute_db_jobs_2/test_hg19_CMM_Swegen_20161223.txt
+    Drop_table: yes
+    Operation: LOAD_AVDB
+    Table_name: test_hg19_CMM_Swegen_20161223
+    Header_exist: Yes
+  - Data_file: /proj/b2011117/nobackup/private/jessada/private/projects/pyCMM/pycmm/proc/db/test/data/dbms/SQLiteDBController/test_execute_db_jobs_2/test_hg19_spidex.txt
+    Drop_table: yes
+    Operation: LOAD_AVDB
+    Table_name: test_hg19_spidex
+    Header_exist: Yes
+  - Data_file: /proj/b2011117/nobackup/private/jessada/private/projects/pyCMM/pycmm/proc/db/test/data/dbms/SQLiteDBController/test_execute_db_jobs_2/test_hg19_intervar.txt
+    Drop_table: yes
+    Operation: LOAD_AVDB
+    Table_name: test_hg19_intervar
+    Header_exist: Yes
+  - Data_file: /proj/b2011117/nobackup/private/jessada/private/projects/pyCMM/pycmm/proc/db/test/data/dbms/SQLiteDBController/test_execute_db_jobs_2/test_hg19_ljb26_all.txt
+    Drop_table: yes
+    Operation: LOAD_AVDB
+    Table_name: test_hg19_ljb26_all
+    Header_exist: Yes
+  - Data_file: /proj/b2011117/nobackup/private/jessada/private/projects/pyCMM/pycmm/proc/db/test/data/dbms/SQLiteDBController/test_execute_db_jobs_2/test_hg19_dbnsfp30a.txt
+    Drop_table: yes
+    Operation: LOAD_AVDB
+    Table_name: test_hg19_dbnsfp30a
+    Header_exist: Yes
+  - Data_file: /proj/b2011117/nobackup/private/jessada/private/projects/pyCMM/pycmm/proc/db/test/data/dbms/SQLiteDBController/test_execute_db_jobs_2/test_hg19_avsnp144.txt
+    Drop_table: yes
+    Operation: LOAD_AVDB
+    Table_name: test_hg19_avsnp144
+    Header_exist: No
+  - Data_file: /proj/b2011117/nobackup/private/jessada/private/projects/pyCMM/pycmm/proc/db/test/data/dbms/SQLiteDBController/test_execute_db_jobs_2/test_annovar_vcf.vcf.gz
+    Drop_table: Yes
+    Operation: LOAD_ANNOVAR_VCF
+    Table_name: test_annovar_vcf
+  - Data_file: /proj/b2011117/nobackup/private/jessada/private/projects/pyCMM/pycmm/proc/db/test/data/dbms/SQLiteDBController/test_execute_db_jobs_2/test_gtz_THYRCA.vcf.gz
+    Drop_table: Yes
+    Operation: LOAD_GTZ_VCF
+    Table_name: test_gtz_THYRCA
+  - Data_file: /proj/b2011117/nobackup/private/jessada/private/projects/pyCMM/pycmm/proc/db/test/data/dbms/SQLiteDBController/test_execute_db_jobs_2/test_gtz_WES294.vcf.gz
+    Drop_table: yes
+    Operation: LOAD_GTZ_VCF
+    Table_name: test_gtz_WES294

@@ -1,7 +1,11 @@
 # This Python file uses the following encoding: utf-8
 import unittest
 from os.path import join as join_path
+from pycmm.settings import FULL_SYSTEM_TEST
 from pycmm.template import SafeTester
+from pycmm.proc.db.dbinput import AVDBReader
+from pycmm.proc.db.dbinput import TAVcfInfoReader as VcfInfoReader
+from pycmm.proc.db.dbinput import TAVcfGTZReader as VcfGTZReader
 from pycmm.proc.db.dbms import SQLiteDB
 from pycmm.proc.db.dbms import SQLiteDBController
 from pycmm.proc.db.dbms import create_dbms_jobs_setup_file as create_jobs_setup_file
@@ -22,10 +26,10 @@ class TestSQLiteDB(SafeTester):
                                "db_input.txt")
         db_file = join_path(self.working_dir,
                             self.current_func_name+".db")
-        table_name = self.current_func_name
-        db = SQLiteDB(db_file)
+        tbl_name = self.current_func_name
+        db = SQLiteDB(db_file, verbose=False)
         row_count = db.load_avdb_data(data_file=input_file,
-                                      table_name=table_name,
+                                      tbl_name=tbl_name,
                                       header_exist=True,
                                       )
         self.assertEqual(row_count,
@@ -40,8 +44,10 @@ class TestSQLiteDB(SafeTester):
                                "input.vcf.gz")
         db_file = join_path(self.working_dir,
                             self.current_func_name+".db")
-        db = SQLiteDB(db_file)
+        tbl_name = self.current_func_name
+        db = SQLiteDB(db_file, verbose=False)
         row_count = db.load_annovar_vcf_data(data_file=input_file,
+                                             tbl_name=tbl_name,
                                              )
         self.assertEqual(row_count,
                          12,
@@ -55,16 +61,16 @@ class TestSQLiteDB(SafeTester):
                                "input.vcf.gz")
         db_file = join_path(self.working_dir,
                             self.current_func_name+".db")
-        table_name = self.current_func_name
-        db = SQLiteDB(db_file)
+        tbl_name = self.current_func_name
+        db = SQLiteDB(db_file, verbose=False)
         row_count = db.load_gtz_vcf_data(data_file=input_file,
-                                         table_name=table_name,
+                                         tbl_name=tbl_name,
                                          )
         self.assertEqual(row_count,
                          6,
                          "SQLiteDB cannot correctly load avdb data")
 
-    def test_calculate_hardy_weinberg(self):
+    def test_calculate_hardy_weinberg_1(self):
         """
         test calculating Hardy-Weinberg equilibrium in avdb table
         from MAF OAF data
@@ -80,10 +86,33 @@ class TestSQLiteDB(SafeTester):
                             self.current_func_name+".db")
         self.copy_file(db_file_with_raw_maf,
                        db_file)
-        table_name = "test_avdb"
-        db = SQLiteDB(db_file)
-        db.cal_hw(table_name)
+        tbl_name = "test_avdb"
+        db = SQLiteDB(db_file, verbose=False)
+        db.cal_hw(tbl_name)
 # *********************************************** Require proper testing **********************************************************
+
+    def test_mutrep_view_1(self):
+        """ test creating VIEW for further use in mutation report """
+
+        self.init_test(self.current_func_name)
+        self.init_test(self.current_func_name)
+        db_file_with_raw_maf = join_path(self.data_dir,
+                                         "input.db")
+        db_file = join_path(self.working_dir,
+                            self.current_func_name+".db")
+        self.copy_file(db_file_with_raw_maf,
+                       db_file)
+        db = SQLiteDB(db_file, verbose=False)
+        view_name = self.current_func_name
+        gtz_tbl_name = "test_gtz_THYRCA"
+        db.create_mutrep_view(view_name=view_name,
+                              gtz_tbl_name=gtz_tbl_name)
+        self.assertEqual(len(db.get_col_names(view_name)),
+                         35,
+                         "SQLiteDB cannot correctly create view")
+        self.assertEqual(db.count_rows(view_name),
+                         9,
+                         "SQLiteDB cannot correctly create view")
 
 class TestSQLiteDBController(SafeTester):
 
@@ -105,11 +134,12 @@ class TestSQLiteDBController(SafeTester):
         """ test if default configurations are loaded correctly """
 
         self.init_test(self.current_func_name)
-        db_file = 'dummy1.db'
+        db_file = join_path(self.working_dir,
+                            'dummy1.db')
         jobs_setup_file = self.__create_jobs_setup_file(db_file=db_file)
-        pl = SQLiteDBController(jobs_setup_file)
+        pl = SQLiteDBController(jobs_setup_file, verbose=False)
         self.assertEqual(pl.db_params.db_file,
-                         "dummy1.db",
+                         db_file,
                          "SQLiteDBController cannot correctly read job info 'db file' from jobs setup file")
         self.assertEqual(len(pl.db_params.db_jobs),
                          0,
@@ -119,20 +149,21 @@ class TestSQLiteDBController(SafeTester):
         """ test if configurations with defined parameters are loaded correctly """
 
         self.init_test(self.current_func_name)
-        db_file = 'dummy2.db'
+        db_file = join_path(self.working_dir,
+                            'dummy2.db')
         db_jobs = "table1::data_file1:type1:Yes"
         db_jobs += ",TableN::test_file2:typo:Yes"
         jobs_setup_file = self.__create_jobs_setup_file(db_file=db_file,
                                                         db_jobs=db_jobs,
                                                         )
-        pl = SQLiteDBController(jobs_setup_file)
+        pl = SQLiteDBController(jobs_setup_file, verbose=False)
         self.assertEqual(pl.db_params.db_file,
-                         "dummy2.db",
+                         db_file,
                          "SQLiteDBController cannot correctly read job info 'db file' from jobs setup file")
         self.assertEqual(len(pl.db_params.db_jobs),
                          2,
                          "SQLiteDBController cannot correctly read job info 'db jobs' from jobs setup file")
-        self.assertEqual(pl.db_params.db_jobs[0].table_name,
+        self.assertEqual(pl.db_params.db_jobs[0].tbl_name,
                          'table1',
                          "SQLiteDBController cannot correctly read job info 'db job' from jobs setup file")
         self.assertEqual(pl.db_params.db_jobs[0].operation,
@@ -156,13 +187,14 @@ class TestSQLiteDBController(SafeTester):
         """
 
         self.init_test(self.current_func_name)
-        db_file = 'dummy3.db'
+        db_file = join_path(self.working_dir,
+                            'dummy3.db')
         jobs_setup_file = self.__create_jobs_setup_file(db_file=db_file,
                                                         db_jobs="",
                                                         )
-        pl = SQLiteDBController(jobs_setup_file)
+        pl = SQLiteDBController(jobs_setup_file, verbose=False)
         self.assertEqual(pl.db_params.db_file,
-                         "dummy3.db",
+                         db_file,
                          "SQLiteDBController cannot correctly read job info 'db file' from jobs setup file")
         self.assertEqual(len(pl.db_params.db_jobs),
                          0,
@@ -176,20 +208,21 @@ class TestSQLiteDBController(SafeTester):
         """
 
         self.init_test(self.current_func_name)
-        db_file = 'dummy4.db'
+        db_file = join_path(self.working_dir,
+                            'dummy4.db')
         db_jobs = join_path(self.data_dir,
                             'db.jobs')
         jobs_setup_file = self.__create_jobs_setup_file(db_file=db_file,
                                                         db_jobs=db_jobs,
                                                         )
-        pl = SQLiteDBController(jobs_setup_file)
+        pl = SQLiteDBController(jobs_setup_file, verbose=False)
         self.assertEqual(pl.db_params.db_file,
-                         "dummy4.db",
+                         db_file,
                          "SQLiteDBController cannot correctly read job info 'db file' from jobs setup file")
         self.assertEqual(len(pl.db_params.db_jobs),
                          3,
                          "SQLiteDBController cannot correctly read job info 'db jobs' from jobs setup file")
-        self.assertEqual(pl.db_params.db_jobs[0].table_name,
+        self.assertEqual(pl.db_params.db_jobs[0].tbl_name,
                          'table1',
                          "SQLiteDBController cannot correctly read job info 'db job' from jobs setup file")
         self.assertEqual(pl.db_params.db_jobs[0].drop_table,
@@ -212,7 +245,35 @@ class TestSQLiteDBController(SafeTester):
                          "SQLiteDBController cannot correctly read job info 'db job' from jobs setup file")
 
     def test_execute_db_jobs_1(self):
-        """ test base-line db_jobs execution"""
+        """ test base-line db_jobs execution """
+
+        self.init_test(self.current_func_name)
+        db_file = join_path(self.working_dir,
+                            self.current_func_name+".db")
+        db_jobs = join_path(self.data_dir,
+                            'db.jobs')
+        jobs_setup_file = self.__create_jobs_setup_file(db_file=db_file,
+                                                        db_jobs=db_jobs,
+                                                        )
+        pl = SQLiteDBController(jobs_setup_file, verbose=False)
+        pl.run_offline_pipeline()
+        db = SQLiteDB(db_file, verbose=False)
+        self.assertEqual(db.table_exist('test_avdb'),
+                         True,
+                         "SQLiteDBController cannot correctly execute db jobs")
+        self.assertEqual(db.table_exist('annovar_vcf'),
+                         False,
+                         "SQLiteDBController cannot correctly execute db jobs")
+        self.assertEqual(db.table_exist('test_gtz_vcf'),
+                         True,
+                         "SQLiteDBController cannot correctly execute db jobs")
+
+    @unittest.skipUnless(FULL_SYSTEM_TEST, "taking too long time to test")
+    def test_execute_db_jobs_2(self):
+        """
+        test db_jobs execution with data that
+        are likely to represent real input data
+        """
 
         self.individual_debug = True
         self.init_test(self.current_func_name)
@@ -223,15 +284,61 @@ class TestSQLiteDBController(SafeTester):
         jobs_setup_file = self.__create_jobs_setup_file(db_file=db_file,
                                                         db_jobs=db_jobs,
                                                         )
-        pl = SQLiteDBController(jobs_setup_file)
+        pl = SQLiteDBController(jobs_setup_file, verbose=False)
         pl.run_offline_pipeline()
-        db = SQLiteDB(db_file)
-        self.assertEqual(db.table_exist('test_avdb'),
-                         True,
+        db = SQLiteDB(db_file, verbose=False)
+        # record counting to ensure if the settings (drop_table for example) are working correct
+        self.assertEqual(db.count_rows("test_hg19_gnomad_genome"),
+                         952,
                          "SQLiteDBController cannot correctly execute db jobs")
-        self.assertEqual(db.table_exist('test_annovar_vcf'),
-                         False,
+        self.assertEqual(db.count_rows("test_hg19_clinvar_20150330"),
+                         8,
                          "SQLiteDBController cannot correctly execute db jobs")
-        self.assertEqual(db.table_exist('test_gtz_vcf'),
-                         True,
+        self.assertEqual(db.count_rows("test_hg19_clinvar_20170130"),
+                         29,
+                         "SQLiteDBController cannot correctly execute db jobs")
+        self.assertEqual(db.count_rows("test_hg19_CMM_Axeq_chr5_19"),
+                         0,
+                         "SQLiteDBController cannot correctly execute db jobs")
+        self.assertEqual(db.count_rows("test_hg19_CMM_OAF_BrC_CRC_prostate"),
+                         21,
+                         "SQLiteDBController cannot correctly execute db jobs")
+        self.assertEqual(db.count_rows("test_hg19_CMM_OAF_familial_CRCs"),
+                         21,
+                         "SQLiteDBController cannot correctly execute db jobs")
+        self.assertEqual(db.count_rows("test_hg19_CMM_OAF_CHEK2"),
+                         21,
+                         "SQLiteDBController cannot correctly execute db jobs")
+        self.assertEqual(db.count_rows("test_hg19_CMM_Swegen_20161223"),
+                         125,
+                         "SQLiteDBController cannot correctly execute db jobs")
+        self.assertEqual(db.count_rows("test_hg19_spidex"),
+                         1935,
+                         "SQLiteDBController cannot correctly execute db jobs")
+        self.assertEqual(db.count_rows("test_hg19_intervar"),
+                         27,
+                         "SQLiteDBController cannot correctly execute db jobs")
+        self.assertEqual(db.count_rows("test_hg19_ljb26_all"),
+                         128,
+                         "SQLiteDBController cannot correctly execute db jobs")
+        self.assertEqual(db.count_rows("test_hg19_dbnsfp30a"),
+                         128,
+                         "SQLiteDBController cannot correctly execute db jobs")
+        self.assertEqual(db.count_rows("test_hg19_avsnp144"),
+                         583,
+                         "SQLiteDBController cannot correctly execute db jobs")
+        self.assertEqual(db.count_rows("test_annovar_vcf"),
+                         18,
+                         "SQLiteDBController cannot correctly execute db jobs")
+        self.assertEqual(db.count_rows("test_gtz_THYRCA"),
+                         9,
+                         "SQLiteDBController cannot correctly execute db jobs")
+        self.assertEqual(db.count_rows("test_gtz_WES294"),
+                         13,
+                         "SQLiteDBController cannot correctly execute db jobs")
+        self.assertEqual(len(reduce(lambda x,y: x+y, db.get_avdb_info().values())),
+                         121,
+                         "SQLiteDBController cannot correctly execute db jobs")
+        self.assertEqual(len(db.get_samples_id()),
+                         303,
                          "SQLiteDBController cannot correctly execute db jobs")

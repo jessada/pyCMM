@@ -1,0 +1,30 @@
+#Chr	Start	End	Ref	Alt	CLINSIG	CLNDBN	CLNACC	CLNDSDB	CLNDSDBID
+10	89685246	89685249	TTTG	-	Benign|Likely benign|Likely benign	Hereditary_cancer-predisposing_syndrome|not_specified|Cowden_syndrome_1	RCV000169818.1|RCV000244062.1|RCV000409424.1	MedGen:SNOMED_CT|MedGen|MedGen:OMIM	C0027672:699346009|CN169374|CN072330:158350
+10	89685261	89685261	T	G	Likely benign	PTEN_hamartoma_tumor_syndrome	RCV000229085.1	MedGen:OMIM:Orphanet	C1959582:601728:ORPHA306498
+10	89685269	89685269	G	A	Pathogenic|Pathogenic	Hereditary_cancer-predisposing_syndrome|not_provided	RCV000167333.3|RCV000212879.1	MedGen:SNOMED_CT|MedGen	C0027672:699346009|CN221809
+10	89685275	89685275	T	G	Uncertain significance|Uncertain significance	Hereditary_cancer-predisposing_syndrome|not_specified	RCV000165189.1|RCV000177035.1	MedGen:SNOMED_CT|MedGen	C0027672:699346009|CN169374
+10	89685279	89685279	T	C	Likely benign	PTEN_hamartoma_tumor_syndrome	RCV000195787.2	MedGen:OMIM:Orphanet	C1959582:601728:ORPHA306498
+10	89685282	89685282	A	G	Likely benign	PTEN_hamartoma_tumor_syndrome	RCV000231848.1	MedGen:OMIM:Orphanet	C1959582:601728:ORPHA306498
+10	89685286	89685286	C	G	Pathogenic	Vater_association_with_macrocephaly_and_ventriculomegaly	RCV000008290.2	MedGen	C2749240
+10	89685287	89685287	A	G	Pathogenic\x2cUncertain significance	Hereditary_cancer-predisposing_syndrome\x2cnot_provided	RCV000169791.1,RCV000078607.3	MedGen:SNOMED_CT\x2cMedGen	C0027672:699346009\x2cCN221809
+10	89685287	89685287	A	T	Pathogenic\x2cUncertain significance	Hereditary_cancer-predisposing_syndrome\x2cnot_provided	RCV000169791.1,RCV000078607.3	MedGen:SNOMED_CT\x2cMedGen	C0027672:699346009\x2cCN221809
+10	89685288	89685288	T	C	Likely benign	Hereditary_cancer-predisposing_syndrome	RCV000213177.1	MedGen:SNOMED_CT	C0027672:699346009
+10	89685295	89685295	C	T	Uncertain significance|Uncertain significance	Hereditary_cancer-predisposing_syndrome|not_specified	RCV000129538.2|RCV000177036.1	MedGen:SNOMED_CT|MedGen	C0027672:699346009|CN169374
+10	89685298	89685298	T	G	Likely pathogenic	Hereditary_cancer-predisposing_syndrome	RCV000115584.2	MedGen:SNOMED_CT	C0027672:699346009
+10	89685300	89685300	C	G	Pathogenic	PTEN_hamartoma_tumor_syndrome	RCV000226814.1	MedGen:OMIM:Orphanet	C1959582:601728:ORPHA306498
+10	89685307	89685307	T	A	Uncertain significance\x2cPathogenic	not_specified\x2cnot_provided	RCV000078608.4,RCV000169864.2	MedGen\x2cMedGen	CN169374\x2cCN221809
+10	89685307	89685307	T	C	Uncertain significance\x2cPathogenic	not_specified\x2cnot_provided	RCV000078608.4,RCV000169864.2	MedGen\x2cMedGen	CN169374\x2cCN221809
+10	89685308	89685308	A	G	Pathogenic	Hereditary_cancer-predisposing_syndrome	RCV000215167.1	MedGen:SNOMED_CT	C0027672:699346009
+10	89685309	89685309	C	T	Likely benign	Hereditary_cancer-predisposing_syndrome	RCV000165973.1	MedGen:SNOMED_CT	C0027672:699346009
+10	89685311	89685311	A	G	Uncertain significance	not_specified	RCV000169866.1	MedGen	CN169374
+10	89685313	89685313	C	T	Uncertain significance	not_specified	RCV000177034.1	MedGen	CN169374
+10	89685314	89685314	T	C	Pathogenic|Pathogenic	Cowden_syndrome_1|Hereditary_cancer-predisposing_syndrome	RCV000008272.2|RCV000169867.1	MedGen:OMIM|MedGen:SNOMED_CT	CN072330:158350|C0027672:699346009
+10	89685315	89685315	G	T	Likely pathogenic	Hereditary_cancer-predisposing_syndrome	RCV000213295.1	MedGen:SNOMED_CT	C0027672:699346009
+10	89685315	89685318	GTAA	-	Uncertain significance|Pathogenic	not_provided|Hereditary_cancer-predisposing_syndrome	RCV000078609.3|RCV000217746.1	MedGen|MedGen:SNOMED_CT	CN221809|C0027672:699346009
+10	89685316	89685316	T	A	Likely pathogenic	PTEN_hamartoma_tumor_syndrome	RCV000229236.1	MedGen:OMIM:Orphanet	C1959582:601728:ORPHA306498
+10	89685317	89685317	A	T	Uncertain significance|Uncertain significance	Hereditary_cancer-predisposing_syndrome|not_specified	RCV000165506.1|RCV000177037.1	MedGen:SNOMED_CT|MedGen	C0027672:699346009|CN169374
+10	89685553	89685553	A	G	Likely benign	Hereditary_cancer-predisposing_syndrome	RCV000209206.1	MedGen:SNOMED_CT	C0027672:699346009
+10	89686050	89686050	A	G	Likely benign	Hereditary_cancer-predisposing_syndrome	RCV000209145.1	MedGen:SNOMED_CT	C0027672:699346009
+10	89686083	89686083	T	C	Likely benign	Hereditary_cancer-predisposing_syndrome	RCV000209819.1	MedGen:SNOMED_CT	C0027672:699346009
+10	89687360	89687360	C	T	Likely benign	Hereditary_cancer-predisposing_syndrome	RCV000209295.1	MedGen:SNOMED_CT	C0027672:699346009
+10	89688187	89688187	C	T	Likely benign	Hereditary_cancer-predisposing_syndrome	RCV000209568.1	MedGen:SNOMED_CT	C0027672:699346009

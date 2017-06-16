@@ -185,10 +185,10 @@ class TestTAVcfInfoReader(SafeTester):
                          "ALT",
                          "TAVcfInfoReader doesn't work correctly")
         self.assertEqual(vcf_reader.header_cols[5],
-                         "Gene_refGene",
+                         "_Gene_refGene",
                          "TAVcfInfoReader doesn't work correctly")
         self.assertEqual(vcf_reader.header_cols[9],
-                         "cytoBand",
+                         "_cytoBand",
                          "TAVcfInfoReader doesn't work correctly")
         self.assertEqual(len(vcf_reader.header_cols),
                          11,

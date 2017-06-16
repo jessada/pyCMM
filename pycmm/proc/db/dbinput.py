@@ -27,7 +27,7 @@ class AVDBParser(pyCMMBase):
     """ To parse a record in Annovar AVDB file """
 
     def __init__(self, rec, *args, **kwargs):
-        self.__items = rec.strip().split()
+        self.__items = rec.strip().split("\t")
         if len(self.__items) < 6:
             raise IOError("Invalid avdb file")
         super(AVDBParser, self).__init__(*args, **kwargs)
@@ -98,14 +98,22 @@ class AVDBReader(Reader):
         if self.header is None:
             header_cols.append(os.path.splitext(ntpath.basename(file_name).strip('hg19_'))[0]) 
         else:
-            split_header_cols = self.header.split()
+            split_header_cols = self.header.strip().split("\t")
             for col_idx in xrange(5, len(split_header_cols)):
-                header_cols.append(split_header_cols[col_idx])
+                col_name = split_header_cols[col_idx]
+                col_name = col_name.replace(":", "_")
+                col_name = col_name.replace("+", "")
+                col_name = col_name.replace("-", "")
+                header_cols.append(col_name)
         return header_cols
 
     @property
     def header_cols(self):
         return self.__header_cols
+
+    @property
+    def avdb_cols(self):
+        return self.header_cols[5:]
 
     @property
     def pkeys(self):
@@ -551,12 +559,16 @@ class TAVcfInfoReader(TAVcfReader):
         annovar_date_idx = self.infos.keys().index("ANNOVAR_DATE")
         anno_fields = self.infos.keys()[annovar_date_idx+1:-1]
         for anno_field in anno_fields:
-            header_cols.append(anno_field.replace(".", "_"))
+            header_cols.append("_"+anno_field.replace(".", "_"))
         return header_cols
 
     @property
     def header_cols(self):
         return self.__header_cols
+
+    @property
+    def info_cols(self):
+        return self.header_cols[4:]
 
     def next(self):
         return super(TAVcfInfoReader, self).next().as_annovar_tuple(self.annovar_infos.keys())
@@ -590,6 +602,10 @@ class TAVcfGTZReader(TAVcfReader):
     @property
     def header_cols(self):
         return self.__header_cols
+
+    @property
+    def samples_id(self):
+        return self.header_cols[6:]
 
     def next(self):
         return super(TAVcfGTZReader, self).next().as_gtz_tuple(self.samples)
