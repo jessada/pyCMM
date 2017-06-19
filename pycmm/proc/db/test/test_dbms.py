@@ -6,17 +6,17 @@ from pycmm.template import SafeTester
 from pycmm.proc.db.dbinput import AVDBReader
 from pycmm.proc.db.dbinput import TAVcfInfoReader as VcfInfoReader
 from pycmm.proc.db.dbinput import TAVcfGTZReader as VcfGTZReader
-from pycmm.proc.db.dbms import SQLiteDB
+from pycmm.proc.db.dbms import SQLiteDBWriter
 from pycmm.proc.db.dbms import SQLiteDBController
 from pycmm.proc.db.dbms import create_dbms_jobs_setup_file as create_jobs_setup_file
 
 
-class TestSQLiteDB(SafeTester):
+class TestSQLiteDBWriter(SafeTester):
 
     def __init__(self, methodName):
-        super(TestSQLiteDB, self).__init__(methodName=methodName,
-                                           test_module_name=__name__,
-                                           )
+        super(TestSQLiteDBWriter, self).__init__(methodName=methodName,
+                                                 test_module_name=__name__,
+                                                 )
 
     def test_load_avdb_data_1(self):
         """ test loading avdb data with header and multiple annotations """
@@ -27,7 +27,7 @@ class TestSQLiteDB(SafeTester):
         db_file = join_path(self.working_dir,
                             self.current_func_name+".db")
         tbl_name = self.current_func_name
-        db = SQLiteDB(db_file, verbose=False)
+        db = SQLiteDBWriter(db_file, verbose=False)
         row_count = db.load_avdb_data(data_file=input_file,
                                       tbl_name=tbl_name,
                                       header_exist=True,
@@ -45,7 +45,7 @@ class TestSQLiteDB(SafeTester):
         db_file = join_path(self.working_dir,
                             self.current_func_name+".db")
         tbl_name = self.current_func_name
-        db = SQLiteDB(db_file, verbose=False)
+        db = SQLiteDBWriter(db_file, verbose=False)
         row_count = db.load_annovar_vcf_data(data_file=input_file,
                                              tbl_name=tbl_name,
                                              )
@@ -62,7 +62,7 @@ class TestSQLiteDB(SafeTester):
         db_file = join_path(self.working_dir,
                             self.current_func_name+".db")
         tbl_name = self.current_func_name
-        db = SQLiteDB(db_file, verbose=False)
+        db = SQLiteDBWriter(db_file, verbose=False)
         row_count = db.load_gtz_vcf_data(data_file=input_file,
                                          tbl_name=tbl_name,
                                          )
@@ -87,32 +87,9 @@ class TestSQLiteDB(SafeTester):
         self.copy_file(db_file_with_raw_maf,
                        db_file)
         tbl_name = "test_avdb"
-        db = SQLiteDB(db_file, verbose=False)
+        db = SQLiteDBWriter(db_file, verbose=False)
         db.cal_hw(tbl_name)
 # *********************************************** Require proper testing **********************************************************
-
-    def test_mutrep_view_1(self):
-        """ test creating VIEW for further use in mutation report """
-
-        self.init_test(self.current_func_name)
-        self.init_test(self.current_func_name)
-        db_file_with_raw_maf = join_path(self.data_dir,
-                                         "input.db")
-        db_file = join_path(self.working_dir,
-                            self.current_func_name+".db")
-        self.copy_file(db_file_with_raw_maf,
-                       db_file)
-        db = SQLiteDB(db_file, verbose=False)
-        view_name = self.current_func_name
-        gtz_tbl_name = "test_gtz_THYRCA"
-        db.create_mutrep_view(view_name=view_name,
-                              gtz_tbl_name=gtz_tbl_name)
-        self.assertEqual(len(db.get_col_names(view_name)),
-                         35,
-                         "SQLiteDB cannot correctly create view")
-        self.assertEqual(db.count_rows(view_name),
-                         9,
-                         "SQLiteDB cannot correctly create view")
 
 class TestSQLiteDBController(SafeTester):
 
@@ -257,7 +234,7 @@ class TestSQLiteDBController(SafeTester):
                                                         )
         pl = SQLiteDBController(jobs_setup_file, verbose=False)
         pl.run_offline_pipeline()
-        db = SQLiteDB(db_file, verbose=False)
+        db = SQLiteDBWriter(db_file, verbose=False)
         self.assertEqual(db.table_exist('test_avdb'),
                          True,
                          "SQLiteDBController cannot correctly execute db jobs")
@@ -286,7 +263,7 @@ class TestSQLiteDBController(SafeTester):
                                                         )
         pl = SQLiteDBController(jobs_setup_file, verbose=False)
         pl.run_offline_pipeline()
-        db = SQLiteDB(db_file, verbose=False)
+        db = SQLiteDBWriter(db_file, verbose=False)
         # record counting to ensure if the settings (drop_table for example) are working correct
         self.assertEqual(db.count_rows("test_hg19_gnomad_genome"),
                          952,

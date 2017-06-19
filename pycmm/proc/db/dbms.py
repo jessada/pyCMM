@@ -1,9 +1,7 @@
 import yaml
 import pyaml
-import sqlite3
 from os.path import isfile
 from collections import OrderedDict
-from collections import defaultdict
 from pycmm.settings import DBMS_EXECUTE_DB_JOBS_BIN
 from pycmm.template import pyCMMBase
 from pycmm.utils.ver import VersionManager
@@ -11,6 +9,10 @@ from pycmm.cmmlib import CMMParams
 from pycmm.proc import CMMPipeline
 from pycmm.proc import init_jobs_setup_file
 from pycmm.proc import get_func_arg
+from pycmm.proc.db.connector import SQLiteDB
+from pycmm.proc.db.connector import DATA_TYPE_AVDB_INFO
+from pycmm.proc.db.connector import DATA_TYPE_ANNOVAR_INFO
+from pycmm.proc.db.connector import DATA_TYPE_GTZ
 from pycmm.proc.db.dbinput import AVDBReader
 from pycmm.proc.db.dbinput import TAVcfInfoReader as VcfInfoReader
 from pycmm.proc.db.dbinput import TAVcfGTZReader as VcfGTZReader
@@ -30,154 +32,18 @@ OPERATION_LOAD_AVDB = 'LOAD_AVDB'
 OPERATION_LOAD_ANNOVAR_VCF = 'LOAD_ANNOVAR_VCF'
 OPERATION_LOAD_GTZ_VCF = 'LOAD_GTZ_VCF'
 
-TBL_NAME_AVDB_INFO = "avdb_info"
-TBL_AVDBS_COL_NAME_COL_NAME = "column_name"
-TBL_AVDBS_TBL_NAME_COL_NAME = "tbl_name"
 
-TBL_NAME_ANNOVAR_INFO = "annovar_info"
-TBL_ANNOVAR_COL_NAME_COL_NAME = "column_name"
-TBL_ANNOVAR_TBL_NAME_COL_NAME = "tbl_name"
+class SQLiteDBWriter(SQLiteDB):
+    """
+    A class for loading and updating data to CMM SQLite database
+    """
 
-TBL_NAME_SAMPLES = "samples"
-TBL_SAMPLES_SAMPLE_ID_COL_NAME = "sample_id"
-TBL_SAMPLES_GTZ_TBL_NAME_COL_NAME = "gtz_tbl_name"
+    def __init__(self, *args, **kwargs):
+        super(SQLiteDBWriter, self).__init__(*args, **kwargs)
 
-
-class SQLiteDB(pyCMMBase):
-    """ A class to provide APIs for conntecting to CMM custrom SQLite DB  """
-
-    def __init__(self, db_path, verbose=True, **kwargs):
-        super(SQLiteDB, self).__init__(**kwargs)
-        self.__db_path = db_path
-        self.__verbose = verbose
-        self.__init_db()
-
-    def get_raw_obj_str(self, **kwargs):
-        raw_repr = super(SQLiteDB, self).get_raw_obj_str(**kwargs)
+    def get_raw_obj_str(self, *args, **kwargs):
+        raw_repr = super(SQLiteDB, self).get_raw_obj_str(*args, **kwargs)
         return raw_repr
-
-    @property
-    def db_path(self):
-        return self.__db_path
-
-    @property
-    def verbose(self):
-        return self.__verbose
-
-    def __init_db(self):
-        self.info()
-        self.info("connecting to database: " + self.db_path)
-        self.__create_table(tbl_name=TBL_NAME_AVDB_INFO,
-                            col_names=[TBL_AVDBS_COL_NAME_COL_NAME,
-                                       TBL_AVDBS_TBL_NAME_COL_NAME],
-                            pkeys=[TBL_AVDBS_COL_NAME_COL_NAME,
-                                   TBL_AVDBS_TBL_NAME_COL_NAME],
-                            )
-        self.__create_table(tbl_name=TBL_NAME_ANNOVAR_INFO,
-                            col_names=[TBL_ANNOVAR_COL_NAME_COL_NAME,
-                                       TBL_ANNOVAR_TBL_NAME_COL_NAME],
-                            pkeys=[TBL_ANNOVAR_COL_NAME_COL_NAME,
-                                   TBL_ANNOVAR_TBL_NAME_COL_NAME],
-                            )
-        self.__create_table(tbl_name=TBL_NAME_SAMPLES,
-                            col_names=[TBL_SAMPLES_SAMPLE_ID_COL_NAME,
-                                       TBL_SAMPLES_GTZ_TBL_NAME_COL_NAME],
-                            pkeys=[TBL_SAMPLES_SAMPLE_ID_COL_NAME,
-                                   TBL_SAMPLES_GTZ_TBL_NAME_COL_NAME],
-                            )
-    def __log_sql(self, sql):
-        if self.verbose:
-            self.info("executing sql: " + sql)
-
-    def __fetch_all(self, sql):
-        # to encapsulate sqlite sql fetchall execution
-        # so far just for logging
-        conn = self.__connect_db()
-        self.__log_sql(sql)
-        result = conn.execute(sql).fetchall()
-        self.__close_connection()
-        return result
-
-    def __fetch_none(self, sql):
-        # to encapsulate sqlite sql fetchnone execution
-        # so far just for logging
-        conn = self.__connect_db()
-        self.__log_sql(sql)
-        result = conn.execute(sql).fetchone()
-        self.__close_connection()
-        return result
-
-    def __exec_sql(self, sql):
-        # to encapsulate sqlite sql execution
-        # so far just for logging
-        conn = self.__connect_db() 
-        self.__log_sql(sql)
-        result = conn.execute(sql)
-        self.__close_connection()
-        return result
-
-    def __exec_many_sql(self, sql, records):
-        # to encapsulate sqlite sql execution
-        # so far just for logging
-        conn = self.__connect_db() 
-        self.__log_sql(sql)
-        result = conn.executemany(sql, records)
-        self.__close_connection()
-        return result
-
-    def __connect_db(self):
-        self.__conn = sqlite3.connect(self.db_path)
-        return self.__conn
-
-    def __close_connection(self):
-        self.__conn.commit()
-        self.__conn.close()
-
-    def drop_table(self, tbl_name):
-        sql = 'DROP TABLE IF EXISTS ' + tbl_name
-        self.__exec_sql(sql)
-
-    def __drop_view(self, view_name):
-        sql = 'DROP VIEW IF EXISTS ' + view_name
-        self.__exec_sql(sql)
-
-    def __create_table(self, tbl_name, col_names, pkeys=None):
-        sql = 'CREATE TABLE IF NOT EXISTS ' + tbl_name
-        sql += ' ( ' + ", ".join(col_names) 
-        if pkeys is not None:
-            sql += ', PRIMARY KEY (' + ",".join(pkeys) + ')' 
-        sql += ' )'
-        self.__exec_sql(sql)
-
-    def __add_avdb_column(self, col_name, tbl_name):
-        sql = 'INSERT INTO ' + TBL_NAME_AVDB_INFO
-        sql += " ( " + TBL_AVDBS_COL_NAME_COL_NAME + ", " + TBL_AVDBS_TBL_NAME_COL_NAME + " ) "
-        sql += " select '" + col_name + "', '" + tbl_name + "' "
-        sql += " WHERE NOT EXISTS ( "
-        sql += " SELECT 1 FROM " + TBL_NAME_AVDB_INFO
-        sql += " WHERE " + TBL_AVDBS_COL_NAME_COL_NAME + "='" + col_name + "'"
-        sql += " AND " + TBL_AVDBS_TBL_NAME_COL_NAME + "='" + tbl_name + "' )"
-        self.__exec_sql(sql)
-
-    def __add_annovar_column(self, col_name, tbl_name):
-        sql = 'INSERT INTO ' + TBL_NAME_ANNOVAR_INFO
-        sql += " ( " + TBL_ANNOVAR_COL_NAME_COL_NAME + ", " + TBL_ANNOVAR_TBL_NAME_COL_NAME + " ) "
-        sql += " select '" + col_name + "', '" + tbl_name + "' "
-        sql += " WHERE NOT EXISTS ( "
-        sql += " SELECT 1 FROM " + TBL_NAME_ANNOVAR_INFO
-        sql += " WHERE " + TBL_ANNOVAR_COL_NAME_COL_NAME + "='" + col_name + "'"
-        sql += " AND " + TBL_ANNOVAR_TBL_NAME_COL_NAME + "='" + tbl_name + "' )"
-        self.__exec_sql(sql)
-
-    def __add_sample(self, sample_id, tbl_name):
-        sql = 'INSERT INTO ' + TBL_NAME_SAMPLES
-        sql += " ( " + TBL_SAMPLES_SAMPLE_ID_COL_NAME + ", " + TBL_SAMPLES_GTZ_TBL_NAME_COL_NAME + " ) "
-        sql += " select '" + sample_id + "', '" + tbl_name + "' "
-        sql += " WHERE NOT EXISTS ( "
-        sql += " SELECT 1 FROM " + TBL_NAME_SAMPLES
-        sql += " WHERE " + TBL_SAMPLES_SAMPLE_ID_COL_NAME + "='" + sample_id + "'"
-        sql += " AND " + TBL_SAMPLES_GTZ_TBL_NAME_COL_NAME + "='" + tbl_name + "' )"
-        self.__exec_sql(sql)
 
     def __load_data_file(self,
                          reader,
@@ -186,45 +52,53 @@ class SQLiteDB(pyCMMBase):
         rec_len = len(reader.header_cols)
         sql = 'INSERT OR IGNORE INTO ' + tbl_name
         sql += ' VALUES (' + ('?,'*(rec_len*2))[:rec_len*2-1] + ')'
-        row_count = self.__exec_many_sql(sql, reader).rowcount
+        row_count = self._exec_many_sql(sql, reader).rowcount
         return row_count
 
     def load_avdb_data(self, data_file, header_exist, *args, **kwargs):
         reader = AVDBReader(file_name=data_file, header_exist=header_exist)
         tbl_name = kwargs['tbl_name']
-        self.__create_table(tbl_name=tbl_name,
+        self._create_table(tbl_name=tbl_name,
                             col_names=reader.header_cols,
                             pkeys=reader.pkeys,
                             )
-        for avdb_col in reader.avdb_cols:
-            self.__add_avdb_column(avdb_col, tbl_name)
+        self._update_sys_info(data_type=DATA_TYPE_AVDB_INFO,
+                              updating_info_cols=reader.avdb_cols,
+                              updating_tbl_name=tbl_name,
+                              )
         return self.__load_data_file(reader=reader, *args, **kwargs)
 
     def load_annovar_vcf_data(self, data_file, *args, **kwargs):
         reader = VcfInfoReader(file_name=data_file)
         tbl_name = kwargs['tbl_name']
-        self.__create_table(tbl_name=tbl_name,
+        self._create_table(tbl_name=tbl_name,
                             col_names=reader.header_cols,
+                            pkeys=reader.pkeys,
                             )
-        for info_col in reader.info_cols:
-            self.__add_annovar_column(info_col, tbl_name)
+        self._update_sys_info(data_type=DATA_TYPE_ANNOVAR_INFO,
+                              updating_info_cols=reader.info_cols,
+                              updating_tbl_name=tbl_name,
+                              )
         return self.__load_data_file(reader=reader, *args, **kwargs)
 
     def load_gtz_vcf_data(self, data_file, *args, **kwargs):
         reader = VcfGTZReader(file_name=data_file)
         tbl_name = kwargs['tbl_name']
-        self.__create_table(tbl_name=tbl_name,
+        self._create_table(tbl_name=tbl_name,
                             col_names=reader.header_cols,
+                            pkeys=reader.pkeys,
                             )
-        for sample_id in reader.samples_id:
-            self.__add_sample(sample_id, tbl_name)
+        self._update_sys_info(data_type=DATA_TYPE_GTZ,
+                              updating_info_cols=reader.samples_id,
+                              updating_tbl_name=tbl_name,
+                              )
         return self.__load_data_file(reader=reader, *args, **kwargs)
 
     def __add_column(self, tbl_name, col_name, col_def=""):
         sql = "ALTER TABLE " + tbl_name
         sql += " ADD " + col_name
         sql += " " + col_def
-        self.__exec_sql(sql)
+        self._exec_sql(sql)
 
     def cal_hw(self, tbl_name):
         # look for dataset name
@@ -243,18 +117,18 @@ class SQLiteDB(pyCMMBase):
         sql = "UPDATE " + tbl_name
         sql += " SET p = 1-" + dataset_name + "_AF"
         sql += ", q = " + dataset_name + "_AF"
-        self.__exec_sql(sql)
+        self._exec_sql(sql)
         sql = "UPDATE " + tbl_name
         sql += " SET exp_wt = p*p*" + dataset_name + "_GT"
         sql += ", exp_het = 2*p*q*" + dataset_name + "_GT"
         sql += ", exp_hom = q*q*" + dataset_name + "_GT"
-        self.__exec_sql(sql)
+        self._exec_sql(sql)
         sql = "UPDATE " + tbl_name
         sql += " SET hw_chisq = 0.0"
         sql += " WHERE exp_wt = 0"
         sql += " OR exp_het = 0"
         sql += " OR exp_hom = 0"
-        self.__exec_sql(sql)
+        self._exec_sql(sql)
         sql = "UPDATE " + tbl_name
         sql += " SET hw_chisq = (" + dataset_name + "_WT-exp_wt)*(" + dataset_name + "_WT-exp_wt)/exp_wt"
         sql += " + (" + dataset_name + "_HET-exp_het)*(" + dataset_name + "_HET-exp_het)/exp_het"
@@ -262,89 +136,7 @@ class SQLiteDB(pyCMMBase):
         sql += " WHERE exp_wt != 0"
         sql += " AND exp_het != 0"
         sql += " AND exp_hom != 0"
-        self.__exec_sql(sql)
-
-    def create_mutrep_view(self, view_name, gtz_tbl_name):
-        # create view for further used in mutation report
-        # it's based on an assumption that all avdb columns in the database
-        # will be included into the view
-        samples_id = self.get_samples_id(gtz_tbl_name=gtz_tbl_name)
-        avdb_info = self.get_avdb_info()
-        annovar_info = self.get_annovar_info()
-        self.__drop_view(view_name)
-        sql = 'CREATE VIEW IF NOT EXISTS ' + view_name + " AS "
-        sql += " SELECT gtz.CHROM, gtz.POS, gtz.REF, gtz.ALT, gtz.FILTER"
-        for annovar_tbl_name in annovar_info:
-            col_names = annovar_info[annovar_tbl_name]
-            for col_name in col_names:
-                sql += ", " + annovar_tbl_name + "." + col_name
-        for avdb_tbl_name in avdb_info:
-            col_names = avdb_info[avdb_tbl_name]
-            for col_name in col_names:
-                sql += ", " + avdb_tbl_name + "." + col_name
-        sql += ", " + ", ".join(map(lambda x: "gtz."+x, samples_id))
-        sql += " FROM " + gtz_tbl_name + " AS gtz"
-        for annovar_tbl_name in annovar_info:
-            sql += " LEFT OUTER JOIN " + annovar_tbl_name + " ON "
-            join_conditions = []
-            join_conditions.append("gtz.CHROM=" + annovar_tbl_name + ".CHROM")
-            join_conditions.append("gtz.POS=" + annovar_tbl_name + ".POS")
-            join_conditions.append("gtz.REF=" + annovar_tbl_name + ".REF")
-            join_conditions.append("gtz.ALT=" + annovar_tbl_name + ".ALT")
-            sql += " AND ".join(join_conditions)
-        for avdb_tbl_name in avdb_info:
-            sql += " LEFT OUTER JOIN " + avdb_tbl_name + " ON "
-            join_conditions = []
-            join_conditions.append("gtz.CHROM=" + avdb_tbl_name + ".Chr")
-            join_conditions.append("gtz.POS=" + avdb_tbl_name + ".Start")
-            join_conditions.append("gtz.REF=" + avdb_tbl_name + ".Ref")
-            join_conditions.append("gtz.ALT=" + avdb_tbl_name + ".ALt")
-            sql += " AND ".join(join_conditions)
-        self.__exec_sql(sql)
-
-    def table_exist(self, tbl_name):
-        sql = "SELECT name FROM sqlite_master WHERE type='table'"
-        sql += "AND name='" + tbl_name + "'"
-        tbl_exist = self.__fetch_none(sql)
-        if tbl_exist:
-            return True
-        return False
-
-    def count_rows(self, tbl_name):
-        sql = "SELECT COUNT(*) FROM " + tbl_name
-        (rows_count,) = self.__fetch_none(sql)
-        return rows_count
-
-    def get_avdb_info(self):
-        avdb_info = defaultdict(list)
-        sql = "SELECT " + TBL_AVDBS_COL_NAME_COL_NAME + ", " + TBL_AVDBS_TBL_NAME_COL_NAME
-        sql += " FROM " + TBL_NAME_AVDB_INFO
-        rows = self.__fetch_all(sql)
-        for (col_name, tbl_name) in rows:
-            avdb_info[tbl_name].append(col_name)
-        return avdb_info
-
-    def get_annovar_info(self):
-        annovar_info = defaultdict(list)
-        sql = "SELECT " + TBL_ANNOVAR_COL_NAME_COL_NAME + ", " + TBL_ANNOVAR_TBL_NAME_COL_NAME
-        sql += " FROM " + TBL_NAME_ANNOVAR_INFO
-        rows = self.__fetch_all(sql)
-        for (col_name, tbl_name) in rows:
-            annovar_info[tbl_name].append(col_name)
-        return annovar_info
-
-    def get_samples_id(self, gtz_tbl_name=None):
-        sql = "SELECT " + TBL_SAMPLES_SAMPLE_ID_COL_NAME
-        sql += " FROM " + TBL_NAME_SAMPLES
-        if gtz_tbl_name is not None:
-            sql += " WHERE " + TBL_SAMPLES_GTZ_TBL_NAME_COL_NAME + "='" + gtz_tbl_name + "'"
-        rows = self.__fetch_all(sql)
-        return map(lambda x: x[0], rows)
-
-    def get_col_names(self, tbl_name):
-        cursor = self.__exec_sql('SELECT * FROM ' + tbl_name + " LIMIT 1")
-        col_names = map(lambda x: x[0], cursor.description)
-        return col_names
+        self._exec_sql(sql)
 
 class DBJob(CMMParams):
     """ A class to keep DB job information """
@@ -408,14 +200,14 @@ class DBParams(CMMParams):
         return self.__db_jobs
 
 class SQLiteDBController(CMMPipeline):
-    """ A class to control all processes related to SQLiteDB """
+    """ A class to control all writing processes related to SQLiteDB """
 
     def __init__(self, jobs_setup_file, verbose=True, *args, **kwargs):
         kwargs['jobs_setup_file'] = jobs_setup_file
         super(SQLiteDBController, self).__init__(*args, **kwargs)
         self.__db_params = DBParams(self._get_job_config(JOBS_SETUP_DB_PARAMS_SECTION,
                                                          required=True))
-        self.__db = SQLiteDB(self.db_params.db_file, verbose=verbose)
+        self.__db = SQLiteDBWriter(self.db_params.db_file, verbose=verbose)
 
     def get_raw_obj_str(self, *args, **kwargs):
         raw_str = super(SQLiteDBController, self).get_raw_obj_str(*args, **kwargs)
