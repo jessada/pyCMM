@@ -15,6 +15,7 @@ class TestSQLiteDBReader(SafeTester):
     def test_mutrep_view_1(self):
         """ test creating VIEW for further use in mutation report """
 
+        self.individual_debug = True
         self.init_test(self.current_func_name)
         self.init_test(self.current_func_name)
         db_file_with_raw_maf = join_path(self.data_dir,

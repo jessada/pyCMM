@@ -9,6 +9,8 @@ from pycmm.proc.db.dbinput import TAVcfGTZReader as VcfGTZReader
 from pycmm.proc.db.dbms import SQLiteDBWriter
 from pycmm.proc.db.dbms import SQLiteDBController
 from pycmm.proc.db.dbms import create_dbms_jobs_setup_file as create_jobs_setup_file
+from pycmm.proc.db.connector import TBL_NAME_CMM_TBLS
+from pycmm.proc.db.connector import TBL_CMM_TBLS_TBL_NAME_COL_NAME
 
 
 class TestSQLiteDBWriter(SafeTester):
@@ -76,20 +78,36 @@ class TestSQLiteDBWriter(SafeTester):
         from MAF OAF data
         """
 
-# *********************************************** Require proper testing **********************************************************
-# waiting for a good query engine to be implemented
         self.individual_debug = True
         self.init_test(self.current_func_name)
-        db_file_with_raw_maf = join_path(self.data_dir,
-                                         "input.db")
+        input_file = join_path(self.data_dir,
+                               "db_input.txt")
         db_file = join_path(self.working_dir,
                             self.current_func_name+".db")
-        self.copy_file(db_file_with_raw_maf,
-                       db_file)
-        tbl_name = "test_avdb"
+        tbl_name = self.current_func_name
         db = SQLiteDBWriter(db_file, verbose=False)
+        db.drop_table(tbl_name)
+        rows_count = db.load_avdb_data(data_file=input_file,
+                                       tbl_name=tbl_name,
+                                       header_exist=True,
+                                       )
+        self.assertEqual(rows_count,
+                         11,
+                         "SQLiteDB cannot correctly load avdb data")
+        avdb_info = db.get_avdb_info()
+        self.assertEqual(len(avdb_info[tbl_name]),
+                         9,
+                         "SQLiteDB cannot correctly calculating Hardy-Weinberg ")
         db.cal_hw(tbl_name)
-# *********************************************** Require proper testing **********************************************************
+        avdb_info = db.get_avdb_info()
+        self.assertEqual(len(avdb_info[tbl_name]),
+                         10,
+                         "SQLiteDB cannot correctly calculating Hardy-Weinberg ")
+        rows_count = db.count_rows(TBL_NAME_CMM_TBLS,
+                                   TBL_CMM_TBLS_TBL_NAME_COL_NAME+"= '"+tbl_name+"'")
+        self.assertEqual(rows_count,
+                         1,
+                         "SQLiteDB cannot correctly load avdb data")
 
 class TestSQLiteDBController(SafeTester):
 

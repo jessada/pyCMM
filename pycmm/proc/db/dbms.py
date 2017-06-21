@@ -108,12 +108,14 @@ class SQLiteDBWriter(SQLiteDB):
         if len(af_col_names) != 1:
             raise Exception('cannot perform Hardy-Weinberg calculation for table ' + tbl_name)
         dataset_name = af_col_names[0].replace("_AF","")
+        hw_col_name = dataset_name.strip("OAF_") + "_hw_chisq"
+        # perform calculation
         self.__add_column(tbl_name, "p")
         self.__add_column(tbl_name, "q")
         self.__add_column(tbl_name, "exp_wt")
         self.__add_column(tbl_name, "exp_het")
         self.__add_column(tbl_name, "exp_hom")
-        self.__add_column(tbl_name, "hw_chisq")
+        self.__add_column(tbl_name, hw_col_name)
         sql = "UPDATE " + tbl_name
         sql += " SET p = 1-" + dataset_name + "_AF"
         sql += ", q = " + dataset_name + "_AF"
@@ -124,19 +126,25 @@ class SQLiteDBWriter(SQLiteDB):
         sql += ", exp_hom = q*q*" + dataset_name + "_GT"
         self._exec_sql(sql)
         sql = "UPDATE " + tbl_name
-        sql += " SET hw_chisq = 0.0"
+        sql += " SET " + hw_col_name + " = 0.0"
         sql += " WHERE exp_wt = 0"
         sql += " OR exp_het = 0"
         sql += " OR exp_hom = 0"
         self._exec_sql(sql)
         sql = "UPDATE " + tbl_name
-        sql += " SET hw_chisq = (" + dataset_name + "_WT-exp_wt)*(" + dataset_name + "_WT-exp_wt)/exp_wt"
+        sql += " SET " + hw_col_name + " = (" + dataset_name + "_WT-exp_wt)*(" + dataset_name + "_WT-exp_wt)/exp_wt"
         sql += " + (" + dataset_name + "_HET-exp_het)*(" + dataset_name + "_HET-exp_het)/exp_het"
         sql += " + (" + dataset_name + "_HOM-exp_hOM)*(" + dataset_name + "_HOM-exp_hom)/exp_hom"
         sql += " WHERE exp_wt != 0"
         sql += " AND exp_het != 0"
         sql += " AND exp_hom != 0"
         self._exec_sql(sql)
+        # update system information
+        avdb_info = self.get_avdb_info()
+        info_cols = avdb_info[tbl_name]
+        if hw_col_name not in info_cols:
+            info_cols.append(hw_col_name)
+        self._update_sys_info(DATA_TYPE_AVDB_INFO, info_cols, tbl_name)
 
 class DBJob(CMMParams):
     """ A class to keep DB job information """

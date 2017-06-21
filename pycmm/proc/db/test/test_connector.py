@@ -17,6 +17,7 @@ class TestSQLiteDB(SafeTester):
     def test_update_sys_info_1(self):
         """ test if the system info can written and read """
 
+        self.individual_debug = True
         self.init_test(self.current_func_name)
         db_file = join_path(self.working_dir,
                             self.current_func_name+".db")
@@ -77,4 +78,20 @@ class TestSQLiteDB(SafeTester):
                          "SQLiteDB cannot correctly update system info")
         self.assertEqual(samples_id[3],
                          "Br-9",
+                         "SQLiteDB cannot correctly update system info")
+        cols_name.append("Br-20")
+        db._update_sys_info(data_type=DATA_TYPE_GTZ,
+                            updating_tbl_name=tbl_name4,
+                            updating_info_cols=cols_name,
+                            )
+        samples_id = db.get_samples_id()
+        self.assertEqual(len(samples_id),
+                         8,
+                         "SQLiteDB cannot correctly update system info")
+        samples_id = db.get_samples_id(gtz_tbl_name=tbl_name4)
+        self.assertEqual(len(samples_id),
+                         5,
+                         "SQLiteDB cannot correctly update system info")
+        self.assertEqual(samples_id[4],
+                         "Br-20",
                          "SQLiteDB cannot correctly update system info")

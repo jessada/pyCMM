@@ -120,18 +120,24 @@ class SQLiteDB(pyCMMBase):
         # For adding system information
         # This has be called when AVDB, Annovar Info and genotyping data
         # are loaded into the database
+        # The process start by checking if the "updating_tbl_name
+        # is alreay there
+        # if yes, insert else update
+        where_clause = TBL_CMM_TBLS_TBL_NAME_COL_NAME + "='" + updating_tbl_name + "'"
         col_names_txt = ",".join(updating_info_cols)
-        sql = 'INSERT INTO ' + TBL_NAME_CMM_TBLS
-        sql += " ( " + TBL_CMM_TBLS_TBL_NAME_COL_NAME
-        sql += ", " + TBL_CMM_TBLS_INFO_COLS_COL_NAME
-        sql += ", " + TBL_CMM_TBLS_DATA_TYPE_COL_NAME + " ) "
-        sql += " select '" + updating_tbl_name + "'"
-        sql += ", '" + col_names_txt + "'"
-        sql += ", '" + data_type + "'"
-        sql += " WHERE NOT EXISTS ( "
-        sql += " SELECT 1 FROM " + TBL_NAME_CMM_TBLS
-        sql += " WHERE " + TBL_CMM_TBLS_TBL_NAME_COL_NAME + "='" + updating_tbl_name + "'"
-        sql += " AND " + TBL_CMM_TBLS_INFO_COLS_COL_NAME + "='" + col_names_txt + "' )"
+        if self.count_rows(TBL_NAME_CMM_TBLS, where_clause) > 0:
+            sql = 'UPDATE ' + TBL_NAME_CMM_TBLS
+            sql += ' SET ' + TBL_CMM_TBLS_INFO_COLS_COL_NAME + "='" + col_names_txt + "'"
+            sql += ' WHERE ' + TBL_CMM_TBLS_TBL_NAME_COL_NAME + "='" + updating_tbl_name + "'"
+        else:
+            sql = 'INSERT INTO ' + TBL_NAME_CMM_TBLS
+            sql += " ( " + TBL_CMM_TBLS_TBL_NAME_COL_NAME
+            sql += ", " + TBL_CMM_TBLS_INFO_COLS_COL_NAME
+            sql += ", " + TBL_CMM_TBLS_DATA_TYPE_COL_NAME + " ) "
+            sql += " select '" + updating_tbl_name + "'"
+            sql += ", '" + col_names_txt + "'"
+            sql += ", '" + data_type + "'"
+        self.dbg(sql)
         self._exec_sql(sql)
 
     def table_exist(self, tbl_name):
@@ -142,8 +148,10 @@ class SQLiteDB(pyCMMBase):
             return True
         return False
 
-    def count_rows(self, tbl_name):
+    def count_rows(self, tbl_name, where_clause=None):
         sql = "SELECT COUNT(*) FROM " + tbl_name
+        if where_clause is not None:
+            sql += " WHERE " + where_clause
         (rows_count,) = self._fetch_none(sql)
         return rows_count
 
@@ -176,3 +184,11 @@ class SQLiteDB(pyCMMBase):
         cursor = self._exec_sql('SELECT * FROM ' + tbl_name + " LIMIT 1")
         col_names = map(lambda x: x[0], cursor.description)
         return col_names
+
+    def read_rows(self, tbl_name):
+        conn = self.__connect_db() 
+        sql = "SELECT * FROM " + tbl_name
+        rows = conn.execute(sql)
+        for row in rows:
+            yield(row)
+        self.__close_connection()
