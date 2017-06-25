@@ -17,7 +17,6 @@ class TestSQLiteDBReader(SafeTester):
 
         self.individual_debug = True
         self.init_test(self.current_func_name)
-        self.init_test(self.current_func_name)
         db_file_with_raw_maf = join_path(self.data_dir,
                                          "input.db")
         db_file = join_path(self.working_dir,

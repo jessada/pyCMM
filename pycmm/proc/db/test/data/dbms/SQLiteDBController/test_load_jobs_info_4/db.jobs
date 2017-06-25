@@ -3,9 +3,11 @@ DB_JOBS:
     Drop_table: No
     Table_name: table1
   - Data_file: test_file789
+    Data_type: DATA_TYPE_AVDB_CMM_AF
     Drop_table: Yes
     Table_name: tbl
   - Data_file: sss
+    Data_type: DATA_TYPE_AVDB_PUBLIC_AF
     Drop_table: No
     Operation: non_type
     Table_name: sss_table

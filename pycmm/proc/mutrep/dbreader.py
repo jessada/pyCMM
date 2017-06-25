@@ -63,7 +63,6 @@ class SQLiteDBReader(SQLiteDB):
             else:
                 self.warning("Column " + qry_col_name + " is missing")
 #                qry_col_idxs[qry_col_name] = -1
-        self.dbg(qry_col_idxs)
         return qry_col_idxs
 
     def __cal_qry_sample_idxs(self, tbl_name):

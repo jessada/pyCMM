@@ -1,16 +1,39 @@
 import sqlite3
+from pycmm.settings import MAX_REF_MAF_COL_NAME
+from pycmm.settings import REF_MAF_COL_NAMES
 from pycmm.template import pyCMMBase
 
 DATA_TYPE_AVDB_INFO = "data_type_avdb_info"
 DATA_TYPE_ANNOVAR_INFO = "data_type_annovar_info"
 DATA_TYPE_GTZ = "data_type_gtz"
 
-# To keep the information about table created for CMM usage
-# So far only keep data type and information columns
+VCF_PKEYS = []
+VCF_PKEYS.append("CHROM")
+VCF_PKEYS.append("POS")
+VCF_PKEYS.append("REF")
+VCF_PKEYS.append("ALT")
+
+AVDB_PKEYS = []
+AVDB_PKEYS.append("Chr")
+AVDB_PKEYS.append("Start")
+AVDB_PKEYS.append("Ref")
+AVDB_PKEYS.append("Alt")
+
+# A table to keep track of information columsn that can be used
+# for generating reports later on
 TBL_NAME_CMM_TBLS = "cmm_tables"
 TBL_CMM_TBLS_INFO_COLS_COL_NAME = "info_cols"
 TBL_CMM_TBLS_TBL_NAME_COL_NAME = "tbl_name"
 TBL_CMM_TBLS_DATA_TYPE_COL_NAME = "data_type"
+
+# A table to keep all the variants coordinate (CHROM, POS, REF, ALT)
+# The columns in the table are als CHROM, POS, REF, ALT
+TBL_NAME_GTZ_COORS = "gtz_coors"
+
+# A table that have all vcf coordinates of all samples,
+# all annotataion columns,
+# and genotyping data from all samples
+TBL_NAME_ALL_GTZ_ANNOS = "all_gtz_annos"
 
 
 class SQLiteDB(pyCMMBase):
@@ -40,12 +63,19 @@ class SQLiteDB(pyCMMBase):
     def __init_db(self):
         self.info()
         self.info("connecting to database: " + self.db_path)
+        self.__create_system_tables()
+
+    def __create_system_tables(self):
         self._create_table(tbl_name=TBL_NAME_CMM_TBLS,
                             col_names=[TBL_CMM_TBLS_TBL_NAME_COL_NAME,
                                        TBL_CMM_TBLS_INFO_COLS_COL_NAME,
                                        TBL_CMM_TBLS_DATA_TYPE_COL_NAME],
                             pkeys=[TBL_CMM_TBLS_TBL_NAME_COL_NAME,
                                    TBL_CMM_TBLS_INFO_COLS_COL_NAME],
+                            )
+        self._create_table(tbl_name=TBL_NAME_GTZ_COORS,
+                            col_names=VCF_PKEYS,
+                            pkeys=VCF_PKEYS,
                             )
 
     def __log_sql(self, sql):
@@ -112,7 +142,22 @@ class SQLiteDB(pyCMMBase):
         sql += ' )'
         self._exec_sql(sql)
 
-    def _update_sys_info(self,
+    def _add_column(self, tbl_name, col_name, col_def=""):
+        sql = "ALTER TABLE " + tbl_name
+        sql += " ADD " + col_name
+        sql += " " + col_def
+        self._exec_sql(sql)
+
+    def _update_gtz_coors(self,
+                          gtz_coors,
+                          ):
+        # insert all the input coors into the table (only the new ones)
+        sql = 'INSERT OR IGNORE INTO ' + TBL_NAME_GTZ_COORS
+        sql += ' VALUES (?, ?, ?, ?)'
+        row_count = self._exec_many_sql(sql, gtz_coors).rowcount
+        return row_count
+
+    def _update_tbl_info(self,
                          data_type,
                          updating_info_cols,
                          updating_tbl_name,
@@ -137,7 +182,6 @@ class SQLiteDB(pyCMMBase):
             sql += " select '" + updating_tbl_name + "'"
             sql += ", '" + col_names_txt + "'"
             sql += ", '" + data_type + "'"
-        self.dbg(sql)
         self._exec_sql(sql)
 
     def table_exist(self, tbl_name):
@@ -152,8 +196,8 @@ class SQLiteDB(pyCMMBase):
         sql = "SELECT COUNT(*) FROM " + tbl_name
         if where_clause is not None:
             sql += " WHERE " + where_clause
-        (rows_count,) = self._fetch_none(sql)
-        return rows_count
+        (row_count,) = self._fetch_none(sql)
+        return row_count
 
     def __get_sys_info(self, datatype):
         sys_info = {}
@@ -180,15 +224,123 @@ class SQLiteDB(pyCMMBase):
         return reduce(lambda x, y: x+y,
                       samples_info.values())
 
+    def get_gtz_tbls(self):
+        samples_info = self.__get_sys_info(DATA_TYPE_GTZ)
+        return samples_info
+
     def get_col_names(self, tbl_name):
         cursor = self._exec_sql('SELECT * FROM ' + tbl_name + " LIMIT 1")
         col_names = map(lambda x: x[0], cursor.description)
         return col_names
 
-    def read_rows(self, tbl_name):
+    def read_rows(self, tbl_name=None, sql=None):
         conn = self.__connect_db() 
-        sql = "SELECT * FROM " + tbl_name
+        if tbl_name is not None:
+            sql = "SELECT * FROM " + tbl_name
         rows = conn.execute(sql)
         for row in rows:
             yield(row)
         self.__close_connection()
+
+    def dbg_query(self, sql):
+        for row in self.read_rows(sql=sql):
+            self.dbg(row)
+
+    def join_all_gtz_anno(self):
+        # This function will create a very huge table
+        # having all gtz coors, all annotation, and gtz from all samples
+        # The rational behind this big join is because report region selection
+        # If this method is too time consuming, the other option is to have 
+        # views dedicated for reports (one view per one report region),
+        # which might be very difficult to maintain
+        annovar_info = self.get_annovar_info()
+        avdb_info = self.get_avdb_info()
+        gtz_tbls = self.get_gtz_tbls()
+        # create the table
+        tbl_cols = list(VCF_PKEYS)
+        tbl_cols += map(lambda x: x.replace("gtz_", "")+"_FILTER",
+                        gtz_tbls.keys())
+        tbl_cols += reduce(lambda x, y: x+y, annovar_info.values()) 
+        tbl_cols += reduce(lambda x, y: x+y, avdb_info.values()) 
+        tbl_cols += reduce(lambda x, y: x+y, gtz_tbls.values()) 
+        self.drop_table(TBL_NAME_ALL_GTZ_ANNOS)
+        self._create_table(tbl_name=TBL_NAME_ALL_GTZ_ANNOS,
+                           col_names=tbl_cols,
+                           pkeys=VCF_PKEYS,
+                           )
+        # join and insert
+        sql = "INSERT INTO " + TBL_NAME_ALL_GTZ_ANNOS
+        sql += " ( " + ", ".join(tbl_cols) + " ) "
+        sql += " SELECT"
+        sql += " " + ", ".join(map(lambda x: TBL_NAME_GTZ_COORS+"."+x,
+                                   VCF_PKEYS))
+        sql += ", " + ", ".join(map(lambda x: x+".FILTER", gtz_tbls.keys()))
+        for annovar_tbl_name, col_names in annovar_info.items():
+            sql += ", " + ", ".join(map(lambda x: annovar_tbl_name+"."+x,
+                                        col_names))
+        for avdb_tbl_name, col_names in avdb_info.items():
+            sql += ", " + ", ".join(map(lambda x: avdb_tbl_name+"."+x,
+                                        col_names))
+        for gtz_tbl_name, samples_id in gtz_tbls.items():
+            sql += ", " + ", ".join(map(lambda x: gtz_tbl_name+"."+x,
+                                        samples_id))
+        sql += " FROM " + TBL_NAME_GTZ_COORS
+        for gtz_tbl_name in gtz_tbls:
+            sql += " LEFT OUTER JOIN " + gtz_tbl_name + " ON "
+            sql += " AND ".join(map(lambda x: TBL_NAME_GTZ_COORS+"."+x+" = "+gtz_tbl_name+"."+x,
+                                    VCF_PKEYS))
+        for annovar_tbl_name in annovar_info:
+            sql += " LEFT OUTER JOIN " + annovar_tbl_name + " ON "
+            sql += " AND ".join(map(lambda x: TBL_NAME_GTZ_COORS+"."+x+" = "+annovar_tbl_name+"."+x,
+                                    VCF_PKEYS))
+        for avdb_tbl_name in avdb_info:
+            sql += " LEFT OUTER JOIN " + avdb_tbl_name + " ON "
+            sql += " AND ".join(map(lambda idx: TBL_NAME_GTZ_COORS+"."+VCF_PKEYS[idx]+" = "+avdb_tbl_name+"."+AVDB_PKEYS[idx],
+                                    xrange(len(VCF_PKEYS))))
+        sql += " ORDER BY"
+        sql += " " + ", ".join(map(lambda x: TBL_NAME_GTZ_COORS+"."+x,
+                                   VCF_PKEYS))
+        return self._exec_sql(sql).rowcount
+
+    def cal_max_ref_maf(self):
+        tbl_name = TBL_NAME_ALL_GTZ_ANNOS
+        self._add_column(tbl_name, MAX_REF_MAF_COL_NAME)
+        sql = "UPDATE " + tbl_name
+        sql += " SET " + MAX_REF_MAF_COL_NAME + " = 0"
+        self._exec_sql(sql)
+#        self.dbg(self.get_col_names(tbl_name))
+        tbl_ref_maf_col_names = []
+        for col_name in self.get_col_names(tbl_name):
+            if col_name.strip("_") in REF_MAF_COL_NAMES:
+                sql = "UPDATE " + tbl_name
+                sql += " SET " + MAX_REF_MAF_COL_NAME + " = " + col_name
+                sql += " WHERE"
+                sql += " " + col_name + " IS NOT NULL"
+                sql += " AND " + col_name + " <> ''"
+                sql += " AND " + col_name + " > " + MAX_REF_MAF_COL_NAME
+                sql += " AND " + col_name + " < 0.5"
+                self._exec_sql(sql) 
+                sql = "UPDATE " + tbl_name
+                sql += " SET " + MAX_REF_MAF_COL_NAME + " = 1 - " + col_name
+                sql += " WHERE"
+                sql += " " + col_name + " IS NOT NULL"
+                sql += " AND " + col_name + " <> ''"
+                sql += " AND 1 - " + col_name + " > " + MAX_REF_MAF_COL_NAME
+                sql += " AND " + col_name + " > 0.5"
+                self._exec_sql(sql) 
+                tbl_ref_maf_col_names.append(col_name)
+#        self.dbg(REF_MAF_COL_NAMES)
+#        self.dbg(tbl_ref_maf_col_names)
+
+#        sql = "SELECT " + ", ".join(VCF_PKEYS)
+#        sql += ", " + MAX_REF_MAF_COL_NAME
+#        sql += ", " + ", ".join(tbl_ref_maf_col_names)
+#        sql += " FROM " + tbl_name
+#        sql += " LIMIT 1"
+#        self.dbg(sql)
+#        self.dbg_query(sql)
+
+
+
+
+

@@ -7,6 +7,7 @@ from vcf.model import _Call as _VcfCall
 from vcf.model import _Record as _VcfRecord
 from vcf import RESERVED_INFO
 from vcf import Reader as VcfReader
+from pycmm.utils import is_number
 from pycmm.template import pyCMMBase
 from pycmm.cmmlib.readerlib import Reader
 
@@ -16,6 +17,9 @@ AVDB_END_IDX = 2
 AVDB_REF_IDX = 3
 AVDB_ALT_IDX = 4
 AVDB_ANNOS_IDX = 5
+
+DATA_TYPE_AVDB_CMM_AF = "DATA_TYPE_AVDB_CMM_AF"
+DATA_TYPE_AVDB_PUBLIC_AF = "DATA_TYPE_AVDB_PUBLIC_AF"
 
 CMMGT_WILDTYPE = 'wt'
 CMMGT_HOMOZYGOTE = 'hom'
@@ -66,27 +70,49 @@ class AVDBParser(pyCMMBase):
     def annotations(self):
         return self.__items[AVDB_ANNOS_IDX:]
 
-    def as_tuple(self):
+    def as_tuple(self, data_type, gf_idx=None):
         res = []
         res.append(self.chrom)
         res.append(self.start)
         res.append(self.end)
         res.append(self.ref)
         res.append(self.alt)
-        res += self.annotations
+#        self.dbg(data_type)
+        if data_type == DATA_TYPE_AVDB_CMM_AF:
+            res += map(lambda x: int(x),
+                       self.annotations[:gf_idx])
+            res += [float(self.annotations[gf_idx])]
+            af = self.annotations[gf_idx+1]
+            if is_number(af):
+                af = float(af)
+            res += [af]
+            res += [float(self.annotations[gf_idx+2])]
+        elif data_type == DATA_TYPE_AVDB_PUBLIC_AF:
+            res += map(lambda x: float(x), self.annotations)
+        else:
+            res += self.annotations
         return tuple(res)
 
 class AVDBReader(Reader):
     """ To read and parse file plink map file """
 
     def __init__(self, 
+                 data_type=None,
                  *args,
                  **kwargs
                  ):
         kwargs['parser'] = AVDBParser
+        self.__data_type = data_type
         file_name = kwargs['file_name']
         super(AVDBReader, self).__init__(*args, **kwargs)
         self.__header_cols = self.__parse_header_cols(file_name)
+        self.__gf_idx = 0
+        if data_type == DATA_TYPE_AVDB_CMM_AF:
+            for col_name in self.header_cols:
+                if col_name.endswith("GF"):
+                    self.__gf_idx = self.header_cols.index(col_name)
+                    self.__gf_idx -= len(self.pkeys)
+                    self.__gf_idx -= 1
 
     def __parse_header_cols(self, file_name):
         header_cols = []
@@ -124,8 +150,14 @@ class AVDBReader(Reader):
         pkeys.append('Alt')
         return pkeys
 
-    def next(self):
-        return super(AVDBReader, self).next().as_tuple()
+#    def next(self):
+#        return super(AVDBReader, self).next().as_tuple()
+#
+    @property
+    def record_tuples(self):
+        for item in super(AVDBReader, self).__iter__():
+            yield item.as_tuple(self.__data_type, self.__gf_idx)
+#        return super(AVDBReader, self).next().as_tuple()
 
 try:
     import cparse
@@ -247,31 +279,37 @@ class _TAVcfRecord(_VcfRecord, pyCMMBase):
            info = ""
         return info
 
-    def as_annovar_tuple(self, annovar_cols):
+    def __check_alt(self):
         if len(self.ALT) > 1:
-            raise Exception(self.ALT + ' has more than one alternate allele')
+            raise Exception(self.ALT + ' cannot have than one alternate allele')
+
+    def __get_pkey_list(self):
         res = []
         res.append(self.CHROM)
         res.append(int(self.POS))
         res.append(self.REF)
         res.append(str(self.ALT[0]))
+        return res
+
+    def as_annovar_tuple(self, annovar_cols):
+        self.__check_alt()
+        res = self.__get_pkey_list()
         for annovar_col in annovar_cols:
             res.append(self.get_info(annovar_col))
         return tuple(res)
 
     def as_gtz_tuple(self, samples_id):
-        if len(self.ALT) > 1:
-            raise Exception(self.ALT + ' has more than one alternate allele')
-        res = []
-        res.append(self.CHROM)
-        res.append(int(self.POS))
-        res.append(self.REF)
-        res.append(str(self.ALT[0]))
+        self.__check_alt()
+        res = self.__get_pkey_list()
         res.append(self.QUAL)
         res.append(self.FILTER)
         for sample_id in samples_id:
             res.append(self.genotype(sample_id).cmm_gts[1])
         return tuple(res)
+
+    def as_pkey_tuple(self):
+        self.__check_alt()
+        return tuple(self.__get_pkey_list())
 
 class TAVcfReader(VcfReader, pyCMMBase):
     """
@@ -570,8 +608,13 @@ class TAVcfInfoReader(TAVcfReader):
     def info_cols(self):
         return self.header_cols[4:]
 
-    def next(self):
-        return super(TAVcfInfoReader, self).next().as_annovar_tuple(self.annovar_infos.keys())
+    @property
+    def record_tuples(self):
+        for item in super(TAVcfInfoReader, self).__iter__():
+            yield item.as_annovar_tuple(self.annovar_infos.keys())
+
+#    def next(self):
+#        return super(TAVcfInfoReader, self).next().as_annovar_tuple(self.annovar_infos.keys())
 
 class TAVcfGTZReader(TAVcfReader):
     """
@@ -607,5 +650,19 @@ class TAVcfGTZReader(TAVcfReader):
     def samples_id(self):
         return self.header_cols[6:]
 
-    def next(self):
-        return super(TAVcfGTZReader, self).next().as_gtz_tuple(self.samples)
+    @property
+    def record_tuples(self):
+        for item in super(TAVcfGTZReader, self).__iter__():
+            yield item.as_gtz_tuple(self.samples)
+#    def next(self):
+#        return super(TAVcfGTZReader, self).next().as_gtz_tuple(self.samples)
+
+    @property
+    def coors(self):
+        for item in super(TAVcfGTZReader, self).__iter__():
+            yield item.as_pkey_tuple()
+#        for item in self.next():
+#            self.dbg(item)
+#            self.dbg(item[0:4])
+#            yield item.as_gtz_tuple()
+#        return super(TAVcfGTZReader, self).next().as_pkey_tuple()

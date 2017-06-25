@@ -13,6 +13,9 @@ from pycmm.proc.db.connector import SQLiteDB
 from pycmm.proc.db.connector import DATA_TYPE_AVDB_INFO
 from pycmm.proc.db.connector import DATA_TYPE_ANNOVAR_INFO
 from pycmm.proc.db.connector import DATA_TYPE_GTZ
+#from pycmm.proc.db.connector import VCF_PKEYS
+#from pycmm.proc.db.connector import AVDB_PKEYS
+#from pycmm.proc.db.connector import TBL_NAME_GTZ_COORS
 from pycmm.proc.db.dbinput import AVDBReader
 from pycmm.proc.db.dbinput import TAVcfInfoReader as VcfInfoReader
 from pycmm.proc.db.dbinput import TAVcfGTZReader as VcfGTZReader
@@ -24,6 +27,7 @@ JOBS_SETUP_DB_JOBS = "DB_JOBS"
 JOBS_SETUP_DB_JOB_TBL_NAME_KEY = "Table_name"
 JOBS_SETUP_DB_JOB_DROP_TABLE_KEY = "Drop_table"
 JOBS_SETUP_DB_JOB_DATA_FILE_KEY = "Data_file"
+JOBS_SETUP_DB_JOB_DATA_TYPE_KEY = "Data_type"
 JOBS_SETUP_DB_JOB_OPERATION_KEY = "Operation"
 JOBS_SETUP_DB_JOB_HEADER_EXIST_KEY = "Header_exist"
 ## *************** table_annovar db section ***************
@@ -31,7 +35,9 @@ JOBS_SETUP_DB_JOB_HEADER_EXIST_KEY = "Header_exist"
 OPERATION_LOAD_AVDB = 'LOAD_AVDB'
 OPERATION_LOAD_ANNOVAR_VCF = 'LOAD_ANNOVAR_VCF'
 OPERATION_LOAD_GTZ_VCF = 'LOAD_GTZ_VCF'
-
+OPERATION_CAL_HW = 'CALCULATE_HARDY_WEINBERG'
+OPERATION_JOIN_ALL_GTZ_ANNOS = 'JOIN_ALL_GTZ_ANNOS'
+OPERATION_CAL_MAX_REF_MAF = 'CAL_MAF_REF_MAF'
 
 class SQLiteDBWriter(SQLiteDB):
     """
@@ -52,17 +58,20 @@ class SQLiteDBWriter(SQLiteDB):
         rec_len = len(reader.header_cols)
         sql = 'INSERT OR IGNORE INTO ' + tbl_name
         sql += ' VALUES (' + ('?,'*(rec_len*2))[:rec_len*2-1] + ')'
-        row_count = self._exec_many_sql(sql, reader).rowcount
+        row_count = self._exec_many_sql(sql, reader.record_tuples).rowcount
         return row_count
 
-    def load_avdb_data(self, data_file, header_exist, *args, **kwargs):
-        reader = AVDBReader(file_name=data_file, header_exist=header_exist)
+    def load_avdb_data(self, data_file, header_exist, data_type=None, *args, **kwargs):
+        reader = AVDBReader(file_name=data_file,
+                            header_exist=header_exist,
+                            data_type=data_type,
+                            )
         tbl_name = kwargs['tbl_name']
         self._create_table(tbl_name=tbl_name,
-                            col_names=reader.header_cols,
-                            pkeys=reader.pkeys,
-                            )
-        self._update_sys_info(data_type=DATA_TYPE_AVDB_INFO,
+                           col_names=reader.header_cols,
+                           pkeys=reader.pkeys,
+                           )
+        self._update_tbl_info(data_type=DATA_TYPE_AVDB_INFO,
                               updating_info_cols=reader.avdb_cols,
                               updating_tbl_name=tbl_name,
                               )
@@ -72,10 +81,10 @@ class SQLiteDBWriter(SQLiteDB):
         reader = VcfInfoReader(file_name=data_file)
         tbl_name = kwargs['tbl_name']
         self._create_table(tbl_name=tbl_name,
-                            col_names=reader.header_cols,
-                            pkeys=reader.pkeys,
-                            )
-        self._update_sys_info(data_type=DATA_TYPE_ANNOVAR_INFO,
+                           col_names=reader.header_cols,
+                           pkeys=reader.pkeys,
+                           )
+        self._update_tbl_info(data_type=DATA_TYPE_ANNOVAR_INFO,
                               updating_info_cols=reader.info_cols,
                               updating_tbl_name=tbl_name,
                               )
@@ -85,19 +94,33 @@ class SQLiteDBWriter(SQLiteDB):
         reader = VcfGTZReader(file_name=data_file)
         tbl_name = kwargs['tbl_name']
         self._create_table(tbl_name=tbl_name,
-                            col_names=reader.header_cols,
-                            pkeys=reader.pkeys,
-                            )
-        self._update_sys_info(data_type=DATA_TYPE_GTZ,
+                           col_names=reader.header_cols,
+                           pkeys=reader.pkeys,
+                           )
+        self._update_tbl_info(data_type=DATA_TYPE_GTZ,
                               updating_info_cols=reader.samples_id,
                               updating_tbl_name=tbl_name,
                               )
-        return self.__load_data_file(reader=reader, *args, **kwargs)
+        row_count = self.__load_data_file(reader=reader, *args, **kwargs)
+        reader = VcfGTZReader(file_name=data_file)
+        self._update_gtz_coors(reader.coors)
+        return row_count
 
-    def __add_column(self, tbl_name, col_name, col_def=""):
-        sql = "ALTER TABLE " + tbl_name
-        sql += " ADD " + col_name
-        sql += " " + col_def
+    def __correct_maf_table(self, tbl_name, dataset_name):
+        # assuming that the input table is in SWEGEN format that
+        # 1. doesn't have WT columns
+        # 2. GT are number of alleles instead of number of samples
+        # Those are needed to be corrected
+        wt_col_name = dataset_name + "_WT"
+        gt_col_name = dataset_name + "_GT"
+        het_col_name = dataset_name + "_HET"
+        hom_col_name = dataset_name + "_HOM"
+        self._add_column(tbl_name, wt_col_name)
+        sql = "UPDATE " + tbl_name
+        sql += " SET " + gt_col_name + " = " + gt_col_name + "/2"
+        self._exec_sql(sql)
+        sql = "UPDATE " + tbl_name
+        sql += " SET " + wt_col_name + " = " + gt_col_name + " - " + het_col_name + " - " + hom_col_name
         self._exec_sql(sql)
 
     def cal_hw(self, tbl_name):
@@ -108,22 +131,32 @@ class SQLiteDBWriter(SQLiteDB):
         if len(af_col_names) != 1:
             raise Exception('cannot perform Hardy-Weinberg calculation for table ' + tbl_name)
         dataset_name = af_col_names[0].replace("_AF","")
+        # identify required columns name
+        af_col_name = dataset_name + "_AF"
+        gt_col_name = dataset_name + "_GT"
+        wt_col_name = dataset_name + "_WT"
+        het_col_name = dataset_name + "_HET"
+        hom_col_name = dataset_name + "_HOM"
         hw_col_name = dataset_name.strip("OAF_") + "_hw_chisq"
+        # check if any required columns are missing
+        if wt_col_name not in col_names:
+            # check of WT column since SWEGEN doesn't have it
+            self.__correct_maf_table(tbl_name, dataset_name)
         # perform calculation
-        self.__add_column(tbl_name, "p")
-        self.__add_column(tbl_name, "q")
-        self.__add_column(tbl_name, "exp_wt")
-        self.__add_column(tbl_name, "exp_het")
-        self.__add_column(tbl_name, "exp_hom")
-        self.__add_column(tbl_name, hw_col_name)
+        self._add_column(tbl_name, "p")
+        self._add_column(tbl_name, "q")
+        self._add_column(tbl_name, "exp_wt")
+        self._add_column(tbl_name, "exp_het")
+        self._add_column(tbl_name, "exp_hom")
+        self._add_column(tbl_name, hw_col_name)
         sql = "UPDATE " + tbl_name
-        sql += " SET p = 1-" + dataset_name + "_AF"
-        sql += ", q = " + dataset_name + "_AF"
+        sql += " SET p = 1-" + af_col_name
+        sql += ", q = " + af_col_name
         self._exec_sql(sql)
         sql = "UPDATE " + tbl_name
-        sql += " SET exp_wt = p*p*" + dataset_name + "_GT"
-        sql += ", exp_het = 2*p*q*" + dataset_name + "_GT"
-        sql += ", exp_hom = q*q*" + dataset_name + "_GT"
+        sql += " SET exp_wt = p*p*" + gt_col_name
+        sql += ", exp_het = 2*p*q*" + gt_col_name
+        sql += ", exp_hom = q*q*" + gt_col_name
         self._exec_sql(sql)
         sql = "UPDATE " + tbl_name
         sql += " SET " + hw_col_name + " = 0.0"
@@ -132,9 +165,9 @@ class SQLiteDBWriter(SQLiteDB):
         sql += " OR exp_hom = 0"
         self._exec_sql(sql)
         sql = "UPDATE " + tbl_name
-        sql += " SET " + hw_col_name + " = (" + dataset_name + "_WT-exp_wt)*(" + dataset_name + "_WT-exp_wt)/exp_wt"
-        sql += " + (" + dataset_name + "_HET-exp_het)*(" + dataset_name + "_HET-exp_het)/exp_het"
-        sql += " + (" + dataset_name + "_HOM-exp_hOM)*(" + dataset_name + "_HOM-exp_hom)/exp_hom"
+        sql += " SET " + hw_col_name + " = (" + wt_col_name + "-exp_wt)*(" + wt_col_name + "-exp_wt)/exp_wt"
+        sql += " + (" + het_col_name + "-exp_het)*(" + het_col_name + "-exp_het)/exp_het"
+        sql += " + (" + hom_col_name + "-exp_hOM)*(" + hom_col_name + "-exp_hom)/exp_hom"
         sql += " WHERE exp_wt != 0"
         sql += " AND exp_het != 0"
         sql += " AND exp_hom != 0"
@@ -142,9 +175,11 @@ class SQLiteDBWriter(SQLiteDB):
         # update system information
         avdb_info = self.get_avdb_info()
         info_cols = avdb_info[tbl_name]
+        if wt_col_name not in info_cols:
+            info_cols.append(wt_col_name)
         if hw_col_name not in info_cols:
             info_cols.append(hw_col_name)
-        self._update_sys_info(DATA_TYPE_AVDB_INFO, info_cols, tbl_name)
+        self._update_tbl_info(DATA_TYPE_AVDB_INFO, info_cols, tbl_name)
 
 class DBJob(CMMParams):
     """ A class to keep DB job information """
@@ -157,6 +192,7 @@ class DBJob(CMMParams):
         raw_str["table name"] = self.tbl_name
         raw_str["drop table"] = self.drop_table
         raw_str["data file"] = self.data_file
+        raw_str["data type"] = self.data_type
         raw_str["operation"] = self.operation
         raw_str["header exist"] = self.header_exist
         return raw_str
@@ -172,6 +208,10 @@ class DBJob(CMMParams):
     @property
     def data_file(self):
         return self._get_job_config(JOBS_SETUP_DB_JOB_DATA_FILE_KEY)
+
+    @property
+    def data_type(self):
+        return self._get_job_config(JOBS_SETUP_DB_JOB_DATA_TYPE_KEY)
 
     @property
     def operation(self):
@@ -236,17 +276,19 @@ class SQLiteDBController(CMMPipeline):
 
     def __execute_db_job(self, db_job):
         info_msg = "executing db job ("
-        info_msg += " table_name = {tbl_name}"
+        info_msg += " operation = {operation}"
+        info_msg += ", table_name = {tbl_name}"
         info_msg += ", drop_table = {drop_table}"
         info_msg += ", data_file = {data_file}"
-        info_msg += ", operation = {operation}"
+        info_msg += ", data_type = {data_type}"
         info_msg += ", header_exist = {header_exist}"
         info_msg += " )"
         self.info()
-        self.info(info_msg.format(tbl_name=db_job.tbl_name,
+        self.info(info_msg.format(operation=db_job.operation,
+                                  tbl_name=db_job.tbl_name,
                                   drop_table=db_job.drop_table,
                                   data_file=db_job.data_file,
-                                  operation=db_job.operation,
+                                  data_type=db_job.data_type,
                                   header_exist=db_job.header_exist,
                                   ))
         if db_job.drop_table:
@@ -255,6 +297,7 @@ class SQLiteDBController(CMMPipeline):
             return self.db.load_avdb_data(data_file=db_job.data_file,
                                           tbl_name=db_job.tbl_name,
                                           header_exist=db_job.header_exist,
+                                          data_type=db_job.data_type
                                           )
         elif db_job.operation == OPERATION_LOAD_ANNOVAR_VCF:
             return self.db.load_annovar_vcf_data(data_file=db_job.data_file,
@@ -264,12 +307,19 @@ class SQLiteDBController(CMMPipeline):
             return self.db.load_gtz_vcf_data(data_file=db_job.data_file,
                                              tbl_name=db_job.tbl_name,
                                              )
+        elif db_job.operation == OPERATION_CAL_HW:
+            return self.db.cal_hw(tbl_name=db_job.tbl_name)
+        elif db_job.operation == OPERATION_JOIN_ALL_GTZ_ANNOS:
+            return self.db.join_all_gtz_anno()
+        elif db_job.operation == OPERATION_CAL_MAX_REF_MAF:
+            return self.db.cal_max_ref_maf()
         else:
             raise Exception('Unknown operation: ' + db_job.operation)
 
     def __execute_db_jobs(self):
         for db_job in self.db_params.db_jobs:
             n_records = self.__execute_db_job(db_job)
+#            self.info("Finished: " + str(n_records) + " were updated")
             self.info("Finished: " + str(n_records) + " records were inserted")
 
     def run_offline_pipeline(self):
@@ -286,7 +336,6 @@ class SQLiteDBController(CMMPipeline):
                                    DBMS_EXECUTE_DB_JOBS_BIN,
                                    params,
                                    )
-
 
 def parse_db_jobs(db_jobs_params):
     db_jobs_yaml = []

@@ -6,7 +6,11 @@ script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 function extract_avdb_data {
     annovar_file_name=$1
     head -1 "$ANNOVAR_HUMAN_DB_DIR/$annovar_file_name" > "$script_dir/test_$annovar_file_name"
+    cmd="grep -P \"^10\\t3181107\" $ANNOVAR_HUMAN_DB_DIR/$annovar_file_name >> $script_dir/test_$annovar_file_name"
+    eval_cmd "$cmd"
     cmd="grep -P \"^10\\t8968\" $ANNOVAR_HUMAN_DB_DIR/$annovar_file_name >> $script_dir/test_$annovar_file_name"
+    eval_cmd "$cmd"
+    cmd="grep -P \"^11\\t57427\" $ANNOVAR_HUMAN_DB_DIR/$annovar_file_name >> $script_dir/test_$annovar_file_name"
     eval_cmd "$cmd"
 }
 
@@ -18,6 +22,7 @@ function extract_avdb_data {
 #extract_avdb_data "hg19_CMM_OAF_BrC_CRC_prostate.txt"
 #extract_avdb_data "hg19_CMM_OAF_familial_CRCs.txt"
 #extract_avdb_data "hg19_CMM_OAF_CHEK2.txt"
+extract_avdb_data "hg19_CMM_OAF_EARLYONSET.txt"
 #extract_avdb_data "hg19_CMM_Swegen_20161223.txt"
 #extract_avdb_data "hg19_exac03constraint.txt"
 #extract_avdb_data "hg19_spidex.txt"

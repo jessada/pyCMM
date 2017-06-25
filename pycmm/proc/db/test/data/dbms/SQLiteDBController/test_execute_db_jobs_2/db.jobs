@@ -1,5 +1,6 @@
 DB_JOBS:
   - Data_file: /proj/b2011117/nobackup/private/jessada/private/projects/pyCMM/pycmm/proc/db/test/data/dbms/SQLiteDBController/test_execute_db_jobs_2/test_hg19_gnomad_genome.txt
+    Data_type: DATA_TYPE_AVDB_PUBLIC_AF
     Drop_table: yes
     Operation: LOAD_AVDB
     Table_name: test_hg19_gnomad_genome
@@ -15,26 +16,37 @@ DB_JOBS:
     Table_name: test_hg19_clinvar_20170130
     Header_exist: Yes
   - Data_file: /proj/b2011117/nobackup/private/jessada/private/projects/pyCMM/pycmm/proc/db/test/data/dbms/SQLiteDBController/test_execute_db_jobs_2/test_hg19_CMM_Axeq_chr5_19.txt
+    Data_type: DATA_TYPE_AVDB_CMM_AF
     Drop_table: yes
     Operation: LOAD_AVDB
     Table_name: test_hg19_CMM_Axeq_chr5_19
     Header_exist: Yes
   - Data_file: /proj/b2011117/nobackup/private/jessada/private/projects/pyCMM/pycmm/proc/db/test/data/dbms/SQLiteDBController/test_execute_db_jobs_2/test_hg19_CMM_OAF_BrC_CRC_prostate.txt
+    Data_type: DATA_TYPE_AVDB_CMM_AF
     Drop_table: yes
     Operation: LOAD_AVDB
     Table_name: test_hg19_CMM_OAF_BrC_CRC_prostate
     Header_exist: Yes
   - Data_file: /proj/b2011117/nobackup/private/jessada/private/projects/pyCMM/pycmm/proc/db/test/data/dbms/SQLiteDBController/test_execute_db_jobs_2/test_hg19_CMM_OAF_familial_CRCs.txt
+    Data_type: DATA_TYPE_AVDB_CMM_AF
     Drop_table: yes
     Operation: LOAD_AVDB
     Table_name: test_hg19_CMM_OAF_familial_CRCs
     Header_exist: Yes
   - Data_file: /proj/b2011117/nobackup/private/jessada/private/projects/pyCMM/pycmm/proc/db/test/data/dbms/SQLiteDBController/test_execute_db_jobs_2/test_hg19_CMM_OAF_CHEK2.txt
+    Data_type: DATA_TYPE_AVDB_CMM_AF
     Drop_table: yes
     Operation: LOAD_AVDB
     Table_name: test_hg19_CMM_OAF_CHEK2
     Header_exist: Yes
+  - Data_file: /proj/b2011117/nobackup/private/jessada/private/projects/pyCMM/pycmm/proc/db/test/data/dbms/SQLiteDBController/test_execute_db_jobs_2/test_hg19_CMM_OAF_EARLYONSET.txt
+    Data_type: DATA_TYPE_AVDB_CMM_AF
+    Drop_table: yes
+    Operation: LOAD_AVDB
+    Table_name: test_hg19_CMM_OAF_EARLYONSET
+    Header_exist: Yes
   - Data_file: /proj/b2011117/nobackup/private/jessada/private/projects/pyCMM/pycmm/proc/db/test/data/dbms/SQLiteDBController/test_execute_db_jobs_2/test_hg19_CMM_Swegen_20161223.txt
+    Data_type: DATA_TYPE_AVDB_CMM_AF
     Drop_table: yes
     Operation: LOAD_AVDB
     Table_name: test_hg19_CMM_Swegen_20161223
@@ -49,11 +61,11 @@ DB_JOBS:
     Operation: LOAD_AVDB
     Table_name: test_hg19_intervar
     Header_exist: Yes
-  - Data_file: /proj/b2011117/nobackup/private/jessada/private/projects/pyCMM/pycmm/proc/db/test/data/dbms/SQLiteDBController/test_execute_db_jobs_2/test_hg19_ljb26_all.txt
-    Drop_table: yes
-    Operation: LOAD_AVDB
-    Table_name: test_hg19_ljb26_all
-    Header_exist: Yes
+#  - Data_file: /proj/b2011117/nobackup/private/jessada/private/projects/pyCMM/pycmm/proc/db/test/data/dbms/SQLiteDBController/test_execute_db_jobs_2/test_hg19_ljb26_all.txt
+#    Drop_table: yes
+#    Operation: LOAD_AVDB
+#    Table_name: test_hg19_ljb26_all
+#    Header_exist: Yes
   - Data_file: /proj/b2011117/nobackup/private/jessada/private/projects/pyCMM/pycmm/proc/db/test/data/dbms/SQLiteDBController/test_execute_db_jobs_2/test_hg19_dbnsfp30a.txt
     Drop_table: yes
     Operation: LOAD_AVDB
@@ -76,3 +88,25 @@ DB_JOBS:
     Drop_table: yes
     Operation: LOAD_GTZ_VCF
     Table_name: test_gtz_WES294
+  - Operation: CALCULATE_HARDY_WEINBERG
+    Drop_table: No
+    Table_name: test_hg19_CMM_Axeq_chr5_19
+  - Operation: CALCULATE_HARDY_WEINBERG
+    Drop_table: No
+    Table_name: test_hg19_CMM_OAF_BrC_CRC_prostate
+  - Operation: CALCULATE_HARDY_WEINBERG
+    Drop_table: No
+    Table_name: test_hg19_CMM_OAF_familial_CRCs
+  - Operation: CALCULATE_HARDY_WEINBERG
+    Drop_table: No
+    Table_name: test_hg19_CMM_OAF_CHEK2
+  - Operation: CALCULATE_HARDY_WEINBERG
+    Drop_table: No
+    Table_name: test_hg19_CMM_OAF_EARLYONSET
+  - Operation: CALCULATE_HARDY_WEINBERG
+    Drop_table: No
+    Table_name: test_hg19_CMM_Swegen_20161223
+  - Operation: JOIN_ALL_GTZ_ANNOS
+    Drop_table: No
+  - Operation: CAL_MAF_REF_MAF
+    Drop_table: No
