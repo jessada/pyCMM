@@ -122,6 +122,7 @@ class SQLiteDB(pyCMMBase):
 
     def __connect_db(self):
         self.__conn = sqlite3.connect(self.db_path)
+        self.__conn.text_factory = str
         return self.__conn
 
     def __close_connection(self):

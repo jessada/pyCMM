@@ -47,7 +47,6 @@ class TestSQLiteDBWriter(SafeTester):
     def test_load_avdb_data_2(self):
         """ test loading avdb data with header and multiple annotations """
 
-        self.individual_debug = True
         self.init_test(self.current_func_name)
         input_file = join_path(self.data_dir,
                                "db_input.txt")
@@ -60,11 +59,28 @@ class TestSQLiteDBWriter(SafeTester):
                                       header_exist=True,
                                       data_type=DATA_TYPE_AVDB_CMM_AF,
                                       )
-#        sql = "SELECT * FROM " + tbl_name + " LIMIT 2"
-#        db.dbg_query(sql)
         db.drop_table(tbl_name)
         self.assertEqual(row_count,
                          23,
+                         "SQLiteDB cannot correctly load avdb data")
+
+    def test_load_avdb_data_3(self):
+        """ test unicode """
+
+        self.init_test(self.current_func_name)
+        input_file = join_path(self.data_dir,
+                               "db_input.txt")
+        db_file = join_path(self.working_dir,
+                            self.current_func_name+".db")
+        tbl_name = self.current_func_name
+        db = SQLiteDBWriter(db_file, verbose=False)
+        row_count = db.load_avdb_data(data_file=input_file,
+                                      tbl_name=tbl_name,
+                                      header_exist=False,
+                                      )
+        db.drop_table(tbl_name)
+        self.assertEqual(row_count,
+                         4,
                          "SQLiteDB cannot correctly load avdb data")
 
     def test_load_annovar_vcf_data_1(self):
@@ -88,7 +104,6 @@ class TestSQLiteDBWriter(SafeTester):
     def test_load_gtz_vcf_data_1(self):
         """ test loading genotyping zygosities from vcf file """
 
-        self.individual_debug = True
         self.init_test(self.current_func_name)
         input_file = join_path(self.data_dir,
                                "input.vcf.gz")
@@ -146,7 +161,6 @@ class TestSQLiteDBWriter(SafeTester):
         from Swegen data
         """
 
-        self.individual_debug = True
         self.init_test(self.current_func_name)
         input_file = join_path(self.data_dir,
                                "db_input.txt")
@@ -339,7 +353,7 @@ class TestSQLiteDBController(SafeTester):
 #        sql = "SELECT * FROM test_avdb"
 #        db.dbg_query(sql)
 
-    @unittest.skipUnless(FULL_SYSTEM_TEST, "taking too long time to test")
+#    @unittest.skipUnless(FULL_SYSTEM_TEST, "taking too long time to test")
     def test_execute_db_jobs_2(self):
         """
         test db_jobs execution with data that
@@ -408,7 +422,7 @@ class TestSQLiteDBController(SafeTester):
                          13,
                          "SQLiteDBController cannot correctly execute db jobs")
         self.assertEqual(len(reduce(lambda x,y: x+y, db.get_avdb_info().values())),
-                         112,
+                         171,
                          "SQLiteDBController cannot correctly execute db jobs")
         self.assertEqual(len(db.get_samples_id()),
                          303,
@@ -417,7 +431,7 @@ class TestSQLiteDBController(SafeTester):
                          19,
                          "SQLiteDBController cannot correctly execute db jobs")
         self.assertEqual(len(db.get_col_names(TBL_NAME_ALL_GTZ_ANNOS)),
-                         434,
+                         493,
                          "SQLiteDBController cannot correctly execute db jobs")
 #        sql = "SELECT * FROM test_hg19_gnomad_genome LIMIT 2"
 #        db.dbg_query(sql)
