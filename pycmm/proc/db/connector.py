@@ -1,6 +1,7 @@
 import sqlite3
 from pycmm.settings import MAX_REF_MAF_COL_NAME
 from pycmm.settings import REF_MAF_COL_NAMES
+from pycmm.settings import GNOMAD_GENOME_ALL_COL_NAME
 from pycmm.template import pyCMMBase
 
 DATA_TYPE_AVDB_INFO = "data_type_avdb_info"
@@ -35,6 +36,7 @@ TBL_NAME_GTZ_COORS = "gtz_coors"
 # and genotyping data from all samples
 TBL_NAME_ALL_GTZ_ANNOS = "all_gtz_annos"
 
+REF_MUTATED_COL_NAME = "ref_mutated"
 
 class SQLiteDB(pyCMMBase):
     """
@@ -336,11 +338,22 @@ class SQLiteDB(pyCMMBase):
 #        sql += ", " + MAX_REF_MAF_COL_NAME
 #        sql += ", " + ", ".join(tbl_ref_maf_col_names)
 #        sql += " FROM " + tbl_name
-#        sql += " LIMIT 1"
+##        sql += " LIMIT 1"
 #        self.dbg(sql)
 #        self.dbg_query(sql)
 
+    def set_ref_mutated(self):
+        tbl_name = TBL_NAME_ALL_GTZ_ANNOS
+        self._add_column(tbl_name, REF_MUTATED_COL_NAME)
+        sql = "UPDATE " + tbl_name
+        sql += " SET " + REF_MUTATED_COL_NAME + " = 0"
+        self._exec_sql(sql)
+        sql = "UPDATE " + tbl_name
+        sql += " SET " + REF_MUTATED_COL_NAME + " = 1"
+        sql += " WHERE " + GNOMAD_GENOME_ALL_COL_NAME + " > 0.5"
+        self._exec_sql(sql)
 
-
+#        sql = "SELECT " + REF_MUTATED_COL_NAME + " FROM " + TBL_NAME_ALL_GTZ_ANNOS
+#        self.dbg_query(sql)
 
 

@@ -60,7 +60,7 @@ class TestSQLiteDBWriter(SafeTester):
                                       header_exist=True,
                                       data_type=DATA_TYPE_AVDB_CMM_AF,
                                       )
-        sql = "SELECT * FROM " + tbl_name + " LIMIT 2"
+#        sql = "SELECT * FROM " + tbl_name + " LIMIT 2"
 #        db.dbg_query(sql)
         db.drop_table(tbl_name)
         self.assertEqual(row_count,
@@ -339,7 +339,7 @@ class TestSQLiteDBController(SafeTester):
 #        sql = "SELECT * FROM test_avdb"
 #        db.dbg_query(sql)
 
-#    @unittest.skipUnless(FULL_SYSTEM_TEST, "taking too long time to test")
+    @unittest.skipUnless(FULL_SYSTEM_TEST, "taking too long time to test")
     def test_execute_db_jobs_2(self):
         """
         test db_jobs execution with data that

@@ -2,11 +2,13 @@
 import unittest
 from os.path import join as join_path
 from pycmm.template import SafeTester
+from pycmm.settings import MAX_REF_MAF_COL_NAME
 from pycmm.proc.db.connector import SQLiteDB
 from pycmm.proc.db.connector import DATA_TYPE_AVDB_INFO
 from pycmm.proc.db.connector import DATA_TYPE_GTZ
 from pycmm.proc.db.connector import TBL_NAME_GTZ_COORS
 from pycmm.proc.db.connector import TBL_NAME_ALL_GTZ_ANNOS
+from pycmm.proc.db.connector import REF_MUTATED_COL_NAME
 
 
 class TestSQLiteDB(SafeTester):
@@ -149,7 +151,8 @@ class TestSQLiteDB(SafeTester):
                        db_file)
         db = SQLiteDB(db_file, verbose=False)
         db.cal_max_ref_maf()
-        sql = "SELECT MAX_REF_MAF FROM " + TBL_NAME_ALL_GTZ_ANNOS
+        sql = "SELECT " + MAX_REF_MAF_COL_NAME
+        sql += " FROM " + TBL_NAME_ALL_GTZ_ANNOS
         rows = db.read_rows(sql=sql)
         row = rows.next()
         self.assertEqual(row[0],
@@ -191,3 +194,57 @@ class TestSQLiteDB(SafeTester):
         self.assertEqual(round(row[0], 4),
                          0.0099,
                          "SQLiteDB cannot correctly calculate max reference allele frequency")
+
+    def test_set_ref_mutated_1(self):
+        """
+        test finding maximum allele frequency
+        from all reference databases
+        """
+
+        self.individual_debug = True
+        self.init_test(self.current_func_name)
+        raw_db_file = join_path(self.data_dir,
+                                "input.db")
+        db_file = join_path(self.working_dir,
+                            self.current_func_name+".db")
+        self.copy_file(raw_db_file,
+                       db_file)
+        db = SQLiteDB(db_file, verbose=False)
+        db.set_ref_mutated()
+        sql = "SELECT " + REF_MUTATED_COL_NAME
+        sql += " FROM " + TBL_NAME_ALL_GTZ_ANNOS
+        rows = db.read_rows(sql=sql)
+        row = rows.next()
+        self.assertEqual(row[0],
+                         0,
+                         "SQLiteDB cannot correctly identify mutation in reference")
+        row = rows.next()
+        row = rows.next()
+        row = rows.next()
+        self.assertEqual(row[0],
+                         0,
+                         "SQLiteDB cannot correctly identify mutation in reference")
+        row = rows.next()
+        row = rows.next()
+        row = rows.next()
+        row = rows.next()
+        row = rows.next()
+        row = rows.next()
+        row = rows.next()
+        row = rows.next()
+        row = rows.next()
+        row = rows.next()
+        self.assertEqual(row[0],
+                         1,
+                         "SQLiteDB cannot correctly identify mutation in reference")
+        row = rows.next()
+        row = rows.next()
+        self.assertEqual(row[0],
+                         0,
+                         "SQLiteDB cannot correctly identify mutation in reference")
+        row = rows.next()
+        row = rows.next()
+        row = rows.next()
+        self.assertEqual(round(row[0], 4),
+                         1,
+                         "SQLiteDB cannot correctly identify mutation in reference")

@@ -81,14 +81,21 @@ class AVDBParser(pyCMMBase):
         if data_type == DATA_TYPE_AVDB_CMM_AF:
             res += map(lambda x: int(x),
                        self.annotations[:gf_idx])
-            res += [float(self.annotations[gf_idx])]
+            res.append(float(self.annotations[gf_idx]))
+#            res += [float(self.annotations[gf_idx])]
             af = self.annotations[gf_idx+1]
             if is_number(af):
                 af = float(af)
-            res += [af]
-            res += [float(self.annotations[gf_idx+2])]
+            res.append(af)
+            res.append(float(self.annotations[gf_idx+2]))
+#            res += [af]
+#            res += [float(self.annotations[gf_idx+2])]
         elif data_type == DATA_TYPE_AVDB_PUBLIC_AF:
-            res += map(lambda x: float(x), self.annotations)
+            for af in self.annotations:
+                if is_number(af):
+                    af = float(af)
+                res.append(af)
+#            res += map(lambda x: float(x), self.annotations)
         else:
             res += self.annotations
         return tuple(res)
