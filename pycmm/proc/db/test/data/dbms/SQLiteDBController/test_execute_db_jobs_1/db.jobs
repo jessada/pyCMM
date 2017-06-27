@@ -1,15 +1,15 @@
 DB_JOBS:
-  - Data_file: /proj/b2011117/nobackup/private/jessada/private/projects/pyCMM/pycmm/proc/db/test/data/dbms/SQLiteDBController/test_execute_db_jobs_1/test_avdb.txt
+  - Data_file: $PYCMM/pycmm/proc/db/test/data/dbms/SQLiteDBController/test_execute_db_jobs_1/test_avdb.txt
     Data_type: DATA_TYPE_AVDB_CMM_AF
     Drop_table: yes
     Operation: LOAD_AVDB
     Table_name: test_avdb
     Header_exist: Yes
-  - Data_file: /proj/b2011117/nobackup/private/jessada/private/projects/pyCMM/pycmm/proc/db/test/data/dbms/SQLiteDBController/test_execute_db_jobs_1/test_annovar_vcf.vcf.gz
+  - Data_file: $PYCMM/pycmm/proc/db/test/data/dbms/SQLiteDBController/test_execute_db_jobs_1/test_annovar_vcf.vcf.gz
     Drop_table: Yes
     Operation: LOAD_ANNOVAR_VCF
     Table_name: test_annovar_vcf
-  - Data_file: /proj/b2011117/nobackup/private/jessada/private/projects/pyCMM/pycmm/proc/db/test/data/dbms/SQLiteDBController/test_execute_db_jobs_1/test_gtz_vcf.vcf.gz
+  - Data_file: $PYCMM/pycmm/proc/db/test/data/dbms/SQLiteDBController/test_execute_db_jobs_1/test_gtz_vcf.vcf.gz
     Drop_table: No
     Operation: LOAD_GTZ_VCF
     Table_name: test_gtz_vcf

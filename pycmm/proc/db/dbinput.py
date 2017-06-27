@@ -77,25 +77,20 @@ class AVDBParser(pyCMMBase):
         res.append(self.end)
         res.append(self.ref)
         res.append(self.alt)
-#        self.dbg(data_type)
         if data_type == DATA_TYPE_AVDB_CMM_AF:
             res += map(lambda x: int(x),
                        self.annotations[:gf_idx])
             res.append(float(self.annotations[gf_idx]))
-#            res += [float(self.annotations[gf_idx])]
             af = self.annotations[gf_idx+1]
             if is_number(af):
                 af = float(af)
             res.append(af)
             res.append(float(self.annotations[gf_idx+2]))
-#            res += [af]
-#            res += [float(self.annotations[gf_idx+2])]
         elif data_type == DATA_TYPE_AVDB_PUBLIC_AF:
             for af in self.annotations:
                 if is_number(af):
                     af = float(af)
                 res.append(af)
-#            res += map(lambda x: float(x), self.annotations)
         else:
             res += self.annotations
         return tuple(res)
@@ -129,7 +124,7 @@ class AVDBReader(Reader):
         header_cols.append('Ref')
         header_cols.append('Alt')
         if self.header is None:
-            header_cols.append(os.path.splitext(ntpath.basename(file_name).strip('hg19_'))[0]) 
+            header_cols.append(os.path.splitext(ntpath.basename(file_name).strip('hg19_'))[0])
         else:
             split_header_cols = self.header.strip().split("\t")
             for col_idx in xrange(5, len(split_header_cols)):
@@ -137,7 +132,7 @@ class AVDBReader(Reader):
                 col_name = col_name.replace(":", "_")
                 col_name = col_name.replace("+", "")
                 col_name = col_name.replace("-", "")
-                header_cols.append(col_name)
+                header_cols.append("_"+col_name)
         return header_cols
 
     @property

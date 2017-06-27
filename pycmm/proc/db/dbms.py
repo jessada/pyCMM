@@ -1,5 +1,6 @@
 import yaml
 import pyaml
+import os
 from os.path import isfile
 from collections import OrderedDict
 from pycmm.settings import DBMS_EXECUTE_DB_JOBS_BIN
@@ -186,6 +187,7 @@ class DBJob(CMMParams):
 
     def __init__(self, *args, **kwargs):
         super(DBJob, self).__init__(*args, **kwargs)
+        self.__data_file = self.__parse_data_file()
 
     def get_raw_obj_str(self, *args, **kwargs):
         raw_str = super(DBJob, self).get_raw_obj_str(*args, **kwargs)
@@ -197,6 +199,19 @@ class DBJob(CMMParams):
         raw_str["header exist"] = self.header_exist
         return raw_str
 
+    def __parse_data_file(self):
+        data_file = self._get_job_config(JOBS_SETUP_DB_JOB_DATA_FILE_KEY)
+        if data_file is not None:
+            tmp_split = data_file.split("/")
+            tmp_join = []
+            for item in tmp_split:
+                if item.startswith("$"):
+                    tmp_join.append(os.environ[item.strip("$")])
+                else:
+                    tmp_join.append(item)
+            data_file = "/".join(tmp_join)
+        return data_file
+
     @property
     def tbl_name(self):
         return self._get_job_config(JOBS_SETUP_DB_JOB_TBL_NAME_KEY)
@@ -207,7 +222,7 @@ class DBJob(CMMParams):
 
     @property
     def data_file(self):
-        return self._get_job_config(JOBS_SETUP_DB_JOB_DATA_FILE_KEY)
+        return self.__data_file
 
     @property
     def data_type(self):

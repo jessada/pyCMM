@@ -73,7 +73,7 @@ class TestAVDBReader(SafeTester):
                          "Alt",
                          "AVDBReader doesn't work correctly")
         self.assertEqual(avdb_reader.header_cols[5],
-                         "OAF_FAMILIAL_CRCS_WT",
+                         "_OAF_FAMILIAL_CRCS_WT",
                          "AVDBReader doesn't work correctly")
         self.assertEqual(len(avdb_reader.header_cols),
                          6,
@@ -116,10 +116,10 @@ class TestAVDBReader(SafeTester):
                          "Alt",
                          "AVDBReader doesn't work correctly")
         self.assertEqual(avdb_reader.header_cols[5],
-                         "OAF_CHEK2_WT",
+                         "_OAF_CHEK2_WT",
                          "AVDBReader doesn't work correctly")
         self.assertEqual(avdb_reader.header_cols[9],
-                         "OAF_CHEK2_NA",
+                         "_OAF_CHEK2_NA",
                          "AVDBReader doesn't work correctly")
         self.assertEqual(len(avdb_reader.header_cols),
                          14,
@@ -177,7 +177,7 @@ class TestAVDBReader(SafeTester):
                          "Alt",
                          "AVDBReader doesn't work correctly")
         self.assertEqual(avdb_reader.header_cols[5],
-                         "OAF_EARLYONSET_WT",
+                         "_OAF_EARLYONSET_WT",
                          "AVDBReader doesn't work correctly")
         self.assertEqual(len(avdb_reader.header_cols),
                          14,
@@ -241,7 +241,7 @@ class TestAVDBReader(SafeTester):
                          "End",
                          "AVDBReader doesn't work correctly")
         self.assertEqual(avdb_reader.header_cols[5],
-                         "gnomAD_genome_ALL",
+                         "_gnomAD_genome_ALL",
                          "AVDBReader doesn't work correctly")
         self.assertEqual(len(avdb_reader.header_cols),
                          13,

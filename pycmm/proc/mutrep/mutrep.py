@@ -3,7 +3,7 @@
 from os.path import join as join_path
 from pycmm.proc import CMMPipeline
 from pycmm.proc.mutrep.dbreader import SQLiteDBReader
-#from collections import defaultdict
+from collections import defaultdict
 from collections import OrderedDict
 #from collections import namedtuple
 #from pycmm.settings import ALL_MUTREP_ANNO_COLS
@@ -40,7 +40,7 @@ from pycmm.settings import GENE_REFGENE_COL_NAME
 #from pycmm.settings import FORMAT_COLS
 #from pycmm.settings import FORMAT_COL_FLOAT
 #from pycmm.settings import FORMAT_COL_INT
-#from pycmm.template import pyCMMBase
+from pycmm.template import pyCMMBase
 #from pycmm.utils import DefaultOrderedDict
 from pycmm.utils import is_number
 #from pycmm.utils.ver import VersionManager
@@ -54,14 +54,14 @@ from pycmm.cmmlib.xlslib import NO_COLOR
 #from pycmm.flow import init_jobs_setup_file
 #from pycmm.flow.cmmdb import CMMPipeline
 #from pycmm.cmmlib.dnalib import ALL_CHROMS
-#from pycmm.cmmlib.dnalib import DNARegion
+from pycmm.cmmlib.dnalib import DNARegion
 #from pycmm.cmmlib.tamodel import CMMGT_HOMOZYGOTE
 #from pycmm.cmmlib.tamodel import CMMGT_HETEROZYGOTE
-#
-#ACTION_DELETE_ROW = "DELETE_ROW"
-#ACTION_COLOR_ROW = "COLOR_ROW"
-#ACTION_COLOR_COL = "COLOR_COLUMN"
-#
+
+ACTION_DELETE_ROW = "DELETE_ROW"
+ACTION_COLOR_ROW = "COLOR_ROW"
+ACTION_COLOR_COL = "COLOR_COLUMN"
+
 #DFLT_COLOR_HET_SHARED = 'LIGHT_BLUE'
 #DFLT_COLOR_HOM_SHARED = 'ICEBLUE'
 #CELL_TYPE_HET_SHARED = 'HET_SHARED'
@@ -83,43 +83,43 @@ RECORDS_LOG_INTERVAL = 1000
 #
 # *************** report layout section ***************
 JOBS_SETUP_RPT_LAYOUT_SECTION = "REPORT_LAYOUT"
-#JOBS_SETUP_RPT_ANNOTATED_VCF_TABIX = "ANNOTATED_VCF_TABIX"
+JOBS_SETUP_RPT_ANNOTATED_VCF_TABIX = "ANNOTATED_VCF_TABIX"
 JOBS_SETUP_RPT_ANNO_COLS_KEY = "COLUMNS"
-#JOBS_SETUP_RPT_ANNO_EXCL_TAGS_KEY = "ANNOTATION_EXCLUSION_TAGS"
+JOBS_SETUP_RPT_ANNO_EXCL_TAGS_KEY = "ANNOTATION_EXCLUSION_TAGS"
 JOBS_SETUP_RPT_HEADER_CORRECTIONS_KEY = "HEADER_CORRECTIONS"
 JOBS_SETUP_RPT_OLD_HEADER_KEY = "OLD_HEADER"
 JOBS_SETUP_RPT_NEW_HEADER_KEY = "NEW_HEADER"
-#JOBS_SETUP_RPT_REGIONS_KEY = "REGIONS"
+JOBS_SETUP_RPT_REGIONS_KEY = "REGIONS"
 #JOBS_SETUP_RPT_FREQ_RATIOS_KEY = "FREQUENCY_RATIOS"
 #JOBS_SETUP_RPT_FREQ_RATIOS_COL_KEY = "COLUMN"
 #JOBS_SETUP_RPT_FREQ_RATIOS_FREQ_KEY = "FREQUENCY"
-#JOBS_SETUP_RPT_EXPRESSIONS_KEY = "EXPRESSIONS"
-#JOBS_SETUP_RPT_EXPRESSIONS_NAME_KEY = "NAME"
-#JOBS_SETUP_RPT_EXPRESSIONS_PATTERN_KEY = "PATTERN"
-#JOBS_SETUP_RPT_EXPRESSIONS_USAGES_KEY = "USAGES"
-#JOBS_SETUP_RPT_EXPRESSIONS_ACTION_KEY = "ACTION"
-#JOBS_SETUP_RPT_EXPRESSIONS_INFO_KEY = "INFO"
-#JOBS_SETUP_RPT_SPLIT_CHROM_KEY = "SPLIT_CHROM"
+JOBS_SETUP_RPT_EXPRESSIONS_KEY = "EXPRESSIONS"
+JOBS_SETUP_RPT_EXPRESSIONS_NAME_KEY = "NAME"
+JOBS_SETUP_RPT_EXPRESSIONS_PATTERN_KEY = "PATTERN"
+JOBS_SETUP_RPT_EXPRESSIONS_USAGES_KEY = "USAGES"
+JOBS_SETUP_RPT_EXPRESSIONS_ACTION_KEY = "ACTION"
+JOBS_SETUP_RPT_EXPRESSIONS_INFO_KEY = "INFO"
+JOBS_SETUP_RPT_SPLIT_CHROM_KEY = "SPLIT_CHROM"
 #JOBS_SETUP_RPT_SUMMARY_FAMILIES_KEY = "SUMMARY_FAMILIES"
 JOBS_SETUP_RPT_EXTRA_ANNO_COLS_KEY = "EXTRA_ANNOTATION_COLUMNS"
 JOBS_SETUP_RPT_EXTRA_ANNO_CALL_DETAIL = "Calling_detail"
 JOBS_SETUP_RPT_EXTRA_ANNO_CALL_GQ = "Calling_GQ"
-#JOBS_SETUP_RPT_SHOW_SHARED_VARIANTS = "Show_shared_mutations"
+JOBS_SETUP_RPT_SHOW_SHARED_VARIANTS = "Show_shared_mutations"
 #JOBS_SETUP_RPT_MT_KEY = "Mitochondria"
-#JOBS_SETUP_RPT_ROWS_FILTER_ACTIONS_CRITERIA_KEY = "ROWS_FILTER_ACTIONS_CRITERIA"
+JOBS_SETUP_RPT_ROWS_FILTER_ACTIONS_CRITERIA_KEY = "ROWS_FILTER_ACTIONS_CRITERIA"
 #JOBS_SETUP_RPT_FILTER_RARE = "Rare"
-#JOBS_SETUP_RPT_FILTER_PASS_VQSR = "PASS-VQSR"
-#JOBS_SETUP_RPT_FILTER_NON_INTERGENIC = "Non-Intergenic"
-#JOBS_SETUP_RPT_FILTER_NON_INTRONIC = "Non-Intronic"
-#JOBS_SETUP_RPT_FILTER_NON_UPSTREAM = "Non-Upstream"
-#JOBS_SETUP_RPT_FILTER_NON_DOWNSTREAM = "Non-Downstream"
-#JOBS_SETUP_RPT_FILTER_NON_UTR = "Non-UTR"
-#JOBS_SETUP_RPT_FILTER_NON_SYNONYMOUS = "Non-Synonymous"
-#JOBS_SETUP_RPT_FILTER_HAS_MUTATION = "Has-Mutation"
-#JOBS_SETUP_RPT_FILTER_HAS_SHARED = "Has-Shared"
-#JOBS_SETUP_RPT_FILTER_NON_RECESSIVE_GENE = "Non-Recessive-Gene"
-#JOBS_SETUP_RPT_FILTER_GENES_KEY = "FILTER_GENES"
-#JOBS_SETUP_RPT_COLOR_GENES_KEY = "COLOR_GENES"
+JOBS_SETUP_RPT_FILTER_PASS_VQSR = "PASS-VQSR"
+JOBS_SETUP_RPT_FILTER_NON_INTERGENIC = "Non-Intergenic"
+JOBS_SETUP_RPT_FILTER_NON_INTRONIC = "Non-Intronic"
+JOBS_SETUP_RPT_FILTER_NON_UPSTREAM = "Non-Upstream"
+JOBS_SETUP_RPT_FILTER_NON_DOWNSTREAM = "Non-Downstream"
+JOBS_SETUP_RPT_FILTER_NON_UTR = "Non-UTR"
+JOBS_SETUP_RPT_FILTER_NON_SYNONYMOUS = "Non-Synonymous"
+JOBS_SETUP_RPT_FILTER_HAS_MUTATION = "Has-Mutation"
+JOBS_SETUP_RPT_FILTER_HAS_SHARED = "Has-Shared"
+JOBS_SETUP_RPT_FILTER_NON_RECESSIVE_GENE = "Non-Recessive-Gene"
+JOBS_SETUP_RPT_FILTER_GENES_KEY = "FILTER_GENES"
+JOBS_SETUP_RPT_COLOR_GENES_KEY = "COLOR_GENES"
 JOBS_SETUP_RPT_COLORING_SAMPLES_KEY = "COLORING_SAMPLES"
 JOBS_SETUP_RPT_COLORING_SHARED = "Shared"
 JOBS_SETUP_RPT_COLORING_ZYGOSITY = "Zygosity"
@@ -130,17 +130,17 @@ JOBS_SETUP_RPT_COLORING_ZYGOSITY = "Zygosity"
 #RPT_LAYOUT_CAPTION_FILTER_ACTIONS = "filter actions"
 #
 #FILTER_RARE = JOBS_SETUP_RPT_FILTER_RARE
-#FILTER_PASS_VQSR = JOBS_SETUP_RPT_FILTER_PASS_VQSR
-#FILTER_NON_INTERGENIC = JOBS_SETUP_RPT_FILTER_NON_INTERGENIC
-#FILTER_NON_INTRONIC = JOBS_SETUP_RPT_FILTER_NON_INTRONIC
-#FILTER_NON_UPSTREAM = JOBS_SETUP_RPT_FILTER_NON_UPSTREAM
-#FILTER_NON_DOWNSTREAM = JOBS_SETUP_RPT_FILTER_NON_DOWNSTREAM
-#FILTER_NON_UTR = JOBS_SETUP_RPT_FILTER_NON_UTR
-#FILTER_NON_SYNONYMOUS = JOBS_SETUP_RPT_FILTER_NON_SYNONYMOUS
-#FILTER_HAS_MUTATION = JOBS_SETUP_RPT_FILTER_HAS_MUTATION
-#FILTER_HAS_SHARED = JOBS_SETUP_RPT_FILTER_HAS_SHARED
-#FILTER_NON_RECESSIVE_GENE = JOBS_SETUP_RPT_FILTER_NON_RECESSIVE_GENE
-#
+FILTER_PASS_VQSR = JOBS_SETUP_RPT_FILTER_PASS_VQSR
+FILTER_NON_INTERGENIC = JOBS_SETUP_RPT_FILTER_NON_INTERGENIC
+FILTER_NON_INTRONIC = JOBS_SETUP_RPT_FILTER_NON_INTRONIC
+FILTER_NON_UPSTREAM = JOBS_SETUP_RPT_FILTER_NON_UPSTREAM
+FILTER_NON_DOWNSTREAM = JOBS_SETUP_RPT_FILTER_NON_DOWNSTREAM
+FILTER_NON_UTR = JOBS_SETUP_RPT_FILTER_NON_UTR
+FILTER_NON_SYNONYMOUS = JOBS_SETUP_RPT_FILTER_NON_SYNONYMOUS
+FILTER_HAS_MUTATION = JOBS_SETUP_RPT_FILTER_HAS_MUTATION
+FILTER_HAS_SHARED = JOBS_SETUP_RPT_FILTER_HAS_SHARED
+FILTER_NON_RECESSIVE_GENE = JOBS_SETUP_RPT_FILTER_NON_RECESSIVE_GENE
+
 XLS_CHROM_COL_IDX = 0
 XLS_POS_COL_IDX = 1
 XLS_REF_COL_IDX = 2
@@ -161,6 +161,140 @@ QRY_FILTER_COL_IDX = 4
 #VcfRecordBuffer = namedtuple('VcfRecordBuffer',
 #                             'qry_record allele_idx')
 #
+class ActionDelRow(pyCMMBase):
+    """ A structure to parse action to delete a row from a mutation report sheet """
+
+    def __init__(self,
+                 pattern,
+                 *args,
+                 **kwargs
+                 ):
+        super(ActionDelRow, self).__init__(*args, **kwargs)
+        self.__pattern = pattern
+
+    def get_raw_obj_str(self):
+        return {"pattern": self.pattern}
+
+    @property
+    def pattern(self):
+        return self.__pattern
+
+class ActionColorRow(pyCMMBase):
+    """ A structure to parse action to color a row in a mutation report sheet """
+
+    def __init__(self,
+                 pattern,
+                 info,
+                 *args,
+                 **kwargs
+                 ):
+        super(ActionColorRow, self).__init__(*args, **kwargs)
+        self.__pattern = pattern
+        self.__info = info
+
+    def get_raw_obj_str(self):
+        return {"pattern": self.pattern,
+                "color": self.color}
+
+    @property
+    def pattern(self):
+        return self.__pattern
+
+    @property
+    def color(self):
+        return self.__info
+
+class ActionColorCol(pyCMMBase):
+    """ A structure to parse action to color a column in a row in a mutation report sheet """
+
+    def __init__(self,
+                 pattern,
+                 info,
+                 *args,
+                 **kwargs
+                 ):
+        super(ActionColorCol, self).__init__(*args, **kwargs)
+        self.__pattern = pattern
+        self.__info = info
+
+    def get_raw_obj_str(self):
+        return {"pattern": self.pattern,
+                "column name": self.col_name,
+                "color": self.color}
+
+    @property
+    def pattern(self):
+        return self.__pattern
+
+    @property
+    def col_name(self):
+        return self.__info.split(":")[0]
+
+    @property
+    def color(self):
+        return self.__info.split(":")[1]
+
+class VcfExpressions(pyCMMBase):
+    """
+    An user-friendly structure encapsulating
+    VCF expression configuration
+    """
+
+    def __init__(self,
+                 expressions,
+                 *args,
+                 **kwargs
+                 ):
+        super(VcfExpressions, self).__init__(*args, **kwargs)
+        self.__expressions = expressions
+        self.__patterns = None
+        self.__actions = None
+
+    @property
+    def name(self):
+        return self.__expression[JOBS_SETUP_RPT_EXPRESSIONS_NAME_KEY]
+
+    @property
+    def patterns(self):
+        if self.__patterns is None:
+            self.__patterns = {}
+            for expr in self.__expressions:
+                name = expr[JOBS_SETUP_RPT_EXPRESSIONS_NAME_KEY]
+                pattern = expr[JOBS_SETUP_RPT_EXPRESSIONS_PATTERN_KEY]
+                self.__patterns[name] = pattern
+        return self.__patterns
+
+    @property
+    def actions(self):
+        if self.__actions is None:
+            # all kind of possible actions are parsed here
+            # possible actions are
+            #   - delete row
+            #   - color a column at the row
+            #   - color a row
+            # each action is structured as a list
+            # each item in the list consist of at least a pattern
+            # -> if the evaluation of the pattern is True the do the action
+            # and the item can also have an info field
+            self.__actions = defaultdict(list)
+            actions_color_col = defaultdict(list)
+            for expr in self.__expressions:
+                if JOBS_SETUP_RPT_EXPRESSIONS_USAGES_KEY in expr:
+                    pattern = expr[JOBS_SETUP_RPT_EXPRESSIONS_PATTERN_KEY]
+                    for usage in expr[JOBS_SETUP_RPT_EXPRESSIONS_USAGES_KEY]:
+                        action = usage[JOBS_SETUP_RPT_EXPRESSIONS_ACTION_KEY]
+                        if JOBS_SETUP_RPT_EXPRESSIONS_INFO_KEY in usage:
+                            info = usage[JOBS_SETUP_RPT_EXPRESSIONS_INFO_KEY]
+                        if action == ACTION_DELETE_ROW:
+                            self.__actions[ACTION_DELETE_ROW].append(ActionDelRow(pattern))
+                        if action == ACTION_COLOR_ROW:
+                            self.__actions[ACTION_COLOR_ROW].append(ActionColorRow(pattern, info=info))
+                        if action == ACTION_COLOR_COL:
+                            acc = ActionColorCol(pattern, info=info)
+                            actions_color_col[acc.col_name].append(acc)
+            self.__actions[ACTION_COLOR_COL] = actions_color_col
+        return self.__actions
+
 class ReportLayout(CMMParams):
     """ A structure to parse and keep mutation report layout """
 
@@ -209,9 +343,9 @@ class ReportLayout(CMMParams):
         self.__anno_cols = None
 #        self.__freq_ratios = None
         self.__header_corrections = self.__get_header_corrections()
-#        self.__exprs = self._get_job_config(JOBS_SETUP_RPT_EXPRESSIONS_KEY)
-#        if self.__exprs is not None:
-#            self.__exprs = VcfExpressions(self.__exprs)
+        self.__exprs = self._get_job_config(JOBS_SETUP_RPT_EXPRESSIONS_KEY)
+        if self.__exprs is not None:
+            self.__exprs = VcfExpressions(self.__exprs)
 
     def __get_header_corrections(self):
         raw_header_corrections = self._get_job_config(JOBS_SETUP_RPT_HEADER_CORRECTIONS_KEY)
@@ -225,7 +359,7 @@ class ReportLayout(CMMParams):
 
     @property
     def db_file(self):
-        return "/pica/v10/b2011117_nobackup/private/jessada/private/projects/pyCMM/pycmm/proc/mutrep/test/data/mutrep/MutRepController/test_gen_report/input.db"
+        return "/proj/b2011117/private/src/pyCMM/pycmm/proc/mutrep/test/data/mutrep/MutRepController/test_gen_report/input.db"
 
 # ********************************** need to refactor ********************************
     @property
@@ -313,39 +447,39 @@ class ReportLayout(CMMParams):
 #            anno_cols += RECESSIVE_STUDY_COL_NAMES
 #        return anno_cols
 
-#    @property
-#    def annotated_vcf_tabix(self):
-#        return self._get_job_config(JOBS_SETUP_RPT_ANNOTATED_VCF_TABIX,
-#                                    required=True)
-#
-#    @property
-#    def anno_excl_tags(self):
-#        return self._get_job_config(JOBS_SETUP_RPT_ANNO_EXCL_TAGS_KEY,
-#                                    default_val=[])
-#
+    @property
+    def annotated_vcf_tabix(self):
+        return self._get_job_config(JOBS_SETUP_RPT_ANNOTATED_VCF_TABIX,
+                                    required=True)
+
+    @property
+    def anno_excl_tags(self):
+        return self._get_job_config(JOBS_SETUP_RPT_ANNO_EXCL_TAGS_KEY,
+                                    default_val=[])
+
 #    @property
 #    def anno_cols(self):
 #        if self.__anno_cols is None:
 #            self.__anno_cols = self.__cal_anno_cols()
 #        return self.__anno_cols
 #
-#    @property
-#    def report_regions(self):
-#        regions = self._get_job_config(JOBS_SETUP_RPT_REGIONS_KEY)
-#        if regions is not None:
-#            regions = map(lambda x: DNARegion(str(x)),
-#                          regions)
-#        return regions
-#
-#    @property
-#    def exprs(self):
-#        return self.__exprs
-#
-#    @property
-#    def split_chrom(self):
-#        return self._get_job_config(JOBS_SETUP_RPT_SPLIT_CHROM_KEY,
-#                                    default_val=False)
-#
+    @property
+    def report_regions(self):
+        regions = self._get_job_config(JOBS_SETUP_RPT_REGIONS_KEY)
+        if regions is not None:
+            regions = map(lambda x: DNARegion(str(x)),
+                          regions)
+        return regions
+
+    @property
+    def exprs(self):
+        return self.__exprs
+
+    @property
+    def split_chrom(self):
+        return self._get_job_config(JOBS_SETUP_RPT_SPLIT_CHROM_KEY,
+                                    default_val=False)
+
     @property
     def call_detail(self):
         return JOBS_SETUP_RPT_EXTRA_ANNO_CALL_DETAIL in self._get_job_config(JOBS_SETUP_RPT_EXTRA_ANNO_COLS_KEY,
@@ -361,56 +495,56 @@ class ReportLayout(CMMParams):
 #        return JOBS_SETUP_RPT_FILTER_RARE in self._get_job_config(JOBS_SETUP_RPT_ROWS_FILTER_ACTIONS_CRITERIA_KEY,
 #                                                                  default_val=[])
 #
-#    @property
-#    def filter_pass_vqsr(self):
-#        return JOBS_SETUP_RPT_FILTER_PASS_VQSR in self._get_job_config(JOBS_SETUP_RPT_ROWS_FILTER_ACTIONS_CRITERIA_KEY,
-#                                                                       default_val=[])
-#
-#    @property
-#    def filter_non_intergenic(self):
-#        return JOBS_SETUP_RPT_FILTER_NON_INTERGENIC in self._get_job_config(JOBS_SETUP_RPT_ROWS_FILTER_ACTIONS_CRITERIA_KEY,
-#                                                                            default_val=[])
-#
-#    @property
-#    def filter_non_intronic(self):
-#        return JOBS_SETUP_RPT_FILTER_NON_INTRONIC in self._get_job_config(JOBS_SETUP_RPT_ROWS_FILTER_ACTIONS_CRITERIA_KEY,
-#                                                                          default_val=[])
-#
-#    @property
-#    def filter_non_upstream(self):
-#        return JOBS_SETUP_RPT_FILTER_NON_UPSTREAM in self._get_job_config(JOBS_SETUP_RPT_ROWS_FILTER_ACTIONS_CRITERIA_KEY,
-#                                                                          default_val=[])
-#
-#    @property
-#    def filter_non_downtream(self):
-#        return JOBS_SETUP_RPT_FILTER_NON_DOWNSTREAM in self._get_job_config(JOBS_SETUP_RPT_ROWS_FILTER_ACTIONS_CRITERIA_KEY,
-#                                                                            default_val=[])
-#
-#    @property
-#    def filter_non_utr(self):
-#        return JOBS_SETUP_RPT_FILTER_NON_UTR in self._get_job_config(JOBS_SETUP_RPT_ROWS_FILTER_ACTIONS_CRITERIA_KEY,
-#                                                                     default_val=[])
-#
-#    @property
-#    def filter_non_synonymous(self):
-#        return JOBS_SETUP_RPT_FILTER_NON_SYNONYMOUS in self._get_job_config(JOBS_SETUP_RPT_ROWS_FILTER_ACTIONS_CRITERIA_KEY,
-#                                                                            default_val=[])
-#
-#    @property
-#    def filter_has_mutation(self):
-#        return JOBS_SETUP_RPT_FILTER_HAS_MUTATION in self._get_job_config(JOBS_SETUP_RPT_ROWS_FILTER_ACTIONS_CRITERIA_KEY,
-#                                                                          default_val=[])
-#
-#    @property
-#    def filter_has_shared(self):
-#        return JOBS_SETUP_RPT_FILTER_HAS_SHARED in self._get_job_config(JOBS_SETUP_RPT_ROWS_FILTER_ACTIONS_CRITERIA_KEY,
-#                                                                        default_val=[])
-#
-#    @property
-#    def filter_non_recessive_gene(self):
-#        return JOBS_SETUP_RPT_FILTER_NON_RECESSIVE_GENE in self._get_job_config(JOBS_SETUP_RPT_ROWS_FILTER_ACTIONS_CRITERIA_KEY,
-#                                                                                default_val=[])
-#
+    @property
+    def filter_pass_vqsr(self):
+        return JOBS_SETUP_RPT_FILTER_PASS_VQSR in self._get_job_config(JOBS_SETUP_RPT_ROWS_FILTER_ACTIONS_CRITERIA_KEY,
+                                                                       default_val=[])
+
+    @property
+    def filter_non_intergenic(self):
+        return JOBS_SETUP_RPT_FILTER_NON_INTERGENIC in self._get_job_config(JOBS_SETUP_RPT_ROWS_FILTER_ACTIONS_CRITERIA_KEY,
+                                                                            default_val=[])
+
+    @property
+    def filter_non_intronic(self):
+        return JOBS_SETUP_RPT_FILTER_NON_INTRONIC in self._get_job_config(JOBS_SETUP_RPT_ROWS_FILTER_ACTIONS_CRITERIA_KEY,
+                                                                          default_val=[])
+
+    @property
+    def filter_non_upstream(self):
+        return JOBS_SETUP_RPT_FILTER_NON_UPSTREAM in self._get_job_config(JOBS_SETUP_RPT_ROWS_FILTER_ACTIONS_CRITERIA_KEY,
+                                                                          default_val=[])
+
+    @property
+    def filter_non_downtream(self):
+        return JOBS_SETUP_RPT_FILTER_NON_DOWNSTREAM in self._get_job_config(JOBS_SETUP_RPT_ROWS_FILTER_ACTIONS_CRITERIA_KEY,
+                                                                            default_val=[])
+
+    @property
+    def filter_non_utr(self):
+        return JOBS_SETUP_RPT_FILTER_NON_UTR in self._get_job_config(JOBS_SETUP_RPT_ROWS_FILTER_ACTIONS_CRITERIA_KEY,
+                                                                     default_val=[])
+
+    @property
+    def filter_non_synonymous(self):
+        return JOBS_SETUP_RPT_FILTER_NON_SYNONYMOUS in self._get_job_config(JOBS_SETUP_RPT_ROWS_FILTER_ACTIONS_CRITERIA_KEY,
+                                                                            default_val=[])
+
+    @property
+    def filter_has_mutation(self):
+        return JOBS_SETUP_RPT_FILTER_HAS_MUTATION in self._get_job_config(JOBS_SETUP_RPT_ROWS_FILTER_ACTIONS_CRITERIA_KEY,
+                                                                          default_val=[])
+
+    @property
+    def filter_has_shared(self):
+        return JOBS_SETUP_RPT_FILTER_HAS_SHARED in self._get_job_config(JOBS_SETUP_RPT_ROWS_FILTER_ACTIONS_CRITERIA_KEY,
+                                                                        default_val=[])
+
+    @property
+    def filter_non_recessive_gene(self):
+        return JOBS_SETUP_RPT_FILTER_NON_RECESSIVE_GENE in self._get_job_config(JOBS_SETUP_RPT_ROWS_FILTER_ACTIONS_CRITERIA_KEY,
+                                                                                default_val=[])
+
     @property
     def coloring_shared(self):
         return JOBS_SETUP_RPT_COLORING_SHARED in self._get_job_config(JOBS_SETUP_RPT_COLORING_SAMPLES_KEY,
@@ -445,14 +579,14 @@ class ReportLayout(CMMParams):
 #            self.__freq_ratios = []
 #        return self.__freq_ratios
 #
-#    @property
-#    def filter_genes(self):
-#        return self._get_job_config(JOBS_SETUP_RPT_FILTER_GENES_KEY)
-#
-#    @property
-#    def color_genes(self):
-#        return self._get_job_config(JOBS_SETUP_RPT_COLOR_GENES_KEY)
-#
+    @property
+    def filter_genes(self):
+        return self._get_job_config(JOBS_SETUP_RPT_FILTER_GENES_KEY)
+
+    @property
+    def color_genes(self):
+        return self._get_job_config(JOBS_SETUP_RPT_COLOR_GENES_KEY)
+
     def __init_cell_colors(self):
         self.__cell_colors = {}
 #        self.__cell_colors[CELL_TYPE_HET_SHARED] = DFLT_COLOR_HET_SHARED
@@ -495,11 +629,11 @@ class ReportLayout(CMMParams):
 #    @property
 #    def cell_color_color_gene(self):
 #        return self.__cell_colors[CELL_TYPE_COLOR_GENE]
-#
-#    @property
-#    def show_shared_variants(self):
-#        return self._get_job_config(JOBS_SETUP_RPT_SHOW_SHARED_VARIANTS,
-#                                    default_val=False)
+
+    @property
+    def show_shared_variants(self):
+        return self._get_job_config(JOBS_SETUP_RPT_SHOW_SHARED_VARIANTS,
+                                    default_val=False)
 
 class MutRepController(CMMPipeline):
     """ A class to control CMMDB best practice pipeline """
@@ -1167,140 +1301,6 @@ class MutRepController(CMMPipeline):
         self.__wb.close()
 
 
-#class ActionDelRow(pyCMMBase):
-#    """ A structure to parse action to delete a row from a mutation report sheet """
-#
-#    def __init__(self,
-#                 pattern,
-#                 *args,
-#                 **kwargs
-#                 ):
-#        super(ActionDelRow, self).__init__(*args, **kwargs)
-#        self.__pattern = pattern
-#
-#    def get_raw_obj_str(self):
-#        return {"pattern": self.pattern}
-#
-#    @property
-#    def pattern(self):
-#        return self.__pattern
-#
-#class ActionColorRow(pyCMMBase):
-#    """ A structure to parse action to color a row in a mutation report sheet """
-#
-#    def __init__(self,
-#                 pattern,
-#                 info,
-#                 *args,
-#                 **kwargs
-#                 ):
-#        super(ActionColorRow, self).__init__(*args, **kwargs)
-#        self.__pattern = pattern
-#        self.__info = info
-#
-#    def get_raw_obj_str(self):
-#        return {"pattern": self.pattern,
-#                "color": self.color}
-#
-#    @property
-#    def pattern(self):
-#        return self.__pattern
-#
-#    @property
-#    def color(self):
-#        return self.__info
-#
-#class ActionColorCol(pyCMMBase):
-#    """ A structure to parse action to color a column in a row in a mutation report sheet """
-#
-#    def __init__(self,
-#                 pattern,
-#                 info,
-#                 *args,
-#                 **kwargs
-#                 ):
-#        super(ActionColorCol, self).__init__(*args, **kwargs)
-#        self.__pattern = pattern
-#        self.__info = info
-#
-#    def get_raw_obj_str(self):
-#        return {"pattern": self.pattern,
-#                "column name": self.col_name,
-#                "color": self.color}
-#
-#    @property
-#    def pattern(self):
-#        return self.__pattern
-#
-#    @property
-#    def col_name(self):
-#        return self.__info.split(":")[0]
-#
-#    @property
-#    def color(self):
-#        return self.__info.split(":")[1]
-#
-#class VcfExpressions(pyCMMBase):
-#    """
-#    An user-friendly structure encapsulating
-#    VCF expression configuration
-#    """
-#
-#    def __init__(self,
-#                 expressions,
-#                 *args,
-#                 **kwargs
-#                 ):
-#        super(VcfExpressions, self).__init__(*args, **kwargs)
-#        self.__expressions = expressions
-#        self.__patterns = None
-#        self.__actions = None
-#
-#    @property
-#    def name(self):
-#        return self.__expression[JOBS_SETUP_RPT_EXPRESSIONS_NAME_KEY]
-#
-#    @property
-#    def patterns(self):
-#        if self.__patterns is None:
-#            self.__patterns = {}
-#            for expr in self.__expressions:
-#                name = expr[JOBS_SETUP_RPT_EXPRESSIONS_NAME_KEY]
-#                pattern = expr[JOBS_SETUP_RPT_EXPRESSIONS_PATTERN_KEY]
-#                self.__patterns[name] = pattern
-#        return self.__patterns
-#
-#    @property
-#    def actions(self):
-#        if self.__actions is None:
-#            # all kind of possible actions are parsed here
-#            # possible actions are
-#            #   - delete row
-#            #   - color a column at the row
-#            #   - color a row
-#            # each action is structured as a list
-#            # each item in the list consist of at least a pattern
-#            # -> if the evaluation of the pattern is True the do the action
-#            # and the item can also have an info field
-#            self.__actions = defaultdict(list)
-#            actions_color_col = defaultdict(list)
-#            for expr in self.__expressions:
-#                if JOBS_SETUP_RPT_EXPRESSIONS_USAGES_KEY in expr:
-#                    pattern = expr[JOBS_SETUP_RPT_EXPRESSIONS_PATTERN_KEY]
-#                    for usage in expr[JOBS_SETUP_RPT_EXPRESSIONS_USAGES_KEY]:
-#                        action = usage[JOBS_SETUP_RPT_EXPRESSIONS_ACTION_KEY]
-#                        if JOBS_SETUP_RPT_EXPRESSIONS_INFO_KEY in usage:
-#                            info = usage[JOBS_SETUP_RPT_EXPRESSIONS_INFO_KEY]
-#                        if action == ACTION_DELETE_ROW:
-#                            self.__actions[ACTION_DELETE_ROW].append(ActionDelRow(pattern))
-#                        if action == ACTION_COLOR_ROW:
-#                            self.__actions[ACTION_COLOR_ROW].append(ActionColorRow(pattern, info=info))
-#                        if action == ACTION_COLOR_COL:
-#                            acc = ActionColorCol(pattern, info=info)
-#                            actions_color_col[acc.col_name].append(acc)
-#            self.__actions[ACTION_COLOR_COL] = actions_color_col
-#        return self.__actions
-#
 #class ReportLayout(CMMParams):
 #    """ A structure to parse and keep mutation report layout """
 #
