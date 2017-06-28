@@ -5,19 +5,19 @@ from os.path import join as join_path
 from collections import OrderedDict
 from pycmm.template import SafeTester
 from pycmm.proc.mutrep.mutrep import MutRepController
-#from pycmm.cmmlib.xlslib import XlsUtils
+from pycmm.cmmlib.xlslib import XlsUtils
 #from pycmm.cmmlib.colorlib import COLORS_RGB
 from pycmm.settings import XLS_TEST
 #from pycmm.settings import DFLT_MUTREP_FREQ_RATIOS
 from pycmm.settings import ALL_MUTREP_ANNO_COLS
 #from pycmm.settings import MT_COLS_TAG
 from pycmm.settings import AXEQ_CHR9_COLS_TAG
-#from pycmm.settings import AXEQ_CHR3_6_14_18_COLS_TAG
-#from pycmm.settings import AXEQ_CHR5_19_COLS_TAG
+from pycmm.settings import AXEQ_CHR3_6_14_18_COLS_TAG
+from pycmm.settings import AXEQ_CHR5_19_COLS_TAG
 from pycmm.settings import MUTSTAT_DETAILS_COLS_TAG
 from pycmm.settings import EXAC_OTH_COLS_TAG
 from pycmm.settings import EXAC_CONSTRAINT_COLS_TAG
-#from pycmm.settings import LJB_SCORE_COLS_TAG
+from pycmm.settings import LJB_SCORE_COLS_TAG
 from pycmm.settings import UNKNOWN_COLS_TAG
 from pycmm.settings import FUNC_REFGENE_COL_NAME
 from pycmm.settings import EXONICFUNC_REFGENE_COL_NAME
@@ -46,22 +46,22 @@ from pycmm.settings import FULL_SYSTEM_TEST
 #from pycmm.settings import COMPOUND_HETEROZYGOTE_FREQ_RATIO_COL_NAME
 #from pycmm.settings import HOMOZYGOTE_AFFECTED_COUNT_COL_NAME
 #from pycmm.settings import HOMOZYGOTE_FREQ_RATIO_COL_NAME
-#from pycmm.flow.mutrep import MutRepController
-from pycmm.flow.mutrep import create_jobs_setup_file
-#from pycmm.flow.mutrep import JOBS_SETUP_RPT_FILTER_RARE
-from pycmm.flow.mutrep import JOBS_SETUP_RPT_FILTER_PASS_VQSR
-from pycmm.flow.mutrep import JOBS_SETUP_RPT_FILTER_NON_INTERGENIC
-from pycmm.flow.mutrep import JOBS_SETUP_RPT_FILTER_NON_INTRONIC
-from pycmm.flow.mutrep import JOBS_SETUP_RPT_FILTER_NON_UPSTREAM
-from pycmm.flow.mutrep import JOBS_SETUP_RPT_FILTER_NON_DOWNSTREAM
-from pycmm.flow.mutrep import JOBS_SETUP_RPT_FILTER_NON_UTR
-from pycmm.flow.mutrep import JOBS_SETUP_RPT_FILTER_NON_SYNONYMOUS
-from pycmm.flow.mutrep import JOBS_SETUP_RPT_FILTER_HAS_MUTATION
-from pycmm.flow.mutrep import JOBS_SETUP_RPT_FILTER_HAS_SHARED
-from pycmm.flow.mutrep import JOBS_SETUP_RPT_FILTER_NON_RECESSIVE_GENE
-from pycmm.flow.mutrep import ACTION_DELETE_ROW
-from pycmm.flow.mutrep import ACTION_COLOR_ROW
-from pycmm.flow.mutrep import ACTION_COLOR_COL
+#from pycmm.proc.mutrep.mutrep import MutRepController
+from pycmm.proc.mutrep.mutrep import create_jobs_setup_file
+#from pycmm.proc.mutrep.mutrep import JOBS_SETUP_RPT_FILTER_RARE
+from pycmm.proc.mutrep.mutrep import JOBS_SETUP_RPT_FILTER_PASS_VQSR
+from pycmm.proc.mutrep.mutrep import JOBS_SETUP_RPT_FILTER_NON_INTERGENIC
+from pycmm.proc.mutrep.mutrep import JOBS_SETUP_RPT_FILTER_NON_INTRONIC
+from pycmm.proc.mutrep.mutrep import JOBS_SETUP_RPT_FILTER_NON_UPSTREAM
+from pycmm.proc.mutrep.mutrep import JOBS_SETUP_RPT_FILTER_NON_DOWNSTREAM
+from pycmm.proc.mutrep.mutrep import JOBS_SETUP_RPT_FILTER_NON_UTR
+from pycmm.proc.mutrep.mutrep import JOBS_SETUP_RPT_FILTER_NON_SYNONYMOUS
+from pycmm.proc.mutrep.mutrep import JOBS_SETUP_RPT_FILTER_HAS_MUTATION
+from pycmm.proc.mutrep.mutrep import JOBS_SETUP_RPT_FILTER_HAS_SHARED
+from pycmm.proc.mutrep.mutrep import JOBS_SETUP_RPT_FILTER_NON_RECESSIVE_GENE
+from pycmm.proc.mutrep.mutrep import ACTION_DELETE_ROW
+from pycmm.proc.mutrep.mutrep import ACTION_COLOR_ROW
+from pycmm.proc.mutrep.mutrep import ACTION_COLOR_COL
 
 DFLT_TEST_MUTREP_COLS = OrderedDict()
 DFLT_TEST_MUTREP_COLS[FUNC_REFGENE_COL_NAME] = ALL_MUTREP_ANNO_COLS[FUNC_REFGENE_COL_NAME]
@@ -100,6 +100,8 @@ class TestMutRepController(SafeTester):
     def __create_jobs_setup_file(self, *args, **kwargs):
         if 'project_name' not in kwargs:
             kwargs['project_name'] = self.test_function
+        if 'db_file' not in kwargs:
+            kwargs['db_file'] = join_path(self.data_dir, "input.db")
 #        if 'anno_cols' not in kwargs:
 #            anno_cols = DFLT_TEST_MUTREP_COLS
 #        else:
@@ -119,9 +121,9 @@ class TestMutRepController(SafeTester):
         """ test if default layout configurations are loaded correctly """
 
         self.init_test(self.current_func_name)
-        annotated_vcf_tabix = join_path(self.data_dir,
-                                        "input.vcf.gz")
-        jobs_setup_file = self.__create_jobs_setup_file(annotated_vcf_tabix=annotated_vcf_tabix)
+        db_file = join_path(self.data_dir,
+                            "input.db")
+        jobs_setup_file = self.__create_jobs_setup_file(db_file=db_file)
         pl = MutRepController(jobs_setup_file)
         self.assertEqual(len(pl.report_layout.anno_excl_tags),
                          0,
@@ -130,10 +132,10 @@ class TestMutRepController(SafeTester):
                          "MutRepController cannot correctly read report layout info 'expressions' from jobs setup file")
         self.assertFalse(pl.report_layout.split_chrom,
                          "MutRepController cannot correctly read report layout info 'split chrom' from jobs setup file")
-        self.assertFalse(pl.report_layout.call_detail,
-                         "MutRepController cannot correctly read report layout info 'call info' from jobs setup file")
-        self.assertFalse(pl.report_layout.call_gq,
-                         "MutRepController cannot correctly read report layout info 'call info' from jobs setup file")
+#        self.assertFalse(pl.report_layout.call_detail,
+#                         "MutRepController cannot correctly read report layout info 'call info' from jobs setup file")
+#        self.assertFalse(pl.report_layout.call_gq,
+#                         "MutRepController cannot correctly read report layout info 'call info' from jobs setup file")
         self.assertFalse(pl.report_layout.show_shared_variants,
                          "MutRepController cannot correctly read report layout info 'show shared mutations' from jobs setup file")
 #        self.assertFalse(pl.report_layout.filter_rare,
@@ -161,8 +163,8 @@ class TestMutRepController(SafeTester):
         """ test if non-default layout configurations are loaded correctly """
 
         self.init_test(self.current_func_name)
-        dummy_annotated_vcf_tabix = join_path(self.data_dir,
-                                              "input.vcf.gz")
+        dummy_db_file = join_path(self.data_dir,
+                                  "input.db")
         rows_filter_actions = JOBS_SETUP_RPT_FILTER_PASS_VQSR
         rows_filter_actions += ',' + JOBS_SETUP_RPT_FILTER_NON_INTERGENIC
         rows_filter_actions += ',' + JOBS_SETUP_RPT_FILTER_NON_INTRONIC
@@ -171,7 +173,7 @@ class TestMutRepController(SafeTester):
         jobs_setup_file = self.__create_jobs_setup_file(anno_cols=",".join(DFLT_TEST_MUTREP_COLS),
                                                         anno_excl_tags=DFLT_TEST_ANNO_EXCL_TAGS,
                                                         header_corrections="old_header:new_header",
-                                                        annotated_vcf_tabix=dummy_annotated_vcf_tabix,
+                                                        db_file=dummy_db_file,
                                                         report_regions="6:78161823-78164117,"+DFLT_TEST_REPORT_REGIONS+",22",
                                                         frequency_ratios=None,
                                                         filter_genes="CHEK2",
@@ -193,11 +195,11 @@ class TestMutRepController(SafeTester):
         self.assertEqual(pl.report_layout.anno_cols[4],
                          "cytoBand",
                          "MutRepController cannot correctly read report layout info 'layout columns' from jobs setup file")
-        self.assertEqual(pl.report_layout.anno_cols[8],
+        self.assertEqual(pl.report_layout.anno_cols[6],
                          AXEQ_CHR5_19_GF_COL_NAME,
                          "MutRepController cannot correctly read report layout info 'layout columns' from jobs setup file")
         self.assertEqual(len(pl.report_layout.anno_cols),
-                         9,
+                         7,
                          "MutRepController cannot correctly read report layout info 'layout columns' from jobs setup file")
         self.assertEqual(len(pl.report_layout.anno_excl_tags),
                          5,
@@ -211,8 +213,8 @@ class TestMutRepController(SafeTester):
         self.assertEqual(pl.report_layout.report_regions[2].start_pos,
                          None,
                          "MutRepController cannot correctly read report layout info 'report regions' from jobs setup file")
-        self.assertEqual(pl.report_layout.annotated_vcf_tabix,
-                         dummy_annotated_vcf_tabix,
+        self.assertEqual(pl.report_layout.db_file,
+                         dummy_db_file,
                          "MutRepController cannot correctly determine report layout info 'annotated vcf tabix' file")
         self.assertEqual(pl.report_layout.exprs.patterns["test1"],
                          '1>0',
@@ -231,10 +233,10 @@ class TestMutRepController(SafeTester):
                          "MutRepController cannot correctly read report layout info 'expression actions' from jobs setup file")
         self.assertTrue(pl.report_layout.split_chrom,
                         "MutRepController cannot correctly read report layout info 'split chrom' from jobs setup file")
-        self.assertTrue(pl.report_layout.call_detail,
-                        "MutRepController cannot correctly read report layout info 'call info' from jobs setup file")
-        self.assertTrue(pl.report_layout.call_gq,
-                        "MutRepController cannot correctly read report layout info 'call info' from jobs setup file")
+#        self.assertTrue(pl.report_layout.call_detail,
+#                        "MutRepController cannot correctly read report layout info 'call info' from jobs setup file")
+#        self.assertTrue(pl.report_layout.call_gq,
+#                        "MutRepController cannot correctly read report layout info 'call info' from jobs setup file")
         self.assertTrue(pl.report_layout.show_shared_variants,
                         "MutRepController cannot correctly read report layout info 'show shared mutations' from jobs setup file")
 #        self.assertTrue(pl.report_layout.filter_rare,
@@ -260,94 +262,99 @@ class TestMutRepController(SafeTester):
         self.assertTrue(pl.report_layout.coloring_zygosity,
                         "MutRepController cannot correctly read report layout info 'coloring zygosity' from jobs setup file")
 
-#    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST, "taking too long time to test")
+    def test_load_jobs_info_3(self):
+        """ test if non-default (None) layout configurations are loaded correctly """
+
+        self.init_test(self.current_func_name)
+        jobs_setup_file = self.__create_jobs_setup_file(report_regions=None,
+                                                        header_corrections="old_header1:new_header1,old_header2:new_header2",
+                                                        frequency_ratios="ExAC:0.5",
+                                                        filter_genes="CHEK2,NOTCH1,NOTCH4",
+                                                        color_genes="BRCA1,MSH2,SRC",
+                                                        expression_patterns='expr_with_key:"abc" < 4,expr_wo:jkl>5, expr78 : 2>3',
+                                                        expression_usages="expr_with_key:DELETE_ROW,expr_wo:COLOR_COLUMN:F_U_8:red,expr_wo:COLOR_ROW:green,expr78:COLOR_ROW:orange",
+                                                        )
+        pl = MutRepController(jobs_setup_file=jobs_setup_file)
+        self.assertEqual(pl.report_layout.report_regions,
+                         None,
+                         "MutRepController cannot correctly read report layout info 'report regions' from jobs setup file")
+#        self.assertEqual(pl.report_layout.freq_ratios["ExAC"],
+#                         0.5,
+#                         "MutRepController cannot correctly read report layout info 'frequency ratios' from jobs setup file")
+        self.assertEqual(pl.report_layout.exprs.patterns["expr_with_key"],
+                         '\'"abc" < 4\'',
+                         "MutRepController cannot correctly read report layout info 'expressions' from jobs setup file")
+        self.assertEqual(pl.report_layout.exprs.patterns["expr_wo"],
+                         'jkl>5',
+                         "MutRepController cannot correctly read report layout info 'expressions' from jobs setup file")
+        self.assertEqual(pl.report_layout.exprs.actions[ACTION_DELETE_ROW][0].pattern,
+                         '\'"abc" < 4\'',
+                         "MutRepController cannot correctly read report layout info 'expression actions' from jobs setup file")
+        self.assertEqual(pl.report_layout.exprs.actions[ACTION_COLOR_COL]['F_U_8'][0].pattern,
+                         'jkl>5',
+                         "MutRepController cannot correctly read report layout info 'expression actions' from jobs setup file")
+        self.assertEqual(pl.report_layout.exprs.actions[ACTION_COLOR_COL]['F_U_8'][0].col_name,
+                         'F_U_8',
+                         "MutRepController cannot correctly read report layout info 'expression actions' from jobs setup file")
+        self.assertEqual(pl.report_layout.exprs.actions[ACTION_COLOR_COL]['F_U_8'][0].color,
+                         'red',
+                         "MutRepController cannot correctly read report layout info 'expression actions' from jobs setup file")
+        self.assertEqual(pl.report_layout.exprs.actions[ACTION_COLOR_ROW][0].pattern,
+                         'jkl>5',
+                         "MutRepController cannot correctly read report layout info 'expression actions' from jobs setup file")
+        self.assertEqual(pl.report_layout.exprs.actions[ACTION_COLOR_ROW][0].color,
+                         'green',
+                         "MutRepController cannot correctly read report layout info 'expression actions' from jobs setup file")
+        self.assertEqual(pl.report_layout.exprs.actions[ACTION_COLOR_ROW][1].pattern,
+                         '2>3',
+                         "MutRepController cannot correctly read report layout info 'expression actions' from jobs setup file")
+        self.assertEqual(pl.report_layout.exprs.actions[ACTION_COLOR_ROW][1].color,
+                         'orange',
+                         "MutRepController cannot correctly read report layout info 'expression actions' from jobs setup file")
+        self.assertEqual(pl.report_layout.filter_genes[1],
+                         'NOTCH1',
+                         "MutRepController cannot correctly read report layout info 'filter genes' from jobs setup file")
+        self.assertEqual(pl.report_layout.filter_genes[2],
+                         'NOTCH4',
+                         "MutRepController cannot correctly read report layout info 'filter genes' from jobs setup file")
+        self.assertEqual(pl.report_layout.color_genes[0],
+                         'BRCA1',
+                         "MutRepController cannot correctly read report layout info 'color genes' from jobs setup file")
+        self.assertEqual(pl.report_layout.color_genes[2],
+                         'SRC',
+                         "MutRepController cannot correctly read report layout info 'color genes' from jobs setup file")
+
+    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST, "taking too long time to test")
     def test_gen_report(self):
         """ very prototype testing of mutrep """
 
         self.individual_debug = True
         self.init_test(self.current_func_name)
-        annotated_vcf_tabix = join_path(self.data_dir,
-                                        "input.vcf.gz")
-        db_file = join_path(self.data_dir,
-                            "input.db")
-        self.dbg(db_file)
-        jobs_setup_file = self.__create_jobs_setup_file(annotated_vcf_tabix=annotated_vcf_tabix)
-        mp = MutRepController(jobs_setup_file)
-        mp.gen_report(None, "all_gtz_annos")
+        anno_cols = "Func_refGene"
+        anno_cols += ",ExonicFunc_refGene"
+        anno_cols += ",Gene_refGene"
+        anno_cols += ",GeneDetail_refGene"
+        anno_cols += ",JUNK_col"
+        anno_cols += ",MAX_REF_MAF"
+        anno_cols += ",SWEGEN_AF"
+        jobs_setup_file = self.__create_jobs_setup_file(anno_cols=anno_cols,
+                                                        sample_info="8:Co-35:Co-37,12:Co-89:Co-90",
+                                                        )
+        mc = MutRepController(jobs_setup_file)
+        mc.gen_report()
+#        mc.gen_report(None, "all_gtz_annos")
 #        mp.gen_report(None, "test_mutrep_view_1")
         
-#    def test_load_jobs_info_3(self):
-#        """ test if non-default (None) layout configurations are loaded correctly """
-#
-#        self.init_test(self.current_func_name)
-#        jobs_setup_file = self.__create_jobs_setup_file(report_regions=None,
-#                                                        header_corrections="old_header1:new_header1,old_header2:new_header2",
-#                                                        frequency_ratios="ExAC:0.5",
-#                                                        filter_genes="CHEK2,NOTCH1,NOTCH4",
-#                                                        color_genes="BRCA1,MSH2,SRC",
-#                                                        expression_patterns='expr_with_key:"abc" < 4,expr_wo:jkl>5, expr78 : 2>3',
-#                                                        expression_usages="expr_with_key:DELETE_ROW,expr_wo:COLOR_COLUMN:F_U_8:red,expr_wo:COLOR_ROW:green,expr78:COLOR_ROW:orange",
-#                                                        )
-#        pl = MutRepController(jobs_setup_file=jobs_setup_file)
-#        self.assertEqual(pl.report_layout.report_regions,
-#                         None,
-#                         "MutRepController cannot correctly read report layout info 'report regions' from jobs setup file")
-#        self.assertEqual(pl.report_layout.freq_ratios["ExAC"],
-#                         0.5,
-#                         "MutRepController cannot correctly read report layout info 'frequency ratios' from jobs setup file")
-#        self.assertEqual(pl.report_layout.exprs.patterns["expr_with_key"],
-#                         '\'"abc" < 4\'',
-#                         "MutRepController cannot correctly read report layout info 'expressions' from jobs setup file")
-#        self.assertEqual(pl.report_layout.exprs.patterns["expr_wo"],
-#                         'jkl>5',
-#                         "MutRepController cannot correctly read report layout info 'expressions' from jobs setup file")
-#        self.assertEqual(pl.report_layout.exprs.actions[ACTION_DELETE_ROW][0].pattern,
-#                         '\'"abc" < 4\'',
-#                         "MutRepController cannot correctly read report layout info 'expression actions' from jobs setup file")
-#        self.assertEqual(pl.report_layout.exprs.actions[ACTION_COLOR_COL]['F_U_8'][0].pattern,
-#                         'jkl>5',
-#                         "MutRepController cannot correctly read report layout info 'expression actions' from jobs setup file")
-#        self.assertEqual(pl.report_layout.exprs.actions[ACTION_COLOR_COL]['F_U_8'][0].col_name,
-#                         'F_U_8',
-#                         "MutRepController cannot correctly read report layout info 'expression actions' from jobs setup file")
-#        self.assertEqual(pl.report_layout.exprs.actions[ACTION_COLOR_COL]['F_U_8'][0].color,
-#                         'red',
-#                         "MutRepController cannot correctly read report layout info 'expression actions' from jobs setup file")
-#        self.assertEqual(pl.report_layout.exprs.actions[ACTION_COLOR_ROW][0].pattern,
-#                         'jkl>5',
-#                         "MutRepController cannot correctly read report layout info 'expression actions' from jobs setup file")
-#        self.assertEqual(pl.report_layout.exprs.actions[ACTION_COLOR_ROW][0].color,
-#                         'green',
-#                         "MutRepController cannot correctly read report layout info 'expression actions' from jobs setup file")
-#        self.assertEqual(pl.report_layout.exprs.actions[ACTION_COLOR_ROW][1].pattern,
-#                         '2>3',
-#                         "MutRepController cannot correctly read report layout info 'expression actions' from jobs setup file")
-#        self.assertEqual(pl.report_layout.exprs.actions[ACTION_COLOR_ROW][1].color,
-#                         'orange',
-#                         "MutRepController cannot correctly read report layout info 'expression actions' from jobs setup file")
-#        self.assertEqual(pl.report_layout.filter_genes[1],
-#                         'NOTCH1',
-#                         "MutRepController cannot correctly read report layout info 'filter genes' from jobs setup file")
-#        self.assertEqual(pl.report_layout.filter_genes[2],
-#                         'NOTCH4',
-#                         "MutRepController cannot correctly read report layout info 'filter genes' from jobs setup file")
-#        self.assertEqual(pl.report_layout.color_genes[0],
-#                         'BRCA1',
-#                         "MutRepController cannot correctly read report layout info 'color genes' from jobs setup file")
-#        self.assertEqual(pl.report_layout.color_genes[2],
-#                         'SRC',
-#                         "MutRepController cannot correctly read report layout info 'color genes' from jobs setup file")
-#
 #    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST, "taking too long time to test")
 #    def test_summary_report_1(self):
 #        """ test if summary report with default configuration can be correctly generated """
 #
 #        self.init_test(self.current_func_name)
-#        annotated_vcf_tabix = join_path(self.data_dir,
+#        db_file = join_path(self.data_dir,
 #                                        "chr6_18.vcf.gz")
 #        project_name = self.test_function
 #        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
-#                                                        annotated_vcf_tabix=annotated_vcf_tabix,
+#                                                        db_file=db_file,
 #                                                        report_regions=None,
 #                                                        )
 #        pl = MutRepController(jobs_setup_file=jobs_setup_file)
@@ -361,28 +368,21 @@ class TestMutRepController(SafeTester):
 #                         "shared mutations cannot be correctly determined")
 #
 #    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST, "taking too long time to test")
-#    def test_summary_report_2(self):
-#        """ test summary with multiple report_regions """
-#
-#        self.init_test(self.current_func_name)
-#        job_name = self.test_function
-#        annotated_vcf_tabix = join_path(self.data_dir,
-#                                        "chr6_18.vcf.gz")
-#        rpt_out_file = join_path(self.working_dir,
-#                                 self.current_func_name + ".xlsx")
-#        project_name = self.test_function
-#        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
-#                                                        annotated_vcf_tabix=annotated_vcf_tabix,
-#                                                        report_regions="6:78171940-78172992,18:28610987-28611790",
-#                                                        call_detail="YES",
-#                                                        )
-#        pl = MutRepController(jobs_setup_file=jobs_setup_file)
-#        pl.gen_summary_report(pl.report_layout.report_regions, out_file=rpt_out_file)
-#        xu = XlsUtils(rpt_out_file)
-#        self.assertEqual(xu.count_rows(),
-#                         10,
-#                         "shared mutations cannot be correctly determined")
-#
+    def test_gen_report_2(self):
+        """ test with multiple report_regions """
+
+        self.individual_debug = True
+        self.init_test(self.current_func_name)
+        rpt_out_file = join_path(self.working_dir,
+                                 self.current_func_name + ".xlsx")
+        jobs_setup_file = self.__create_jobs_setup_file(report_regions="10:89683800-89685413,11")
+        mc = MutRepController(jobs_setup_file)
+        mc.gen_report(mc.report_layout.report_regions, out_file=rpt_out_file)
+        xu = XlsUtils(rpt_out_file)
+        self.assertEqual(xu.count_rows(),
+                         8,
+                         "Incorrect number of rows")
+
 #    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST, "taking too long time to test")
 #    def test_summary_report_3(self):
 #        """
@@ -391,11 +391,11 @@ class TestMutRepController(SafeTester):
 #        """
 #
 #        self.init_test(self.current_func_name)
-#        annotated_vcf_tabix = join_path(self.data_dir,
+#        db_file = join_path(self.data_dir,
 #                                        "input.vcf.gz")
 #        project_name = self.test_function
 #        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
-#                                                        annotated_vcf_tabix=annotated_vcf_tabix,
+#                                                        db_file=db_file,
 #                                                        report_regions="6",
 #                                                        call_detail=False,
 #                                                        )
@@ -417,11 +417,11 @@ class TestMutRepController(SafeTester):
 #        """ test summary with multiple report_regions and many sample infos """
 #
 #        self.init_test(self.current_func_name)
-#        annotated_vcf_tabix = join_path(self.data_dir,
+#        db_file = join_path(self.data_dir,
 #                                        "chr6_18.vcf.gz")
 #        project_name = self.test_function
 #        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
-#                                                        annotated_vcf_tabix=annotated_vcf_tabix,
+#                                                        db_file=db_file,
 #                                                        report_regions="6:78171940-78172992,18:28610987-28611790",
 #                                                        sample_info="1234:Alb-31:Br-466,6067:Br-432:Al-161:Br-504,6789:Al-65",
 #                                                        call_detail="YES",
@@ -452,11 +452,11 @@ class TestMutRepController(SafeTester):
 #        """ test summary report of CRC samples """
 #
 #        self.init_test(self.current_func_name)
-#        annotated_vcf_tabix = join_path(self.data_dir,
+#        db_file = join_path(self.data_dir,
 #                                        "input.vcf.gz")
 #        project_name = self.test_function
 #        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
-#                                                        annotated_vcf_tabix=annotated_vcf_tabix,
+#                                                        db_file=db_file,
 #                                                        report_regions=None,
 #                                                        call_detail=False,
 #                                                        anno_excl_tags=DFLT_TEST_ANNO_EXCL_TAGS,
@@ -477,12 +477,12 @@ class TestMutRepController(SafeTester):
 #        """ test if unicode character 'ö' is allowed in the report """
 #
 #        self.init_test(self.current_func_name)
-#        annotated_vcf_tabix = join_path(self.data_dir,
+#        db_file = join_path(self.data_dir,
 #                                        "input.vcf.gz")
 #        rows_filter_actions = JOBS_SETUP_RPT_FILTER_NON_INTRONIC
 #        project_name = self.test_function
 #        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
-#                                                        annotated_vcf_tabix=annotated_vcf_tabix,
+#                                                        db_file=db_file,
 #                                                        anno_excl_tags=DFLT_TEST_ANNO_EXCL_TAGS,
 #                                                        report_regions=None,
 #                                                        call_detail=False,
@@ -504,11 +504,11 @@ class TestMutRepController(SafeTester):
 #        """ test excluding "*" allele """
 #
 #        self.init_test(self.current_func_name)
-#        annotated_vcf_tabix = join_path(self.data_dir,
+#        db_file = join_path(self.data_dir,
 #                                        "input.vcf.gz")
 #        project_name = self.test_function
 #        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
-#                                                        annotated_vcf_tabix=annotated_vcf_tabix,
+#                                                        db_file=db_file,
 #                                                        anno_excl_tags=DFLT_TEST_ANNO_EXCL_TAGS,
 #                                                        report_regions=None,
 #                                                        call_detail=False,
@@ -529,11 +529,11 @@ class TestMutRepController(SafeTester):
 ##        """ test with only one family which has only one members """
 ##
 ##        self.init_test(self.current_func_name)
-##        annotated_vcf_tabix = join_path(self.data_dir,
+##        db_file = join_path(self.data_dir,
 ##                                        "input.vcf.gz")
 ##        project_name = self.test_function
 ##        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
-##                                                        annotated_vcf_tabix=annotated_vcf_tabix,
+##                                                        db_file=db_file,
 ##                                                        call_detail="YES",
 ##                                                        report_regions="6",
 ##                                                        sample_info="6789:Al-65",
@@ -556,11 +556,11 @@ class TestMutRepController(SafeTester):
 ##        """ test with only one family which has two members """
 ##
 ##        self.init_test(self.current_func_name)
-##        annotated_vcf_tabix = join_path(self.data_dir,
+##        db_file = join_path(self.data_dir,
 ##                                        "input.vcf.gz")
 ##        project_name = self.test_function
 ##        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
-##                                                        annotated_vcf_tabix=annotated_vcf_tabix,
+##                                                        db_file=db_file,
 ##                                                        call_detail="YES",
 ##                                                        report_regions="6",
 ##                                                        sample_info="1234:Alb-31:Br-466",
@@ -589,11 +589,11 @@ class TestMutRepController(SafeTester):
 ##        """ test with only one family which has three members """
 ##
 ##        self.init_test(self.current_func_name)
-##        annotated_vcf_tabix = join_path(self.data_dir,
+##        db_file = join_path(self.data_dir,
 ##                                        "input.vcf.gz")
 ##        project_name = self.test_function
 ##        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
-##                                                        annotated_vcf_tabix=annotated_vcf_tabix,
+##                                                        db_file=db_file,
 ##                                                        call_detail="YES",
 ##                                                        report_regions="6",
 ##                                                        sample_info="6067:Br-432:Al-161:Br-504",
@@ -630,14 +630,14 @@ class TestMutRepController(SafeTester):
 ##        """
 ##
 ##        self.init_test(self.current_func_name)
-##        annotated_vcf_tabix = join_path(self.data_dir,
+##        db_file = join_path(self.data_dir,
 ##                                        "input.vcf.gz")
 ##        project_name = self.test_function
 ##        frequency_ratios = PRIMARY_MAF_VAR + ":0.2"
 ##        frequency_ratios += "," + AXEQ_CHR5_19_GF_COL_NAME + ":0.3"
 ##        frequency_ratios += "," + EXAC_ALL_COL_NAME + ":0.3"
 ##        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
-##                                                        annotated_vcf_tabix=annotated_vcf_tabix,
+##                                                        db_file=db_file,
 ##                                                        call_detail="YES",
 ##                                                        report_regions=None,
 ##                                                        frequency_ratios=frequency_ratios,
@@ -664,11 +664,11 @@ class TestMutRepController(SafeTester):
 ##        """ test if report can be run with missing columns """
 ##
 ##        self.init_test(self.current_func_name)
-##        annotated_vcf_tabix = join_path(self.data_dir,
+##        db_file = join_path(self.data_dir,
 ##                                        "input.vcf.gz")
 ##        project_name = self.test_function
 ##        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
-##                                                        annotated_vcf_tabix=annotated_vcf_tabix,
+##                                                        db_file=db_file,
 ##                                                        report_regions=None,
 ##                                                        anno_cols=ALL_MUTREP_ANNO_COLS,
 ##                                                        sample_info="24:Co-166:Co-213",
@@ -694,11 +694,11 @@ class TestMutRepController(SafeTester):
 ##        """ test generating offline families reports (1 family)"""
 ##
 ##        self.init_test(self.current_func_name)
-##        annotated_vcf_tabix = join_path(self.data_dir,
+##        db_file = join_path(self.data_dir,
 ##                                        "input.vcf.gz")
 ##        project_name = self.test_function
 ##        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
-##                                                        annotated_vcf_tabix=annotated_vcf_tabix,
+##                                                        db_file=db_file,
 ##                                                        call_detail="YES",
 ##                                                        report_regions="6",
 ##                                                        sample_info="6067:Br-432:Al-161:Br-504",
@@ -730,11 +730,11 @@ class TestMutRepController(SafeTester):
 ##        """ test generating offline families reports (3 families)"""
 ##
 ##        self.init_test(self.current_func_name)
-##        annotated_vcf_tabix = join_path(self.data_dir,
+##        db_file = join_path(self.data_dir,
 ##                                        "input.vcf.gz")
 ##        project_name = self.test_function
 ##        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
-##                                                        annotated_vcf_tabix=annotated_vcf_tabix,
+##                                                        db_file=db_file,
 ##                                                        report_regions="6",
 ##                                                        call_detail="YES",
 ##                                                        sample_info="1234:Alb-31:Br-466,6067:Br-432:Al-161:Br-504,6789:Al-65",
@@ -768,11 +768,11 @@ class TestMutRepController(SafeTester):
 ##        """ test generating 101 CRC families reports """
 ##
 ##        self.init_test(self.current_func_name)
-##        annotated_vcf_tabix = join_path(self.data_dir,
+##        db_file = join_path(self.data_dir,
 ##                                        "input.vcf.gz")
 ##        project_name = self.test_function
 ##        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
-##                                                        annotated_vcf_tabix=annotated_vcf_tabix,
+##                                                        db_file=db_file,
 ##                                                        report_regions=None,
 ##                                                        call_detail=False,
 ##                                                        sample_info="8:Co-35:Co-37,12:Co-89:Co-90,13:Co-95,26:Co-131:Co-135,31:1793-11D:1322-11D,87:Co-218:Co-258,91:Co-454:Co-700,94:Co-238,110:1526-02D:Co-1301,134:Co-460:Co-553,141:Co-305:Co-785,185:Co-603:Co-669,191:Co-384,214:Co-484,216:Co-367:Co-446,221:Co-358,227:Co-364,231:Co-555:Co-572,254:Co-616:Co-1156,275:Co-618:Co-1262,288:Co-1141,296:Co-793:Co-876,301:Co-837:Co-840:Co-1053,306:Co-779,309:Co-783,312:Co-1116,315:1462-01D,325:Co-851:Co-859,348:Co-846:Co-857,350:1104-03D:Co-866,409:Co-1254,415:Co-1031:Co-1037,425:Co-1458:Co-1595,434:Co-1051:Co-1534,445:Co-1157:Co-1158,478:Co-1207:Co-1274,485:Co-1302:Co-1322,532:Co-1583:Co-1584,574:468-04:474-05,578:531-04o:Co-1349,650:398-05o:729-05o,695:Co-1354:Co-1359:Co-1368,739:529-05:Co-1467,740:602-05o:Co-1373:Co-1383,849:Co-1764:Co-1765,869:Co-1685,871:Co-1618:Co-1661,918:134-06:354-06,975:Co-1591:Co-1600,1025:Co-1529,1085:Co-1518,1113:642-06:Co-1538,1206:1052-05D:Co-1552,1207:2818-07D,1213:Co-1666,1252:Co-1719,1290:Co-1723,prostate:P001:P002:P003",
@@ -813,11 +813,11 @@ class TestMutRepController(SafeTester):
 ##        """ test generating NK64 fam24 families reports """
 ##
 ##        self.init_test(self.current_func_name)
-##        annotated_vcf_tabix = join_path(self.data_dir,
+##        db_file = join_path(self.data_dir,
 ##                                        "input.vcf.gz")
 ##        project_name = self.test_function
 ##        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
-##                                                        annotated_vcf_tabix=annotated_vcf_tabix,
+##                                                        db_file=db_file,
 ##                                                        report_regions=None,
 ##                                                        call_detail=False,
 ##                                                        sample_info="24:Co-166:Co-213",
@@ -846,7 +846,7 @@ class TestMutRepController(SafeTester):
 ##        """ test generating NK64 PMS2 families reports """
 ##
 ##        self.init_test(self.current_func_name)
-##        annotated_vcf_tabix = join_path(self.data_dir,
+##        db_file = join_path(self.data_dir,
 ##                                        "input.vcf.gz")
 ##        anno_cols = list(DFLT_TEST_MUTREP_COLS)
 ##        anno_cols.append("LRT_score")
@@ -855,7 +855,7 @@ class TestMutRepController(SafeTester):
 ##        anno_cols.append("Polyphen2_HDIV_pred")
 ##        project_name = self.test_function
 ##        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
-##                                                        annotated_vcf_tabix=annotated_vcf_tabix,
+##                                                        db_file=db_file,
 ##                                                        anno_cols=anno_cols,
 ##                                                        report_regions=None,
 ##                                                        call_detail=False,
@@ -900,11 +900,11 @@ class TestMutRepController(SafeTester):
 #        """
 #
 #        self.init_test(self.current_func_name)
-#        annotated_vcf_tabix = join_path(self.data_dir,
+#        db_file = join_path(self.data_dir,
 #                                        "input.vcf.gz")
 #        project_name = self.test_function
 #        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
-#                                                        annotated_vcf_tabix=annotated_vcf_tabix,
+#                                                        db_file=db_file,
 #                                                        report_regions="6:78171940-78172992,18:28610987-28611790",
 #                                                        expression_patterns='exp_ns_snv:"ExonicFunc.refGene"==\'synonymous_SNV\'',
 #                                                        expression_usages="exp_ns_snv:DELETE_ROW",
@@ -929,11 +929,11 @@ class TestMutRepController(SafeTester):
 #        """
 #
 #        self.init_test(self.current_func_name)
-#        annotated_vcf_tabix = join_path(self.data_dir,
+#        db_file = join_path(self.data_dir,
 #                                        "input.vcf.gz")
 #        project_name = self.test_function
 #        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
-#                                                        annotated_vcf_tabix=annotated_vcf_tabix,
+#                                                        db_file=db_file,
 #                                                        report_regions="6:78171940-78172992,18:28610987-28611790",
 #                                                        expression_patterns='exp_OAF1:"AXEQ_CHR3_6_14_18_PF"==\'1.0000\'',
 #                                                        expression_usages="exp_OAF1:DELETE_ROW",
@@ -957,13 +957,13 @@ class TestMutRepController(SafeTester):
 #        """
 #
 #        self.init_test(self.current_func_name)
-#        annotated_vcf_tabix = join_path(self.data_dir,
+#        db_file = join_path(self.data_dir,
 #                                        "input.vcf.gz")
 #        project_name = self.test_function
 #        anno_cols = list(DFLT_TEST_MUTREP_COLS)
 #        anno_cols.append("OAF_EARLYONSET_AF")
 #        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
-#                                                        annotated_vcf_tabix=annotated_vcf_tabix,
+#                                                        db_file=db_file,
 #                                                        report_regions="22",
 #                                                        expression_patterns='exp_OAF0:"OAF_EARLYONSET_AF"==\'0.0000\',exp_OAF1:"OAF_EARLYONSET_AF"==\'1.0000\',exp_OAF_empty:"OAF_EARLYONSET_AF"==\'\',exp_OAF_NA:"OAF_EARLYONSET_AF"==\'NA\'',
 #                                                        expression_usages="exp_OAF0:DELETE_ROW,exp_OAF1:DELETE_ROW,exp_OAF_empty:DELETE_ROW,exp_OAF_NA:DELETE_ROW",
@@ -988,14 +988,14 @@ class TestMutRepController(SafeTester):
 #        """
 #
 #        self.init_test(self.current_func_name)
-#        annotated_vcf_tabix = join_path(self.data_dir,
+#        db_file = join_path(self.data_dir,
 #                                        "input.vcf.gz")
 #        project_name = self.test_function
 #        anno_cols = list(DFLT_TEST_MUTREP_COLS)
 #        anno_cols.append("OAF_EARLYONSET_AF")
 #        anno_cols.append("dpsi_zscore")
 #        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
-#                                                        annotated_vcf_tabix=annotated_vcf_tabix,
+#                                                        db_file=db_file,
 #                                                        report_regions="1",
 #                                                        expression_patterns='true_synonymous:("dpsi_zscore"!=\'\')and(float("dpsi_zscore")>-2)and("ExonicFunc.refGene"==\'synonymous_SNV\')and(float("dpsi_zscore")<2)',
 #                                                        expression_usages="true_synonymous:DELETE_ROW",
@@ -1019,7 +1019,7 @@ class TestMutRepController(SafeTester):
 #        """
 #
 #        self.init_test(self.current_func_name)
-#        annotated_vcf_tabix = join_path(self.data_dir,
+#        db_file = join_path(self.data_dir,
 #                                        "input.vcf.gz")
 #        project_name = self.test_function
 #        anno_cols = ALL_MUTREP_ANNO_COLS
@@ -1027,7 +1027,7 @@ class TestMutRepController(SafeTester):
 #        anno_cols.append(MAX_REF_MAF_COL_NAME)
 #        anno_cols += REF_MAF_COL_NAMES
 #        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
-#                                                        annotated_vcf_tabix=annotated_vcf_tabix,
+#                                                        db_file=db_file,
 #                                                        report_regions="1,12,17",
 #                                                        expression_patterns='max_ref_maf_10percent:float("MAX_REF_MAF")>0.1',
 #                                                        expression_usages="max_ref_maf_10percent:DELETE_ROW",
@@ -1052,11 +1052,11 @@ class TestMutRepController(SafeTester):
 #        """
 #
 #        self.init_test(self.current_func_name)
-#        annotated_vcf_tabix = join_path(self.data_dir,
+#        db_file = join_path(self.data_dir,
 #                                        "input.vcf.gz")
 #        project_name = self.test_function
 #        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
-#                                                        annotated_vcf_tabix=annotated_vcf_tabix,
+#                                                        db_file=db_file,
 #                                                        report_regions="6:78171940-78172992,18:28610987-28611790",
 #                                                        expression_patterns='exp_splicing:"Func.refGene"==\'splicing\'',
 #                                                        expression_usages="exp_splicing:COLOR_ROW:ROSY_BROWN",
@@ -1095,11 +1095,11 @@ class TestMutRepController(SafeTester):
 #        """
 #
 #        self.init_test(self.current_func_name)
-#        annotated_vcf_tabix = join_path(self.data_dir,
+#        db_file = join_path(self.data_dir,
 #                                        "input.vcf.gz")
 #        project_name = self.test_function
 #        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
-#                                                        annotated_vcf_tabix=annotated_vcf_tabix,
+#                                                        db_file=db_file,
 #                                                        report_regions="6:78171940-78172992,18:28610987-28611790",
 #                                                        expression_patterns='exp_exonic:"Func.refGene"==\'exonic\',exp_ns_snv:"ExonicFunc.refGene"==\'nonsynonymous_SNV\'',
 #                                                        expression_usages="exp_exonic:COLOR_ROW:ROSY_BROWN,exp_ns_snv:COLOR_COLUMN:cytoBand:TEAL,exp_exonic:COLOR_COLUMN:Gene.refGene:YELLOW",
@@ -1149,7 +1149,7 @@ class TestMutRepController(SafeTester):
 #        """
 #
 #        self.init_test(self.current_func_name)
-#        annotated_vcf_tabix = join_path(self.data_dir,
+#        db_file = join_path(self.data_dir,
 #                                        "input.vcf.gz")
 #        project_name = self.test_function
 #        anno_cols = list(DFLT_TEST_MUTREP_COLS)
@@ -1166,7 +1166,7 @@ class TestMutRepController(SafeTester):
 #        expression_patterns+='and(float("1000g2014oct_all")<0.03)'
 #        expression_usages+=',kg_all_rare:COLOR_COLUMN:1000g2014oct_all:YELLOW'
 #        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
-#                                                        annotated_vcf_tabix=annotated_vcf_tabix,
+#                                                        db_file=db_file,
 #                                                        report_regions="1,17",
 #                                                        expression_patterns=expression_patterns,
 #                                                        expression_usages=expression_usages,
@@ -1209,11 +1209,11 @@ class TestMutRepController(SafeTester):
 #        """
 #
 #        self.init_test(self.current_func_name)
-#        annotated_vcf_tabix = join_path(self.data_dir,
+#        db_file = join_path(self.data_dir,
 #                                        "input.vcf.gz")
 #        project_name = self.test_function
 #        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
-#                                                        annotated_vcf_tabix=annotated_vcf_tabix,
+#                                                        db_file=db_file,
 #                                                        report_regions="9:99700709-99702632",
 #                                                        sample_info="8:Co-35:Co-37,13:Co-95,275:Co-1262:Co-618,296:Co-793:Co-876",
 #                                                        coloring_shared=True,
@@ -1242,7 +1242,7 @@ class TestMutRepController(SafeTester):
 #        """
 #
 #        self.init_test(self.current_func_name)
-#        annotated_vcf_tabix = join_path(self.data_dir,
+#        db_file = join_path(self.data_dir,
 #                                        "input.vcf.gz")
 #        project_name = self.test_function
 #        anno_cols = list(DFLT_TEST_MUTREP_COLS)
@@ -1251,7 +1251,7 @@ class TestMutRepController(SafeTester):
 #        anno_cols.append(WES294_OAF_EARLYONSET_AF_COL_NAME)
 #        anno_cols.append(WES294_OAF_BRCS_AF_COL_NAME)
 #        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
-#                                                        annotated_vcf_tabix=annotated_vcf_tabix,
+#                                                        db_file=db_file,
 #                                                        report_regions="22",
 #                                                        anno_cols=anno_cols,
 #                                                        )
@@ -1273,7 +1273,7 @@ class TestMutRepController(SafeTester):
 #        """
 #
 #        self.init_test(self.current_func_name)
-#        annotated_vcf_tabix = join_path(self.data_dir,
+#        db_file = join_path(self.data_dir,
 #                                        "input.vcf.gz")
 #        sample_info = join_path(self.data_dir,
 #                                "sample.info")
@@ -1287,7 +1287,7 @@ class TestMutRepController(SafeTester):
 #        anno_cols.append(WES294_OAF_EARLYONSET_GF_COL_NAME)
 #        anno_cols.append(WES294_OAF_BRCS_AF_COL_NAME)
 #        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
-#                                                        annotated_vcf_tabix=annotated_vcf_tabix,
+#                                                        db_file=db_file,
 #                                                        report_regions="22",
 #                                                        sample_info=sample_info,
 #                                                        anno_cols=anno_cols,
@@ -1343,12 +1343,12 @@ class TestMutRepController(SafeTester):
 #        """ test summary with multiple report_regions and many sample infos """
 #
 #        self.init_test(self.current_func_name)
-#        annotated_vcf_tabix = join_path(self.data_dir,
+#        db_file = join_path(self.data_dir,
 #                                        "chr6_18.vcf.gz")
 #        project_name = self.test_function
 #        rows_filter_actions = JOBS_SETUP_RPT_FILTER_NON_INTRONIC
 #        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
-#                                                        annotated_vcf_tabix=annotated_vcf_tabix,
+#                                                        db_file=db_file,
 #                                                        report_regions="6:78171940-78172992,18:28610987-28611790",
 #                                                        sample_info="1234:Alb-31:Br-466,6067:Br-432:Al-161:Br-504,6789:Al-65",
 #                                                        call_detail="YES",
@@ -1384,7 +1384,7 @@ class TestMutRepController(SafeTester):
 #        """ test if column headers can be replaced with better names  """
 #
 #        self.init_test(self.current_func_name)
-#        annotated_vcf_tabix = join_path(self.data_dir,
+#        db_file = join_path(self.data_dir,
 #                                        "input.vcf.gz")
 #        project_name = self.test_function
 #        anno_cols = list(DFLT_TEST_MUTREP_COLS)
@@ -1393,7 +1393,7 @@ class TestMutRepController(SafeTester):
 #        header_corrections = "OAF_EARLYONSET_AF:EARLYONSET_AF"
 #        header_corrections += ",OAF_BRC_CRC_PROSTATE_AF:ALL_EXOME_AF"
 #        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
-#                                                        annotated_vcf_tabix=annotated_vcf_tabix,
+#                                                        db_file=db_file,
 #                                                        header_corrections=header_corrections,
 #                                                        report_regions="22",
 #                                                        anno_cols=anno_cols,
@@ -1423,7 +1423,7 @@ class TestMutRepController(SafeTester):
 #        """ test if calling genotyping quality can be displayed correctly in general cases """
 #
 #        self.init_test(self.current_func_name)
-#        annotated_vcf_tabix = join_path(self.data_dir,
+#        db_file = join_path(self.data_dir,
 #                                        "input.vcf.gz")
 #        project_name = self.test_function
 #        rows_filter_actions = JOBS_SETUP_RPT_FILTER_NON_INTERGENIC
@@ -1434,7 +1434,7 @@ class TestMutRepController(SafeTester):
 #        rows_filter_actions += ',' + JOBS_SETUP_RPT_FILTER_NON_SYNONYMOUS
 #        rows_filter_actions += ',' + JOBS_SETUP_RPT_FILTER_HAS_MUTATION
 #        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
-#                                                        annotated_vcf_tabix=annotated_vcf_tabix,
+#                                                        db_file=db_file,
 #                                                        sample_info="/proj/b2011117/private/databases/samples_list/Exome_all_CRCs.list",
 #                                                        report_regions="7",
 #                                                        rows_filter_actions=rows_filter_actions,
@@ -1481,12 +1481,12 @@ class TestMutRepController(SafeTester):
 #        """
 #
 #        self.init_test(self.current_func_name)
-#        annotated_vcf_tabix = join_path(self.data_dir,
+#        db_file = join_path(self.data_dir,
 #                                        "input.vcf.gz")
 #        project_name = self.test_function
 #        filter_genes = "ANKRD19P"
 #        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
-#                                                        annotated_vcf_tabix=annotated_vcf_tabix,
+#                                                        db_file=db_file,
 #                                                        sample_info="8:Co-35:Co-37,13:Co-95,275:Co-1262:Co-618,296:Co-793:Co-876",
 #                                                        report_regions="9",
 #                                                        filter_genes=filter_genes,
@@ -1510,12 +1510,12 @@ class TestMutRepController(SafeTester):
 #        """
 #
 #        self.init_test(self.current_func_name)
-#        annotated_vcf_tabix = join_path(self.data_dir,
+#        db_file = join_path(self.data_dir,
 #                                        "input.vcf.gz")
 #        project_name = self.test_function
 #        filter_genes = "ANKRD19P,IPPK"
 #        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
-#                                                        annotated_vcf_tabix=annotated_vcf_tabix,
+#                                                        db_file=db_file,
 #                                                        sample_info="8:Co-35:Co-37,13:Co-95,275:Co-1262:Co-618,296:Co-793:Co-876",
 #                                                        report_regions="9",
 #                                                        filter_genes=filter_genes,
@@ -1539,12 +1539,12 @@ class TestMutRepController(SafeTester):
 #        """
 #
 #        self.init_test(self.current_func_name)
-#        annotated_vcf_tabix = join_path(self.data_dir,
+#        db_file = join_path(self.data_dir,
 #                                        "input.vcf.gz")
 #        project_name = self.test_function
 #        color_genes = "ANKRD19P"
 #        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
-#                                                        annotated_vcf_tabix=annotated_vcf_tabix,
+#                                                        db_file=db_file,
 #                                                        sample_info="8:Co-35:Co-37,13:Co-95,275:Co-1262:Co-618,296:Co-793:Co-876",
 #                                                        report_regions="9",
 #                                                        color_genes=color_genes,
@@ -1574,12 +1574,12 @@ class TestMutRepController(SafeTester):
 #        """
 #
 #        self.init_test(self.current_func_name)
-#        annotated_vcf_tabix = join_path(self.data_dir,
+#        db_file = join_path(self.data_dir,
 #                                        "input.vcf.gz")
 #        project_name = self.test_function
 #        color_genes = "ANKRD19P,IPPK"
 #        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
-#                                                        annotated_vcf_tabix=annotated_vcf_tabix,
+#                                                        db_file=db_file,
 #                                                        sample_info="8:Co-35:Co-37,13:Co-95,275:Co-1262:Co-618,296:Co-793:Co-876",
 #                                                        report_regions="9",
 #                                                        color_genes=color_genes,
@@ -1610,7 +1610,7 @@ class TestMutRepController(SafeTester):
 #        """ test coloring shared samples when the option is off """
 #
 #        self.init_test(self.current_func_name)
-#        annotated_vcf_tabix = join_path(self.data_dir,
+#        db_file = join_path(self.data_dir,
 #                                        "input.vcf.gz")
 #        project_name = self.test_function
 #        custom_excl_tags = DFLT_TEST_ANNO_EXCL_TAGS
@@ -1620,7 +1620,7 @@ class TestMutRepController(SafeTester):
 #        sample_info = join_path(self.data_dir,
 #                                "sample.info")
 #        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
-#                                                        annotated_vcf_tabix=annotated_vcf_tabix,
+#                                                        db_file=db_file,
 #                                                        anno_cols=ALL_MUTREP_ANNO_COLS,
 #                                                        anno_excl_tags=custom_excl_tags,
 #                                                        sample_info=sample_info,
@@ -1714,7 +1714,7 @@ class TestMutRepController(SafeTester):
 #        """ test coloring shared samples when the option is on """
 #
 #        self.init_test(self.current_func_name)
-#        annotated_vcf_tabix = join_path(self.data_dir,
+#        db_file = join_path(self.data_dir,
 #                                        "input.vcf.gz")
 #        project_name = self.test_function
 #        custom_excl_tags = DFLT_TEST_ANNO_EXCL_TAGS
@@ -1724,7 +1724,7 @@ class TestMutRepController(SafeTester):
 #        sample_info = join_path(self.data_dir,
 #                                "sample.info")
 #        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
-#                                                        annotated_vcf_tabix=annotated_vcf_tabix,
+#                                                        db_file=db_file,
 #                                                        anno_cols=ALL_MUTREP_ANNO_COLS,
 #                                                        anno_excl_tags=custom_excl_tags,
 #                                                        sample_info=sample_info,
@@ -1821,7 +1821,7 @@ class TestMutRepController(SafeTester):
 #        """ test coloring shared samples when the option is off """
 #
 #        self.init_test(self.current_func_name)
-#        annotated_vcf_tabix = join_path(self.data_dir,
+#        db_file = join_path(self.data_dir,
 #                                        "input.vcf.gz")
 #        project_name = self.test_function
 #        custom_excl_tags = DFLT_TEST_ANNO_EXCL_TAGS
@@ -1831,7 +1831,7 @@ class TestMutRepController(SafeTester):
 #        sample_info = join_path(self.data_dir,
 #                                "sample.info")
 #        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
-#                                                        annotated_vcf_tabix=annotated_vcf_tabix,
+#                                                        db_file=db_file,
 #                                                        anno_cols=ALL_MUTREP_ANNO_COLS,
 #                                                        anno_excl_tags=custom_excl_tags,
 #                                                        sample_info=sample_info,
@@ -1929,7 +1929,7 @@ class TestMutRepController(SafeTester):
 #        """ test coloring shared samples when the option is on """
 #
 #        self.init_test(self.current_func_name)
-#        annotated_vcf_tabix = join_path(self.data_dir,
+#        db_file = join_path(self.data_dir,
 #                                        "input.vcf.gz")
 #        project_name = self.test_function
 #        custom_excl_tags = DFLT_TEST_ANNO_EXCL_TAGS
@@ -1939,7 +1939,7 @@ class TestMutRepController(SafeTester):
 #        sample_info = join_path(self.data_dir,
 #                                "sample.info")
 #        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
-#                                                        annotated_vcf_tabix=annotated_vcf_tabix,
+#                                                        db_file=db_file,
 #                                                        anno_cols=ALL_MUTREP_ANNO_COLS,
 #                                                        anno_excl_tags=custom_excl_tags,
 #                                                        sample_info=sample_info,
@@ -2034,7 +2034,7 @@ class TestMutRepController(SafeTester):
 #        """
 #
 #        self.init_test(self.current_func_name)
-#        annotated_vcf_tabix = join_path(self.data_dir,
+#        db_file = join_path(self.data_dir,
 #                                        "input.vcf.gz")
 #        project_name = self.test_function
 #        custom_excl_tags = DFLT_TEST_ANNO_EXCL_TAGS
@@ -2063,7 +2063,7 @@ class TestMutRepController(SafeTester):
 #        sample_info = join_path(self.data_dir,
 #                                "sample.info")
 #        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
-#                                                        annotated_vcf_tabix=annotated_vcf_tabix,
+#                                                        db_file=db_file,
 #                                                        anno_cols=ALL_MUTREP_ANNO_COLS,
 #                                                        anno_excl_tags=custom_excl_tags,
 #                                                        sample_info=sample_info,
@@ -2111,7 +2111,7 @@ class TestMutRepController(SafeTester):
 #        """
 #
 #        self.init_test(self.current_func_name)
-#        annotated_vcf_tabix = join_path(self.data_dir,
+#        db_file = join_path(self.data_dir,
 #                                        "input.vcf.gz")
 #        project_name = self.test_function
 #        custom_excl_tags = DFLT_TEST_ANNO_EXCL_TAGS
@@ -2140,7 +2140,7 @@ class TestMutRepController(SafeTester):
 #        sample_info = join_path(self.data_dir,
 #                                "sample.info")
 #        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
-#                                                        annotated_vcf_tabix=annotated_vcf_tabix,
+#                                                        db_file=db_file,
 #                                                        anno_cols=ALL_MUTREP_ANNO_COLS,
 #                                                        anno_excl_tags=custom_excl_tags,
 #                                                        sample_info=sample_info,
@@ -2179,61 +2179,63 @@ class TestMutRepController(SafeTester):
 #                         "het",
 #                         "Incorrect cell value"
 #                         )
-#
-#    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST, "taking too long time to test")
-#    def test_show_shared_variants_1(self):
-#        """ test if shared mutations can be shown """
-#
-#        self.init_test(self.current_func_name)
-#        annotated_vcf_tabix = join_path(self.data_dir,
-#                                        "input.vcf.gz")
-#        project_name = self.test_function
-#        custom_excl_tags = DFLT_TEST_ANNO_EXCL_TAGS
-#        custom_excl_tags += "," + AXEQ_CHR3_6_14_18_COLS_TAG
-#        custom_excl_tags += "," + AXEQ_CHR5_19_COLS_TAG
-#        custom_excl_tags += "," + LJB_SCORE_COLS_TAG
-#        sample_info = join_path(self.data_dir,
-#                                "sample.info")
-#        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
-#                                                        annotated_vcf_tabix=annotated_vcf_tabix,
-#                                                        anno_excl_tags=custom_excl_tags,
-#                                                        sample_info=sample_info,
-#                                                        report_regions="3",
-#                                                        show_shared_variants=True,
-#                                                        coloring_shared=True,
-#                                                        )
-#        pl = MutRepController(jobs_setup_file=jobs_setup_file)
-#        pl.gen_summary_report(pl.report_layout.report_regions)
-#        xls_file = join_path(self.working_dir,
-#                             "rpts",
-#                             project_name+"_summary.xlsx")
-#        xu = XlsUtils(xls_file)
-#        fam_col_idx = xu.get_col_idx("F0007826")
-#        self.assertEqual(xu.get_cell_value(2, fam_col_idx),
-#                         "not shared",
-#                         "Incorrect cell value"
-#                         )
-#        exp_rgb = "FF" + COLORS_RGB["XLS_GRAY1_2"][-6:]
-#        self.assertEqual(xu.get_cell_rgb(2, fam_col_idx),
-#                         exp_rgb,
-#                         "Incorrect color"
-#                         )
-#        self.assertEqual(xu.get_cell_value(3, fam_col_idx),
-#                         "shared",
-#                         "Incorrect cell value"
-#                         )
-#        exp_rgb = "FF" + COLORS_RGB["LIGHT_BLUE"][-6:]
-#        self.assertEqual(xu.get_cell_rgb(3, fam_col_idx),
-#                         exp_rgb,
-#                         "Incorrect color"
-#                         )
-#
+
+    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST, "taking too long time to test")
+    def test_show_shared_variants_1(self):
+        """ test if shared mutations can be shown """
+
+        self.individual_debug = True
+        self.init_test(self.current_func_name)
+        db_file = join_path(self.data_dir,
+                            "input.db")
+        project_name = self.test_function
+        custom_excl_tags = DFLT_TEST_ANNO_EXCL_TAGS
+        custom_excl_tags += "," + AXEQ_CHR3_6_14_18_COLS_TAG
+        custom_excl_tags += "," + AXEQ_CHR5_19_COLS_TAG
+        custom_excl_tags += "," + LJB_SCORE_COLS_TAG
+        sample_info = join_path(self.data_dir,
+                                "sample.info")
+        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
+                                                        db_file=db_file,
+                                                        anno_excl_tags=custom_excl_tags,
+                                                        sample_info=sample_info,
+                                                        report_regions="10",
+                                                        show_shared_variants=True,
+                                                        coloring_shared=True,
+                                                        )
+        mc = MutRepController(jobs_setup_file)
+        mc.gen_report(mc.report_layout.report_regions, "all_gtz_annos")
+        self.dbg(mc.report_layout)
+        xls_file = join_path(self.working_dir,
+                             "rpts",
+                             project_name+"_summary.xlsx")
+        xu = XlsUtils(xls_file)
+        fam_col_idx = xu.get_col_idx("F0007826")
+        self.assertEqual(xu.get_cell_value(2, fam_col_idx),
+                         "not shared",
+                         "Incorrect cell value"
+                         )
+        exp_rgb = "FF" + COLORS_RGB["XLS_GRAY1_2"][-6:]
+        self.assertEqual(xu.get_cell_rgb(2, fam_col_idx),
+                         exp_rgb,
+                         "Incorrect color"
+                         )
+        self.assertEqual(xu.get_cell_value(3, fam_col_idx),
+                         "shared",
+                         "Incorrect cell value"
+                         )
+        exp_rgb = "FF" + COLORS_RGB["LIGHT_BLUE"][-6:]
+        self.assertEqual(xu.get_cell_rgb(3, fam_col_idx),
+                         exp_rgb,
+                         "Incorrect color"
+                         )
+
 #    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST, "taking too long time to test")
 #    def test_filter_non_recessive_gene_1(self):
 #        """ test basic filtering non-recessive gene """
 #
 #        self.init_test(self.current_func_name)
-#        annotated_vcf_tabix = join_path(self.data_dir,
+#        db_file = join_path(self.data_dir,
 #                                        "input.vcf.gz")
 #        project_name = self.test_function
 #        custom_excl_tags = DFLT_TEST_ANNO_EXCL_TAGS
@@ -2262,7 +2264,7 @@ class TestMutRepController(SafeTester):
 #        sample_info = join_path(self.data_dir,
 #                                "sample.info")
 #        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
-#                                                        annotated_vcf_tabix=annotated_vcf_tabix,
+#                                                        db_file=db_file,
 #                                                        anno_cols=ALL_MUTREP_ANNO_COLS,
 #                                                        anno_excl_tags=custom_excl_tags,
 #                                                        sample_info=sample_info,
