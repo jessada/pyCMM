@@ -38,9 +38,9 @@ from pycmm.settings import DFLT_HEADER_CORRECTIONS
 #from pycmm.settings import HOMOZYGOTE_UNAFFECTED_COUNT_COL_NAME
 #from pycmm.settings import HOMOZYGOTE_FREQ_RATIO_COL_NAME
 #from pycmm.settings import RECESSIVE_STUDY_COL_NAMES
-#from pycmm.settings import FORMAT_COLS
-#from pycmm.settings import FORMAT_COL_FLOAT
-#from pycmm.settings import FORMAT_COL_INT
+from pycmm.settings import FORMAT_COLS
+from pycmm.settings import FORMAT_COL_FLOAT
+from pycmm.settings import FORMAT_COL_INT
 from pycmm.template import pyCMMBase
 from pycmm.utils import DefaultOrderedDict
 from pycmm.utils import is_number
@@ -991,19 +991,18 @@ class MutRepController(CMMPipeline):
 #                        anno_cell_fmt = self.plain_fmts[self.report_layout.cell_color_color_gene]
 #                        break
 #            # determine cell format
-#            if (anno_col_name in FORMAT_COLS and
-#                FORMAT_COLS[anno_col_name] == FORMAT_COL_FLOAT and
-#                info != "INF" and
-#                is_number(info)
-#                ):
-#                ws.write(row, anno_idx+LAYOUT_VCF_COLS, float(info), anno_cell_fmt)
-#            elif (anno_col_name in FORMAT_COLS and
-#                FORMAT_COLS[anno_col_name] == FORMAT_COL_INT and
-#                is_number(info)
-#                ):
-#                ws.write(row, anno_idx+LAYOUT_VCF_COLS, int(info), anno_cell_fmt)
-#            elif is_number(info):
-            if is_number(anno):
+            if (anno_col_name in FORMAT_COLS and
+                FORMAT_COLS[anno_col_name] == FORMAT_COL_FLOAT and
+                anno != "INF" and
+                is_number(anno)
+                ):
+                ws.write(row, anno_col_idx+LAYOUT_VCF_COLS, float(anno), anno_cell_fmt)
+            elif (anno_col_name in FORMAT_COLS and
+                FORMAT_COLS[anno_col_name] == FORMAT_COL_INT and
+                is_number(anno)
+                ):
+                ws.write(row, anno_col_idx+LAYOUT_VCF_COLS, int(anno), anno_cell_fmt)
+            elif is_number(anno):
                 ws.write(row, anno_col_idx+LAYOUT_VCF_COLS, anno, anno_cell_fmt)
             else:
                 ws.write(row, anno_col_idx+LAYOUT_VCF_COLS, str(anno).decode('utf-8'), anno_cell_fmt)

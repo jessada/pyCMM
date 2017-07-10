@@ -335,16 +335,26 @@ class SQLiteDBReader(SQLiteDB):
                                    master_col_names)
         self.__anno_col_idxs = OrderedDict()
         self.__qry_cols = []
+        avail_cols = []
         anno_col_idx = len(VCF_PKEYS)
         for col_name in col_names:
             if col_name in mod_master_col_names:
+                avail_cols.append(col_name)
                 self.__anno_col_idxs[col_name] = anno_col_idx
                 master_col_idx = mod_master_col_names.index(col_name)
                 self.__qry_cols.append(master_col_names[master_col_idx])
                 anno_col_idx += 1
+            elif (col_name in EXAC03_CONSTRAINT_COL_NAMES and
+                EXAC03_CONSTRAINT_COL_NAME in mod_master_col_names
+                ):
+                avail_cols.append(col_name)
+                if EXAC03_CONSTRAINT_COL_NAME not in self.__anno_col_idxs:
+                    self.__anno_col_idxs[EXAC03_CONSTRAINT_COL_NAME] = anno_col_idx
+                    master_col_idx = mod_master_col_names.index(EXAC03_CONSTRAINT_COL_NAME)
+                    self.__qry_cols.append(master_col_names[master_col_idx])
+                    anno_col_idx += 1
             else:
                 self.warning("Column " + col_name + " is missing")
-        avail_cols = self.__anno_col_idxs.keys()
         return avail_cols
 
     def init_samples(self, samples_id=None):
