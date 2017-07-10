@@ -2,6 +2,8 @@ import copy
 import re
 from collections import OrderedDict
 from pycmm.settings import MAX_REF_MAF_COL_NAME
+from pycmm.settings import EXAC03_CONSTRAINT_COL_NAMES
+from pycmm.settings import EXAC03_CONSTRAINT_COL_NAME
 from pycmm.utils import is_number
 from pycmm.template import pyCMMBase
 from pycmm.proc.db.connector import SQLiteDB
@@ -28,6 +30,8 @@ QRY_POS_COL_IDX = 1
 QRY_REF_COL_IDX = 2
 QRY_ALT_COL_IDX = 3
 #QRY_FILTER_COL_IDX = 4
+
+EXAC_CONSTRAINT_PATTERN = re.compile(r'''(?P<var_name>.+?)=(?P<value>.+)''')
 
 
 class QryCall(pyCMMBase):
@@ -96,7 +100,7 @@ class QryRecord(pyCMMBase):
                  raw_qry,
                  anno_col_idxs,
                  sample_col_idxs,
-                 ref_mutated_col_idx,
+#                 ref_mutated_col_idx,
                  family_infos,
                  *args,
                  **kwargs
@@ -107,6 +111,7 @@ class QryRecord(pyCMMBase):
         self.__sample_col_idxs = sample_col_idxs
 #        self.__ref_mutated = raw_qry[ref_mutated_col_idx]
         self.__family_infos = copy.deepcopy(family_infos)
+        self.__exac_constraints = -1
         self.__parse_genotype()
         self.__cal_shared()
 
@@ -188,6 +193,30 @@ class QryRecord(pyCMMBase):
                 self.gt[member.sample_id].shared_mutation = shared_mutation
             family_info.shared_mutation = shared_mutation
 
+    def __parse_exac_constraint(self, exac_constraint_vals):
+        exac_constaints = exac_constraint_vals.split('#')
+        self.__exac_constraints = {}
+        for exac_constaint in exac_constaints:
+            match = EXAC_CONSTRAINT_PATTERN.match(exac_constaint)
+            var_name = match.group('var_name')
+            value = match.group('value')
+            self.__exac_constraints[var_name] = value
+
+    def __get_exac_constraint_val(self, var_name):
+        if self.__exac_constraints is None:
+            return None
+        if self.__exac_constraints == -1:
+            exac_constraint_vals = self.get_anno(EXAC03_CONSTRAINT_COL_NAME)
+            if (exac_constraint_vals is None or
+                exac_constraint_vals == "." or
+                exac_constraint_vals == ""):
+                self.__exac_constraints = None
+                return None
+            self.__parse_exac_constraint(exac_constraint_vals)
+        if var_name in self.__exac_constraints:
+            return self.__exac_constraints[var_name]
+        raise IndexError("constraint: "+var_name+" is not found in exac03 constraint")
+
     def __get_anno(self, anno_col):
         # - If info exist (maybe in an "encrypted" name),
         # return the info
@@ -202,6 +231,10 @@ class QryRecord(pyCMMBase):
         # - Otherwise, exception
         # - Before return simplify all possible NA into ""
         anno_val = self.__get_anno(anno_col)
+        if anno_val is not None:
+            pass
+        elif anno_col in EXAC03_CONSTRAINT_COL_NAMES:
+            anno_val = self.__get_exac_constraint_val(anno_col)
         if (anno_val == "" or
             anno_val is None or
             anno_val == [None] or
@@ -437,6 +470,6 @@ class SQLiteDBReader(SQLiteDB):
             yield QryRecord(row,
                             self.__anno_col_idxs,
                             self.__sample_col_idxs,
-                            self.__ref_mutated_col_idx,
+#                            self.__ref_mutated_col_idx,
                             self.__family_infos,
                             )
