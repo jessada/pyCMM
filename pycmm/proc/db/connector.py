@@ -51,8 +51,8 @@ class SQLiteDB(pyCMMBase):
         self.__init_db()
 
     def get_raw_obj_str(self, *args, **kwargs):
-        raw_repr = super(SQLiteDB, self).get_raw_obj_str(*args, **kwargs)
-        return raw_repr
+        raw_str = super(SQLiteDB, self).get_raw_obj_str(*args, **kwargs)
+        return raw_str
 
     @property
     def db_path(self):
@@ -66,6 +66,8 @@ class SQLiteDB(pyCMMBase):
         self.info()
         self.info("connecting to database: " + self.db_path)
         self.__create_system_tables()
+        self.__avdb_info = None
+        self.__annovar_info = None
 
     def __create_system_tables(self):
         self._create_table(tbl_name=TBL_NAME_CMM_TBLS,
@@ -215,7 +217,9 @@ class SQLiteDB(pyCMMBase):
         return sys_info
 
     def get_avdb_info(self):
-        return self.__get_sys_info(DATA_TYPE_AVDB_INFO)
+        if self.__avdb_info is None:
+            self.__avdb_info = self.__get_sys_info(DATA_TYPE_AVDB_INFO)
+        return self.__avdb_info
 
     def get_annovar_info(self):
         return self.__get_sys_info(DATA_TYPE_ANNOVAR_INFO)
@@ -351,7 +355,7 @@ class SQLiteDB(pyCMMBase):
         self._exec_sql(sql)
         sql = "UPDATE " + tbl_name
         sql += " SET " + REF_MUTATED_COL_NAME + " = 1"
-        sql += " WHERE " + GNOMAD_GENOME_ALL_COL_NAME + " > 0.5"
+        sql += " WHERE _" + GNOMAD_GENOME_ALL_COL_NAME + " > 0.5"
         self._exec_sql(sql)
 
 #        sql = "SELECT " + REF_MUTATED_COL_NAME + " FROM " + TBL_NAME_ALL_GTZ_ANNOS

@@ -213,6 +213,8 @@ class TestSQLiteDB(SafeTester):
         db.set_ref_mutated()
         sql = "SELECT " + REF_MUTATED_COL_NAME
         sql += " FROM " + TBL_NAME_ALL_GTZ_ANNOS
+        sql += " WHERE POS > 89684278"
+        sql += " OR POS = 57427955"
         rows = db.read_rows(sql=sql)
         row = rows.next()
         self.assertEqual(row[0],
@@ -222,27 +224,17 @@ class TestSQLiteDB(SafeTester):
         row = rows.next()
         row = rows.next()
         self.assertEqual(row[0],
-                         0,
-                         "SQLiteDB cannot correctly identify mutation in reference")
-        row = rows.next()
-        row = rows.next()
-        row = rows.next()
-        row = rows.next()
-        row = rows.next()
-        row = rows.next()
-        row = rows.next()
-        row = rows.next()
-        row = rows.next()
-        row = rows.next()
-        self.assertEqual(row[0],
                          1,
                          "SQLiteDB cannot correctly identify mutation in reference")
         row = rows.next()
-        row = rows.next()
         self.assertEqual(row[0],
                          0,
                          "SQLiteDB cannot correctly identify mutation in reference")
         row = rows.next()
+        row = rows.next()
+        self.assertEqual(row[0],
+                         0,
+                         "SQLiteDB cannot correctly identify mutation in reference")
         row = rows.next()
         row = rows.next()
         self.assertEqual(round(row[0], 4),

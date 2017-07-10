@@ -4,7 +4,6 @@ from os.path import join as join_path
 from pycmm.proc import CMMPipeline
 from pycmm.proc import init_jobs_setup_file
 from pycmm.proc import get_func_arg
-from pycmm.proc.mutrep.dbreader import SQLiteDBReader
 from collections import defaultdict
 from collections import OrderedDict
 #from collections import namedtuple
@@ -55,8 +54,11 @@ from pycmm.cmmlib.xlslib import NO_COLOR
 #from pycmm.flow import get_func_arg
 #from pycmm.flow import init_jobs_setup_file
 #from pycmm.flow.cmmdb import CMMPipeline
-#from pycmm.cmmlib.dnalib import ALL_CHROMS
+from pycmm.cmmlib.dnalib import ALL_CHROMS
 from pycmm.cmmlib.dnalib import DNARegion
+from pycmm.proc.mutrep.dbreader import SQLiteDBReader
+from pycmm.proc.mutrep.dbreader import GT_HOM
+from pycmm.proc.mutrep.dbreader import GT_HET
 #from pycmm.cmmlib.tamodel import CMMGT_HOMOZYGOTE
 #from pycmm.cmmlib.tamodel import CMMGT_HETEROZYGOTE
 
@@ -332,7 +334,7 @@ class ReportLayout(CMMParams):
         filter_actions[FILTER_NON_INTERGENIC] = self.filter_non_intergenic
         filter_actions[FILTER_NON_INTRONIC] = self.filter_non_intronic
         filter_actions[FILTER_NON_UPSTREAM] = self.filter_non_upstream
-        filter_actions[FILTER_NON_DOWNSTREAM] = self.filter_non_downtream
+        filter_actions[FILTER_NON_DOWNSTREAM] = self.filter_non_downstream
         filter_actions[FILTER_NON_UTR] = self.filter_non_utr
         filter_actions[FILTER_NON_SYNONYMOUS] = self.filter_non_synonymous
         filter_actions[FILTER_HAS_MUTATION] = self.filter_has_mutation
@@ -525,7 +527,7 @@ class ReportLayout(CMMParams):
                                                                           default_val=[])
 
     @property
-    def filter_non_downtream(self):
+    def filter_non_downstream(self):
         return JOBS_SETUP_RPT_FILTER_NON_DOWNSTREAM in self._get_job_config(JOBS_SETUP_RPT_ROWS_FILTER_ACTIONS_CRITERIA_KEY,
                                                                             default_val=[])
 
@@ -647,9 +649,11 @@ class ReportLayout(CMMParams):
 class MutRepController(CMMPipeline):
     """ A class to control CMMDB best practice pipeline """
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, jobs_setup_file, verbose=True, *args, **kwargs):
+        kwargs['jobs_setup_file'] = jobs_setup_file
         super(MutRepController, self).__init__(*args, **kwargs)
         self.__init_properties()
+        self.__verbose = verbose
 
     def get_raw_obj_str(self, *args, **kwargs):
         raw_str = super(MutRepController, self).get_raw_obj_str(*args, **kwargs)
@@ -881,25 +885,23 @@ class MutRepController(CMMPipeline):
 #            sample_id = samples_id[sample_idx]
 #            call = qry_record.genotype(sample_id)
 #            zygo = call.cmm_gts[allele_idx]
-            zygo = qry_record.get_call(sample_id)
+            gt = qry_record.gt[sample_id]
             # determine cell(s) format
             if self.report_layout.coloring_shared:
-                if type(call.shared_mutations) is not list:
-                    zygo_fmt = dflt_cell_fmt
-                elif not call.shared_mutations[allele_idx]:
+                if not gt.shared_mutation:
                     zygo_fmt = dflt_cell_fmt
                 # then assuming that they are shared
-                elif call.actual_gts[allele_idx] == CMMGT_HOMOZYGOTE:
+                elif gt.actual_zygo == GT_HOM:
                     hom_shared_color = self.report_layout.cell_color_hom_shared
                     zygo_fmt = self.plain_fmts[hom_shared_color]
                 else:
                     het_shared_color = self.report_layout.cell_color_het_shared
                     zygo_fmt = self.plain_fmts[het_shared_color]
             elif self.report_layout.coloring_zygosity:
-                if call.actual_gts[allele_idx] == CMMGT_HOMOZYGOTE:
+                if gt.actual_zygo == GT_HOM:
                     hom_zygo_color = self.report_layout.cell_color_hom_zygo
                     zygo_fmt = self.plain_fmts[hom_zygo_color]
-                elif call.actual_gts[allele_idx] == CMMGT_HETEROZYGOTE:
+                elif gt.actual_zygo == GT_HET:
                     het_zygo_color = self.report_layout.cell_color_het_zygo
                     zygo_fmt = self.plain_fmts[het_zygo_color]
                 else:
@@ -916,7 +918,7 @@ class MutRepController(CMMPipeline):
 #                    zygo_fmt = self.plain_fmts[het_zygo_color]
 #
             # write content to cell(s)
-            next_col = self.__write_sample(ws, row, next_col, zygo, zygo_fmt)
+            next_col = self.__write_sample(ws, row, next_col, gt.raw_zygo, zygo_fmt)
 #            if self.report_layout.call_gq:
 #                zygo_gq = call.data.GQ
 #                if zygo_gq is None:
@@ -936,12 +938,12 @@ class MutRepController(CMMPipeline):
                         ):
         # use input expression to determine if row will have background color
         row_color = None
-#        if self.report_layout.exprs is not None:
-#            color_row_actions = self.report_layout.exprs.actions[ACTION_COLOR_ROW]
-#            for cra in color_row_actions:
-#                if qry_record.qry_eval(cra.pattern, allele_idx):
-#                    row_color = cra.color
-#                    break
+        if self.report_layout.exprs is not None:
+            color_row_actions = self.report_layout.exprs.actions[ACTION_COLOR_ROW]
+            for cra in color_row_actions:
+                if qry_record.qry_eval(cra.pattern):
+                    row_color = cra.color
+                    break
         if row_color is not None:
             dflt_cell_fmt = self.plain_fmts[row_color]
         else:
@@ -972,8 +974,8 @@ class MutRepController(CMMPipeline):
             if anno_col_name in color_col_actions:
                 anno_color_col_actions = color_col_actions[anno_col_name]
                 for cca in anno_color_col_actions:
-                    if qry_record.qry_eval(cca.pattern, allele_idx):
-                        info_cell_fmt = self.plain_fmts[cca.color]
+                    if qry_record.qry_eval(cca.pattern):
+                        anno_cell_fmt = self.plain_fmts[cca.color]
                         color_col = True
             if anno == "" and not color_col:
                 continue
@@ -986,7 +988,7 @@ class MutRepController(CMMPipeline):
 #                                                    allele_idx).split(',')
 #                for color_gene in self.report_layout.color_genes:
 #                    if color_gene in gene_refgenes:
-#                        info_cell_fmt = self.plain_fmts[self.report_layout.cell_color_color_gene]
+#                        anno_cell_fmt = self.plain_fmts[self.report_layout.cell_color_color_gene]
 #                        break
 #            # determine cell format
 #            if (anno_col_name in FORMAT_COLS and
@@ -994,12 +996,12 @@ class MutRepController(CMMPipeline):
 #                info != "INF" and
 #                is_number(info)
 #                ):
-#                ws.write(row, anno_idx+LAYOUT_VCF_COLS, float(info), info_cell_fmt)
+#                ws.write(row, anno_idx+LAYOUT_VCF_COLS, float(info), anno_cell_fmt)
 #            elif (anno_col_name in FORMAT_COLS and
 #                FORMAT_COLS[anno_col_name] == FORMAT_COL_INT and
 #                is_number(info)
 #                ):
-#                ws.write(row, anno_idx+LAYOUT_VCF_COLS, int(info), info_cell_fmt)
+#                ws.write(row, anno_idx+LAYOUT_VCF_COLS, int(info), anno_cell_fmt)
 #            elif is_number(info):
             if is_number(anno):
                 ws.write(row, anno_col_idx+LAYOUT_VCF_COLS, anno, anno_cell_fmt)
@@ -1114,6 +1116,15 @@ class MutRepController(CMMPipeline):
         current_gene = None
         qry_record_buffers = []
         for qry_record in qry_records:
+            delete_row = False
+            if self.report_layout.exprs is not None:
+                del_row_actions = self.report_layout.exprs.actions[ACTION_DELETE_ROW]
+                for dra in del_row_actions:
+                    if qry_record.qry_eval(dra.pattern):
+                        delete_row = True
+                        break
+            if delete_row:
+                continue
             row = self.__write_content(ws,
                                        row,
                                        qry_record,
@@ -1134,7 +1145,7 @@ class MutRepController(CMMPipeline):
 #                if (self.report_layout.filter_non_upstream and
 #                    qry_record.is_upstream[allele_idx]):
 #                    continue
-#                if (self.report_layout.filter_non_downtream and
+#                if (self.report_layout.filter_non_downstream and
 #                    qry_record.is_downstream[allele_idx]):
 #                    continue
 #                if (self.report_layout.filter_non_utr and
@@ -1150,15 +1161,6 @@ class MutRepController(CMMPipeline):
 #                    not qry_record.has_shared(allele_idx)):
 #                    continue
 #                if qry_record.alleles[allele_idx] == "*":
-#                    continue
-#                delete_row = False
-#                if self.report_layout.exprs is not None:
-#                    del_row_actions = self.report_layout.exprs.actions[ACTION_DELETE_ROW]
-#                    for dra in del_row_actions:
-#                        if qry_record.qry_eval(dra.pattern, allele_idx):
-#                            delete_row = True
-#                            break
-#                if delete_row:
 #                    continue
 #                # If filter_genes is defined, only the filter_genes can be
 #                # in the report. Otherwise, no filtering applied
@@ -1205,21 +1207,10 @@ class MutRepController(CMMPipeline):
 
     def __add_muts_sheet(self,
                          sheet_name,
-#                         view_name,
                          report_regions,
                          fam_id=None,
                          ):
         wb = self.__wb
-#        reader = self.__query_table(view_name)
-#        annotated_vcf_tabix = self.report_layout.annotated_vcf_tabix
-#        if annotated_vcf_tabix.endswith('.vcf.gz'):
-#            # only one vcf file is allowed for one pipeline
-#            self.__vcf_reader = VcfReader(filename=annotated_vcf_tabix,
-#                                          family_infos=self.families_info,
-#                                          freq_ratios=self.report_layout.freq_ratios,
-#                                          )
-#        else:
-#            self.thrown(annotated_vcf_tabix + ' does not endswith .vcf.gz')
         row = 1
         ws = self.__add_sheet(sheet_name)
         sample_start_idx, ncol = self.__write_header(ws,
@@ -1229,8 +1220,6 @@ class MutRepController(CMMPipeline):
             qry_records = self.reader.get_qry_records()
             row = self.__write_contents(ws,
                                         row,
-#                                        self.vcf_reader,
-#                                        reader,
                                         qry_records,
                                         fam_id,
                                         )
@@ -1254,10 +1243,6 @@ class MutRepController(CMMPipeline):
         self.info(log_msg)
         self.__set_layout(ws, sample_start_idx, ncol)
 
-#    def gen_report(self, veiw_name):
-#        for rec in self.db.read_table(view_name):
-#            self.dbg(rec)
-#    
     def __init_db_connection(self):
         # - In order to have a precise table with only needed information
         # - To tell the database what annotation columns it should expect
@@ -1265,7 +1250,9 @@ class MutRepController(CMMPipeline):
         # - To tell the database about row filtering criteria
         # - The self.__reader must be able to read the needed info w/o
         # explicitly providing the criteria again
-        self.__reader = SQLiteDBReader(self.report_layout.db_file)
+        self.__reader = SQLiteDBReader(self.report_layout.db_file,
+                                       self.families_info,
+                                       verbose=self.__verbose)
         self.__anno_cols = self.__reader.init_columns(self.report_layout.anno_cols)
         if not self.has_samples_info:
             self.__reader.init_samples()
@@ -1279,6 +1266,12 @@ class MutRepController(CMMPipeline):
                    out_file=None,
                    ):
         self.__init_db_connection()
+        if type(report_regions) is str:
+            report_regions = map(lambda x: DNARegion(x),
+                                 report_regions.split(","))
+        if report_regions is None:
+            report_regions = map(lambda x: DNARegion(x),
+                                 ALL_CHROMS)
         if out_file is None:
             out_file = self.summary_rpt_file
         self.info("")
@@ -1294,7 +1287,7 @@ class MutRepController(CMMPipeline):
                               )
 #        self.__add_criteria_sheet()
         self.__wb.close()
-
+        return out_file
 
 #class ReportLayout(CMMParams):
 #    """ A structure to parse and keep mutation report layout """
@@ -1331,7 +1324,7 @@ class MutRepController(CMMPipeline):
 #        filter_actions[FILTER_NON_INTERGENIC] = self.filter_non_intergenic
 #        filter_actions[FILTER_NON_INTRONIC] = self.filter_non_intronic
 #        filter_actions[FILTER_NON_UPSTREAM] = self.filter_non_upstream
-#        filter_actions[FILTER_NON_DOWNSTREAM] = self.filter_non_downtream
+#        filter_actions[FILTER_NON_DOWNSTREAM] = self.filter_non_downstream
 #        filter_actions[FILTER_NON_UTR] = self.filter_non_utr
 #        filter_actions[FILTER_NON_SYNONYMOUS] = self.filter_non_synonymous
 #        filter_actions[FILTER_HAS_MUTATION] = self.filter_has_mutation
@@ -1502,7 +1495,7 @@ class MutRepController(CMMPipeline):
 #                                                                          default_val=[])
 #
 #    @property
-#    def filter_non_downtream(self):
+#    def filter_non_downstream(self):
 #        return JOBS_SETUP_RPT_FILTER_NON_DOWNSTREAM in self._get_job_config(JOBS_SETUP_RPT_ROWS_FILTER_ACTIONS_CRITERIA_KEY,
 #                                                                            default_val=[])
 #
@@ -2046,7 +2039,7 @@ class MutRepController(CMMPipeline):
 #                if (self.report_layout.filter_non_upstream and
 #                    qry_record.is_upstream[allele_idx]):
 #                    continue
-#                if (self.report_layout.filter_non_downtream and
+#                if (self.report_layout.filter_non_downstream and
 #                    qry_record.is_downstream[allele_idx]):
 #                    continue
 #                if (self.report_layout.filter_non_utr and
@@ -2492,8 +2485,10 @@ def create_jobs_setup_file(*args, **kwargs):
     rpt_cfg[JOBS_SETUP_RPT_DB_FILE] = get_func_arg('db_file', kwargs)
     if anno_cols is None:
         rpt_cfg[JOBS_SETUP_RPT_ANNO_COLS_KEY] = ALL_MUTREP_ANNO_COLS.keys()
-    else:
+    elif type(anno_cols) is str:
         rpt_cfg[JOBS_SETUP_RPT_ANNO_COLS_KEY] = anno_cols.split(",")
+    else:
+        rpt_cfg[JOBS_SETUP_RPT_ANNO_COLS_KEY] = anno_cols
     anno_excl_tags = get_func_arg('anno_excl_tags', kwargs)
     if anno_excl_tags is not None:
         rpt_cfg[JOBS_SETUP_RPT_ANNO_EXCL_TAGS_KEY] = anno_excl_tags.split(",")

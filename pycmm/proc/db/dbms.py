@@ -39,6 +39,7 @@ OPERATION_LOAD_GTZ_VCF = 'LOAD_GTZ_VCF'
 OPERATION_CAL_HW = 'CALCULATE_HARDY_WEINBERG'
 OPERATION_JOIN_ALL_GTZ_ANNOS = 'JOIN_ALL_GTZ_ANNOS'
 OPERATION_CAL_MAX_REF_MAF = 'CAL_MAF_REF_MAF'
+OPERATION_SET_REF_MUTATED = 'SET_REF_MUTATED'
 
 class SQLiteDBWriter(SQLiteDB):
     """
@@ -328,6 +329,8 @@ class SQLiteDBController(CMMPipeline):
             return self.db.join_all_gtz_anno()
         elif db_job.operation == OPERATION_CAL_MAX_REF_MAF:
             return self.db.cal_max_ref_maf()
+        elif db_job.operation == OPERATION_SET_REF_MUTATED:
+            return self.db.set_ref_mutated()
         else:
             raise Exception('Unknown operation: ' + db_job.operation)
 
