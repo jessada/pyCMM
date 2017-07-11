@@ -271,9 +271,6 @@ class SQLiteDB(pyCMMBase):
         db_col_names = self.get_col_names(TBL_NAME_ALL_GTZ_ANNOS)
         mod_db_col_names = map(lambda x: x.strip("_"),
                                db_col_names)
-#        self.dbg(anno_col_names)
-#        self.dbg(mod_db_col_names)
-#        self.dbg(ALL_MUTREP_ANNO_COLS)
         for anno_col_name in anno_col_names:
             if anno_col_name in mod_db_col_names:
                 db_col_idx = mod_db_col_names.index(anno_col_name)
@@ -281,16 +278,11 @@ class SQLiteDB(pyCMMBase):
                 self.__col_mapping[anno_col_name] = db_col_name
             else:
                 mod_anno_col_name = anno_col_name.replace(".", "_")
-#                dbg_msg = "before compare mod_anno_col_name: " + mod_anno_col_name + ", anno_col_name: " + anno_col_name
-#                self.dbg(dbg_msg)
                 if mod_anno_col_name in mod_db_col_names:
-#                    dbg_msg = "in mod_anno_col_name: " + mod_anno_col_name + ", anno_col_name: " + anno_col_name
-#                    self.dbg(dbg_msg)
                     db_col_idx = mod_db_col_names.index(mod_anno_col_name)
                     db_col_name = db_col_names[db_col_idx]
                     self.__col_mapping[anno_col_name] = db_col_name
                     self.__col_mapping[mod_anno_col_name] = db_col_name
-#        self.dbg(self.__col_mapping)
 
     def anno_col_to_db_col(self, anno_col_name):
         if self.__col_mapping is None:
@@ -391,7 +383,7 @@ class SQLiteDB(pyCMMBase):
         self._exec_sql(sql)
         sql = "UPDATE " + tbl_name
         sql += " SET " + REF_MUTATED_COL_NAME + " = 1"
-        sql += " WHERE _" + GNOMAD_GENOME_ALL_COL_NAME + " > 0.5"
+        sql += " WHERE " + self.anno_col_to_db_col(GNOMAD_GENOME_ALL_COL_NAME) + " > 0.5"
         self._exec_sql(sql)
 
 #        sql = "SELECT " + REF_MUTATED_COL_NAME + " FROM " + TBL_NAME_ALL_GTZ_ANNOS
