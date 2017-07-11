@@ -324,38 +324,68 @@ class SQLiteDBReader(SQLiteDB):
                 samples_id.append(col_name.strip("_").replace("_", "-"))
         return samples_id
 
-    def init_columns(self, col_names):
+    def init_columns(self, anno_col_names):
+#    def init_columns(self, col_names):
         # - To tell the reader what columns it should expect
         # - To prepare the column names for later sql query
         # - Because the UI col name and sql col name might be different,
         # the function also maps UI col name and col name idx in the query
         # - The return value is a list of available columns
-        master_col_names = self.get_col_names(MASTER_TABLE)
-        mod_master_col_names = map(lambda x: x.strip("_"),
-                                   master_col_names)
+#        master_col_names = self.get_col_names(MASTER_TABLE)
+#        mod_master_col_names = map(lambda x: x.strip("_"),
+#                                   master_col_names)
         self.__anno_col_idxs = OrderedDict()
         self.__qry_cols = []
         avail_cols = []
         anno_col_idx = len(VCF_PKEYS)
-        for col_name in col_names:
-            if col_name in mod_master_col_names:
-                avail_cols.append(col_name)
-                self.__anno_col_idxs[col_name] = anno_col_idx
-                master_col_idx = mod_master_col_names.index(col_name)
-                self.__qry_cols.append(master_col_names[master_col_idx])
+        for anno_col_name in anno_col_names:
+            db_col_name = self.anno_col_to_db_col(anno_col_name)
+#            dbg_msg = "anno_col_name: " + anno_col_name + ", db_col_name: " + str(db_col_name)
+#            self.dbg(dbg_msg)
+            if db_col_name is not None:
+                avail_cols.append(anno_col_name)
+                self.__anno_col_idxs[anno_col_name] = anno_col_idx
+                self.__qry_cols.append(db_col_name)
                 anno_col_idx += 1
-            elif (col_name in EXAC03_CONSTRAINT_COL_NAMES and
-                EXAC03_CONSTRAINT_COL_NAME in mod_master_col_names
+            elif (anno_col_name in EXAC03_CONSTRAINT_COL_NAMES and
+                self.anno_col_to_db_col(EXAC03_CONSTRAINT_COL_NAME) is not None
                 ):
-                avail_cols.append(col_name)
+                avail_cols.append(anno_col_name)
                 if EXAC03_CONSTRAINT_COL_NAME not in self.__anno_col_idxs:
                     self.__anno_col_idxs[EXAC03_CONSTRAINT_COL_NAME] = anno_col_idx
-                    master_col_idx = mod_master_col_names.index(EXAC03_CONSTRAINT_COL_NAME)
-                    self.__qry_cols.append(master_col_names[master_col_idx])
+                    db_col_name = self.anno_col_to_db_col(EXAC03_CONSTRAINT_COL_NAME)
+                    self.__qry_cols.append(db_col_name)
                     anno_col_idx += 1
             else:
-                self.warning("Column " + col_name + " is missing")
+                self.warning("Column " + anno_col_name + " is missing")
         return avail_cols
+#        master_col_names = self.get_col_names(MASTER_TABLE)
+#        mod_master_col_names = map(lambda x: x.strip("_"),
+#                                   master_col_names)
+#        self.dbg(mod_master_col_names)
+#        self.__anno_col_idxs = OrderedDict()
+#        self.__qry_cols = []
+#        avail_cols = []
+#        anno_col_idx = len(VCF_PKEYS)
+#        for col_name in col_names:
+#            if col_name in mod_master_col_names:
+#                avail_cols.append(col_name)
+#                self.__anno_col_idxs[col_name] = anno_col_idx
+#                master_col_idx = mod_master_col_names.index(col_name)
+#                self.__qry_cols.append(master_col_names[master_col_idx])
+#                anno_col_idx += 1
+#            elif (col_name in EXAC03_CONSTRAINT_COL_NAMES and
+#                EXAC03_CONSTRAINT_COL_NAME in mod_master_col_names
+#                ):
+#                avail_cols.append(col_name)
+#                if EXAC03_CONSTRAINT_COL_NAME not in self.__anno_col_idxs:
+#                    self.__anno_col_idxs[EXAC03_CONSTRAINT_COL_NAME] = anno_col_idx
+#                    master_col_idx = mod_master_col_names.index(EXAC03_CONSTRAINT_COL_NAME)
+#                    self.__qry_cols.append(master_col_names[master_col_idx])
+#                    anno_col_idx += 1
+#            else:
+#                self.warning("Column " + col_name + " is missing")
+#        return avail_cols
 
     def init_samples(self, samples_id=None):
         # - To tell the reader what samples'id it should expect
@@ -441,6 +471,7 @@ class SQLiteDBReader(SQLiteDB):
 
     def get_qry_records(self, chrom=None, start_pos=None, end_pos=None):
         sql = "SELECT "
+        self.dbg(self.__qry_cols)
         if self.__qry_cols is None:
             anno_cols = self.get_avdb_info().values()
             anno_cols += self.get_annovar_info().values()

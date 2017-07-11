@@ -2,6 +2,7 @@ import sqlite3
 from pycmm.settings import MAX_REF_MAF_COL_NAME
 from pycmm.settings import REF_MAF_COL_NAMES
 from pycmm.settings import GNOMAD_GENOME_ALL_COL_NAME
+from pycmm.settings import ALL_MUTREP_ANNO_COLS
 from pycmm.template import pyCMMBase
 
 DATA_TYPE_AVDB_INFO = "data_type_avdb_info"
@@ -68,6 +69,7 @@ class SQLiteDB(pyCMMBase):
         self.__create_system_tables()
         self.__avdb_info = None
         self.__annovar_info = None
+        self.__col_mapping = None
 
     def __create_system_tables(self):
         self._create_table(tbl_name=TBL_NAME_CMM_TBLS,
@@ -253,6 +255,50 @@ class SQLiteDB(pyCMMBase):
         for row in self.read_rows(sql=sql):
             self.dbg(row)
 
+    def __map_columns(self):
+        # Due to the different in annotation column names and the column names
+        # in the database, and there are some risks in changing how the table
+        # columns schema, this funtion will map them in dictionary by using the
+        # annotation column name as the key and the table column name as value.
+        anno_col_names = self.get_avdb_info().values()
+        anno_col_names += self.get_annovar_info().values()
+        anno_col_names = map(lambda x: x.strip("_"),
+                             reduce(lambda x, y: x+y,
+                                    anno_col_names))
+        anno_col_names += ALL_MUTREP_ANNO_COLS
+        anno_col_names.append(REF_MUTATED_COL_NAME)
+        self.__col_mapping = {}
+        db_col_names = self.get_col_names(TBL_NAME_ALL_GTZ_ANNOS)
+        mod_db_col_names = map(lambda x: x.strip("_"),
+                               db_col_names)
+#        self.dbg(anno_col_names)
+#        self.dbg(mod_db_col_names)
+#        self.dbg(ALL_MUTREP_ANNO_COLS)
+        for anno_col_name in anno_col_names:
+            if anno_col_name in mod_db_col_names:
+                db_col_idx = mod_db_col_names.index(anno_col_name)
+                db_col_name = db_col_names[db_col_idx]
+                self.__col_mapping[anno_col_name] = db_col_name
+            else:
+                mod_anno_col_name = anno_col_name.replace(".", "_")
+#                dbg_msg = "before compare mod_anno_col_name: " + mod_anno_col_name + ", anno_col_name: " + anno_col_name
+#                self.dbg(dbg_msg)
+                if mod_anno_col_name in mod_db_col_names:
+#                    dbg_msg = "in mod_anno_col_name: " + mod_anno_col_name + ", anno_col_name: " + anno_col_name
+#                    self.dbg(dbg_msg)
+                    db_col_idx = mod_db_col_names.index(mod_anno_col_name)
+                    db_col_name = db_col_names[db_col_idx]
+                    self.__col_mapping[anno_col_name] = db_col_name
+                    self.__col_mapping[mod_anno_col_name] = db_col_name
+#        self.dbg(self.__col_mapping)
+
+    def anno_col_to_db_col(self, anno_col_name):
+        if self.__col_mapping is None:
+            self.__map_columns()
+        if anno_col_name in self.__col_mapping:
+            return self.__col_mapping[anno_col_name]
+        return None
+
     def join_all_gtz_anno(self):
         # This function will create a very huge table
         # having all gtz coors, all annotation, and gtz from all samples
@@ -336,16 +382,6 @@ class SQLiteDB(pyCMMBase):
                 sql += " AND " + col_name + " > 0.5"
                 self._exec_sql(sql) 
                 tbl_ref_maf_col_names.append(col_name)
-#        self.dbg(REF_MAF_COL_NAMES)
-#        self.dbg(tbl_ref_maf_col_names)
-
-#        sql = "SELECT " + ", ".join(VCF_PKEYS)
-#        sql += ", " + MAX_REF_MAF_COL_NAME
-#        sql += ", " + ", ".join(tbl_ref_maf_col_names)
-#        sql += " FROM " + tbl_name
-##        sql += " LIMIT 1"
-#        self.dbg(sql)
-#        self.dbg_query(sql)
 
     def set_ref_mutated(self):
         tbl_name = TBL_NAME_ALL_GTZ_ANNOS

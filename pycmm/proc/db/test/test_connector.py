@@ -3,6 +3,7 @@ import unittest
 from os.path import join as join_path
 from pycmm.template import SafeTester
 from pycmm.settings import MAX_REF_MAF_COL_NAME
+from pycmm.settings import GNOMAD_GENOME_ALL_COL_NAME
 from pycmm.proc.db.connector import SQLiteDB
 from pycmm.proc.db.connector import DATA_TYPE_AVDB_INFO
 from pycmm.proc.db.connector import DATA_TYPE_GTZ
@@ -134,6 +135,49 @@ class TestSQLiteDB(SafeTester):
         self.assertEqual(len(db.get_col_names(TBL_NAME_ALL_GTZ_ANNOS)),
                          417,
                          "SQLiteDB cannot correctly join all genotype and annotations")
+
+    def test_anno_col_to_db_col_1(self):
+        """
+        test converting ui col name to db col name
+        - ui col: gnomAD_genome_ALL
+        - db col: _gnomAD_genome_ALL
+        """
+
+        self.init_test(self.current_func_name)
+        db_file = join_path(self.data_dir,
+                            "input.db")
+        db = SQLiteDB(db_file, verbose=False)
+        self.assertEqual(db.anno_col_to_db_col(GNOMAD_GENOME_ALL_COL_NAME),
+                         "_"+GNOMAD_GENOME_ALL_COL_NAME,
+                         "SQLiteDB cannot correctly map UI column name to DB column name")
+
+    def test_anno_col_to_db_col_2(self):
+        """
+        test converting ui col name to db col name
+        - ui col: gnomAD_genome_ALL
+        - db col: gnomAD_genome_ALL
+        """
+
+        self.init_test(self.current_func_name)
+        db_file = join_path(self.data_dir,
+                            "input.db")
+        db = SQLiteDB(db_file, verbose=False)
+        self.assertEqual(db.anno_col_to_db_col(GNOMAD_GENOME_ALL_COL_NAME),
+                         GNOMAD_GENOME_ALL_COL_NAME,
+                         "SQLiteDB cannot correctly map UI column name to DB column name")
+
+    def test_anno_col_to_db_col_3(self):
+        """
+        test converting ui column that doesn't exist
+        """
+
+        self.init_test(self.current_func_name)
+        db_file = join_path(self.data_dir,
+                            "input.db")
+        db = SQLiteDB(db_file, verbose=False)
+        self.assertEqual(db.anno_col_to_db_col("NOT_EXIST"),
+                         None,
+                         "SQLiteDB cannot correctly map UI column name to DB column name")
 
     def test_cal_max_ref_maf_1(self):
         """

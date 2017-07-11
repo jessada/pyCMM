@@ -139,7 +139,7 @@ class SQLiteDBWriter(SQLiteDB):
         wt_col_name = dataset_name + "_WT"
         het_col_name = dataset_name + "_HET"
         hom_col_name = dataset_name + "_HOM"
-        hw_col_name = dataset_name.strip("OAF_") + "_hw_chisq"
+        hw_col_name = dataset_name.replace("OAF_", "") + "_hw_chisq"
         # check if any required columns are missing
         if wt_col_name not in col_names:
             # check of WT column since SWEGEN doesn't have it
