@@ -4,12 +4,17 @@ from collections import OrderedDict
 from pycmm.settings import MAX_REF_MAF_COL_NAME
 from pycmm.settings import EXAC03_CONSTRAINT_COL_NAMES
 from pycmm.settings import EXAC03_CONSTRAINT_COL_NAME
+from pycmm.settings import INTERVAR_AND_EVIDENCE_COL_NAME
+from pycmm.settings import INTERVAR_CLASS_COL_NAME
+from pycmm.settings import INTERVAR_EVIDENCE_COL_NAME
 from pycmm.utils import is_number
 from pycmm.template import pyCMMBase
 from pycmm.proc.db.connector import SQLiteDB
 from pycmm.proc.db.connector import VCF_PKEYS
 from pycmm.proc.db.connector import TBL_NAME_ALL_GTZ_ANNOS
 from pycmm.proc.db.connector import REF_MUTATED_COL_NAME
+from pycmm.cmmlib.intervarlib import parse_intervar_class
+from pycmm.cmmlib.intervarlib import parse_intervar_evidence
 
 MASTER_TABLE = TBL_NAME_ALL_GTZ_ANNOS
 
@@ -235,6 +240,10 @@ class QryRecord(pyCMMBase):
             pass
         elif anno_col in EXAC03_CONSTRAINT_COL_NAMES:
             anno_val = self.__get_exac_constraint_val(anno_col)
+        elif anno_col == INTERVAR_CLASS_COL_NAME:
+            anno_val = parse_intervar_class(self.get_anno(INTERVAR_AND_EVIDENCE_COL_NAME))
+        elif anno_col == INTERVAR_EVIDENCE_COL_NAME:
+            anno_val = parse_intervar_evidence(self.get_anno(INTERVAR_AND_EVIDENCE_COL_NAME))
         if (anno_val == "" or
             anno_val is None or
             anno_val == [None] or
@@ -331,17 +340,12 @@ class SQLiteDBReader(SQLiteDB):
         # - Because the UI col name and sql col name might be different,
         # the function also maps UI col name and col name idx in the query
         # - The return value is a list of available columns
-#        master_col_names = self.get_col_names(MASTER_TABLE)
-#        mod_master_col_names = map(lambda x: x.strip("_"),
-#                                   master_col_names)
         self.__anno_col_idxs = OrderedDict()
         self.__qry_cols = []
         avail_cols = []
         anno_col_idx = len(VCF_PKEYS)
         for anno_col_name in anno_col_names:
             db_col_name = self.anno_col_to_db_col(anno_col_name)
-#            dbg_msg = "anno_col_name: " + anno_col_name + ", db_col_name: " + str(db_col_name)
-#            self.dbg(dbg_msg)
             if db_col_name is not None:
                 avail_cols.append(anno_col_name)
                 self.__anno_col_idxs[anno_col_name] = anno_col_idx
@@ -354,6 +358,16 @@ class SQLiteDBReader(SQLiteDB):
                 if EXAC03_CONSTRAINT_COL_NAME not in self.__anno_col_idxs:
                     self.__anno_col_idxs[EXAC03_CONSTRAINT_COL_NAME] = anno_col_idx
                     db_col_name = self.anno_col_to_db_col(EXAC03_CONSTRAINT_COL_NAME)
+                    self.__qry_cols.append(db_col_name)
+                    anno_col_idx += 1
+            elif ((anno_col_name == INTERVAR_CLASS_COL_NAME or
+                anno_col_name == INTERVAR_EVIDENCE_COL_NAME) and
+                self.anno_col_to_db_col(INTERVAR_AND_EVIDENCE_COL_NAME) is not None
+                ):
+                avail_cols.append(anno_col_name)
+                if INTERVAR_AND_EVIDENCE_COL_NAME not in self.__anno_col_idxs:
+                    self.__anno_col_idxs[INTERVAR_AND_EVIDENCE_COL_NAME] = anno_col_idx
+                    db_col_name = self.anno_col_to_db_col(INTERVAR_AND_EVIDENCE_COL_NAME)
                     self.__qry_cols.append(db_col_name)
                     anno_col_idx += 1
             else:
@@ -471,7 +485,6 @@ class SQLiteDBReader(SQLiteDB):
 
     def get_qry_records(self, chrom=None, start_pos=None, end_pos=None):
         sql = "SELECT "
-        self.dbg(self.__qry_cols)
         if self.__qry_cols is None:
             anno_cols = self.get_avdb_info().values()
             anno_cols += self.get_annovar_info().values()
@@ -480,6 +493,7 @@ class SQLiteDBReader(SQLiteDB):
                                    anno_cols))
             anno_cols.append(MAX_REF_MAF_COL_NAME)
             anno_cols.append(REF_MUTATED_COL_NAME)
+            anno_cols.append(INTERVAR_AND_EVIDENCE_COL_NAME)
             self.init_columns(anno_cols)
             self.init_samples(self.samples_id)
         sql += ", ".join(VCF_PKEYS)

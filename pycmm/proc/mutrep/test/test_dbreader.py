@@ -23,9 +23,16 @@ from pycmm.settings import EXAC03_CONSTRAINT_MIS_Z_COL_NAME
 from pycmm.settings import EXAC03_CONSTRAINT_EXP_LOF_COL_NAME
 from pycmm.settings import EXAC03_CONSTRAINT_N_LOF_COL_NAME
 from pycmm.settings import EXAC03_CONSTRAINT_PLI_COL_NAME
+from pycmm.settings import INTERVAR_CLASS_COL_NAME
+from pycmm.settings import INTERVAR_EVIDENCE_COL_NAME
 #from pycmm.settings import MAX_REF_MAF_COL_NAME
 #from pycmm.settings import WES294_OAF_EARLYONSET_AF_COL_NAME
 #from pycmm.settings import WES294_OAF_BRCS_AF_COL_NAME
+from pycmm.cmmlib.intervarlib import INTERVAR_CLASS_BENIGN
+from pycmm.cmmlib.intervarlib import INTERVAR_CLASS_LIKELY_BENIGN
+from pycmm.cmmlib.intervarlib import INTERVAR_CLASS_UNCERTAIN_SIGNIFICANCE
+from pycmm.cmmlib.intervarlib import INTERVAR_CLASS_LIKELY_PATHOGENIC
+from pycmm.cmmlib.intervarlib import INTERVAR_CLASS_PATHOGENIC
 #from pycmm.cmmlib.taparser import SQLiteDBReader
 #from pycmm.flow.mutrep import MutRepPipeline
 #from pycmm.flow.test.test_mutrep import DFLT_TEST_MUTREP_COLS
@@ -1098,3 +1105,55 @@ class TestQryRecord(SafeTester):
 #                         '',
 #                         "values of ExAC constraint cannot be correctly determined")
 #
+    def test_parse_intervar_1(self):
+        """
+        test parsing intervar
+        """
+
+        self.init_test(self.current_func_name)
+        db_file = join_path(self.data_dir,
+                            'input.db')
+        db_reader = SQLiteDBReader(db_file, verbose=False)
+        qry_records = db_reader.get_qry_records()
+        qry_record = qry_records.next()
+        self.assertEqual(qry_record.get_anno(INTERVAR_CLASS_COL_NAME),
+                         INTERVAR_CLASS_BENIGN,
+                         "Incorect intervar value")
+        self.assertEqual(qry_record.get_anno(INTERVAR_EVIDENCE_COL_NAME),
+                         "BA1, BS1, BP4, BP7",
+                         "Incorect intervar value")
+        qry_record = qry_records.next()
+        self.assertEqual(qry_record.get_anno(INTERVAR_CLASS_COL_NAME),
+                         INTERVAR_CLASS_LIKELY_BENIGN,
+                         "Incorect intervar value")
+        self.assertEqual(qry_record.get_anno(INTERVAR_EVIDENCE_COL_NAME),
+                         "PM1, BS2, BP4",
+                         "Incorect intervar value")
+        qry_record = qry_records.next()
+        self.assertEqual(qry_record.get_anno(INTERVAR_CLASS_COL_NAME),
+                         INTERVAR_CLASS_UNCERTAIN_SIGNIFICANCE,
+                         "Incorect intervar value")
+        self.assertEqual(qry_record.get_anno(INTERVAR_EVIDENCE_COL_NAME),
+                         "",
+                         "Incorect intervar value")
+        qry_record = qry_records.next()
+        self.assertEqual(qry_record.get_anno(INTERVAR_CLASS_COL_NAME),
+                         INTERVAR_CLASS_BENIGN,
+                         "Incorect intervar value")
+        self.assertEqual(qry_record.get_anno(INTERVAR_EVIDENCE_COL_NAME),
+                         "BS1, BS2",
+                         "Incorect intervar value")
+        qry_record = qry_records.next()
+        self.assertEqual(qry_record.get_anno(INTERVAR_CLASS_COL_NAME),
+                         INTERVAR_CLASS_PATHOGENIC,
+                         "Incorect intervar value")
+        self.assertEqual(qry_record.get_anno(INTERVAR_EVIDENCE_COL_NAME),
+                         "PVS1, PM2, PP5",
+                         "Incorect intervar value")
+        qry_record = qry_records.next()
+        self.assertEqual(qry_record.get_anno(INTERVAR_CLASS_COL_NAME),
+                         INTERVAR_CLASS_LIKELY_PATHOGENIC,
+                         "Incorect intervar value")
+        self.assertEqual(qry_record.get_anno(INTERVAR_EVIDENCE_COL_NAME),
+                         "PVS1, PM2",
+                         "Incorect intervar value")

@@ -1,6 +1,7 @@
 import sqlite3
 from pycmm.settings import MAX_REF_MAF_COL_NAME
 from pycmm.settings import REF_MAF_COL_NAMES
+from pycmm.settings import INTERVAR_AND_EVIDENCE_COL_NAME
 from pycmm.settings import GNOMAD_GENOME_ALL_COL_NAME
 from pycmm.settings import ALL_MUTREP_ANNO_COLS
 from pycmm.template import pyCMMBase
@@ -260,6 +261,10 @@ class SQLiteDB(pyCMMBase):
         # in the database, and there are some risks in changing how the table
         # columns schema, this funtion will map them in dictionary by using the
         # annotation column name as the key and the table column name as value.
+        self.__col_mapping = {}
+        db_col_names = self.get_col_names(TBL_NAME_ALL_GTZ_ANNOS)
+        mod_db_col_names = map(lambda x: x.strip("_"),
+                               db_col_names)
         anno_col_names = self.get_avdb_info().values()
         anno_col_names += self.get_annovar_info().values()
         anno_col_names = map(lambda x: x.strip("_"),
@@ -267,10 +272,9 @@ class SQLiteDB(pyCMMBase):
                                     anno_col_names))
         anno_col_names += ALL_MUTREP_ANNO_COLS
         anno_col_names.append(REF_MUTATED_COL_NAME)
-        self.__col_mapping = {}
-        db_col_names = self.get_col_names(TBL_NAME_ALL_GTZ_ANNOS)
-        mod_db_col_names = map(lambda x: x.strip("_"),
-                               db_col_names)
+        anno_col_names.append(INTERVAR_AND_EVIDENCE_COL_NAME)
+#        self.dbg(anno_col_names)
+#        self.dbg(mod_db_col_names)
         for anno_col_name in anno_col_names:
             if anno_col_name in mod_db_col_names:
                 db_col_idx = mod_db_col_names.index(anno_col_name)
@@ -283,6 +287,13 @@ class SQLiteDB(pyCMMBase):
                     db_col_name = db_col_names[db_col_idx]
                     self.__col_mapping[anno_col_name] = db_col_name
                     self.__col_mapping[mod_anno_col_name] = db_col_name
+                mod_anno_col_name = anno_col_name.replace(":", "_")
+                if mod_anno_col_name in mod_db_col_names:
+                    db_col_idx = mod_db_col_names.index(mod_anno_col_name)
+                    db_col_name = db_col_names[db_col_idx]
+                    self.__col_mapping[anno_col_name] = db_col_name
+                    self.__col_mapping[mod_anno_col_name] = db_col_name
+#        self.dbg(self.__col_mapping)
 
     def anno_col_to_db_col(self, anno_col_name):
         if self.__col_mapping is None:

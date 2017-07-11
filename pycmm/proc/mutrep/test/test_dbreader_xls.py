@@ -8,8 +8,8 @@ from pycmm.settings import XLS_TEST
 #from pycmm.settings import EXAC_ALL_COL_NAME
 #from pycmm.settings import PATHOGENIC_COUNT_COL_NAME
 from pycmm.settings import EXAC03_CONSTRAINT_SYN_Z_COL_NAME
-#from pycmm.settings import INTERVAR_CLASS_COL_NAME
-#from pycmm.settings import INTERVAR_EVIDENCE_COL_NAME
+from pycmm.settings import INTERVAR_CLASS_COL_NAME
+from pycmm.settings import INTERVAR_EVIDENCE_COL_NAME
 #from pycmm.settings import MAX_REF_MAF_COL_NAME
 #from pycmm.settings import REF_MAF_COL_NAMES
 from pycmm.settings import FULL_SYSTEM_TEST
@@ -19,11 +19,11 @@ from pycmm.settings import FULL_SYSTEM_TEST
 #from pycmm.settings import EXAC_CONSTRAINT_COLS_TAG
 #from pycmm.settings import LJB_SCORE_COLS_TAG
 from pycmm.cmmlib.xlslib import XlsUtils
-#from pycmm.cmmlib.intervarlib import INTERVAR_CLASS_BENIGN
-#from pycmm.cmmlib.intervarlib import INTERVAR_CLASS_LIKELY_BENIGN
-#from pycmm.cmmlib.intervarlib import INTERVAR_CLASS_UNCERTAIN_SIGNIFICANCE
-#from pycmm.cmmlib.intervarlib import INTERVAR_CLASS_LIKELY_PATHOGENIC
-#from pycmm.cmmlib.intervarlib import INTERVAR_CLASS_PATHOGENIC
+from pycmm.cmmlib.intervarlib import INTERVAR_CLASS_BENIGN
+from pycmm.cmmlib.intervarlib import INTERVAR_CLASS_LIKELY_BENIGN
+from pycmm.cmmlib.intervarlib import INTERVAR_CLASS_UNCERTAIN_SIGNIFICANCE
+from pycmm.cmmlib.intervarlib import INTERVAR_CLASS_LIKELY_PATHOGENIC
+from pycmm.cmmlib.intervarlib import INTERVAR_CLASS_PATHOGENIC
 from pycmm.proc.mutrep.mutrep import MutRepController
 from pycmm.proc.mutrep.mutrep import create_jobs_setup_file
 #from pycmm.flow.mutrep import JOBS_SETUP_RPT_FILTER_RARE
@@ -36,7 +36,7 @@ from pycmm.proc.mutrep.mutrep import create_jobs_setup_file
 #from pycmm.flow.mutrep import JOBS_SETUP_RPT_FILTER_NON_SYNONYMOUS
 #from pycmm.flow.mutrep import JOBS_SETUP_RPT_FILTER_HAS_MUTATION
 #from pycmm.flow.mutrep import JOBS_SETUP_RPT_FILTER_HAS_SHARED
-#from pycmm.flow.test.test_mutrep import DFLT_TEST_MUTREP_COLS
+from pycmm.proc.mutrep.test.test_mutrep import DFLT_TEST_MUTREP_COLS
 #from pycmm.flow.test.test_mutrep import DFLT_TEST_ANNO_EXCL_TAGS
 
 DBREADER_XLS_TEST = False
@@ -85,8 +85,8 @@ class TestQryCallXls(SafeTester):
 #                                                        frequency_ratios=frequency_ratios,
 #                                                        sample_info=",".join(sample_info),
 #                                                        )
-#        pl = MutRepPipeline(jobs_setup_file)
-#        pl.gen_family_report('24', pl.report_layout.report_regions)
+#        mc = MutRepController(jobs_setup_file)
+#        mc.gen_family_report('24', mc.report_layout.report_regions)
 #        xls_file = join_path(self.working_dir,
 #                             "rpts",
 #                             project_name+"_fam24.xlsx")
@@ -136,8 +136,8 @@ class TestQryRecordXls(SafeTester):
 #                                                        anno_cols=DFLT_TEST_MUTREP_COLS,
 #                                                        anno_excl_tags=DFLT_TEST_ANNO_EXCL_TAGS,
 #                                                        )
-#        pl = MutRepPipeline(jobs_setup_file)
-#        pl.gen_summary_report(pl.report_layout.report_regions)
+#        mc = MutRepController(jobs_setup_file)
+#        mc.gen_summary_report(mc.report_layout.report_regions)
 #        xls_file = join_path(self.working_dir,
 #                             "rpts",
 #                             project_name+"_summary.xlsx")
@@ -154,8 +154,8 @@ class TestQryRecordXls(SafeTester):
 #                                                        anno_excl_tags=DFLT_TEST_ANNO_EXCL_TAGS,
 #                                                        rows_filter_actions=rows_filter_actions,
 #                                                        )
-#        pl = MutRepPipeline(jobs_setup_file)
-#        pl.gen_summary_report(pl.report_layout.report_regions)
+#        mc = MutRepController(jobs_setup_file)
+#        mc.gen_summary_report(mc.report_layout.report_regions)
 #        xls_file = join_path(self.working_dir,
 #                             "rpts",
 #                             project_name+"_summary.xlsx")
@@ -197,8 +197,8 @@ class TestQryRecordXls(SafeTester):
 ##                                                        sample_info=",".join(sample_info),
 ##                                                        summary_families_sheet=True,
 ##                                                        )
-##        pl = MutRepPipeline(jobs_setup_file)
-##        pl.gen_family_report('24', pl.report_layout.report_regions)
+##        mc = MutRepController(jobs_setup_file)
+##        mc.gen_family_report('24', mc.report_layout.report_regions)
 ##        xls_file = join_path(self.working_dir,
 ##                             "rpts",
 ##                             project_name+"_fam24.xlsx")
@@ -222,8 +222,8 @@ class TestQryRecordXls(SafeTester):
 ##                                                        anno_cols=ALL_MUTREP_ANNO_COLS,
 ##                                                        annotated_vcf_tabix=annotated_vcf_tabix,
 ##                                                        )
-##        pl = MutRepPipeline(jobs_setup_file)
-##        pl.gen_summary_report(pl.report_layout.report_regions)
+##        mc = MutRepController(jobs_setup_file)
+##        mc.gen_summary_report(mc.report_layout.report_regions)
 ##        xls_file = join_path(self.working_dir,
 ##                             "rpts",
 ##                             project_name+"_summary.xlsx")
@@ -241,8 +241,8 @@ class TestQryRecordXls(SafeTester):
 ##                                                        frequency_ratios=frequency_ratios,
 ##                                                        rows_filter_actions=rows_filter_actions,
 ##                                                        )
-##        pl = MutRepPipeline(jobs_setup_file)
-##        pl.gen_summary_report(pl.report_layout.report_regions)
+##        mc = MutRepController(jobs_setup_file)
+##        mc.gen_summary_report(mc.report_layout.report_regions)
 ##        xls_file = join_path(self.working_dir,
 ##                             "rpts",
 ##                             project_name+"_summary.xlsx")
@@ -265,8 +265,8 @@ class TestQryRecordXls(SafeTester):
 #                                                        anno_cols=ALL_MUTREP_ANNO_COLS,
 #                                                        annotated_vcf_tabix=annotated_vcf_tabix,
 #                                                        )
-#        pl = MutRepPipeline(jobs_setup_file=jobs_setup_file)
-#        pl.gen_summary_report(pl.report_layout.report_regions)
+#        mc = MutRepController(jobs_setup_file=jobs_setup_file)
+#        mc.gen_summary_report(mc.report_layout.report_regions)
 #        xls_file = join_path(self.working_dir,
 #                             "rpts",
 #                             project_name+"_summary.xlsx")
@@ -281,8 +281,8 @@ class TestQryRecordXls(SafeTester):
 #                                                        anno_cols=ALL_MUTREP_ANNO_COLS,
 #                                                        rows_filter_actions=rows_filter_actions,
 #                                                        )
-#        pl = MutRepPipeline(jobs_setup_file=jobs_setup_file)
-#        pl.gen_summary_report(pl.report_layout.report_regions)
+#        mc = MutRepController(jobs_setup_file=jobs_setup_file)
+#        mc.gen_summary_report(mc.report_layout.report_regions)
 #        xls_file = join_path(self.working_dir,
 #                             "rpts",
 #                             project_name+"_summary.xlsx")
@@ -305,8 +305,8 @@ class TestQryRecordXls(SafeTester):
 #        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
 #                                                        annotated_vcf_tabix=annotated_vcf_tabix,
 #                                                        )
-#        pl = MutRepPipeline(jobs_setup_file)
-#        pl.gen_summary_report(pl.report_layout.report_regions)
+#        mc = MutRepController(jobs_setup_file)
+#        mc.gen_summary_report(mc.report_layout.report_regions)
 #        xls_file = join_path(self.working_dir,
 #                             "rpts",
 #                             project_name+"_summary.xlsx")
@@ -320,8 +320,8 @@ class TestQryRecordXls(SafeTester):
 #                                                        annotated_vcf_tabix=annotated_vcf_tabix,
 #                                                        rows_filter_actions=rows_filter_actions,
 #                                                        )
-#        pl = MutRepPipeline(jobs_setup_file)
-#        pl.gen_summary_report(pl.report_layout.report_regions)
+#        mc = MutRepController(jobs_setup_file)
+#        mc.gen_summary_report(mc.report_layout.report_regions)
 #        xls_file = join_path(self.working_dir,
 #                             "rpts",
 #                             project_name+"_summary.xlsx")
@@ -346,8 +346,8 @@ class TestQryRecordXls(SafeTester):
 #                                                        anno_cols=DFLT_TEST_MUTREP_COLS,
 #                                                        anno_excl_tags=DFLT_TEST_ANNO_EXCL_TAGS,
 #                                                        )
-#        pl = MutRepPipeline(jobs_setup_file)
-#        pl.gen_summary_report(pl.report_layout.report_regions)
+#        mc = MutRepController(jobs_setup_file)
+#        mc.gen_summary_report(mc.report_layout.report_regions)
 #        xls_file = join_path(self.working_dir,
 #                             "rpts",
 #                             project_name+"_summary.xlsx")
@@ -363,8 +363,8 @@ class TestQryRecordXls(SafeTester):
 #                                                        anno_excl_tags=DFLT_TEST_ANNO_EXCL_TAGS,
 #                                                        rows_filter_actions=rows_filter_actions,
 #                                                        )
-#        pl = MutRepPipeline(jobs_setup_file)
-#        pl.gen_summary_report(pl.report_layout.report_regions)
+#        mc = MutRepController(jobs_setup_file)
+#        mc.gen_summary_report(mc.report_layout.report_regions)
 #        xls_file = join_path(self.working_dir,
 #                             "rpts",
 #                             project_name+"_summary.xlsx")
@@ -389,8 +389,8 @@ class TestQryRecordXls(SafeTester):
 #                                                        anno_cols=DFLT_TEST_MUTREP_COLS,
 #                                                        anno_excl_tags=DFLT_TEST_ANNO_EXCL_TAGS,
 #                                                        )
-#        pl = MutRepPipeline(jobs_setup_file)
-#        pl.gen_summary_report(pl.report_layout.report_regions)
+#        mc = MutRepController(jobs_setup_file)
+#        mc.gen_summary_report(mc.report_layout.report_regions)
 #        xls_file = join_path(self.working_dir,
 #                             "rpts",
 #                             project_name+"_summary.xlsx")
@@ -406,8 +406,8 @@ class TestQryRecordXls(SafeTester):
 #                                                        anno_excl_tags=DFLT_TEST_ANNO_EXCL_TAGS,
 #                                                        rows_filter_actions=rows_filter_actions,
 #                                                        )
-#        pl = MutRepPipeline(jobs_setup_file)
-#        pl.gen_summary_report(pl.report_layout.report_regions)
+#        mc = MutRepController(jobs_setup_file)
+#        mc.gen_summary_report(mc.report_layout.report_regions)
 #        xls_file = join_path(self.working_dir,
 #                             "rpts",
 #                             project_name+"_summary.xlsx")
@@ -432,8 +432,8 @@ class TestQryRecordXls(SafeTester):
 #                                                        anno_cols=DFLT_TEST_MUTREP_COLS,
 #                                                        anno_excl_tags=DFLT_TEST_ANNO_EXCL_TAGS,
 #                                                        )
-#        pl = MutRepPipeline(jobs_setup_file)
-#        pl.gen_summary_report(pl.report_layout.report_regions)
+#        mc = MutRepController(jobs_setup_file)
+#        mc.gen_summary_report(mc.report_layout.report_regions)
 #        xls_file = join_path(self.working_dir,
 #                             "rpts",
 #                             project_name+"_summary.xlsx")
@@ -449,8 +449,8 @@ class TestQryRecordXls(SafeTester):
 #                                                        anno_excl_tags=DFLT_TEST_ANNO_EXCL_TAGS,
 #                                                        rows_filter_actions=rows_filter_actions,
 #                                                        )
-#        pl = MutRepPipeline(jobs_setup_file)
-#        pl.gen_summary_report(pl.report_layout.report_regions)
+#        mc = MutRepController(jobs_setup_file)
+#        mc.gen_summary_report(mc.report_layout.report_regions)
 #        xls_file = join_path(self.working_dir,
 #                             "rpts",
 #                             project_name+"_summary.xlsx")
@@ -475,8 +475,8 @@ class TestQryRecordXls(SafeTester):
 #                                                        anno_cols=DFLT_TEST_MUTREP_COLS,
 #                                                        anno_excl_tags=DFLT_TEST_ANNO_EXCL_TAGS,
 #                                                        )
-#        pl = MutRepPipeline(jobs_setup_file)
-#        pl.gen_summary_report(pl.report_layout.report_regions)
+#        mc = MutRepController(jobs_setup_file)
+#        mc.gen_summary_report(mc.report_layout.report_regions)
 #        xls_file = join_path(self.working_dir,
 #                             "rpts",
 #                             project_name+"_summary.xlsx")
@@ -492,8 +492,8 @@ class TestQryRecordXls(SafeTester):
 #                                                        anno_excl_tags=DFLT_TEST_ANNO_EXCL_TAGS,
 #                                                        rows_filter_actions=rows_filter_actions,
 #                                                        )
-#        pl = MutRepPipeline(jobs_setup_file)
-#        pl.gen_summary_report(pl.report_layout.report_regions)
+#        mc = MutRepController(jobs_setup_file)
+#        mc.gen_summary_report(mc.report_layout.report_regions)
 #        xls_file = join_path(self.working_dir,
 #                             "rpts",
 #                             project_name+"_summary.xlsx")
@@ -518,8 +518,8 @@ class TestQryRecordXls(SafeTester):
 #                                                        anno_cols=DFLT_TEST_MUTREP_COLS,
 #                                                        anno_excl_tags=DFLT_TEST_ANNO_EXCL_TAGS,
 #                                                        )
-#        pl = MutRepPipeline(jobs_setup_file)
-#        pl.gen_summary_report(pl.report_layout.report_regions)
+#        mc = MutRepController(jobs_setup_file)
+#        mc.gen_summary_report(mc.report_layout.report_regions)
 #        xls_file = join_path(self.working_dir,
 #                             "rpts",
 #                             project_name+"_summary.xlsx")
@@ -535,8 +535,8 @@ class TestQryRecordXls(SafeTester):
 #                                                        anno_excl_tags=DFLT_TEST_ANNO_EXCL_TAGS,
 #                                                        rows_filter_actions=rows_filter_actions,
 #                                                        )
-#        pl = MutRepPipeline(jobs_setup_file)
-#        pl.gen_summary_report(pl.report_layout.report_regions)
+#        mc = MutRepController(jobs_setup_file)
+#        mc.gen_summary_report(mc.report_layout.report_regions)
 #        xls_file = join_path(self.working_dir,
 #                             "rpts",
 #                             project_name+"_summary.xlsx")
@@ -573,8 +573,8 @@ class TestQryRecordXls(SafeTester):
 #                                                        anno_excl_tags=custom_excl_tags,
 #                                                        rows_filter_actions=rows_filter_actions,
 #                                                        )
-#        pl = MutRepPipeline(jobs_setup_file=jobs_setup_file)
-#        pl.gen_summary_report(pl.report_layout.report_regions)
+#        mc = MutRepController(jobs_setup_file=jobs_setup_file)
+#        mc.gen_summary_report(mc.report_layout.report_regions)
 #        xls_file = join_path(self.working_dir,
 #                             "rpts",
 #                             project_name+"_summary.xlsx")
@@ -614,80 +614,71 @@ class TestQryRecordXls(SafeTester):
                          "Incorect number of ExAC constraint value"
                          )
 
-#    @unittest.skipUnless(FULL_SYSTEM_TEST or DBREADER_XLS_TEST or XLS_TEST, "taking too long time to test")
-#    def test_intervar_xls_1(self):
-#        """
-#        - test if intervar classification and evidence can be parsed
-#        """
-#
-#        self.init_test(self.current_func_name)
-#        anno_cols = list(DFLT_TEST_MUTREP_COLS)
-#        anno_cols.append(INTERVAR_CLASS_COL_NAME)
-#        anno_cols.append(INTERVAR_EVIDENCE_COL_NAME)
-#        annotated_vcf_tabix = join_path(self.data_dir,
-#                                        "input.vcf.gz")
-#        project_name = self.test_function
-#        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
-#                                                        annotated_vcf_tabix=annotated_vcf_tabix,
-#                                                        anno_cols=anno_cols,
-#                                                        )
-#        pl = MutRepPipeline(jobs_setup_file=jobs_setup_file)
-#        pl.gen_summary_report(pl.report_layout.report_regions)
-#        xls_file = join_path(self.working_dir,
-#                             "rpts",
-#                             project_name+"_summary.xlsx")
-#        xu = XlsUtils(xls_file)
-#        intervar_class_col_idx = xu.get_col_idx(pl.correct_header(INTERVAR_CLASS_COL_NAME))
-#        self.assertEqual(xu.get_cell_value(2, intervar_class_col_idx),
-#                         INTERVAR_CLASS_BENIGN,
-#                         "Incorect intervar value"
-#                         )
-#        self.assertEqual(xu.get_cell_value(3, intervar_class_col_idx),
-#                         INTERVAR_CLASS_LIKELY_BENIGN,
-#                         "Incorect intervar value"
-#                         )
-#        self.assertEqual(xu.get_cell_value(4, intervar_class_col_idx),
-#                         INTERVAR_CLASS_UNCERTAIN_SIGNIFICANCE,
-#                         "Incorect intervar value"
-#                         )
-#        self.assertEqual(xu.get_cell_value(5, intervar_class_col_idx),
-#                         INTERVAR_CLASS_BENIGN,
-#                         "Incorect intervar value"
-#                         )
-#        self.assertEqual(xu.get_cell_value(6, intervar_class_col_idx),
-#                         INTERVAR_CLASS_PATHOGENIC,
-#                         "Incorect intervar value"
-#                         )
-#        self.assertEqual(xu.get_cell_value(7, intervar_class_col_idx),
-#                         INTERVAR_CLASS_LIKELY_PATHOGENIC,
-#                         "Incorect intervar value"
-#                         )
-#        intervar_evidence_col_idx = xu.get_col_idx(pl.correct_header(INTERVAR_EVIDENCE_COL_NAME))
-#        self.assertEqual(xu.get_cell_value(2, intervar_evidence_col_idx),
-#                         "BA1, BS1, BP4, BP7",
-#                         "Incorect intervar value"
-#                         )
-#        self.assertEqual(xu.get_cell_value(3, intervar_evidence_col_idx),
-#                         "PM1, BS2, BP4",
-#                         "Incorect intervar value"
-#                         )
-#        self.assertEqual(xu.get_cell_value(4, intervar_evidence_col_idx),
-#                         None,
-#                         "Incorect intervar value"
-#                         )
-#        self.assertEqual(xu.get_cell_value(5, intervar_evidence_col_idx),
-#                         "BS1, BS2",
-#                         "Incorect intervar value"
-#                         )
-#        self.assertEqual(xu.get_cell_value(6, intervar_evidence_col_idx),
-#                         "PVS1, PM2, PP5",
-#                         "Incorect intervar value"
-#                         )
-#        self.assertEqual(xu.get_cell_value(7, intervar_evidence_col_idx),
-#                         "PVS1, PM2",
-#                         "Incorect intervar value"
-#                         )
-#
+    @unittest.skipUnless(FULL_SYSTEM_TEST or DBREADER_XLS_TEST or XLS_TEST, "taking too long time to test")
+    def test_parse_intervar_xls_1(self):
+        """
+        - test if intervar classification and evidence can be parsed
+        """
+
+        self.init_test(self.current_func_name)
+        anno_cols = list(DFLT_TEST_MUTREP_COLS)
+        anno_cols.append(INTERVAR_CLASS_COL_NAME)
+        anno_cols.append(INTERVAR_EVIDENCE_COL_NAME)
+        jobs_setup_file = self.__create_jobs_setup_file(anno_cols=anno_cols)
+        mc = MutRepController(jobs_setup_file, verbose=False)
+        xls_file = mc.gen_report()
+        xu = XlsUtils(xls_file)
+        intervar_class_col_idx = xu.get_col_idx(mc.correct_header(INTERVAR_CLASS_COL_NAME))
+        self.assertEqual(xu.get_cell_value(2, intervar_class_col_idx),
+                         INTERVAR_CLASS_BENIGN,
+                         "Incorect intervar value"
+                         )
+        self.assertEqual(xu.get_cell_value(3, intervar_class_col_idx),
+                         INTERVAR_CLASS_LIKELY_BENIGN,
+                         "Incorect intervar value"
+                         )
+        self.assertEqual(xu.get_cell_value(4, intervar_class_col_idx),
+                         INTERVAR_CLASS_UNCERTAIN_SIGNIFICANCE,
+                         "Incorect intervar value"
+                         )
+        self.assertEqual(xu.get_cell_value(5, intervar_class_col_idx),
+                         INTERVAR_CLASS_BENIGN,
+                         "Incorect intervar value"
+                         )
+        self.assertEqual(xu.get_cell_value(6, intervar_class_col_idx),
+                         INTERVAR_CLASS_PATHOGENIC,
+                         "Incorect intervar value"
+                         )
+        self.assertEqual(xu.get_cell_value(7, intervar_class_col_idx),
+                         INTERVAR_CLASS_LIKELY_PATHOGENIC,
+                         "Incorect intervar value"
+                         )
+        intervar_evidence_col_idx = xu.get_col_idx(mc.correct_header(INTERVAR_EVIDENCE_COL_NAME))
+        self.assertEqual(xu.get_cell_value(2, intervar_evidence_col_idx),
+                         "BA1, BS1, BP4, BP7",
+                         "Incorect intervar value"
+                         )
+        self.assertEqual(xu.get_cell_value(3, intervar_evidence_col_idx),
+                         "PM1, BS2, BP4",
+                         "Incorect intervar value"
+                         )
+        self.assertEqual(xu.get_cell_value(4, intervar_evidence_col_idx),
+                         None,
+                         "Incorect intervar value"
+                         )
+        self.assertEqual(xu.get_cell_value(5, intervar_evidence_col_idx),
+                         "BS1, BS2",
+                         "Incorect intervar value"
+                         )
+        self.assertEqual(xu.get_cell_value(6, intervar_evidence_col_idx),
+                         "PVS1, PM2, PP5",
+                         "Incorect intervar value"
+                         )
+        self.assertEqual(xu.get_cell_value(7, intervar_evidence_col_idx),
+                         "PVS1, PM2",
+                         "Incorect intervar value"
+                         )
+
 #    @unittest.skipUnless(FULL_SYSTEM_TEST or DBREADER_XLS_TEST or XLS_TEST, "taking too long time to test")
 #    def test_max_ref_maf_xls_2(self):
 #        """
@@ -705,13 +696,13 @@ class TestQryRecordXls(SafeTester):
 #                                                        annotated_vcf_tabix=annotated_vcf_tabix,
 #                                                        anno_cols=anno_cols,
 #                                                        )
-#        pl = MutRepPipeline(jobs_setup_file=jobs_setup_file)
-#        pl.gen_summary_report(pl.report_layout.report_regions)
+#        mc = MutRepController(jobs_setup_file=jobs_setup_file)
+#        mc.gen_summary_report(mc.report_layout.report_regions)
 #        xls_file = join_path(self.working_dir,
 #                             "rpts",
 #                             project_name+"_summary.xlsx")
 #        xu = XlsUtils(xls_file)
-#        max_ref_maf_col_idx = xu.get_col_idx(pl.correct_header(MAX_REF_MAF_COL_NAME))
+#        max_ref_maf_col_idx = xu.get_col_idx(mc.correct_header(MAX_REF_MAF_COL_NAME))
 #        self.assertEqual(xu.get_cell_value(2, max_ref_maf_col_idx),
 #                         0.0008,
 #                         "Incorect maximum reference allele frequency value"
