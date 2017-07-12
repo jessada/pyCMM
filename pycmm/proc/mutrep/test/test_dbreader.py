@@ -33,10 +33,6 @@ from pycmm.cmmlib.intervarlib import INTERVAR_CLASS_LIKELY_BENIGN
 from pycmm.cmmlib.intervarlib import INTERVAR_CLASS_UNCERTAIN_SIGNIFICANCE
 from pycmm.cmmlib.intervarlib import INTERVAR_CLASS_LIKELY_PATHOGENIC
 from pycmm.cmmlib.intervarlib import INTERVAR_CLASS_PATHOGENIC
-#from pycmm.cmmlib.taparser import SQLiteDBReader
-#from pycmm.flow.mutrep import MutRepPipeline
-#from pycmm.flow.test.test_mutrep import DFLT_TEST_MUTREP_COLS
-#from pycmm.flow.cmmdb import create_jobs_setup_file
 
 
 class TestQryCall(SafeTester):
@@ -56,7 +52,7 @@ class TestQryCall(SafeTester):
             kwargs['db_file'] = join_path(self.data_dir, "input.db")
         kwargs['project_out_dir'] = self.working_dir
         kwargs['jobs_setup_file'] = join_path(self.working_dir,
-                                              self.test_function+'_jobs_setup.txt')
+                                              kwargs['project_name']+'_jobs_setup.txt')
         create_jobs_setup_file(*args, **kwargs)
         return kwargs['jobs_setup_file']
 
@@ -806,7 +802,34 @@ class TestQryRecord(SafeTester):
 
     def test_max_ref_maf_1(self):
         """
-        test finding maximum reference minor allele frequency
+        test finding pre-calculated maximum reference minor allele frequency
+        """
+
+        self.init_test(self.current_func_name)
+        db_file = join_path(self.data_dir,
+                            'input.db')
+        db_reader = SQLiteDBReader(db_file, verbose=False)
+        qry_records = db_reader.get_qry_records(chrom='6')
+        qry_record = qry_records.next()
+        self.assertEqual(qry_record.get_anno(MAX_REF_MAF_COL_NAME),
+                         0.235,
+                         "values of MAX_REF_MAF cannot be correctly determined")
+        qry_record = qry_records.next()
+        self.assertEqual(qry_record.get_anno(MAX_REF_MAF_COL_NAME),
+                         0.4963,
+                         "values of MAX_REF_MAF cannot be correctly determined")
+        qry_record = qry_records.next()
+        self.assertEqual(qry_record.get_anno(MAX_REF_MAF_COL_NAME),
+                         0.0155,
+                         "values of MAX_REF_MAF cannot be correctly determined")
+        qry_record = qry_records.next()
+        self.assertEqual(qry_record.get_anno(MAX_REF_MAF_COL_NAME),
+                         0.4969,
+                         "values of MAX_REF_MAF cannot be correctly determined")
+
+    def test_max_ref_maf_2(self):
+        """
+        test finding on-demand maximum reference minor allele frequency
         """
 
         self.init_test(self.current_func_name)
@@ -981,34 +1004,37 @@ class TestQryRecord(SafeTester):
 #
 #        self.init_test(self.current_func_name)
 #        db_file = join_path(self.data_dir,
-#                            'input.vcf.gz')
-#        db_reader = SQLiteDBReader(db_file)
-#        qry_record = db_reader.next()
+#                            'input.db')
+#        db_reader = SQLiteDBReader(db_file, verbose=False)
+#        qry_records = db_reader.get_qry_records()
+#        qry_record = qry_records.next()
 #        self.assertEqual(qry_record.pathogenic_count(allele_idx=1),
 #                         1,
 #                         "number of harmful pathogenic prediction cannot be correctly determined")
-#        qry_record = db_reader.next()
+#        qry_record = qry_records.next()
 #        self.assertEqual(qry_record.pathogenic_count(allele_idx=1),
 #                         9,
 #                         "number of harmful pathogenic prediction cannot be correctly determined")
-#        qry_record = db_reader.next()
+#        qry_record = qry_records.next()
 #        self.assertEqual(qry_record.pathogenic_count(allele_idx=2),
 #                         0,
 #                         "number of harmful pathogenic prediction cannot be correctly determined")
 #        self.assertEqual(qry_record.pathogenic_count(allele_idx=3),
 #                         1,
 #                         "number of harmful pathogenic prediction cannot be correctly determined")
-#        qry_record = db_reader.next()
-#        qry_record = db_reader.next()
-#        qry_record = db_reader.next()
-#        qry_record = db_reader.next()
-#        qry_record = db_reader.next()
-#        qry_record = db_reader.next()
-#        qry_record = db_reader.next()
-#        qry_record = db_reader.next()
-#        qry_record = db_reader.next()
-#        qry_record = db_reader.next()
-#        qry_record = db_reader.next()
+#        qry_record = qry_records.next()
+#        qry_record = qry_records.next()
+#        qry_record = qry_records.next()
+#        qry_record = qry_records.next()
+#        qry_record = qry_records.next()
+#        qry_record = qry_records.next()
+#        qry_record = qry_records.next()
+#        qry_record = qry_records.next()
+#        qry_record = qry_records.next()
+#        qry_record = qry_records.next()
+#        qry_record = qry_records.next()
+#        qry_record = qry_records.next()
+#        qry_record = qry_records.next()
 #        self.assertEqual(qry_record.pathogenic_count(allele_idx=1),
 #                         1,
 #                         "number of harmful pathogenic prediction cannot be correctly determined")

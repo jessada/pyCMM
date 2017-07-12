@@ -102,18 +102,9 @@ class TestMutRepController(SafeTester):
             kwargs['project_name'] = self.test_function
         if 'db_file' not in kwargs:
             kwargs['db_file'] = join_path(self.data_dir, "input.db")
-#        if 'anno_cols' not in kwargs:
-#            anno_cols = DFLT_TEST_MUTREP_COLS
-#        else:
-#            anno_cols = kwargs['anno_cols']
-#        if 'report_regions' not in kwargs:
-#            kwargs['report_regions'] = DFLT_TEST_REPORT_REGIONS
-#        if 'frequency_ratios' not in kwargs:
-#            kwargs['frequency_ratios'] = DFLT_TEST_FREQ_RATIOS
-#        kwargs['anno_cols'] = ",".join(anno_cols)
         kwargs['project_out_dir'] = self.working_dir
         kwargs['jobs_setup_file'] = join_path(self.working_dir,
-                                              self.test_function+'_jobs_setup.txt')
+                                              kwargs['project_name']+'_jobs_setup.txt')
         create_jobs_setup_file(*args, **kwargs)
         return kwargs['jobs_setup_file']
 

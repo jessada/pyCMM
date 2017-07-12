@@ -224,7 +224,7 @@ class TestSQLiteDBController(SafeTester):
             kwargs['project_name'] = self.test_function
         kwargs['project_out_dir'] = self.working_dir
         kwargs['jobs_setup_file'] = join_path(self.working_dir,
-                                              self.test_function+'_jobs_setup.txt')
+                                              kwargs['project_name']+'_jobs_setup.txt')
         create_jobs_setup_file(*args, **kwargs)
         return kwargs['jobs_setup_file']
 

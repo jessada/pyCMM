@@ -10,8 +10,8 @@ from pycmm.settings import XLS_TEST
 from pycmm.settings import EXAC03_CONSTRAINT_SYN_Z_COL_NAME
 from pycmm.settings import INTERVAR_CLASS_COL_NAME
 from pycmm.settings import INTERVAR_EVIDENCE_COL_NAME
-#from pycmm.settings import MAX_REF_MAF_COL_NAME
-#from pycmm.settings import REF_MAF_COL_NAMES
+from pycmm.settings import MAX_REF_MAF_COL_NAME
+from pycmm.settings import REF_MAF_COL_NAMES
 from pycmm.settings import FULL_SYSTEM_TEST
 #from pycmm.settings import AXEQ_CHR9_COLS_TAG
 #from pycmm.settings import AXEQ_CHR3_6_14_18_COLS_TAG
@@ -28,12 +28,12 @@ from pycmm.proc.mutrep.mutrep import MutRepController
 from pycmm.proc.mutrep.mutrep import create_jobs_setup_file
 #from pycmm.flow.mutrep import JOBS_SETUP_RPT_FILTER_RARE
 #from pycmm.flow.mutrep import JOBS_SETUP_RPT_FILTER_PASS_VQSR
-#from pycmm.flow.mutrep import JOBS_SETUP_RPT_FILTER_NON_INTRONIC
-#from pycmm.flow.mutrep import JOBS_SETUP_RPT_FILTER_NON_INTERGENIC
-#from pycmm.flow.mutrep import JOBS_SETUP_RPT_FILTER_NON_UPSTREAM
-#from pycmm.flow.mutrep import JOBS_SETUP_RPT_FILTER_NON_DOWNSTREAM
-#from pycmm.flow.mutrep import JOBS_SETUP_RPT_FILTER_NON_UTR
-#from pycmm.flow.mutrep import JOBS_SETUP_RPT_FILTER_NON_SYNONYMOUS
+from pycmm.flow.mutrep import JOBS_SETUP_RPT_FILTER_NON_INTERGENIC
+from pycmm.flow.mutrep import JOBS_SETUP_RPT_FILTER_NON_INTRONIC
+from pycmm.flow.mutrep import JOBS_SETUP_RPT_FILTER_NON_UPSTREAM
+from pycmm.flow.mutrep import JOBS_SETUP_RPT_FILTER_NON_DOWNSTREAM
+from pycmm.flow.mutrep import JOBS_SETUP_RPT_FILTER_NON_UTR
+from pycmm.flow.mutrep import JOBS_SETUP_RPT_FILTER_NON_SYNONYMOUS
 #from pycmm.flow.mutrep import JOBS_SETUP_RPT_FILTER_HAS_MUTATION
 #from pycmm.flow.mutrep import JOBS_SETUP_RPT_FILTER_HAS_SHARED
 from pycmm.proc.mutrep.test.test_mutrep import DFLT_TEST_MUTREP_COLS
@@ -58,7 +58,7 @@ class TestQryCallXls(SafeTester):
             kwargs['db_file'] = join_path(self.data_dir, "input.db")
         kwargs['project_out_dir'] = self.working_dir
         kwargs['jobs_setup_file'] = join_path(self.working_dir,
-                                              self.test_function+'_jobs_setup.txt')
+                                              kwargs['project_name']+'_jobs_setup.txt')
         create_jobs_setup_file(*args, **kwargs)
         return kwargs['jobs_setup_file']
 
@@ -105,9 +105,6 @@ class TestQryRecordXls(SafeTester):
     def setUp(self):
         pass
 
-    def setUp(self):
-        pass
-
     def __create_jobs_setup_file(self, *args, **kwargs):
         if 'project_name' not in kwargs:
             kwargs['project_name'] = self.test_function
@@ -115,7 +112,7 @@ class TestQryRecordXls(SafeTester):
             kwargs['db_file'] = join_path(self.data_dir, "input.db")
         kwargs['project_out_dir'] = self.working_dir
         kwargs['jobs_setup_file'] = join_path(self.working_dir,
-                                              self.test_function+'_jobs_setup.txt')
+                                              kwargs['project_name']+'_jobs_setup.txt')
         create_jobs_setup_file(*args, **kwargs)
         return kwargs['jobs_setup_file']
 
@@ -291,260 +288,156 @@ class TestQryRecordXls(SafeTester):
 #                         5,
 #                         "number of mutations that pass VQSR cannot be correctly determined")
 #
-#    @unittest.skipUnless(FULL_SYSTEM_TEST or DBREADER_XLS_TEST or XLS_TEST, "taking too long time to test")
-#    def test_is_intergenic_xls_3(self):
-#        """
-#        - test filter non-intergenic feature with xls record
-#        - this test doesn't corresponding to any other tests
-#        """
-#
-#        self.init_test(self.current_func_name)
-#        annotated_vcf_tabix = join_path(self.data_dir,
-#                                        "input.vcf.gz")
-#        project_name = self.test_function + '_with_intergenic'
-#        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
-#                                                        annotated_vcf_tabix=annotated_vcf_tabix,
-#                                                        )
-#        mc = MutRepController(jobs_setup_file)
-#        mc.gen_summary_report(mc.report_layout.report_regions)
-#        xls_file = join_path(self.working_dir,
-#                             "rpts",
-#                             project_name+"_summary.xlsx")
-#        xu = XlsUtils(xls_file)
-#        self.assertEqual(xu.count_rows(),
-#                         22,
-#                         "intergenic mutations cannot be correctly determined")
-#        project_name = self.test_function
-#        rows_filter_actions = JOBS_SETUP_RPT_FILTER_NON_INTERGENIC
-#        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
-#                                                        annotated_vcf_tabix=annotated_vcf_tabix,
-#                                                        rows_filter_actions=rows_filter_actions,
-#                                                        )
-#        mc = MutRepController(jobs_setup_file)
-#        mc.gen_summary_report(mc.report_layout.report_regions)
-#        xls_file = join_path(self.working_dir,
-#                             "rpts",
-#                             project_name+"_summary.xlsx")
-#        xu = XlsUtils(xls_file)
-#        self.assertEqual(xu.count_rows(),
-#                         11,
-#                         "intergenic mutations cannot be correctly determined")
-#
-#    @unittest.skipUnless(FULL_SYSTEM_TEST or DBREADER_XLS_TEST or XLS_TEST, "taking too long time to test")
-#    def test_is_intronic_xls_3(self):
-#        """
-#        - test filter non-intronic feature with xls records
-#        - this test doesn't corresponding to any other tests
-#        """
-#
-#        self.init_test(self.current_func_name)
-#        annotated_vcf_tabix = join_path(self.data_dir,
-#                                        "input.vcf.gz")
-#        project_name = self.test_function + '_with_intronic'
-#        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
-#                                                        annotated_vcf_tabix=annotated_vcf_tabix,
-#                                                        anno_cols=DFLT_TEST_MUTREP_COLS,
-#                                                        anno_excl_tags=DFLT_TEST_ANNO_EXCL_TAGS,
-#                                                        )
-#        mc = MutRepController(jobs_setup_file)
-#        mc.gen_summary_report(mc.report_layout.report_regions)
-#        xls_file = join_path(self.working_dir,
-#                             "rpts",
-#                             project_name+"_summary.xlsx")
-#        xu = XlsUtils(xls_file)
-#        self.assertEqual(xu.count_rows(),
-#                         26,
-#                         "intronic mutations cannot be correctly determined")
-#        project_name = self.test_function
-#        rows_filter_actions = JOBS_SETUP_RPT_FILTER_NON_INTRONIC
-#        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
-#                                                        annotated_vcf_tabix=annotated_vcf_tabix,
-#                                                        anno_cols=DFLT_TEST_MUTREP_COLS,
-#                                                        anno_excl_tags=DFLT_TEST_ANNO_EXCL_TAGS,
-#                                                        rows_filter_actions=rows_filter_actions,
-#                                                        )
-#        mc = MutRepController(jobs_setup_file)
-#        mc.gen_summary_report(mc.report_layout.report_regions)
-#        xls_file = join_path(self.working_dir,
-#                             "rpts",
-#                             project_name+"_summary.xlsx")
-#        xu = XlsUtils(xls_file)
-#        self.assertEqual(xu.count_rows(),
-#                         9,
-#                         "intronic mutations cannot be correctly determined")
-#
-#    @unittest.skipUnless(FULL_SYSTEM_TEST or DBREADER_XLS_TEST or XLS_TEST, "taking too long time to test")
-#    def test_is_upstream_xls_3(self):
-#        """
-#        - test filter non-upstream feature with xls records
-#        - this test doesn't corresponding to any other tests
-#        """
-#
-#        self.init_test(self.current_func_name)
-#        annotated_vcf_tabix = join_path(self.data_dir,
-#                                        "input.vcf.gz")
-#        project_name = self.test_function + '_with_upstream'
-#        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
-#                                                        annotated_vcf_tabix=annotated_vcf_tabix,
-#                                                        anno_cols=DFLT_TEST_MUTREP_COLS,
-#                                                        anno_excl_tags=DFLT_TEST_ANNO_EXCL_TAGS,
-#                                                        )
-#        mc = MutRepController(jobs_setup_file)
-#        mc.gen_summary_report(mc.report_layout.report_regions)
-#        xls_file = join_path(self.working_dir,
-#                             "rpts",
-#                             project_name+"_summary.xlsx")
-#        xu = XlsUtils(xls_file)
-#        self.assertEqual(xu.count_rows(),
-#                         32,
-#                         "upstream mutations cannot be correctly determined")
-#        project_name = self.test_function
-#        rows_filter_actions = JOBS_SETUP_RPT_FILTER_NON_UPSTREAM
-#        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
-#                                                        annotated_vcf_tabix=annotated_vcf_tabix,
-#                                                        anno_cols=DFLT_TEST_MUTREP_COLS,
-#                                                        anno_excl_tags=DFLT_TEST_ANNO_EXCL_TAGS,
-#                                                        rows_filter_actions=rows_filter_actions,
-#                                                        )
-#        mc = MutRepController(jobs_setup_file)
-#        mc.gen_summary_report(mc.report_layout.report_regions)
-#        xls_file = join_path(self.working_dir,
-#                             "rpts",
-#                             project_name+"_summary.xlsx")
-#        xu = XlsUtils(xls_file)
-#        self.assertEqual(xu.count_rows(),
-#                         28,
-#                         "upstream mutations cannot be correctly determined")
-#
-#    @unittest.skipUnless(FULL_SYSTEM_TEST or DBREADER_XLS_TEST or XLS_TEST, "taking too long time to test")
-#    def test_is_downstream_xls_3(self):
-#        """
-#        - test filter non-downstream feature with xls records
-#        - this test doesn't corresponding to any other tests
-#        """
-#
-#        self.init_test(self.current_func_name)
-#        annotated_vcf_tabix = join_path(self.data_dir,
-#                                        "input.vcf.gz")
-#        project_name = self.test_function + '_with_downstream'
-#        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
-#                                                        annotated_vcf_tabix=annotated_vcf_tabix,
-#                                                        anno_cols=DFLT_TEST_MUTREP_COLS,
-#                                                        anno_excl_tags=DFLT_TEST_ANNO_EXCL_TAGS,
-#                                                        )
-#        mc = MutRepController(jobs_setup_file)
-#        mc.gen_summary_report(mc.report_layout.report_regions)
-#        xls_file = join_path(self.working_dir,
-#                             "rpts",
-#                             project_name+"_summary.xlsx")
-#        xu = XlsUtils(xls_file)
-#        self.assertEqual(xu.count_rows(),
-#                         32,
-#                         "downstream mutations cannot be correctly determined")
-#        project_name = self.test_function
-#        rows_filter_actions = JOBS_SETUP_RPT_FILTER_NON_DOWNSTREAM
-#        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
-#                                                        annotated_vcf_tabix=annotated_vcf_tabix,
-#                                                        anno_cols=DFLT_TEST_MUTREP_COLS,
-#                                                        anno_excl_tags=DFLT_TEST_ANNO_EXCL_TAGS,
-#                                                        rows_filter_actions=rows_filter_actions,
-#                                                        )
-#        mc = MutRepController(jobs_setup_file)
-#        mc.gen_summary_report(mc.report_layout.report_regions)
-#        xls_file = join_path(self.working_dir,
-#                             "rpts",
-#                             project_name+"_summary.xlsx")
-#        xu = XlsUtils(xls_file)
-#        self.assertEqual(xu.count_rows(),
-#                         31,
-#                         "downstream mutations cannot be correctly determined")
-#
-#    @unittest.skipUnless(FULL_SYSTEM_TEST or DBREADER_XLS_TEST or XLS_TEST, "taking too long time to test")
-#    def test_is_utr_xls_3(self):
-#        """
-#        - test filter non-UTR feature with xls records
-#        - this test doesn't corresponding to any other tests
-#        """
-#
-#        self.init_test(self.current_func_name)
-#        annotated_vcf_tabix = join_path(self.data_dir,
-#                                        "input.vcf.gz")
-#        project_name = self.test_function + '_with_utr'
-#        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
-#                                                        annotated_vcf_tabix=annotated_vcf_tabix,
-#                                                        anno_cols=DFLT_TEST_MUTREP_COLS,
-#                                                        anno_excl_tags=DFLT_TEST_ANNO_EXCL_TAGS,
-#                                                        )
-#        mc = MutRepController(jobs_setup_file)
-#        mc.gen_summary_report(mc.report_layout.report_regions)
-#        xls_file = join_path(self.working_dir,
-#                             "rpts",
-#                             project_name+"_summary.xlsx")
-#        xu = XlsUtils(xls_file)
-#        self.assertEqual(xu.count_rows(),
-#                         32,
-#                         "UTR mutations cannot be correctly determined")
-#        project_name = self.test_function
-#        rows_filter_actions = JOBS_SETUP_RPT_FILTER_NON_UTR
-#        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
-#                                                        annotated_vcf_tabix=annotated_vcf_tabix,
-#                                                        anno_cols=DFLT_TEST_MUTREP_COLS,
-#                                                        anno_excl_tags=DFLT_TEST_ANNO_EXCL_TAGS,
-#                                                        rows_filter_actions=rows_filter_actions,
-#                                                        )
-#        mc = MutRepController(jobs_setup_file)
-#        mc.gen_summary_report(mc.report_layout.report_regions)
-#        xls_file = join_path(self.working_dir,
-#                             "rpts",
-#                             project_name+"_summary.xlsx")
-#        xu = XlsUtils(xls_file)
-#        self.assertEqual(xu.count_rows(),
-#                         20,
-#                         "UTR mutations cannot be correctly determined")
-#
-#    @unittest.skipUnless(FULL_SYSTEM_TEST or DBREADER_XLS_TEST or XLS_TEST, "taking too long time to test")
-#    def test_is_synonymous_xls_3(self):
-#        """
-#        - test filter non-synonymous feature with xls records
-#        - this test doesn't corresponding to any other tests
-#        """
-#
-#        self.init_test(self.current_func_name)
-#        annotated_vcf_tabix = join_path(self.data_dir,
-#                                        "input.vcf.gz")
-#        project_name = self.test_function + '_with_synonymous'
-#        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
-#                                                        annotated_vcf_tabix=annotated_vcf_tabix,
-#                                                        anno_cols=DFLT_TEST_MUTREP_COLS,
-#                                                        anno_excl_tags=DFLT_TEST_ANNO_EXCL_TAGS,
-#                                                        )
-#        mc = MutRepController(jobs_setup_file)
-#        mc.gen_summary_report(mc.report_layout.report_regions)
-#        xls_file = join_path(self.working_dir,
-#                             "rpts",
-#                             project_name+"_summary.xlsx")
-#        xu = XlsUtils(xls_file)
-#        self.assertEqual(xu.count_rows(),
-#                         32,
-#                         "synonymous mutations cannot be correctly determined")
-#        project_name = self.test_function
-#        rows_filter_actions = JOBS_SETUP_RPT_FILTER_NON_SYNONYMOUS
-#        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
-#                                                        annotated_vcf_tabix=annotated_vcf_tabix,
-#                                                        anno_cols=DFLT_TEST_MUTREP_COLS,
-#                                                        anno_excl_tags=DFLT_TEST_ANNO_EXCL_TAGS,
-#                                                        rows_filter_actions=rows_filter_actions,
-#                                                        )
-#        mc = MutRepController(jobs_setup_file)
-#        mc.gen_summary_report(mc.report_layout.report_regions)
-#        xls_file = join_path(self.working_dir,
-#                             "rpts",
-#                             project_name+"_summary.xlsx")
-#        xu = XlsUtils(xls_file)
-#        self.assertEqual(xu.count_rows(),
-#                         28,
-#                         "synonymous mutations cannot be correctly determined")
-#
+    @unittest.skipUnless(FULL_SYSTEM_TEST or DBREADER_XLS_TEST or XLS_TEST, "taking too long time to test")
+    def test_filter_non_intergenic_xls_1(self):
+        """
+        - test filter non-intergenic feature with xls record
+        - this test doesn't corresponding to any other tests
+        """
+
+        self.init_test(self.current_func_name)
+        project_name = self.test_function + '_with_intergenic'
+        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name)
+        mc = MutRepController(jobs_setup_file, verbose=False)
+        xls_file = mc.gen_report()
+        xu = XlsUtils(xls_file)
+        self.assertEqual(xu.count_rows(),
+                         17,
+                         "intergenic mutations cannot be correctly determined")
+        rows_filter_actions = JOBS_SETUP_RPT_FILTER_NON_INTERGENIC
+        jobs_setup_file = self.__create_jobs_setup_file(rows_filter_actions=rows_filter_actions)
+        mc = MutRepController(jobs_setup_file, verbose=False)
+        xls_file = mc.gen_report()
+        xu = XlsUtils(xls_file)
+        self.assertEqual(xu.count_rows(),
+                         7,
+                         "intergenic mutations cannot be correctly determined")
+
+    @unittest.skipUnless(FULL_SYSTEM_TEST or DBREADER_XLS_TEST or XLS_TEST, "taking too long time to test")
+    def test_filter_non_intronic_xls_1(self):
+        """
+        - test filter non-intronic feature with xls records
+        - this test doesn't corresponding to any other tests
+        """
+
+        self.init_test(self.current_func_name)
+        project_name = self.test_function + '_with_intronic'
+        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name)
+        mc = MutRepController(jobs_setup_file, verbose=False)
+        xls_file = mc.gen_report()
+        xu = XlsUtils(xls_file)
+        self.assertEqual(xu.count_rows(),
+                         26,
+                         "intergenic mutations cannot be correctly determined")
+        rows_filter_actions = JOBS_SETUP_RPT_FILTER_NON_INTRONIC
+        jobs_setup_file = self.__create_jobs_setup_file(rows_filter_actions=rows_filter_actions)
+        mc = MutRepController(jobs_setup_file, verbose=False)
+        xls_file = mc.gen_report()
+        xu = XlsUtils(xls_file)
+        self.assertEqual(xu.count_rows(),
+                         14,
+                         "intergenic mutations cannot be correctly determined")
+
+    @unittest.skipUnless(FULL_SYSTEM_TEST or DBREADER_XLS_TEST or XLS_TEST, "taking too long time to test")
+    def test_filter_non_upstream_xls_1(self):
+        """
+        - test filter non-upstream feature with xls records
+        - this test doesn't corresponding to any other tests
+        """
+
+        self.init_test(self.current_func_name)
+        project_name = self.test_function + '_with_upstream'
+        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name)
+        mc = MutRepController(jobs_setup_file, verbose=False)
+        xls_file = mc.gen_report()
+        xu = XlsUtils(xls_file)
+        self.assertEqual(xu.count_rows(),
+                         64,
+                         "intergenic mutations cannot be correctly determined")
+        rows_filter_actions = JOBS_SETUP_RPT_FILTER_NON_UPSTREAM
+        jobs_setup_file = self.__create_jobs_setup_file(rows_filter_actions=rows_filter_actions)
+        mc = MutRepController(jobs_setup_file, verbose=False)
+        xls_file = mc.gen_report()
+        xu = XlsUtils(xls_file)
+        self.assertEqual(xu.count_rows(),
+                         57,
+                         "intergenic mutations cannot be correctly determined")
+
+    @unittest.skipUnless(FULL_SYSTEM_TEST or DBREADER_XLS_TEST or XLS_TEST, "taking too long time to test")
+    def test_filter_non_downstream_xls_1(self):
+        """
+        - test filter non-downstream feature with xls records
+        - this test doesn't corresponding to any other tests
+        """
+
+        self.init_test(self.current_func_name)
+        project_name = self.test_function + '_with_downstream'
+        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name)
+        mc = MutRepController(jobs_setup_file, verbose=False)
+        xls_file = mc.gen_report()
+        xu = XlsUtils(xls_file)
+        self.assertEqual(xu.count_rows(),
+                         64,
+                         "intergenic mutations cannot be correctly determined")
+        rows_filter_actions = JOBS_SETUP_RPT_FILTER_NON_DOWNSTREAM
+        jobs_setup_file = self.__create_jobs_setup_file(rows_filter_actions=rows_filter_actions)
+        mc = MutRepController(jobs_setup_file, verbose=False)
+        xls_file = mc.gen_report()
+        xu = XlsUtils(xls_file)
+        self.assertEqual(xu.count_rows(),
+                         50,
+                         "intergenic mutations cannot be correctly determined")
+
+    @unittest.skipUnless(FULL_SYSTEM_TEST or DBREADER_XLS_TEST or XLS_TEST, "taking too long time to test")
+    def test_filter_non_utr_xls_1(self):
+        """
+        - test filter non-UTR feature with xls records
+        - this test doesn't corresponding to any other tests
+        """
+
+        self.init_test(self.current_func_name)
+        project_name = self.test_function + '_with_utr'
+        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name)
+        mc = MutRepController(jobs_setup_file, verbose=False)
+        xls_file = mc.gen_report()
+        xu = XlsUtils(xls_file)
+        self.assertEqual(xu.count_rows(),
+                         64,
+                         "intergenic mutations cannot be correctly determined")
+        rows_filter_actions = JOBS_SETUP_RPT_FILTER_NON_UTR
+        jobs_setup_file = self.__create_jobs_setup_file(rows_filter_actions=rows_filter_actions)
+        mc = MutRepController(jobs_setup_file, verbose=False)
+        xls_file = mc.gen_report()
+        xu = XlsUtils(xls_file)
+        self.assertEqual(xu.count_rows(),
+                         43,
+                         "intergenic mutations cannot be correctly determined")
+
+    @unittest.skipUnless(FULL_SYSTEM_TEST or DBREADER_XLS_TEST or XLS_TEST, "taking too long time to test")
+    def test_filter_non_synonymous_xls_1(self):
+        """
+        - test filter non-synonymous feature with xls records
+        - this test doesn't corresponding to any other tests
+        """
+
+        self.init_test(self.current_func_name)
+        project_name = self.test_function + '_with_synonymous'
+        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name)
+        mc = MutRepController(jobs_setup_file, verbose=False)
+        xls_file = mc.gen_report()
+        xu = XlsUtils(xls_file)
+        self.assertEqual(xu.count_rows(),
+                         64,
+                         "intergenic mutations cannot be correctly determined")
+        rows_filter_actions = JOBS_SETUP_RPT_FILTER_NON_SYNONYMOUS
+        jobs_setup_file = self.__create_jobs_setup_file(rows_filter_actions=rows_filter_actions)
+        mc = MutRepController(jobs_setup_file, verbose=False)
+        xls_file = mc.gen_report()
+        xu = XlsUtils(xls_file)
+        self.assertEqual(xu.count_rows(),
+                         55,
+                         "intergenic mutations cannot be correctly determined")
+
 #    @unittest.skipUnless(FULL_SYSTEM_TEST or DBREADER_XLS_TEST or XLS_TEST, "taking too long time to test")
 #    def test_pathogenic_count_xls_2(self):
 #        """
@@ -679,71 +572,70 @@ class TestQryRecordXls(SafeTester):
                          "Incorect intervar value"
                          )
 
-#    @unittest.skipUnless(FULL_SYSTEM_TEST or DBREADER_XLS_TEST or XLS_TEST, "taking too long time to test")
-#    def test_max_ref_maf_xls_2(self):
-#        """
-#        test finding maximum reference minor allele frequency
-#        """
-#
-#        self.init_test(self.current_func_name)
-#        annotated_vcf_tabix = join_path(self.data_dir,
-#                                        "input.vcf.gz")
-#        project_name = self.test_function
-#        anno_cols = list(DFLT_TEST_MUTREP_COLS)
-#        anno_cols.append(MAX_REF_MAF_COL_NAME)
-#        anno_cols += REF_MAF_COL_NAMES
-#        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
-#                                                        annotated_vcf_tabix=annotated_vcf_tabix,
-#                                                        anno_cols=anno_cols,
-#                                                        )
-#        mc = MutRepController(jobs_setup_file=jobs_setup_file)
-#        mc.gen_summary_report(mc.report_layout.report_regions)
-#        xls_file = join_path(self.working_dir,
-#                             "rpts",
-#                             project_name+"_summary.xlsx")
-#        xu = XlsUtils(xls_file)
-#        max_ref_maf_col_idx = xu.get_col_idx(mc.correct_header(MAX_REF_MAF_COL_NAME))
-#        self.assertEqual(xu.get_cell_value(2, max_ref_maf_col_idx),
-#                         0.0008,
-#                         "Incorect maximum reference allele frequency value"
-#                         )
-#        self.assertEqual(xu.get_cell_value(3, max_ref_maf_col_idx),
-#                         0.095,
-#                         "Incorect maximum reference allele frequency value"
-#                         )
-#        self.assertEqual(xu.get_cell_value(4, max_ref_maf_col_idx),
-#                         0.00119808,
-#                         "Incorect maximum reference allele frequency value"
-#                         )
-#        self.assertEqual(xu.get_cell_value(5, max_ref_maf_col_idx),
-#                         0.0035,
-#                         "Incorect maximum reference allele frequency value"
-#                         )
-#        self.assertEqual(xu.get_cell_value(6, max_ref_maf_col_idx),
-#                         0.0125,
-#                         "Incorect maximum reference allele frequency value"
-#                         )
-#        self.assertEqual(xu.get_cell_value(7, max_ref_maf_col_idx),
-#                         0.0377,
-#                         "Incorect maximum reference allele frequency value"
-#                         )
-#        self.assertEqual(xu.get_cell_value(8, max_ref_maf_col_idx),
-#                         0.0441,
-#                         "Incorect maximum reference allele frequency value"
-#                         )
-#        self.assertEqual(xu.get_cell_value(9, max_ref_maf_col_idx),
-#                         0.0924,
-#                         "Incorect maximum reference allele frequency value"
-#                         )
-#        self.assertEqual(xu.get_cell_value(10, max_ref_maf_col_idx),
-#                         0.3711,
-#                         "Incorect maximum reference allele frequency value"
-#                         )
-#        self.assertEqual(xu.get_cell_value(11, max_ref_maf_col_idx),
-#                         0.075,
-#                         "Incorect maximum reference allele frequency value"
-#                         )
-#        self.assertEqual(xu.get_cell_value(12, max_ref_maf_col_idx),
-#                         0.2785,
-#                         "Incorect maximum reference allele frequency value"
-#                         )
+    @unittest.skipUnless(FULL_SYSTEM_TEST or DBREADER_XLS_TEST or XLS_TEST, "taking too long time to test")
+    def test_max_ref_maf_xls_1(self):
+        """
+        test finding maximum reference minor allele frequency
+        """
+
+        self.init_test(self.current_func_name)
+        anno_cols = list(DFLT_TEST_MUTREP_COLS)
+        anno_cols.append(MAX_REF_MAF_COL_NAME)
+        anno_cols += REF_MAF_COL_NAMES
+        jobs_setup_file = self.__create_jobs_setup_file(anno_cols=anno_cols)
+        mc = MutRepController(jobs_setup_file, verbose=False)
+        xls_file = mc.gen_report()
+        xu = XlsUtils(xls_file)
+        max_ref_maf_col_idx = xu.get_col_idx(mc.correct_header(MAX_REF_MAF_COL_NAME))
+        self.assertEqual(xu.get_cell_value(2, max_ref_maf_col_idx),
+                         0.0008,
+                         "Incorect maximum reference allele frequency value"
+                         )
+        self.assertEqual(xu.get_cell_value(3, max_ref_maf_col_idx),
+                         0.1074,
+                         "Incorect maximum reference allele frequency value"
+                         )
+        self.assertEqual(xu.get_cell_value(4, max_ref_maf_col_idx),
+                         0.0012,
+                         "Incorect maximum reference allele frequency value"
+                         )
+        self.assertEqual(xu.get_cell_value(5, max_ref_maf_col_idx),
+                         0.0035,
+                         "Incorect maximum reference allele frequency value"
+                         )
+        self.assertEqual(xu.get_cell_value(6, max_ref_maf_col_idx),
+                         0.0132,
+                         "Incorect maximum reference allele frequency value"
+                         )
+        self.assertEqual(xu.get_cell_value(7, max_ref_maf_col_idx),
+                         0.0377,
+                         "Incorect maximum reference allele frequency value"
+                         )
+        self.assertEqual(xu.get_cell_value(8, max_ref_maf_col_idx),
+                         0.2912,
+                         "Incorect maximum reference allele frequency value"
+                         )
+        self.assertEqual(xu.get_cell_value(9, max_ref_maf_col_idx),
+                         0.0924,
+                         "Incorect maximum reference allele frequency value"
+                         )
+        self.assertEqual(xu.get_cell_value(10, max_ref_maf_col_idx),
+                         0.3711,
+                         "Incorect maximum reference allele frequency value"
+                         )
+        self.assertEqual(xu.get_cell_value(11, max_ref_maf_col_idx),
+                         0.075,
+                         "Incorect maximum reference allele frequency value"
+                         )
+        self.assertEqual(xu.get_cell_value(12, max_ref_maf_col_idx),
+                         0.3153,
+                         "Incorect maximum reference allele frequency value"
+                         )
+        self.assertEqual(xu.get_cell_value(13, max_ref_maf_col_idx),
+                         0.1401,
+                         "Incorect maximum reference allele frequency value"
+                         )
+        self.assertEqual(xu.get_cell_value(14, max_ref_maf_col_idx),
+                         0.0056,
+                         "Incorect maximum reference allele frequency value"
+                         )

@@ -2,6 +2,7 @@ import copy
 import re
 from collections import OrderedDict
 from pycmm.settings import MAX_REF_MAF_COL_NAME
+from pycmm.settings import REF_MAF_COL_NAMES
 from pycmm.settings import EXAC03_CONSTRAINT_COL_NAMES
 from pycmm.settings import EXAC03_CONSTRAINT_COL_NAME
 from pycmm.settings import INTERVAR_AND_EVIDENCE_COL_NAME
@@ -105,7 +106,6 @@ class QryRecord(pyCMMBase):
                  raw_qry,
                  anno_col_idxs,
                  sample_col_idxs,
-#                 ref_mutated_col_idx,
                  family_infos,
                  *args,
                  **kwargs
@@ -114,9 +114,9 @@ class QryRecord(pyCMMBase):
         self.__raw_qry = raw_qry
         self.__anno_col_idxs = anno_col_idxs
         self.__sample_col_idxs = sample_col_idxs
-#        self.__ref_mutated = raw_qry[ref_mutated_col_idx]
         self.__family_infos = copy.deepcopy(family_infos)
         self.__exac_constraints = -1
+        self.__max_ref_maf = None
         self.__parse_genotype()
         self.__cal_shared()
 
@@ -222,6 +222,21 @@ class QryRecord(pyCMMBase):
             return self.__exac_constraints[var_name]
         raise IndexError("constraint: "+var_name+" is not found in exac03 constraint")
 
+    def __get_max_ref_maf(self):
+        if self.__max_ref_maf is None:
+            max_ref_maf = 0
+            for ref_maf_col_name in REF_MAF_COL_NAMES:
+                ref_maf = self.get_anno(ref_maf_col_name)
+                if ref_maf == "":
+                    continue
+                ref_maf = float(ref_maf)
+                if ref_maf > 0.5:
+                    ref_maf = 1 - ref_maf
+                if ref_maf > max_ref_maf:
+                    max_ref_maf = ref_maf
+            self.__max_ref_maf = max_ref_maf
+        return self.__max_ref_maf
+
     def __get_anno(self, anno_col):
         # - If info exist (maybe in an "encrypted" name),
         # return the info
@@ -244,6 +259,8 @@ class QryRecord(pyCMMBase):
             anno_val = parse_intervar_class(self.get_anno(INTERVAR_AND_EVIDENCE_COL_NAME))
         elif anno_col == INTERVAR_EVIDENCE_COL_NAME:
             anno_val = parse_intervar_evidence(self.get_anno(INTERVAR_AND_EVIDENCE_COL_NAME))
+        elif anno_col == MAX_REF_MAF_COL_NAME:
+            anno_val = self.__get_max_ref_maf()
         if (anno_val == "" or
             anno_val is None or
             anno_val == [None] or
@@ -334,7 +351,6 @@ class SQLiteDBReader(SQLiteDB):
         return samples_id
 
     def init_columns(self, anno_col_names):
-#    def init_columns(self, col_names):
         # - To tell the reader what columns it should expect
         # - To prepare the column names for later sql query
         # - Because the UI col name and sql col name might be different,
@@ -370,36 +386,11 @@ class SQLiteDBReader(SQLiteDB):
                     db_col_name = self.anno_col_to_db_col(INTERVAR_AND_EVIDENCE_COL_NAME)
                     self.__qry_cols.append(db_col_name)
                     anno_col_idx += 1
+            elif anno_col_name == MAX_REF_MAF_COL_NAME:
+                avail_cols.append(anno_col_name)
             else:
                 self.warning("Column " + anno_col_name + " is missing")
         return avail_cols
-#        master_col_names = self.get_col_names(MASTER_TABLE)
-#        mod_master_col_names = map(lambda x: x.strip("_"),
-#                                   master_col_names)
-#        self.dbg(mod_master_col_names)
-#        self.__anno_col_idxs = OrderedDict()
-#        self.__qry_cols = []
-#        avail_cols = []
-#        anno_col_idx = len(VCF_PKEYS)
-#        for col_name in col_names:
-#            if col_name in mod_master_col_names:
-#                avail_cols.append(col_name)
-#                self.__anno_col_idxs[col_name] = anno_col_idx
-#                master_col_idx = mod_master_col_names.index(col_name)
-#                self.__qry_cols.append(master_col_names[master_col_idx])
-#                anno_col_idx += 1
-#            elif (col_name in EXAC03_CONSTRAINT_COL_NAMES and
-#                EXAC03_CONSTRAINT_COL_NAME in mod_master_col_names
-#                ):
-#                avail_cols.append(col_name)
-#                if EXAC03_CONSTRAINT_COL_NAME not in self.__anno_col_idxs:
-#                    self.__anno_col_idxs[EXAC03_CONSTRAINT_COL_NAME] = anno_col_idx
-#                    master_col_idx = mod_master_col_names.index(EXAC03_CONSTRAINT_COL_NAME)
-#                    self.__qry_cols.append(master_col_names[master_col_idx])
-#                    anno_col_idx += 1
-#            else:
-#                self.warning("Column " + col_name + " is missing")
-#        return avail_cols
 
     def init_samples(self, samples_id=None):
         # - To tell the reader what samples'id it should expect
@@ -498,7 +489,6 @@ class SQLiteDBReader(SQLiteDB):
             self.init_samples(self.samples_id)
         sql += ", ".join(VCF_PKEYS)
         sql += ", " + ", ".join(self.__qry_cols)
-#        sql += ", " + REF_MUTATED_COL_NAME
         sql += " FROM " + MASTER_TABLE
         where_clause = []
         if chrom is not None:
@@ -506,10 +496,10 @@ class SQLiteDBReader(SQLiteDB):
             if start_pos is not None:
                 where_clause.append("POS >= " + start_pos)
                 where_clause.append("POS <= " + end_pos)
-        if self.filter_non_intronic:
-            where_clause.append("_Func_refGene != '" + FUNC_INTRONIC + "'")
         if self.filter_non_intergenic:
             where_clause.append("_Func_refGene != '" + FUNC_INTERGENIC + "'")
+        if self.filter_non_intronic:
+            where_clause.append("_Func_refGene != '" + FUNC_INTRONIC + "'")
         if self.filter_non_upstream:
             where_clause.append("_Func_refGene != '" + FUNC_UPSTREAM + "'")
         if self.filter_non_downstream:
@@ -525,6 +515,5 @@ class SQLiteDBReader(SQLiteDB):
             yield QryRecord(row,
                             self.__anno_col_idxs,
                             self.__sample_col_idxs,
-#                            self.__ref_mutated_col_idx,
                             self.__family_infos,
                             )

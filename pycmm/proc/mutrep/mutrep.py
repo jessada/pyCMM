@@ -1258,6 +1258,12 @@ class MutRepController(CMMPipeline):
         else:
             self.__reader.init_samples(map(lambda x: x.sample_id,
                                            self.samples_list))
+        self.__reader.filter_non_intergenic = self.report_layout.filter_non_intergenic
+        self.__reader.filter_non_intronic = self.report_layout.filter_non_intronic
+        self.__reader.filter_non_upstream = self.report_layout.filter_non_upstream
+        self.__reader.filter_non_downstream = self.report_layout.filter_non_downstream
+        self.__reader.filter_non_utr = self.report_layout.filter_non_utr
+        self.__reader.filter_non_synonymous = self.report_layout.filter_non_synonymous
 
     def gen_report(self,
                    report_regions=None,
