@@ -179,6 +179,34 @@ class TestSQLiteDB(SafeTester):
                          None,
                          "SQLiteDB cannot correctly map UI column name to DB column name")
 
+    def test_sample_id_to_db_col_1(self):
+        """ test converting sample id to db column name """
+
+        self.init_test(self.current_func_name)
+        db_file = join_path(self.data_dir,
+                            "input.db")
+        db = SQLiteDB(db_file, verbose=False)
+        self.assertEqual(db.sample_id_to_db_col("Co-35"),
+                         "_Co_35",
+                         "SQLiteDB cannot correctly map sample id to DB column name")
+
+    def test_sample_id_to_tbl_1(self):
+        """ test converting sample id to db column name """
+
+        self.init_test(self.current_func_name)
+        db_file = join_path(self.data_dir,
+                            "input.db")
+        db = SQLiteDB(db_file, verbose=False)
+        self.assertEqual(db.sample_id_to_tbl("Co-35"),
+                         "gtz_WES294",
+                         "SQLiteDB cannot correctly map sample id to table name")
+        self.assertEqual(db.sample_id_to_tbl("Co-309"),
+                         "fam119_new_sample",
+                         "SQLiteDB cannot correctly map sample id to table name")
+        self.assertEqual(db.sample_id_to_tbl("2016-18116"),
+                         "gtz_THYRCA",
+                         "SQLiteDB cannot correctly map sample id to table name")
+
     def test_cal_max_ref_maf_1(self):
         """
         test finding maximum allele frequency

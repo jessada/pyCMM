@@ -71,6 +71,9 @@ class SQLiteDB(pyCMMBase):
         self.__avdb_info = None
         self.__annovar_info = None
         self.__col_mapping = None
+        self.__sample_id_mapping = None
+        self.__sample_tbl_mapping = None
+        self.__samples_id = None
 
     def __create_system_tables(self):
         self._create_table(tbl_name=TBL_NAME_CMM_TBLS,
@@ -256,9 +259,17 @@ class SQLiteDB(pyCMMBase):
         for row in self.read_rows(sql=sql):
             self.dbg(row)
 
+    @property
+    def samples_id(self):
+        if self.__sample_id_mapping is None:
+            self.__map_samples()
+        if self.__samples_id is None:
+            self.__samples_id = self.__sample_id_mapping.keys()
+        return self.__samples_id
+
     def __map_columns(self):
         # Due to the different in annotation column names and the column names
-        # in the database, and there are some risks in changing how the table
+        # in the database, and there are some risks in changing the table
         # columns schema, this funtion will map them in dictionary by using the
         # annotation column name as the key and the table column name as value.
         self.__col_mapping = {}
@@ -273,8 +284,6 @@ class SQLiteDB(pyCMMBase):
         anno_col_names += ALL_MUTREP_ANNO_COLS
         anno_col_names.append(REF_MUTATED_COL_NAME)
         anno_col_names.append(INTERVAR_AND_EVIDENCE_COL_NAME)
-#        self.dbg(anno_col_names)
-#        self.dbg(mod_db_col_names)
         for anno_col_name in anno_col_names:
             if anno_col_name in mod_db_col_names:
                 db_col_idx = mod_db_col_names.index(anno_col_name)
@@ -293,13 +302,41 @@ class SQLiteDB(pyCMMBase):
                     db_col_name = db_col_names[db_col_idx]
                     self.__col_mapping[anno_col_name] = db_col_name
                     self.__col_mapping[mod_anno_col_name] = db_col_name
-#        self.dbg(self.__col_mapping)
 
     def anno_col_to_db_col(self, anno_col_name):
         if self.__col_mapping is None:
             self.__map_columns()
         if anno_col_name in self.__col_mapping:
             return self.__col_mapping[anno_col_name]
+        return None
+
+    def __map_samples(self):
+        # Due to the different in the actual sample ids and the column names
+        # in the database, this funtion will map them in dictionary by using the
+        # actual sample ids as the key and the table column name as value.
+        self.__sample_id_mapping = {}
+        self.__sample_tbl_mapping = {}
+        gtz_tbls = self.get_gtz_tbls()
+        db_samples_id = reduce(lambda x, y: x+y,
+                               self.get_gtz_tbls().values())
+        for gtz_tbl in gtz_tbls:
+            for db_sample_id in gtz_tbls[gtz_tbl]:
+                actual_id = db_sample_id.strip("_").replace("_", "-")
+                self.__sample_id_mapping[actual_id] = db_sample_id
+                self.__sample_tbl_mapping[actual_id] = gtz_tbl
+
+    def sample_id_to_db_col(self, sample_id):
+        if self.__sample_id_mapping is None:
+            self.__map_samples()
+        if sample_id in self.__sample_id_mapping:
+            return self.__sample_id_mapping[sample_id]
+        return None
+
+    def sample_id_to_tbl(self, sample_id):
+        if self.__sample_tbl_mapping is None:
+            self.__map_samples()
+        if sample_id in self.__sample_tbl_mapping:
+            return self.__sample_tbl_mapping[sample_id]
         return None
 
     def join_all_gtz_anno(self):
@@ -364,7 +401,6 @@ class SQLiteDB(pyCMMBase):
         sql = "UPDATE " + tbl_name
         sql += " SET " + MAX_REF_MAF_COL_NAME + " = 0"
         self._exec_sql(sql)
-#        self.dbg(self.get_col_names(tbl_name))
         tbl_ref_maf_col_names = []
         for col_name in self.get_col_names(tbl_name):
             if col_name.strip("_") in REF_MAF_COL_NAMES:
@@ -396,8 +432,3 @@ class SQLiteDB(pyCMMBase):
         sql += " SET " + REF_MUTATED_COL_NAME + " = 1"
         sql += " WHERE " + self.anno_col_to_db_col(GNOMAD_GENOME_ALL_COL_NAME) + " > 0.5"
         self._exec_sql(sql)
-
-#        sql = "SELECT " + REF_MUTATED_COL_NAME + " FROM " + TBL_NAME_ALL_GTZ_ANNOS
-#        self.dbg_query(sql)
-
-

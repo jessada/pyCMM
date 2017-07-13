@@ -7,6 +7,7 @@ from pycmm.proc.mutrep.dbreader import SQLiteDBReader
 from pycmm.proc.mutrep.dbreader import GT_WT
 from pycmm.proc.mutrep.dbreader import GT_HOM
 from pycmm.proc.mutrep.dbreader import GT_HET
+from pycmm.proc.mutrep.mutrep import MutRepController
 from pycmm.proc.db.dbms import create_dbms_jobs_setup_file as create_jobs_setup_file
 from pycmm.proc.db.dbms import SQLiteDBController
 from pycmm.proc.db.connector import TBL_NAME_ALL_GTZ_ANNOS

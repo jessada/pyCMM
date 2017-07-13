@@ -4,7 +4,6 @@ from os.path import join as join_path
 #from os.path import dirname
 from collections import OrderedDict
 from pycmm.template import SafeTester
-from pycmm.proc.mutrep.mutrep import MutRepController
 from pycmm.cmmlib.xlslib import XlsUtils
 from pycmm.cmmlib.colorlib import COLORS_RGB
 from pycmm.settings import XLS_TEST
@@ -38,7 +37,7 @@ from pycmm.settings import FULL_SYSTEM_TEST
 #from pycmm.settings import EST_KVOT_EARLYONSET_VS_BRC_COL_NAME
 #from pycmm.settings import EST_KVOT_EARLYONSET_VS_EXAC_NFE_COL_NAME
 #from pycmm.settings import EST_KVOT_EARLYONSET_VS_KG_EUR_COL_NAME
-#from pycmm.settings import WES294_OAF_BRCS_AF_COL_NAME
+from pycmm.settings import WES294_OAF_BRCS_AF_COL_NAME
 from pycmm.settings import SWEGEN_AF_COL_NAME
 from pycmm.settings import MAX_REF_MAF_COL_NAME
 from pycmm.settings import REF_MAF_COL_NAMES
@@ -46,7 +45,7 @@ from pycmm.settings import REF_MAF_COL_NAMES
 #from pycmm.settings import COMPOUND_HETEROZYGOTE_FREQ_RATIO_COL_NAME
 #from pycmm.settings import HOMOZYGOTE_AFFECTED_COUNT_COL_NAME
 #from pycmm.settings import HOMOZYGOTE_FREQ_RATIO_COL_NAME
-#from pycmm.proc.mutrep.mutrep import MutRepController
+from pycmm.proc.mutrep.mutrep import MutRepController
 from pycmm.proc.mutrep.mutrep import create_jobs_setup_file
 #from pycmm.proc.mutrep.mutrep import JOBS_SETUP_RPT_FILTER_RARE
 from pycmm.proc.mutrep.mutrep import JOBS_SETUP_RPT_FILTER_PASS_VQSR
@@ -315,26 +314,60 @@ class TestMutRepController(SafeTester):
                          "MutRepController cannot correctly read report layout info 'color genes' from jobs setup file")
 
     @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST, "taking too long time to test")
-    def test_gen_report(self):
-        """ very prototype testing of mutrep """
+    def test_select_dataset_1(self):
+        """ test selection only rows with samples information """
 
-        self.individual_debug = True
         self.init_test(self.current_func_name)
-        anno_cols = "Func_refGene"
-        anno_cols += ",ExonicFunc_refGene"
-        anno_cols += ",Gene_refGene"
-        anno_cols += ",GeneDetail_refGene"
-        anno_cols += ",JUNK_col"
-        anno_cols += ",MAX_REF_MAF"
-        anno_cols += ",SWEGEN_AF"
+        anno_cols = FUNC_REFGENE_COL_NAME
+        anno_cols += "," + EXONICFUNC_REFGENE_COL_NAME
+        anno_cols += "," + GENE_REFGENE_COL_NAME
+        anno_cols += "," + GENEDETAIL_REFGENE_COL_NAME
+        anno_cols += "," + SWEGEN_AF_COL_NAME
+        anno_cols += "," + WES294_OAF_BRCS_AF_COL_NAME
         jobs_setup_file = self.__create_jobs_setup_file(anno_cols=anno_cols,
-                                                        sample_info="8:Co-35:Co-37,12:Co-89:Co-90",
+                                                        sample_info="8:Co-35:Co-37,13:Co-95,275:Co-1262:Co-618,296:Co-793:Co-876",
                                                         )
-        mc = MutRepController(jobs_setup_file)
-        mc.gen_report()
-#        mc.gen_report(None, "all_gtz_annos")
-#        mp.gen_report(None, "test_mutrep_view_1")
-        
+        mc = MutRepController(jobs_setup_file, verbose=False)
+        xls_file = mc.gen_report()
+        xu = XlsUtils(xls_file)
+        self.assertEqual(xu.count_rows(),
+                         48,
+                         "Incorrect number of rows"
+                         )
+
+        jobs_setup_file = self.__create_jobs_setup_file(anno_cols=anno_cols,
+                                                        sample_info="119:Co-309",
+                                                        )
+        mc = MutRepController(jobs_setup_file, verbose=False)
+        xls_file = mc.gen_report()
+        xu = XlsUtils(xls_file)
+        self.assertEqual(xu.count_rows(),
+                         2,
+                         "Incorrect number of rows"
+                         )
+
+        jobs_setup_file = self.__create_jobs_setup_file(anno_cols=anno_cols,
+                                                        sample_info="119:Co-309,Co-1209,2016-00043",
+                                                        )
+        mc = MutRepController(jobs_setup_file, verbose=False)
+        xls_file = mc.gen_report()
+        xu = XlsUtils(xls_file)
+        self.assertEqual(xu.count_rows(),
+                         54,
+                         "Incorrect number of rows"
+                         )
+
+        jobs_setup_file = self.__create_jobs_setup_file(anno_cols=anno_cols,
+                                                        sample_info="2016-00043",
+                                                        )
+        mc = MutRepController(jobs_setup_file, verbose=False)
+        xls_file = mc.gen_report()
+        xu = XlsUtils(xls_file)
+        self.assertEqual(xu.count_rows(),
+                         26,
+                         "Incorrect number of rows"
+                         )
+
 #    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST, "taking too long time to test")
 #    def test_summary_report_1(self):
 #        """ test if summary report with default configuration can be correctly generated """
@@ -1176,44 +1209,41 @@ class TestMutRepController(SafeTester):
 #                         )
 #
 #    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST, "taking too long time to test")
-#    def test_color_genes_2(self):
-#        """
-#        test if a little advance gene search (two genes, full name) can be done correctly
-#        both inside the genes and surrounding.
-#        """
-#
-#        self.init_test(self.current_func_name)
-#        db_file = join_path(self.data_dir,
-#                                        "input.vcf.gz")
-#        project_name = self.test_function
-#        color_genes = "ANKRD19P,IPPK"
-#        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
-#                                                        db_file=db_file,
-#                                                        sample_info="8:Co-35:Co-37,13:Co-95,275:Co-1262:Co-618,296:Co-793:Co-876",
-#                                                        report_regions="9",
-#                                                        color_genes=color_genes,
-#                                                        )
-#        pl = MutRepController(jobs_setup_file=jobs_setup_file)
-#        pl.gen_summary_report(pl.report_layout.report_regions)
-#        xls_file = join_path(self.working_dir,
-#                             "rpts",
-#                             project_name+"_summary.xlsx")
-#        xu = XlsUtils(xls_file)
-#        refgene_col_idx = xu.get_col_idx(GENE_REFGENE_COL_NAME)
-#        exp_rgb = "FF" + COLORS_RGB["XLS_GREEN"][-6:]
-#        self.assertEqual(xu.get_cell_rgb(2, refgene_col_idx),
-#                         exp_rgb,
-#                         "Incorrect color"
-#                         )
-#        self.assertEqual(xu.get_cell_rgb(20, refgene_col_idx),
-#                         RGB_NO_FILL,
-#                         "Incorrect color"
-#                         )
-#        self.assertEqual(xu.get_cell_rgb(50, refgene_col_idx),
-#                         exp_rgb,
-#                         "Incorrect color"
-#                         )
-#
+    def test_color_genes_2(self):
+        """
+        test if a little advance gene search (two genes, full name) can be done correctly
+        both inside the genes and surrounding.
+        """
+
+        self.individual_debug = True
+        self.init_test(self.current_func_name)
+        project_name = self.test_function
+        color_genes = "ANKRD19P,IPPK"
+        jobs_setup_file = self.__create_jobs_setup_file(sample_info="8:Co-35:Co-37,13:Co-95,275:Co-1262:Co-618,296:Co-793:Co-876",
+                                                        color_genes=color_genes,
+                                                        )
+        mc = MutRepController(jobs_setup_file, verbose=False)
+        xls_file = mc.gen_report()
+        xu = XlsUtils(xls_file)
+        self.assertEqual(xu.count_rows(sheet_idx=0),
+                         9,
+                         "Incorrect number of rows"
+                         )
+        refgene_col_idx = xu.get_col_idx(GENE_REFGENE_COL_NAME)
+        exp_rgb = "FF" + COLORS_RGB["XLS_GREEN"][-6:]
+        self.assertEqual(xu.get_cell_rgb(2, refgene_col_idx),
+                         exp_rgb,
+                         "Incorrect color"
+                         )
+        self.assertEqual(xu.get_cell_rgb(20, refgene_col_idx),
+                         RGB_NO_FILL,
+                         "Incorrect color"
+                         )
+        self.assertEqual(xu.get_cell_rgb(50, refgene_col_idx),
+                         exp_rgb,
+                         "Incorrect color"
+                         )
+
 #    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST, "taking too long time to test")
 #    def test_coloring_zygosity_1(self):
 #        """ test coloring shared samples when the option is off """
@@ -1584,18 +1614,13 @@ class TestMutRepController(SafeTester):
 
         self.individual_debug = True
         self.init_test(self.current_func_name)
-        db_file = join_path(self.data_dir,
-                            "input.db")
-        project_name = self.test_function
         custom_excl_tags = DFLT_TEST_ANNO_EXCL_TAGS
         custom_excl_tags += "," + AXEQ_CHR3_6_14_18_COLS_TAG
         custom_excl_tags += "," + AXEQ_CHR5_19_COLS_TAG
         custom_excl_tags += "," + LJB_SCORE_COLS_TAG
         sample_info = join_path(self.data_dir,
                                 "sample.info")
-        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
-                                                        db_file=db_file,
-                                                        anno_excl_tags=custom_excl_tags,
+        jobs_setup_file = self.__create_jobs_setup_file(anno_excl_tags=custom_excl_tags,
                                                         sample_info=sample_info,
                                                         report_regions="10",
                                                         show_shared_variants=True,

@@ -361,7 +361,6 @@ class SQLiteDBReader(SQLiteDB):
         super(SQLiteDBReader, self).__init__(*args, **kwargs)
         self.__qry_cols = None
         self.__family_infos = family_infos
-        self.__samples_id = self.__parse_samples()
         self.__pred_tran = PredictionTranslator()
         self.__init_properties()
 
@@ -376,15 +375,6 @@ class SQLiteDBReader(SQLiteDB):
     def get_raw_obj_str(self, *args, **kwargs):
         raw_str = super(SQLiteDBReader, self).get_raw_obj_str(*args, **kwargs)
         return raw_str
-
-    def __parse_samples(self):
-        master_col_names = self.get_col_names(MASTER_TABLE)
-        db_samples_id = self.get_samples_id()
-        samples_id = []
-        for col_name in master_col_names:
-            if col_name in db_samples_id:
-                samples_id.append(col_name.strip("_").replace("_", "-"))
-        return samples_id
 
     def init_columns(self, anno_col_names):
         # - To tell the reader what columns it should expect
@@ -435,27 +425,26 @@ class SQLiteDBReader(SQLiteDB):
         # - To prepare the column names for later sql query
         # - Because the UI sample id and sql sample id might be different,
         # the function also maps UI sample id and sample id idx in the query
-        master_col_names = self.get_col_names(MASTER_TABLE)
-        mod_master_col_names = map(lambda x: x.strip("_").replace("_", "-"),
-                                   master_col_names)
         self.__sample_col_idxs = OrderedDict()
+        self.__sample_tbls = OrderedDict()
         sample_col_idx = len(VCF_PKEYS) + len(self.__anno_col_idxs)
         if samples_id is None:
             samples_id = self.samples_id
         for sample_id in samples_id:
-            if sample_id in mod_master_col_names:
+            db_col_name = self.sample_id_to_db_col(sample_id)
+            if db_col_name is not None:
                 self.__sample_col_idxs[sample_id] = sample_col_idx
-                master_col_idx = mod_master_col_names.index(sample_id)
-                self.__qry_cols.append(master_col_names[master_col_idx])
+                self.__qry_cols.append(db_col_name)
                 sample_col_idx += 1
             else:
                 raise IndexError("sample id: "+sample_id+" is not found in the database")
+            tbl_name = self.sample_id_to_tbl(sample_id)
+            if tbl_name is not None:
+                self.__sample_tbls[tbl_name] = 1
+            else:
+                raise IndexError("sample id: "+sample_id+" is not found in any tables")
         self.__ref_mutated_col_idx = sample_col_idx
             
-    @property
-    def samples_id(self):
-        return self.__samples_id
-
     @property
     def filter_non_intergenic(self):
         return self.__filter_non_intergenic
@@ -547,6 +536,11 @@ class SQLiteDBReader(SQLiteDB):
             where_clause.append("_Func_refGene != '" + FUNC_UTR + "5'")
         if self.filter_non_synonymous:
             where_clause.append("_ExonicFunc_refGene != '" + EXONICFUNC_SYNONYMOUS + "'")
+        or_clause = []
+        for tbl_name in self.__sample_tbls:
+            col_name = tbl_name.replace("gtz_", "") + "_FILTER"
+            or_clause.append(col_name + " IS NOT NULL")
+        where_clause.append("(" + " OR ".join(or_clause) + ")")
         if len(where_clause) > 0:
             sql += " WHERE " + " AND ".join(where_clause)
         for row in self.read_rows(sql=sql):
