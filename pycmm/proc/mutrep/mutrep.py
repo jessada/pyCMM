@@ -10,7 +10,6 @@ from collections import OrderedDict
 from pycmm.settings import ALL_MUTREP_ANNO_COLS
 #from pycmm.settings import EST_KVOT_COLS
 #from pycmm.settings import DFLT_MUTREP_FREQ_RATIOS
-#from pycmm.settings import PREDICTION_COLS
 #from pycmm.settings import MUTREP_FAMILY_REPORT_BIN
 #from pycmm.settings import MUTREP_SUMMARY_REPORT_BIN
 #from pycmm.settings import EST_KVOT_EARLYONSET_VS_BRC_COL_NAME
@@ -56,6 +55,7 @@ from pycmm.cmmlib.xlslib import NO_COLOR
 #from pycmm.flow.cmmdb import CMMPipeline
 from pycmm.cmmlib.dnalib import ALL_CHROMS
 from pycmm.cmmlib.dnalib import DNARegion
+from pycmm.proc.mutrep.dbreader import PREDICTION_COLS
 from pycmm.proc.mutrep.dbreader import SQLiteDBReader
 from pycmm.proc.mutrep.dbreader import GT_HOM
 from pycmm.proc.mutrep.dbreader import GT_HET
@@ -979,8 +979,8 @@ class MutRepController(CMMPipeline):
                         color_col = True
             if anno == "" and not color_col:
                 continue
-#            if anno_col_name in PREDICTION_COLS:
-#                info = info.description
+            if anno_col_name in PREDICTION_COLS:
+                anno = anno.description
 #            # If color_genes is defined, color the genes found in color_genes
 #            if (anno_col_name == GENE_REFGENE_COL_NAME and
 #                self.report_layout.color_genes is not None): 

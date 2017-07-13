@@ -6,7 +6,7 @@ from pycmm.settings import XLS_TEST
 #from pycmm.settings import ALL_MUTREP_ANNO_COLS
 #from pycmm.settings import PRIMARY_MAF_VAR
 #from pycmm.settings import EXAC_ALL_COL_NAME
-#from pycmm.settings import PATHOGENIC_COUNT_COL_NAME
+from pycmm.settings import PATHOGENIC_COUNT_COL_NAME
 from pycmm.settings import EXAC03_CONSTRAINT_SYN_Z_COL_NAME
 from pycmm.settings import INTERVAR_CLASS_COL_NAME
 from pycmm.settings import INTERVAR_EVIDENCE_COL_NAME
@@ -14,10 +14,10 @@ from pycmm.settings import MAX_REF_MAF_COL_NAME
 from pycmm.settings import REF_MAF_COL_NAMES
 from pycmm.settings import FULL_SYSTEM_TEST
 #from pycmm.settings import AXEQ_CHR9_COLS_TAG
-#from pycmm.settings import AXEQ_CHR3_6_14_18_COLS_TAG
-#from pycmm.settings import AXEQ_CHR5_19_COLS_TAG
-#from pycmm.settings import EXAC_CONSTRAINT_COLS_TAG
-#from pycmm.settings import LJB_SCORE_COLS_TAG
+from pycmm.settings import AXEQ_CHR3_6_14_18_COLS_TAG
+from pycmm.settings import AXEQ_CHR5_19_COLS_TAG
+from pycmm.settings import EXAC_CONSTRAINT_COLS_TAG
+from pycmm.settings import LJB_SCORE_COLS_TAG
 from pycmm.cmmlib.xlslib import XlsUtils
 from pycmm.cmmlib.intervarlib import INTERVAR_CLASS_BENIGN
 from pycmm.cmmlib.intervarlib import INTERVAR_CLASS_LIKELY_BENIGN
@@ -37,7 +37,7 @@ from pycmm.flow.mutrep import JOBS_SETUP_RPT_FILTER_NON_SYNONYMOUS
 #from pycmm.flow.mutrep import JOBS_SETUP_RPT_FILTER_HAS_MUTATION
 #from pycmm.flow.mutrep import JOBS_SETUP_RPT_FILTER_HAS_SHARED
 from pycmm.proc.mutrep.test.test_mutrep import DFLT_TEST_MUTREP_COLS
-#from pycmm.flow.test.test_mutrep import DFLT_TEST_ANNO_EXCL_TAGS
+from pycmm.proc.mutrep.test.test_mutrep import DFLT_TEST_ANNO_EXCL_TAGS
 
 DBREADER_XLS_TEST = False
 
@@ -438,53 +438,51 @@ class TestQryRecordXls(SafeTester):
                          55,
                          "intergenic mutations cannot be correctly determined")
 
-#    @unittest.skipUnless(FULL_SYSTEM_TEST or DBREADER_XLS_TEST or XLS_TEST, "taking too long time to test")
-#    def test_pathogenic_count_xls_2(self):
-#        """
-#        - test if number of pathogenic count can be correctly displayed
-#        """
-#
-#        self.init_test(self.current_func_name)
-#        annotated_vcf_tabix = join_path(self.data_dir,
-#                                        "input.vcf.gz")
-#        project_name = self.test_function
-#        custom_excl_tags = DFLT_TEST_ANNO_EXCL_TAGS
-#        custom_excl_tags += "," + AXEQ_CHR3_6_14_18_COLS_TAG
-#        custom_excl_tags += "," + AXEQ_CHR5_19_COLS_TAG
-#        custom_excl_tags += "," + LJB_SCORE_COLS_TAG
-#        custom_excl_tags += "," + EXAC_CONSTRAINT_COLS_TAG
-#        custom_excl_tags += "," + LJB_SCORE_COLS_TAG
-#        rows_filter_actions = JOBS_SETUP_RPT_FILTER_NON_INTERGENIC
-#        rows_filter_actions += ',' + JOBS_SETUP_RPT_FILTER_NON_INTRONIC
-#        rows_filter_actions += ',' + JOBS_SETUP_RPT_FILTER_NON_UPSTREAM
-#        rows_filter_actions += ',' + JOBS_SETUP_RPT_FILTER_NON_DOWNSTREAM
-#        rows_filter_actions += ',' + JOBS_SETUP_RPT_FILTER_NON_UTR
-#        rows_filter_actions += ',' + JOBS_SETUP_RPT_FILTER_NON_SYNONYMOUS
-#        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
-#                                                        annotated_vcf_tabix=annotated_vcf_tabix,
-#                                                        anno_cols=ALL_MUTREP_ANNO_COLS,
-#                                                        anno_excl_tags=custom_excl_tags,
-#                                                        rows_filter_actions=rows_filter_actions,
-#                                                        )
-#        mc = MutRepController(jobs_setup_file=jobs_setup_file)
-#        mc.gen_summary_report(mc.report_layout.report_regions)
-#        xls_file = join_path(self.working_dir,
-#                             "rpts",
-#                             project_name+"_summary.xlsx")
-#        xu = XlsUtils(xls_file)
-#        pc_col_idx = xu.get_col_idx(PATHOGENIC_COUNT_COL_NAME)
-#        self.assertEqual(xu.get_cell_value(4, pc_col_idx),
-#                         1,
-#                         "Incorect number of harmful pathogenic predictions"
-#                         )
-#        self.assertEqual(xu.get_cell_value(5, pc_col_idx),
-#                         0,
-#                         "Incorect number of harmful pathogenic predictions"
-#                         )
-#        self.assertEqual(xu.get_cell_value(9, pc_col_idx),
-#                         5,
-#                         "Incorect number of harmful pathogenic predictions"
-#                         )
+    @unittest.skipUnless(FULL_SYSTEM_TEST or DBREADER_XLS_TEST or XLS_TEST, "taking too long time to test")
+    def test_pathogenic_count_xls_1(self):
+        """
+        - test if number of pathogenic count can be correctly displayed
+        """
+
+        self.init_test(self.current_func_name)
+        custom_excl_tags = DFLT_TEST_ANNO_EXCL_TAGS
+        custom_excl_tags += "," + AXEQ_CHR3_6_14_18_COLS_TAG
+        custom_excl_tags += "," + AXEQ_CHR5_19_COLS_TAG
+        custom_excl_tags += "," + EXAC_CONSTRAINT_COLS_TAG
+        custom_excl_tags += "," + LJB_SCORE_COLS_TAG
+        rows_filter_actions = JOBS_SETUP_RPT_FILTER_NON_INTERGENIC
+        rows_filter_actions += ',' + JOBS_SETUP_RPT_FILTER_NON_INTRONIC
+        rows_filter_actions += ',' + JOBS_SETUP_RPT_FILTER_NON_UPSTREAM
+        rows_filter_actions += ',' + JOBS_SETUP_RPT_FILTER_NON_DOWNSTREAM
+        rows_filter_actions += ',' + JOBS_SETUP_RPT_FILTER_NON_UTR
+        rows_filter_actions += ',' + JOBS_SETUP_RPT_FILTER_NON_SYNONYMOUS
+        jobs_setup_file = self.__create_jobs_setup_file(anno_excl_tags=custom_excl_tags,
+                                                        rows_filter_actions=rows_filter_actions,
+                                                        )
+        mc = MutRepController(jobs_setup_file, verbose=False)
+        xls_file = mc.gen_report()
+        xu = XlsUtils(xls_file)
+        pc_col_idx = xu.get_col_idx(PATHOGENIC_COUNT_COL_NAME)
+        self.assertEqual(xu.get_cell_value(4, pc_col_idx),
+                         1,
+                         "Incorect number of harmful pathogenic predictions"
+                         )
+        self.assertEqual(xu.get_cell_value(5, pc_col_idx),
+                         1,
+                         "Incorect number of harmful pathogenic predictions"
+                         )
+        self.assertEqual(xu.get_cell_value(6, pc_col_idx),
+                         0,
+                         "Incorect number of harmful pathogenic predictions"
+                         )
+        self.assertEqual(xu.get_cell_value(9, pc_col_idx),
+                         5,
+                         "Incorect number of harmful pathogenic predictions"
+                         )
+        self.assertEqual(xu.get_cell_value(10, pc_col_idx),
+                         9,
+                         "Incorect number of harmful pathogenic predictions"
+                         )
 
     @unittest.skipUnless(FULL_SYSTEM_TEST or DBREADER_XLS_TEST or XLS_TEST, "taking too long time to test")
     def test_parse_exac_constraint_xls_1(self):

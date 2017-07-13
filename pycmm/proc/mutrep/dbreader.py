@@ -8,6 +8,12 @@ from pycmm.settings import EXAC03_CONSTRAINT_COL_NAME
 from pycmm.settings import INTERVAR_AND_EVIDENCE_COL_NAME
 from pycmm.settings import INTERVAR_CLASS_COL_NAME
 from pycmm.settings import INTERVAR_EVIDENCE_COL_NAME
+from pycmm.settings import PATHOGENIC_COUNT_COL_NAME
+from pycmm.settings import PREDICTION_COLS
+from pycmm.settings import LJB_METASVM_PREDICTION_COL_NAME
+from pycmm.settings import LJB_METALR_PREDICTION_COL_NAME
+from pycmm.settings import LJB_RADIALSVM_PREDICTION_COL_NAME
+from pycmm.settings import LJB_LR_PREDICTION_COL_NAME
 from pycmm.utils import is_number
 from pycmm.template import pyCMMBase
 from pycmm.proc.db.connector import SQLiteDB
@@ -16,6 +22,7 @@ from pycmm.proc.db.connector import TBL_NAME_ALL_GTZ_ANNOS
 from pycmm.proc.db.connector import REF_MUTATED_COL_NAME
 from pycmm.cmmlib.intervarlib import parse_intervar_class
 from pycmm.cmmlib.intervarlib import parse_intervar_evidence
+from pycmm.cmmlib.annovarlib import PredictionTranslator
 
 MASTER_TABLE = TBL_NAME_ALL_GTZ_ANNOS
 
@@ -39,6 +46,11 @@ QRY_ALT_COL_IDX = 3
 
 EXAC_CONSTRAINT_PATTERN = re.compile(r'''(?P<var_name>.+?)=(?P<value>.+)''')
 
+PREDICTION_COLS = list(PREDICTION_COLS)
+PREDICTION_COLS.append(LJB_METASVM_PREDICTION_COL_NAME)
+PREDICTION_COLS.append(LJB_METALR_PREDICTION_COL_NAME)
+PREDICTION_COLS.remove(LJB_RADIALSVM_PREDICTION_COL_NAME)
+PREDICTION_COLS.remove(LJB_LR_PREDICTION_COL_NAME)
 
 class QryCall(pyCMMBase):
     """
@@ -107,6 +119,7 @@ class QryRecord(pyCMMBase):
                  anno_col_idxs,
                  sample_col_idxs,
                  family_infos,
+                 pred_tran,
                  *args,
                  **kwargs
                  ):
@@ -115,8 +128,10 @@ class QryRecord(pyCMMBase):
         self.__anno_col_idxs = anno_col_idxs
         self.__sample_col_idxs = sample_col_idxs
         self.__family_infos = copy.deepcopy(family_infos)
+        self.__pred_tran = pred_tran
         self.__exac_constraints = -1
         self.__max_ref_maf = None
+        self.__pathogenic_count = None
         self.__parse_genotype()
         self.__cal_shared()
 
@@ -237,6 +252,20 @@ class QryRecord(pyCMMBase):
             self.__max_ref_maf = max_ref_maf
         return self.__max_ref_maf
 
+    def __get_pathogenic_count(self):
+        if self.__pathogenic_count is None:
+            count = 0
+            for col_name in PREDICTION_COLS:
+                info = self.get_anno(col_name)
+                if (info is None or info == ""):
+                    count += 1
+                    continue
+                if not info.harmful:
+                    continue
+                count += 1
+            self.__pathogenic_count = count
+        return self.__pathogenic_count
+
     def __get_anno(self, anno_col):
         # - If info exist (maybe in an "encrypted" name),
         # return the info
@@ -251,6 +280,10 @@ class QryRecord(pyCMMBase):
         # - Otherwise, exception
         # - Before return simplify all possible NA into ""
         anno_val = self.__get_anno(anno_col)
+        # Translate in-silico prediction if possible
+        if (anno_col in self.__pred_tran.predictor_list and
+            anno_val is not None):
+            anno_val = self.__pred_tran.get_prediction_info(anno_col, anno_val)
         if anno_val is not None:
             pass
         elif anno_col in EXAC03_CONSTRAINT_COL_NAMES:
@@ -261,6 +294,8 @@ class QryRecord(pyCMMBase):
             anno_val = parse_intervar_evidence(self.get_anno(INTERVAR_AND_EVIDENCE_COL_NAME))
         elif anno_col == MAX_REF_MAF_COL_NAME:
             anno_val = self.__get_max_ref_maf()
+        elif anno_col == PATHOGENIC_COUNT_COL_NAME:
+            anno_val = self.__get_pathogenic_count()
         if (anno_val == "" or
             anno_val is None or
             anno_val == [None] or
@@ -327,6 +362,7 @@ class SQLiteDBReader(SQLiteDB):
         self.__qry_cols = None
         self.__family_infos = family_infos
         self.__samples_id = self.__parse_samples()
+        self.__pred_tran = PredictionTranslator()
         self.__init_properties()
 
     def __init_properties(self):
@@ -387,6 +423,8 @@ class SQLiteDBReader(SQLiteDB):
                     self.__qry_cols.append(db_col_name)
                     anno_col_idx += 1
             elif anno_col_name == MAX_REF_MAF_COL_NAME:
+                avail_cols.append(anno_col_name)
+            elif anno_col_name == PATHOGENIC_COUNT_COL_NAME:
                 avail_cols.append(anno_col_name)
             else:
                 self.warning("Column " + anno_col_name + " is missing")
@@ -516,4 +554,5 @@ class SQLiteDBReader(SQLiteDB):
                             self.__anno_col_idxs,
                             self.__sample_col_idxs,
                             self.__family_infos,
+                            self.__pred_tran,
                             )

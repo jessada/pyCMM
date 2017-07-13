@@ -11,7 +11,9 @@ from pycmm.settings import LJB_MUTATIONTASTER_PREDICTION_COL_NAME as MUTATIONTAS
 from pycmm.settings import LJB_MUTATIONASSESSOR_PREDICTION_COL_NAME as MUTATIONASSESSOR_PRED_COL
 from pycmm.settings import LJB_FATHMM_PREDICTION_COL_NAME as FATHMM_PRED_COL
 from pycmm.settings import LJB_RADIALSVM_PREDICTION_COL_NAME as RADIALSVM_PRED_COL
+from pycmm.settings import LJB_METASVM_PREDICTION_COL_NAME as METASVM_PRED_COL
 from pycmm.settings import LJB_LR_PREDICTION_COL_NAME as LR_PRED_COL
+from pycmm.settings import LJB_METALR_PREDICTION_COL_NAME as METALR_PRED_COL
 from pycmm.settings import DFLT_ANV_DB_DIR
 from pycmm.settings import DFLT_ANV_DB_NAMES
 from pycmm.settings import DFLT_ANV_DB_OPS
@@ -347,6 +349,7 @@ class PredictionTranslator(CMMParams):
                                    harmful=False,
                                    )
         self.__pred_info[RADIALSVM_PRED_COL]['T'] = pred_info
+        self.__pred_info[METASVM_PRED_COL] = self.__pred_info[RADIALSVM_PRED_COL]
 
         self.__pred_info[LR_PRED_COL] = {}
         pred_info = PredictionInfo(code='D',
@@ -359,6 +362,7 @@ class PredictionTranslator(CMMParams):
                                    harmful=False,
                                    )
         self.__pred_info[LR_PRED_COL]['T'] = pred_info
+        self.__pred_info[METALR_PRED_COL] = self.__pred_info[LR_PRED_COL]
 
     def get_prediction_info(self,
                             predictor_name,

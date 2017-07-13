@@ -25,6 +25,7 @@ from pycmm.settings import EXAC03_CONSTRAINT_N_LOF_COL_NAME
 from pycmm.settings import EXAC03_CONSTRAINT_PLI_COL_NAME
 from pycmm.settings import INTERVAR_CLASS_COL_NAME
 from pycmm.settings import INTERVAR_EVIDENCE_COL_NAME
+from pycmm.settings import PATHOGENIC_COUNT_COL_NAME
 #from pycmm.settings import MAX_REF_MAF_COL_NAME
 #from pycmm.settings import WES294_OAF_EARLYONSET_AF_COL_NAME
 #from pycmm.settings import WES294_OAF_BRCS_AF_COL_NAME
@@ -997,50 +998,72 @@ class TestQryRecord(SafeTester):
 #        self.assertTrue(qry_record.qry_eval(expr6, 5),
 #                        "cannot perform vcf expression evaluation correctly")
 #
-#    def test_pathogenic_count_1(self):
-#        """
-#        test if harmful pathogenic variants can be correctly count
-#        """
-#
-#        self.init_test(self.current_func_name)
-#        db_file = join_path(self.data_dir,
-#                            'input.db')
-#        db_reader = SQLiteDBReader(db_file, verbose=False)
-#        qry_records = db_reader.get_qry_records()
-#        qry_record = qry_records.next()
-#        self.assertEqual(qry_record.pathogenic_count(allele_idx=1),
-#                         1,
-#                         "number of harmful pathogenic prediction cannot be correctly determined")
-#        qry_record = qry_records.next()
-#        self.assertEqual(qry_record.pathogenic_count(allele_idx=1),
-#                         9,
-#                         "number of harmful pathogenic prediction cannot be correctly determined")
-#        qry_record = qry_records.next()
-#        self.assertEqual(qry_record.pathogenic_count(allele_idx=2),
-#                         0,
-#                         "number of harmful pathogenic prediction cannot be correctly determined")
-#        self.assertEqual(qry_record.pathogenic_count(allele_idx=3),
-#                         1,
-#                         "number of harmful pathogenic prediction cannot be correctly determined")
-#        qry_record = qry_records.next()
-#        qry_record = qry_records.next()
-#        qry_record = qry_records.next()
-#        qry_record = qry_records.next()
-#        qry_record = qry_records.next()
-#        qry_record = qry_records.next()
-#        qry_record = qry_records.next()
-#        qry_record = qry_records.next()
-#        qry_record = qry_records.next()
-#        qry_record = qry_records.next()
-#        qry_record = qry_records.next()
-#        qry_record = qry_records.next()
-#        qry_record = qry_records.next()
-#        self.assertEqual(qry_record.pathogenic_count(allele_idx=1),
-#                         1,
-#                         "number of harmful pathogenic prediction cannot be correctly determined")
-#        self.assertEqual(qry_record.pathogenic_count(allele_idx=2),
-#                         9,
-#                         "number of harmful pathogenic prediction cannot be correctly determined")
+    def test_pathogenic_count_1(self):
+        """
+        test if harmful pathogenic variants can be correctly count
+        """
+
+        self.init_test(self.current_func_name)
+        db_file = join_path(self.data_dir,
+                            'input.db')
+        db_reader = SQLiteDBReader(db_file, verbose=False)
+        qry_records = db_reader.get_qry_records()
+        qry_record = qry_records.next()
+        self.assertEqual(qry_record.get_anno(PATHOGENIC_COUNT_COL_NAME),
+                         1,
+                         "number of harmful pathogenic prediction cannot be correctly determined")
+        qry_record = qry_records.next()
+        self.assertEqual(qry_record.get_anno(PATHOGENIC_COUNT_COL_NAME),
+                         9,
+                         "number of harmful pathogenic prediction cannot be correctly determined")
+        qry_record = qry_records.next()
+        self.assertEqual(qry_record.get_anno(PATHOGENIC_COUNT_COL_NAME),
+                         1,
+                         "number of harmful pathogenic prediction cannot be correctly determined")
+        qry_record = qry_records.next()
+        self.assertEqual(qry_record.get_anno(PATHOGENIC_COUNT_COL_NAME),
+                         1,
+                         "number of harmful pathogenic prediction cannot be correctly determined")
+        qry_record = qry_records.next()
+        self.assertEqual(qry_record.get_anno(PATHOGENIC_COUNT_COL_NAME),
+                         0,
+                         "number of harmful pathogenic prediction cannot be correctly determined")
+        qry_record = qry_records.next()
+        self.assertEqual(qry_record.get_anno(PATHOGENIC_COUNT_COL_NAME),
+                         9,
+                         "number of harmful pathogenic prediction cannot be correctly determined")
+        qry_record = qry_records.next()
+        self.assertEqual(qry_record.get_anno(PATHOGENIC_COUNT_COL_NAME),
+                         0,
+                         "number of harmful pathogenic prediction cannot be correctly determined")
+        qry_record = qry_records.next()
+        self.assertEqual(qry_record.get_anno(PATHOGENIC_COUNT_COL_NAME),
+                         5,
+                         "number of harmful pathogenic prediction cannot be correctly determined")
+        qry_record = qry_records.next()
+        self.assertEqual(qry_record.get_anno(PATHOGENIC_COUNT_COL_NAME),
+                         9,
+                         "number of harmful pathogenic prediction cannot be correctly determined")
+        qry_record = qry_records.next()
+        self.assertEqual(qry_record.get_anno(PATHOGENIC_COUNT_COL_NAME),
+                         3,
+                         "number of harmful pathogenic prediction cannot be correctly determined")
+        qry_record = qry_records.next()
+        self.assertEqual(qry_record.get_anno(PATHOGENIC_COUNT_COL_NAME),
+                         5,
+                         "number of harmful pathogenic prediction cannot be correctly determined")
+        qry_record = qry_records.next()
+        qry_record = qry_records.next()
+        qry_record = qry_records.next()
+        qry_record = qry_records.next()
+        qry_record = qry_records.next()
+        self.assertEqual(qry_record.get_anno(PATHOGENIC_COUNT_COL_NAME),
+                         4,
+                         "number of harmful pathogenic prediction cannot be correctly determined")
+        qry_record = qry_records.next()
+        self.assertEqual(qry_record.get_anno(PATHOGENIC_COUNT_COL_NAME),
+                         9,
+                         "number of harmful pathogenic prediction cannot be correctly determined")
 
     def test_parse_exac_constraint_1(self):
         """
