@@ -358,6 +358,17 @@ class TestMutRepController(SafeTester):
                          )
 
         jobs_setup_file = self.__create_jobs_setup_file(anno_cols=anno_cols,
+                                                        sample_info="119:Co-309,2016-00043",
+                                                        )
+        mc = MutRepController(jobs_setup_file, verbose=False)
+        xls_file = mc.gen_report()
+        xu = XlsUtils(xls_file)
+        self.assertEqual(xu.count_rows(),
+                         27,
+                         "Incorrect number of rows"
+                         )
+
+        jobs_setup_file = self.__create_jobs_setup_file(anno_cols=anno_cols,
                                                         sample_info="2016-00043",
                                                         )
         mc = MutRepController(jobs_setup_file, verbose=False)
@@ -368,28 +379,6 @@ class TestMutRepController(SafeTester):
                          "Incorrect number of rows"
                          )
 
-#    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST, "taking too long time to test")
-#    def test_summary_report_1(self):
-#        """ test if summary report with default configuration can be correctly generated """
-#
-#        self.init_test(self.current_func_name)
-#        db_file = join_path(self.data_dir,
-#                                        "chr6_18.vcf.gz")
-#        project_name = self.test_function
-#        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
-#                                                        db_file=db_file,
-#                                                        report_regions=None,
-#                                                        )
-#        pl = MutRepController(jobs_setup_file=jobs_setup_file)
-#        pl.gen_summary_report(pl.report_layout.report_regions)
-#        xls_file = join_path(self.working_dir,
-#                             "rpts",
-#                             project_name+"_summary.xlsx")
-#        xu = XlsUtils(xls_file)
-#        self.assertEqual(xu.count_rows(),
-#                         18,
-#                         "shared mutations cannot be correctly determined")
-#
     @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST, "taking too long time to test")
     def test_gen_report_2(self):
         """ test with multiple report_regions """
@@ -471,31 +460,6 @@ class TestMutRepController(SafeTester):
 #                         )
 #
 #    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST, "taking too long time to test")
-#    def test_summary_report_5(self):
-#        """ test summary report of CRC samples """
-#
-#        self.init_test(self.current_func_name)
-#        db_file = join_path(self.data_dir,
-#                                        "input.vcf.gz")
-#        project_name = self.test_function
-#        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
-#                                                        db_file=db_file,
-#                                                        report_regions=None,
-#                                                        call_detail=False,
-#                                                        anno_excl_tags=DFLT_TEST_ANNO_EXCL_TAGS,
-#                                                        )
-#        pl = MutRepController(jobs_setup_file=jobs_setup_file)
-#        pl.gen_summary_report(pl.report_layout.report_regions)
-#        xls_file = join_path(self.working_dir,
-#                             "rpts",
-#                             project_name+"_summary.xlsx")
-#        xu = XlsUtils(xls_file)
-#        self.assertEqual(xu.count_rows(),
-#                         15,
-#                         "CRC report cannot be generated correctly"
-#                         )
-#
-#    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST, "taking too long time to test")
 #    def test_summary_report_6(self):
 #        """ test if unicode character 'ö' is allowed in the report """
 #
@@ -520,31 +484,6 @@ class TestMutRepController(SafeTester):
 #        self.assertEqual(xu.count_rows(),
 #                         2,
 #                         "report with swedish unicode character cannot be generated correctly"
-#                         )
-#
-#    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST, "taking too long time to test")
-#    def test_summary_report_7(self):
-#        """ test excluding "*" allele """
-#
-#        self.init_test(self.current_func_name)
-#        db_file = join_path(self.data_dir,
-#                                        "input.vcf.gz")
-#        project_name = self.test_function
-#        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
-#                                                        db_file=db_file,
-#                                                        anno_excl_tags=DFLT_TEST_ANNO_EXCL_TAGS,
-#                                                        report_regions=None,
-#                                                        call_detail=False,
-#                                                        )
-#        pl = MutRepController(jobs_setup_file=jobs_setup_file)
-#        pl.gen_summary_report(pl.report_layout.report_regions)
-#        xls_file = join_path(self.working_dir,
-#                             "rpts",
-#                             project_name+"_summary.xlsx")
-#        xu = XlsUtils(xls_file)
-#        self.assertEqual(xu.count_rows(),
-#                         12,
-#                         "mutation report cannot exclude '*' allele"
 #                         )
 #
     @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST, "taking too long time to test")
@@ -1217,7 +1156,6 @@ class TestMutRepController(SafeTester):
 
         self.individual_debug = True
         self.init_test(self.current_func_name)
-        project_name = self.test_function
         color_genes = "ANKRD19P,IPPK"
         jobs_setup_file = self.__create_jobs_setup_file(sample_info="8:Co-35:Co-37,13:Co-95,275:Co-1262:Co-618,296:Co-793:Co-876",
                                                         color_genes=color_genes,
@@ -1244,216 +1182,194 @@ class TestMutRepController(SafeTester):
                          "Incorrect color"
                          )
 
-#    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST, "taking too long time to test")
-#    def test_coloring_zygosity_1(self):
-#        """ test coloring shared samples when the option is off """
-#
-#        self.init_test(self.current_func_name)
-#        db_file = join_path(self.data_dir,
-#                                        "input.vcf.gz")
-#        project_name = self.test_function
-#        custom_excl_tags = DFLT_TEST_ANNO_EXCL_TAGS
-#        custom_excl_tags += "," + AXEQ_CHR3_6_14_18_COLS_TAG
-#        custom_excl_tags += "," + AXEQ_CHR5_19_COLS_TAG
-#        custom_excl_tags += "," + LJB_SCORE_COLS_TAG
-#        sample_info = join_path(self.data_dir,
-#                                "sample.info")
-#        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
-#                                                        db_file=db_file,
-#                                                        anno_cols=ALL_MUTREP_ANNO_COLS,
-#                                                        anno_excl_tags=custom_excl_tags,
-#                                                        sample_info=sample_info,
-#                                                        report_regions="9",
-#                                                        )
-#        pl = MutRepController(jobs_setup_file=jobs_setup_file)
-#        pl.gen_summary_report(pl.report_layout.report_regions)
-#        xls_file = join_path(self.working_dir,
-#                             "rpts",
-#                             project_name+"_summary.xlsx")
-#        xu = XlsUtils(xls_file)
-#        xls_file = join_path(self.working_dir,
-#                             "rpts",
-#                             project_name+"_summary.xlsx")
-#        xu = XlsUtils(xls_file)
-#        sample_col_idx = xu.get_col_idx("256-Co-388")
-#        self.assertEqual(xu.get_cell_value(2, sample_col_idx),
-#                         "wt",
-#                         "Incorrect cell value"
-#                         )
-#        self.assertEqual(xu.get_cell_rgb(2, sample_col_idx),
-#                         RGB_NO_FILL,
-#                         "Incorrect color"
-#                         )
-#        self.assertEqual(xu.get_cell_value(3, sample_col_idx),
-#                         "het",
-#                         "Incorrect cell value"
-#                         )
-#        self.assertEqual(xu.get_cell_rgb(3, sample_col_idx),
-#                         RGB_NO_FILL,
-#                         "Incorrect color"
-#                         )
-#        sample_col_idx = xu.get_col_idx("13-Co-95")
-#        self.assertEqual(xu.get_cell_value(2, sample_col_idx),
-#                         ".",
-#                         "Incorrect cell value"
-#                         )
-#        self.assertEqual(xu.get_cell_rgb(2, sample_col_idx),
-#                         RGB_NO_FILL,
-#                         "Incorrect color"
-#                         )
-#        self.assertEqual(xu.get_cell_value(3, sample_col_idx),
-#                         "hom",
-#                         "Incorrect cell value"
-#                         )
-#        self.assertEqual(xu.get_cell_rgb(3, sample_col_idx),
-#                         RGB_NO_FILL,
-#                         "Incorrect color"
-#                         )
-#        sample_col_idx = xu.get_col_idx("110-Co-1313")
-#        self.assertEqual(xu.get_cell_value(2, sample_col_idx),
-#                         "wt",
-#                         "Incorrect cell value"
-#                         )
-#        self.assertEqual(xu.get_cell_rgb(2, sample_col_idx),
-#                         RGB_NO_FILL,
-#                         "Incorrect color"
-#                         )
-#        self.assertEqual(xu.get_cell_value(17, sample_col_idx),
-#                         "het",
-#                         "Incorrect cell value"
-#                         )
-#        self.assertEqual(xu.get_cell_rgb(17, sample_col_idx),
-#                         RGB_NO_FILL,
-#                         "Incorrect color"
-#                         )
-#        sample_col_idx = xu.get_col_idx("771-08F")
-#        self.assertEqual(xu.get_cell_value(2, sample_col_idx),
-#                         ".",
-#                         "Incorrect cell value"
-#                         )
-#        self.assertEqual(xu.get_cell_rgb(2, sample_col_idx),
-#                         RGB_NO_FILL,
-#                         "Incorrect color"
-#                         )
-#        self.assertEqual(xu.get_cell_value(3, sample_col_idx),
-#                         "hom",
-#                         "Incorrect cell value"
-#                         )
-#        self.assertEqual(xu.get_cell_rgb(3, sample_col_idx),
-#                         RGB_NO_FILL,
-#                         "Incorrect color"
-#                         )
-#        self.assertEqual(xu.get_cell_value(15, sample_col_idx),
-#                         "het",
-#                         "Incorrect cell value"
-#                         )
-#        self.assertEqual(xu.get_cell_rgb(15, sample_col_idx),
-#                         RGB_NO_FILL,
-#                         "Incorrect color"
-#                         )
-#
-#    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST, "taking too long time to test")
-#    def test_coloring_zygosity_2(self):
-#        """ test coloring shared samples when the option is on """
-#
-#        self.init_test(self.current_func_name)
-#        db_file = join_path(self.data_dir,
-#                                        "input.vcf.gz")
-#        project_name = self.test_function
-#        custom_excl_tags = DFLT_TEST_ANNO_EXCL_TAGS
-#        custom_excl_tags += "," + AXEQ_CHR3_6_14_18_COLS_TAG
-#        custom_excl_tags += "," + AXEQ_CHR5_19_COLS_TAG
-#        custom_excl_tags += "," + LJB_SCORE_COLS_TAG
-#        sample_info = join_path(self.data_dir,
-#                                "sample.info")
-#        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
-#                                                        db_file=db_file,
-#                                                        anno_cols=ALL_MUTREP_ANNO_COLS,
-#                                                        anno_excl_tags=custom_excl_tags,
-#                                                        sample_info=sample_info,
-#                                                        report_regions="9",
-#                                                        coloring_zygosity=True,
-#                                                        )
-#        pl = MutRepController(jobs_setup_file=jobs_setup_file)
-#        pl.gen_summary_report(pl.report_layout.report_regions)
-#        xls_file = join_path(self.working_dir,
-#                             "rpts",
-#                             project_name+"_summary.xlsx")
-#        xu = XlsUtils(xls_file)
-#        sample_col_idx = xu.get_col_idx("256-Co-388")
-#        exp_rgb = "FF" + COLORS_RGB["XLS_LIGHT_GREEN"][-6:]
-#        self.assertEqual(xu.get_cell_value(2, sample_col_idx),
-#                         "wt",
-#                         "Incorrect cell value"
-#                         )
-#        self.assertEqual(xu.get_cell_rgb(2, sample_col_idx),
-#                         RGB_NO_FILL,
-#                         "Incorrect color"
-#                         )
-#        self.assertEqual(xu.get_cell_value(3, sample_col_idx),
-#                         "het",
-#                         "Incorrect cell value"
-#                         )
-#        self.assertEqual(xu.get_cell_rgb(3, sample_col_idx),
-#                         exp_rgb,
-#                         "Incorrect color"
-#                         )
-#        sample_col_idx = xu.get_col_idx("13-Co-95")
-#        exp_rgb = "FF" + COLORS_RGB["XLS_DARK_GREEN"][-6:]
-#        self.assertEqual(xu.get_cell_value(2, sample_col_idx),
-#                         ".",
-#                         "Incorrect cell value"
-#                         )
-#        self.assertEqual(xu.get_cell_rgb(2, sample_col_idx),
-#                         RGB_NO_FILL,
-#                         "Incorrect color"
-#                         )
-#        self.assertEqual(xu.get_cell_value(3, sample_col_idx),
-#                         "hom",
-#                         "Incorrect cell value"
-#                         )
-#        self.assertEqual(xu.get_cell_rgb(3, sample_col_idx),
-#                         exp_rgb,
-#                         "Incorrect color"
-#                         )
-#        sample_col_idx = xu.get_col_idx("1207-2818-07D")
-#        exp_rgb = "FF" + COLORS_RGB["XLS_LIGHT_GREEN"][-6:]
-#        self.assertEqual(xu.get_cell_value(17, sample_col_idx),
-#                         "het",
-#                         "Incorrect cell value"
-#                         )
-#        self.assertEqual(xu.get_cell_rgb(17, sample_col_idx),
-#                         exp_rgb,
-#                         "Incorrect color"
-#                         )
-#        sample_col_idx = xu.get_col_idx("771-08F")
-#        self.assertEqual(xu.get_cell_value(2, sample_col_idx),
-#                         ".",
-#                         "Incorrect cell value"
-#                         )
-#        self.assertEqual(xu.get_cell_rgb(2, sample_col_idx),
-#                         RGB_NO_FILL,
-#                         "Incorrect color"
-#                         )
-#        exp_rgb = "FF" + COLORS_RGB["XLS_DARK_GREEN"][-6:]
-#        self.assertEqual(xu.get_cell_value(3, sample_col_idx),
-#                         "hom",
-#                         "Incorrect cell value"
-#                         )
-#        self.assertEqual(xu.get_cell_rgb(3, sample_col_idx),
-#                         exp_rgb,
-#                         "Incorrect color"
-#                         )
-#        exp_rgb = "FF" + COLORS_RGB["XLS_LIGHT_GREEN"][-6:]
-#        self.assertEqual(xu.get_cell_value(15, sample_col_idx),
-#                         "het",
-#                         "Incorrect cell value"
-#                         )
-#        self.assertEqual(xu.get_cell_rgb(15, sample_col_idx),
-#                         exp_rgb,
-#                         "Incorrect color"
-#                         )
-#
+    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST, "taking too long time to test")
+    def test_coloring_zygosity_1(self):
+        """ test coloring shared samples when the option is off """
+
+        self.init_test(self.current_func_name)
+        custom_excl_tags = DFLT_TEST_ANNO_EXCL_TAGS
+        custom_excl_tags += "," + AXEQ_CHR3_6_14_18_COLS_TAG
+        custom_excl_tags += "," + AXEQ_CHR5_19_COLS_TAG
+        custom_excl_tags += "," + LJB_SCORE_COLS_TAG
+        sample_info = join_path(self.data_dir,
+                                "sample.info")
+        jobs_setup_file = self.__create_jobs_setup_file(anno_cols=ALL_MUTREP_ANNO_COLS,
+                                                        anno_excl_tags=custom_excl_tags,
+                                                        sample_info=sample_info,
+                                                        )
+        mc = MutRepController(jobs_setup_file, verbose=False)
+        xls_file = mc.gen_report(report_regions="9")
+        xu = XlsUtils(xls_file)
+        sample_col_idx = xu.get_col_idx("256-Co-388")
+        self.assertEqual(xu.get_cell_value(2, sample_col_idx),
+                         "wt",
+                         "Incorrect cell value"
+                         )
+        self.assertEqual(xu.get_cell_rgb(2, sample_col_idx),
+                         RGB_NO_FILL,
+                         "Incorrect color"
+                         )
+        self.assertEqual(xu.get_cell_value(3, sample_col_idx),
+                         "het",
+                         "Incorrect cell value"
+                         )
+        self.assertEqual(xu.get_cell_rgb(3, sample_col_idx),
+                         RGB_NO_FILL,
+                         "Incorrect color"
+                         )
+        sample_col_idx = xu.get_col_idx("13-Co-95")
+        self.assertEqual(xu.get_cell_value(2, sample_col_idx),
+                         ".",
+                         "Incorrect cell value"
+                         )
+        self.assertEqual(xu.get_cell_rgb(2, sample_col_idx),
+                         RGB_NO_FILL,
+                         "Incorrect color"
+                         )
+        self.assertEqual(xu.get_cell_value(3, sample_col_idx),
+                         "hom",
+                         "Incorrect cell value"
+                         )
+        self.assertEqual(xu.get_cell_rgb(3, sample_col_idx),
+                         RGB_NO_FILL,
+                         "Incorrect color"
+                         )
+        sample_col_idx = xu.get_col_idx("110-Co-1313")
+        self.assertEqual(xu.get_cell_value(2, sample_col_idx),
+                         "wt",
+                         "Incorrect cell value"
+                         )
+        self.assertEqual(xu.get_cell_rgb(2, sample_col_idx),
+                         RGB_NO_FILL,
+                         "Incorrect color"
+                         )
+        self.assertEqual(xu.get_cell_value(18, sample_col_idx),
+                         "het",
+                         "Incorrect cell value"
+                         )
+        self.assertEqual(xu.get_cell_rgb(18, sample_col_idx),
+                         RGB_NO_FILL,
+                         "Incorrect color"
+                         )
+        sample_col_idx = xu.get_col_idx("771-08F")
+        self.assertEqual(xu.get_cell_value(2, sample_col_idx),
+                         ".",
+                         "Incorrect cell value"
+                         )
+        self.assertEqual(xu.get_cell_rgb(2, sample_col_idx),
+                         RGB_NO_FILL,
+                         "Incorrect color"
+                         )
+        self.assertEqual(xu.get_cell_value(3, sample_col_idx),
+                         "hom",
+                         "Incorrect cell value"
+                         )
+        self.assertEqual(xu.get_cell_rgb(3, sample_col_idx),
+                         RGB_NO_FILL,
+                         "Incorrect color"
+                         )
+        self.assertEqual(xu.get_cell_value(26, sample_col_idx),
+                         "het",
+                         "Incorrect cell value"
+                         )
+        self.assertEqual(xu.get_cell_rgb(26, sample_col_idx),
+                         RGB_NO_FILL,
+                         "Incorrect color"
+                         )
+
+    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST, "taking too long time to test")
+    def test_coloring_zygosity_2(self):
+        """ test coloring shared samples when the option is on """
+
+        self.init_test(self.current_func_name)
+        custom_excl_tags = DFLT_TEST_ANNO_EXCL_TAGS
+        custom_excl_tags += "," + AXEQ_CHR3_6_14_18_COLS_TAG
+        custom_excl_tags += "," + AXEQ_CHR5_19_COLS_TAG
+        custom_excl_tags += "," + LJB_SCORE_COLS_TAG
+        sample_info = join_path(self.data_dir,
+                                "sample.info")
+        jobs_setup_file = self.__create_jobs_setup_file(anno_cols=ALL_MUTREP_ANNO_COLS,
+                                                        anno_excl_tags=custom_excl_tags,
+                                                        sample_info=sample_info,
+                                                        coloring_zygosity=True,
+                                                        )
+        mc = MutRepController(jobs_setup_file, verbose=False)
+        xls_file = mc.gen_report(report_regions="9")
+        xu = XlsUtils(xls_file)
+        sample_col_idx = xu.get_col_idx("256-Co-388")
+        exp_rgb = "FF" + COLORS_RGB["XLS_LIGHT_GREEN"][-6:]
+        self.assertEqual(xu.get_cell_value(2, sample_col_idx),
+                         "wt",
+                         "Incorrect cell value"
+                         )
+        self.assertEqual(xu.get_cell_rgb(2, sample_col_idx),
+                         RGB_NO_FILL,
+                         "Incorrect color"
+                         )
+        self.assertEqual(xu.get_cell_value(3, sample_col_idx),
+                         "het",
+                         "Incorrect cell value"
+                         )
+        self.assertEqual(xu.get_cell_rgb(3, sample_col_idx),
+                         exp_rgb,
+                         "Incorrect color"
+                         )
+        sample_col_idx = xu.get_col_idx("13-Co-95")
+        exp_rgb = "FF" + COLORS_RGB["XLS_DARK_GREEN"][-6:]
+        self.assertEqual(xu.get_cell_value(2, sample_col_idx),
+                         ".",
+                         "Incorrect cell value"
+                         )
+        self.assertEqual(xu.get_cell_rgb(2, sample_col_idx),
+                         RGB_NO_FILL,
+                         "Incorrect color"
+                         )
+        self.assertEqual(xu.get_cell_value(3, sample_col_idx),
+                         "hom",
+                         "Incorrect cell value"
+                         )
+        self.assertEqual(xu.get_cell_rgb(3, sample_col_idx),
+                         exp_rgb,
+                         "Incorrect color"
+                         )
+        sample_col_idx = xu.get_col_idx("1207-2818-07D")
+        exp_rgb = "FF" + COLORS_RGB["XLS_LIGHT_GREEN"][-6:]
+        self.assertEqual(xu.get_cell_value(25, sample_col_idx),
+                         "het",
+                         "Incorrect cell value"
+                         )
+        self.assertEqual(xu.get_cell_rgb(25, sample_col_idx),
+                         exp_rgb,
+                         "Incorrect color"
+                         )
+        sample_col_idx = xu.get_col_idx("771-08F")
+        self.assertEqual(xu.get_cell_value(2, sample_col_idx),
+                         ".",
+                         "Incorrect cell value"
+                         )
+        self.assertEqual(xu.get_cell_rgb(2, sample_col_idx),
+                         RGB_NO_FILL,
+                         "Incorrect color"
+                         )
+        exp_rgb = "FF" + COLORS_RGB["XLS_DARK_GREEN"][-6:]
+        self.assertEqual(xu.get_cell_value(3, sample_col_idx),
+                         "hom",
+                         "Incorrect cell value"
+                         )
+        self.assertEqual(xu.get_cell_rgb(3, sample_col_idx),
+                         exp_rgb,
+                         "Incorrect color"
+                         )
+        exp_rgb = "FF" + COLORS_RGB["XLS_LIGHT_GREEN"][-6:]
+        self.assertEqual(xu.get_cell_value(11, sample_col_idx),
+                         "het",
+                         "Incorrect cell value"
+                         )
+        self.assertEqual(xu.get_cell_rgb(11, sample_col_idx),
+                         exp_rgb,
+                         "Incorrect color"
+                         )
+
 #    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST, "taking too long time to test")
 #    def test_datasets_1(self):
 #        """

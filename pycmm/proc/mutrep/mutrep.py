@@ -70,10 +70,10 @@ DFLT_COLOR_HET_SHARED = 'LIGHT_BLUE'
 DFLT_COLOR_HOM_SHARED = 'ICEBLUE'
 CELL_TYPE_HET_SHARED = 'HET_SHARED'
 CELL_TYPE_HOM_SHARED = 'HOM_SHARED'
-#DFLT_COLOR_HET_ZYGO = 'XLS_LIGHT_GREEN'
-#DFLT_COLOR_HOM_ZYGO = 'XLS_DARK_GREEN'
-#CELL_TYPE_HET_ZYGO = 'HET_ZYGO'
-#CELL_TYPE_HOM_ZYGO = 'HOM_ZYGO'
+DFLT_COLOR_HET_ZYGO = 'XLS_LIGHT_GREEN'
+DFLT_COLOR_HOM_ZYGO = 'XLS_DARK_GREEN'
+CELL_TYPE_HET_ZYGO = 'HET_ZYGO'
+CELL_TYPE_HOM_ZYGO = 'HOM_ZYGO'
 #DFLT_COLOR_HET_RECESSIVE = 'XLS_GREEN'
 #DFLT_COLOR_HOM_RECESSIVE = 'XLS_ORANGE'
 #CELL_TYPE_HET_RECESSIVE = 'HET_RECESSIVE'
@@ -602,8 +602,8 @@ class ReportLayout(CMMParams):
         self.__cell_colors = {}
         self.__cell_colors[CELL_TYPE_HET_SHARED] = DFLT_COLOR_HET_SHARED
         self.__cell_colors[CELL_TYPE_HOM_SHARED] = DFLT_COLOR_HOM_SHARED
-#        self.__cell_colors[CELL_TYPE_HET_ZYGO] = DFLT_COLOR_HET_ZYGO
-#        self.__cell_colors[CELL_TYPE_HOM_ZYGO] = DFLT_COLOR_HOM_ZYGO
+        self.__cell_colors[CELL_TYPE_HET_ZYGO] = DFLT_COLOR_HET_ZYGO
+        self.__cell_colors[CELL_TYPE_HOM_ZYGO] = DFLT_COLOR_HOM_ZYGO
 #        self.__cell_colors[CELL_TYPE_HET_RECESSIVE] = DFLT_COLOR_HET_RECESSIVE
 #        self.__cell_colors[CELL_TYPE_HOM_RECESSIVE] = DFLT_COLOR_HOM_RECESSIVE
         self.__cell_colors[CELL_TYPE_SEPARATOR] = DFLT_COLOR_SEPARATOR
@@ -617,14 +617,14 @@ class ReportLayout(CMMParams):
     def cell_color_hom_shared(self):
         return self.__cell_colors[CELL_TYPE_HOM_SHARED]
 
-#    @property
-#    def cell_color_het_zygo(self):
-#        return self.__cell_colors[CELL_TYPE_HET_ZYGO]
-#
-#    @property
-#    def cell_color_hom_zygo(self):
-#        return self.__cell_colors[CELL_TYPE_HOM_ZYGO]
-#
+    @property
+    def cell_color_het_zygo(self):
+        return self.__cell_colors[CELL_TYPE_HET_ZYGO]
+
+    @property
+    def cell_color_hom_zygo(self):
+        return self.__cell_colors[CELL_TYPE_HOM_ZYGO]
+
 #    @property
 #    def cell_color_het_recessive(self):
 #        return self.__cell_colors[CELL_TYPE_HET_RECESSIVE]
@@ -2492,6 +2492,8 @@ def create_jobs_setup_file(*args, **kwargs):
         rpt_cfg[JOBS_SETUP_RPT_ANNO_COLS_KEY] = ALL_MUTREP_ANNO_COLS.keys()
     elif type(anno_cols) is str:
         rpt_cfg[JOBS_SETUP_RPT_ANNO_COLS_KEY] = anno_cols.split(",")
+    elif type(anno_cols) is dict or type(anno_cols) is OrderedDict:
+        rpt_cfg[JOBS_SETUP_RPT_ANNO_COLS_KEY] = anno_cols.keys()
     else:
         rpt_cfg[JOBS_SETUP_RPT_ANNO_COLS_KEY] = anno_cols
     anno_excl_tags = get_func_arg('anno_excl_tags', kwargs)
