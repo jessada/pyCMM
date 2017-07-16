@@ -11,6 +11,7 @@ This module is all about constant value
 DEBUG_MODE = True
 FULL_SYSTEM_TEST = False
 SLURM_TEST = False
+DB_TEST = False
 XLS_TEST = False
 
 TEST_PROJECT_CODE = 'b2012247'

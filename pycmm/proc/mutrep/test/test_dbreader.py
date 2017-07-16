@@ -3,6 +3,8 @@ from os.path import join as join_path
 #from os.path import dirname
 from pycmm.template import SafeTester
 from pycmm.settings import MAX_REF_MAF_COL_NAME
+from pycmm.settings import DB_TEST
+from pycmm.settings import FULL_SYSTEM_TEST
 from pycmm.proc.mutrep.dbreader import SQLiteDBReader
 from pycmm.proc.mutrep.dbreader import GT_WT
 from pycmm.proc.mutrep.dbreader import GT_HOM
@@ -36,6 +38,8 @@ from pycmm.cmmlib.intervarlib import INTERVAR_CLASS_UNCERTAIN_SIGNIFICANCE
 from pycmm.cmmlib.intervarlib import INTERVAR_CLASS_LIKELY_PATHOGENIC
 from pycmm.cmmlib.intervarlib import INTERVAR_CLASS_PATHOGENIC
 
+DBREADER_TEST = False
+
 
 class TestQryCall(SafeTester):
 
@@ -58,6 +62,7 @@ class TestQryCall(SafeTester):
         create_jobs_setup_file(*args, **kwargs)
         return kwargs['jobs_setup_file']
 
+    @unittest.skipUnless(FULL_SYSTEM_TEST or DBREADER_TEST or DB_TEST, "taking too long time to test")
     def test_raw_zygo_1(self):
         """ test if raw_zygosity can be correctly parsed """
 
@@ -107,6 +112,7 @@ class TestQryCall(SafeTester):
                          GT_WT,
                          "raw zygosity cannot be correctly determined")
 
+    @unittest.skipUnless(FULL_SYSTEM_TEST or DBREADER_TEST or DB_TEST, "taking too long time to test")
     def test_actual_zygo_1(self):
         """
         test if true zygosity can be correctly determined
@@ -159,6 +165,7 @@ class TestQryCall(SafeTester):
                          GT_WT,
                          "actual zygosity cannot be correctly determined")
 
+    @unittest.skipUnless(FULL_SYSTEM_TEST or DBREADER_TEST or DB_TEST, "taking too long time to test")
     def test_mutated_1(self):
         """
         test if mutation can be identified
@@ -210,6 +217,7 @@ class TestQryCall(SafeTester):
                          False,
                          "mutation cannot be correctly determined")
 
+    @unittest.skipUnless(FULL_SYSTEM_TEST or DBREADER_TEST or DB_TEST, "taking too long time to test")
     def test_shared_mutation_1(self):
         """
         test if shared mutation in a family can be identified
@@ -401,6 +409,56 @@ class TestQryCall(SafeTester):
                          False,
                          "shared mutation cannot be correctly determined")
 
+    @unittest.skipUnless(FULL_SYSTEM_TEST or DBREADER_TEST or DB_TEST, "taking too long time to test")
+    def test_shared_mutation_2(self):
+        """
+        test if shared mutation in a family can be identified if the ref is mutated
+        """
+
+        self.init_test(self.current_func_name)
+        db_file = join_path(self.data_dir,
+                            'input.db')
+        sample_info = join_path(self.data_dir,
+                                "sample.info")
+        jobs_setup_file = self.__create_jobs_setup_file(sample_info=sample_info)
+        dbc= SQLiteDBController(jobs_setup_file, verbose=False)
+        dbr = SQLiteDBReader(db_file, family_infos=dbc.families_info, verbose=False)
+        qry_records = dbr.get_qry_records()
+        self.assertEqual(len(list(qry_records)),
+                         5,
+                         "SQLiteDBController cannot correctly execute db jobs")
+        qry_records = dbr.get_qry_records()
+        qry_record = qry_records.next()
+        self.assertEqual(qry_record.gt["1415-10D"].shared_mutation,
+                         False,
+                         "shared mutation cannot be correctly determined")
+        self.assertEqual(qry_record.gt["2016-08616"].shared_mutation,
+                         False,
+                         "shared mutation cannot be correctly determined")
+        qry_record = qry_records.next()
+        self.assertEqual(qry_record.gt["1415-10D"].shared_mutation,
+                         True,
+                         "shared mutation cannot be correctly determined")
+        self.assertEqual(qry_record.gt["2016-08616"].shared_mutation,
+                         False,
+                         "shared mutation cannot be correctly determined")
+        qry_record = qry_records.next()
+        qry_record = qry_records.next()
+        self.dbg(qry_record)
+        self.assertEqual(qry_record.gt["1415-10D"].shared_mutation,
+                         False,
+                         "shared mutation cannot be correctly determined")
+        self.assertEqual(qry_record.gt["2016-08616"].shared_mutation,
+                         False,
+                         "shared mutation cannot be correctly determined")
+        qry_record = qry_records.next()
+        self.assertEqual(qry_record.gt["1415-10D"].shared_mutation,
+                         False,
+                         "shared mutation cannot be correctly determined")
+        self.assertEqual(qry_record.gt["2016-08616"].shared_mutation,
+                         False,
+                         "shared mutation cannot be correctly determined")
+
 class TestSQLiteDBReader(SafeTester):
 
     def __init__(self, methodName):
@@ -422,6 +480,7 @@ class TestSQLiteDBReader(SafeTester):
         create_jobs_setup_file(*args, **kwargs)
         return kwargs['jobs_setup_file']
 
+    @unittest.skipUnless(FULL_SYSTEM_TEST or DBREADER_TEST or DB_TEST, "taking too long time to test")
     def test_filter_non_intergenic_1(self):
         """ test counting non-intergenic variants """
 
@@ -435,6 +494,7 @@ class TestSQLiteDBReader(SafeTester):
                          31,
                          "non-intergenic variants cannot be correctly determined")
 
+    @unittest.skipUnless(FULL_SYSTEM_TEST or DBREADER_TEST or DB_TEST, "taking too long time to test")
     def test_filter_non_intronic_1(self):
         """ test counting non-intronic variants """
 
@@ -448,6 +508,7 @@ class TestSQLiteDBReader(SafeTester):
                          11,
                          "non-intronic variants cannot be correctly determined")
 
+    @unittest.skipUnless(FULL_SYSTEM_TEST or DBREADER_TEST or DB_TEST, "taking too long time to test")
     def test_filter_non_upstream_1(self):
         """ test counting non-upstream variants """
 
@@ -461,6 +522,7 @@ class TestSQLiteDBReader(SafeTester):
                          27,
                          "non-upstream variants cannot be correctly determined")
 
+    @unittest.skipUnless(FULL_SYSTEM_TEST or DBREADER_TEST or DB_TEST, "taking too long time to test")
     def test_filter_non_downstream_1(self):
         """ test counting non-downstream variants """
 
@@ -474,6 +536,7 @@ class TestSQLiteDBReader(SafeTester):
                          15,
                          "non-downstream variants cannot be correctly determined")
 
+    @unittest.skipUnless(FULL_SYSTEM_TEST or DBREADER_TEST or DB_TEST, "taking too long time to test")
     def test_filter_non_utr_1(self):
         """ test counting non-utr variants """
 
@@ -487,6 +550,7 @@ class TestSQLiteDBReader(SafeTester):
                          11,
                          "non-utr variants cannot be correctly determined")
 
+    @unittest.skipUnless(FULL_SYSTEM_TEST or DBREADER_TEST or DB_TEST, "taking too long time to test")
     def test_filter_non_synonymous_1(self):
         """ test counting non-synonymous variants """
 
@@ -521,6 +585,7 @@ class TestQryRecord(SafeTester):
         create_jobs_setup_file(*args, **kwargs)
         return kwargs['jobs_setup_file']
 
+    @unittest.skipUnless(FULL_SYSTEM_TEST or DBREADER_TEST or DB_TEST, "taking too long time to test")
     def test_has_mutation_1(self):
         """ test a mutation can be correctly identified in one sample """
 
@@ -603,6 +668,7 @@ class TestQryRecord(SafeTester):
                          False,
                          "mutations in a sample cannot be correctly determined")
 
+    @unittest.skipUnless(FULL_SYSTEM_TEST or DBREADER_TEST or DB_TEST, "taking too long time to test")
     def test_has_mutation_2(self):
         """ test a mutation can be correctly identified in two samples """
 
@@ -685,6 +751,7 @@ class TestQryRecord(SafeTester):
                          False,
                          "mutations in samples cannot be correctly determined")
 
+    @unittest.skipUnless(FULL_SYSTEM_TEST or DBREADER_TEST or DB_TEST, "taking too long time to test")
     def test_has_shared_1(self):
         """ test if a family with shared mutation can be detected """
 
@@ -770,6 +837,7 @@ class TestQryRecord(SafeTester):
                          True,
                          "shared mutation cannot be correctly determined")
 
+    @unittest.skipUnless(FULL_SYSTEM_TEST or DBREADER_TEST or DB_TEST, "taking too long time to test")
     def test_qry_eval_1(self):
         """ test general evaluation of qry_eval """
 
@@ -802,6 +870,7 @@ class TestQryRecord(SafeTester):
                          False,
                          "cannot perform qry expression evaluation correctly")
 
+    @unittest.skipUnless(FULL_SYSTEM_TEST or DBREADER_TEST or DB_TEST, "taking too long time to test")
     def test_max_ref_maf_1(self):
         """
         test finding pre-calculated maximum reference minor allele frequency
@@ -829,6 +898,7 @@ class TestQryRecord(SafeTester):
                          0.4969,
                          "values of MAX_REF_MAF cannot be correctly determined")
 
+    @unittest.skipUnless(FULL_SYSTEM_TEST or DBREADER_TEST or DB_TEST, "taking too long time to test")
     def test_max_ref_maf_2(self):
         """
         test finding on-demand maximum reference minor allele frequency
@@ -856,6 +926,7 @@ class TestQryRecord(SafeTester):
                          0.4969,
                          "values of MAX_REF_MAF cannot be correctly determined")
 
+    @unittest.skipUnless(FULL_SYSTEM_TEST or DBREADER_TEST or DB_TEST, "taking too long time to test")
     def test_cal_est_kvot_1(self):
         """
         test finding maximum reference minor allele frequency
@@ -999,6 +1070,7 @@ class TestQryRecord(SafeTester):
 #        self.assertTrue(qry_record.qry_eval(expr6, 5),
 #                        "cannot perform vcf expression evaluation correctly")
 #
+    @unittest.skipUnless(FULL_SYSTEM_TEST or DBREADER_TEST or DB_TEST, "taking too long time to test")
     def test_pathogenic_count_1(self):
         """
         test if harmful pathogenic variants can be correctly count
@@ -1066,6 +1138,7 @@ class TestQryRecord(SafeTester):
                          9,
                          "number of harmful pathogenic prediction cannot be correctly determined")
 
+    @unittest.skipUnless(FULL_SYSTEM_TEST or DBREADER_TEST or DB_TEST, "taking too long time to test")
     def test_parse_exac_constraint_1(self):
         """
         test parsing exac constraint from the annotated vcf
@@ -1155,6 +1228,7 @@ class TestQryRecord(SafeTester):
 #                         '',
 #                         "values of ExAC constraint cannot be correctly determined")
 #
+    @unittest.skipUnless(FULL_SYSTEM_TEST or DBREADER_TEST or DB_TEST, "taking too long time to test")
     def test_parse_intervar_1(self):
         """
         test parsing intervar

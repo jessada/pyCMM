@@ -1,11 +1,15 @@
 import unittest
 from os.path import join as join_path
+from pycmm.settings import FULL_SYSTEM_TEST
+from pycmm.settings import DB_TEST
 from pycmm.template import SafeTester
 from pycmm.proc.db.dbinput import AVDBReader
 from pycmm.proc.db.dbinput import TAVcfInfoReader
 from pycmm.proc.db.dbinput import TAVcfGTZReader
 from pycmm.proc.db.dbinput import DATA_TYPE_AVDB_CMM_AF
 from pycmm.proc.db.dbinput import DATA_TYPE_AVDB_PUBLIC_AF
+
+DBINPUT_TEST = False
 
 
 class TestAVDBReader(SafeTester):
@@ -18,6 +22,7 @@ class TestAVDBReader(SafeTester):
     def setUp(self):
         pass
 
+    @unittest.skipUnless(FULL_SYSTEM_TEST or DBINPUT_TEST or DB_TEST, "taking too long time to test")
     def test_reader_1(self):
         """ test reading avdb file without header """
 
@@ -59,6 +64,7 @@ class TestAVDBReader(SafeTester):
                          ("1", 14697, 14697, "T", "G", "0.86"),
                          "AVDBReader doesn't work correctly")
 
+    @unittest.skipUnless(FULL_SYSTEM_TEST or DBINPUT_TEST or DB_TEST, "taking too long time to test")
     def test_reader_2(self):
         """ test reading avdb file with header and one anno column """
 
@@ -102,6 +108,7 @@ class TestAVDBReader(SafeTester):
                          ("1", 10440, 10440, "C", "-", "7"),
                          "AVDBReader doesn't work correctly")
 
+    @unittest.skipUnless(FULL_SYSTEM_TEST or DBINPUT_TEST or DB_TEST, "taking too long time to test")
     def test_reader_3(self):
         """ test reading avdb file with header and nine anno columns """
 
@@ -161,6 +168,7 @@ class TestAVDBReader(SafeTester):
                          ("1", 2051493, 2051493, "T", "C", 8, 0, 1, 0, 19, 9, 0.3214, 0.1111, 0.0357),
                          "AVDBReader doesn't work correctly")
 
+    @unittest.skipUnless(FULL_SYSTEM_TEST or DBINPUT_TEST or DB_TEST, "taking too long time to test")
     def test_reader_4(self):
         """ test reading avdb file with AF has both number an text """
 
@@ -225,6 +233,7 @@ class TestAVDBReader(SafeTester):
                          ("10", 8968857, 8968857, "G", "A", 0, 0, 0, 0, 51, 0, 0.0, "NA", 0.0),
                          "AVDBReader doesn't work correctly")
 
+    @unittest.skipUnless(FULL_SYSTEM_TEST or DBINPUT_TEST or DB_TEST, "taking too long time to test")
     def test_reader_5(self):
         """ test reading avdb file from gnomad """
 
@@ -277,8 +286,6 @@ class TestAVDBReader(SafeTester):
                          ('10', 896823, 896823, 'A', 'C', 3.232e-05, 0.0, 0.0, 0.0, 0.0, 0.0, 6.661e-05, 0.0),
                          "AVDBReader doesn't work correctly")
 
-    def tearDown(self):
-        self.remove_working_dir()
 
 class TestTAVcfInfoReader(SafeTester):
 
@@ -290,6 +297,7 @@ class TestTAVcfInfoReader(SafeTester):
     def setUp(self):
         pass
 
+    @unittest.skipUnless(FULL_SYSTEM_TEST or DBINPUT_TEST or DB_TEST, "taking too long time to test")
     def test_reader_1(self):
         """ test reading standard vcf file from annovar """
 
@@ -347,8 +355,6 @@ class TestTAVcfInfoReader(SafeTester):
                          ('10', 89442697, 'C', 'T', 'intronic', 'PAPSS2', '', '', '', '10q23.2'),
                          "TAVcfInfoReader doesn't work correctly")
 
-    def tearDown(self):
-        self.remove_working_dir()
 
 class TestTAVcfGTZReader(SafeTester):
 
@@ -360,6 +366,7 @@ class TestTAVcfGTZReader(SafeTester):
     def setUp(self):
         pass
 
+    @unittest.skipUnless(FULL_SYSTEM_TEST or DBINPUT_TEST or DB_TEST, "taking too long time to test")
     def test_reader_1(self):
         """ test reading GTZ from vcf file without ANNOVAR """
 
@@ -445,6 +452,3 @@ class TestTAVcfGTZReader(SafeTester):
         self.assertEqual(vcf_rec,
                          ('10', 100000554, 'A', 'ATT', 5045.91, 'PASS', 'het', 'het', '.', '.', 'hom', 'hom', 'het', 'het', 'het'),
                          "TAVcfGTZReader doesn't work correctly")
-
-    def tearDown(self):
-        self.remove_working_dir()

@@ -3,6 +3,7 @@ import unittest
 import filecmp
 from os.path import join as join_path
 from pycmm.settings import FULL_SYSTEM_TEST
+from pycmm.settings import DB_TEST
 from pycmm.template import SafeTester
 from pycmm.proc.db.dbinput import AVDBReader
 from pycmm.proc.db.dbinput import TAVcfInfoReader as VcfInfoReader
@@ -18,6 +19,8 @@ from pycmm.proc.db.connector import TBL_NAME_GTZ_COORS
 from pycmm.proc.db.connector import TBL_NAME_ALL_GTZ_ANNOS
 from pycmm.proc.db.connector import SQLiteDB
 
+DBMS_TEST = False
+
 
 class TestSQLiteDBWriter(SafeTester):
 
@@ -26,6 +29,7 @@ class TestSQLiteDBWriter(SafeTester):
                                                  test_module_name=__name__,
                                                  )
 
+    @unittest.skipUnless(FULL_SYSTEM_TEST or DBMS_TEST or DB_TEST, "taking too long time to test")
     def test_load_avdb_data_1(self):
         """ test loading avdb data with header and multiple annotations """
 
@@ -45,6 +49,7 @@ class TestSQLiteDBWriter(SafeTester):
                          11,
                          "SQLiteDB cannot correctly load avdb data")
 
+    @unittest.skipUnless(FULL_SYSTEM_TEST or DBMS_TEST or DB_TEST, "taking too long time to test")
     def test_load_avdb_data_2(self):
         """ test loading avdb data with header and multiple annotations """
 
@@ -65,6 +70,7 @@ class TestSQLiteDBWriter(SafeTester):
                          23,
                          "SQLiteDB cannot correctly load avdb data")
 
+    @unittest.skipUnless(FULL_SYSTEM_TEST or DBMS_TEST or DB_TEST, "taking too long time to test")
     def test_load_avdb_data_3(self):
         """ test unicode """
 
@@ -84,6 +90,7 @@ class TestSQLiteDBWriter(SafeTester):
                          4,
                          "SQLiteDB cannot correctly load avdb data")
 
+    @unittest.skipUnless(FULL_SYSTEM_TEST or DBMS_TEST or DB_TEST, "taking too long time to test")
     def test_load_avdb_data_4(self):
         """ test avdb w/o header and name start with number """
 
@@ -104,6 +111,7 @@ class TestSQLiteDBWriter(SafeTester):
                          10,
                          "SQLiteDB cannot correctly load avdb data")
 
+    @unittest.skipUnless(FULL_SYSTEM_TEST or DBMS_TEST or DB_TEST, "taking too long time to test")
     def test_load_annovar_vcf_data_1(self):
         """ test loading annotation file from ANNOVAR """
 
@@ -122,6 +130,7 @@ class TestSQLiteDBWriter(SafeTester):
                          12,
                          "SQLiteDB cannot correctly load avdb data")
 
+    @unittest.skipUnless(FULL_SYSTEM_TEST or DBMS_TEST or DB_TEST, "taking too long time to test")
     def test_load_gtz_vcf_data_1(self):
         """ test loading genotyping zygosities from vcf file """
 
@@ -140,6 +149,7 @@ class TestSQLiteDBWriter(SafeTester):
                          6,
                          "SQLiteDB cannot correctly load avdb data")
 
+    @unittest.skipUnless(FULL_SYSTEM_TEST or DBMS_TEST or DB_TEST, "taking too long time to test")
     def test_calculate_hardy_weinberg_1(self):
         """
         test calculating Hardy-Weinberg equilibrium in avdb table
@@ -176,6 +186,7 @@ class TestSQLiteDBWriter(SafeTester):
                          1,
                          "SQLiteDB cannot correctly load avdb data")
 
+    @unittest.skipUnless(FULL_SYSTEM_TEST or DBMS_TEST or DB_TEST, "taking too long time to test")
     def test_calculate_hardy_weinberg_2(self):
         """
         test calculating Hardy-Weinberg equilibrium in avdb table
@@ -354,6 +365,7 @@ class TestSQLiteDBController(SafeTester):
                          False,
                          "SQLiteDBController cannot correctly read job info 'db job' from jobs setup file")
 
+    @unittest.skipUnless(FULL_SYSTEM_TEST or DBMS_TEST or DB_TEST, "taking too long time to test")
     def test_execute_db_jobs_1(self):
         """ test base-line db_jobs execution """
 
@@ -377,10 +389,8 @@ class TestSQLiteDBController(SafeTester):
         self.assertEqual(db.table_exist('test_gtz_vcf'),
                          True,
                          "SQLiteDBController cannot correctly execute db jobs")
-#        sql = "SELECT * FROM test_avdb"
-#        db.dbg_query(sql)
 
-#    @unittest.skipUnless(FULL_SYSTEM_TEST, "taking too long time to test")
+    @unittest.skipUnless(FULL_SYSTEM_TEST or DBMS_TEST or DB_TEST, "taking too long time to test")
     def test_execute_db_jobs_2(self):
         """
         test db_jobs execution with data that
@@ -460,11 +470,8 @@ class TestSQLiteDBController(SafeTester):
         self.assertEqual(len(db.get_col_names(TBL_NAME_ALL_GTZ_ANNOS)),
                          495,
                          "SQLiteDBController cannot correctly execute db jobs")
-#        sql = "SELECT * FROM test_hg19_gnomad_genome LIMIT 2"
-#        db.dbg_query(sql)
-#        sql = "SELECT CHROM, POS, REF, ALT, _1000g2014oct_all, _1000g2014oct_eur, SWEGEN_AF, gnomAD_genome_ALL, gnomAD_genome_AFR, gnomAD_genome_AMR, gnomAD_genome_ASJ, gnomAD_genome_EAS, gnomAD_genome_FIN, gnomAD_genome_NFE, gnomAD_genome_OTH FROM all_gtz_annos LIMIT 1"
-#        db.dbg_query(sql)
-    @unittest.skipUnless(FULL_SYSTEM_TEST, "taking too long time to test")
+
+    @unittest.skipUnless(FULL_SYSTEM_TEST or DBMS_TEST or DB_TEST, "taking too long time to test")
     def test_execute_db_jobs_2(self):
         """
         test db_jobs execution with data that
@@ -544,12 +551,8 @@ class TestSQLiteDBController(SafeTester):
         self.assertEqual(len(db.get_col_names(TBL_NAME_ALL_GTZ_ANNOS)),
                          496,
                          "SQLiteDBController cannot correctly execute db jobs")
-#        sql = "SELECT * FROM test_hg19_gnomad_genome LIMIT 2"
-#        db.dbg_query(sql)
-#        sql = "SELECT CHROM, POS, REF, ALT, _1000g2014oct_all, _1000g2014oct_eur, SWEGEN_AF, gnomAD_genome_ALL, gnomAD_genome_AFR, gnomAD_genome_AMR, gnomAD_genome_ASJ, gnomAD_genome_EAS, gnomAD_genome_FIN, gnomAD_genome_NFE, gnomAD_genome_OTH FROM all_gtz_annos LIMIT 1"
-#        db.dbg_query(sql)
 
-    @unittest.skipUnless(FULL_SYSTEM_TEST, "taking too long time to test")
+    @unittest.skipUnless(FULL_SYSTEM_TEST or DBMS_TEST or DB_TEST, "taking too long time to test")
     def test_execute_db_jobs_3(self):
         """
         test db_jobs execution with data that
@@ -583,7 +586,7 @@ class TestSQLiteDBController(SafeTester):
                          496,
                          "SQLiteDBController cannot correctly execute db jobs")
 
-    @unittest.skipUnless(FULL_SYSTEM_TEST, "taking too long time to test")
+    @unittest.skipUnless(FULL_SYSTEM_TEST or DBMS_TEST or DB_TEST, "taking too long time to test")
     def test_execute_db_jobs_4(self):
         """
         Test db_jobs execution with data that
@@ -617,7 +620,7 @@ class TestSQLiteDBController(SafeTester):
                          496,
                          "SQLiteDBController cannot correctly execute db jobs")
 
-    @unittest.skipUnless(FULL_SYSTEM_TEST, "taking too long time to test")
+    @unittest.skipUnless(FULL_SYSTEM_TEST or DBMS_TEST or DB_TEST, "taking too long time to test")
     def test_execute_db_jobs_5(self):
         """
         Test db_jobs execution with data that

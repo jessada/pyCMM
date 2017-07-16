@@ -1524,7 +1524,7 @@ class TestMutRepController(SafeTester):
 #                         "Incorrect cell value"
 #                         )
 
-    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST, "taking too long time to test")
+#    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST, "taking too long time to test")
     def test_show_shared_variants_1(self):
         """ test if shared mutations can be shown """
 
@@ -1538,15 +1538,11 @@ class TestMutRepController(SafeTester):
                                 "sample.info")
         jobs_setup_file = self.__create_jobs_setup_file(anno_excl_tags=custom_excl_tags,
                                                         sample_info=sample_info,
-                                                        report_regions="10",
                                                         show_shared_variants=True,
                                                         coloring_shared=True,
                                                         )
         mc = MutRepController(jobs_setup_file)
-        mc.gen_report(mc.report_layout.report_regions, "all_gtz_annos")
-        xls_file = join_path(self.working_dir,
-                             "rpts",
-                             project_name+"_summary.xlsx")
+        xls_file = mc.gen_report(report_regions="3")
         xu = XlsUtils(xls_file)
         fam_col_idx = xu.get_col_idx("F0007826")
         self.assertEqual(xu.get_cell_value(2, fam_col_idx),
@@ -1564,6 +1560,15 @@ class TestMutRepController(SafeTester):
                          )
         exp_rgb = "FF" + COLORS_RGB["LIGHT_BLUE"][-6:]
         self.assertEqual(xu.get_cell_rgb(3, fam_col_idx),
+                         exp_rgb,
+                         "Incorrect color"
+                         )
+        self.assertEqual(xu.get_cell_value(10, fam_col_idx),
+                         "not shared",
+                         "Incorrect cell value"
+                         )
+        exp_rgb = "FF" + COLORS_RGB["XLS_GRAY1_2"][-6:]
+        self.assertEqual(xu.get_cell_rgb(10, fam_col_idx),
                          exp_rgb,
                          "Incorrect color"
                          )

@@ -59,6 +59,7 @@ from pycmm.proc.mutrep.dbreader import PREDICTION_COLS
 from pycmm.proc.mutrep.dbreader import SQLiteDBReader
 from pycmm.proc.mutrep.dbreader import GT_HOM
 from pycmm.proc.mutrep.dbreader import GT_HET
+from pycmm.proc.db.connector import REF_MUTATED_COL_NAME
 #from pycmm.cmmlib.tamodel import CMMGT_HOMOZYGOTE
 #from pycmm.cmmlib.tamodel import CMMGT_HETEROZYGOTE
 
@@ -1033,27 +1034,26 @@ class MutRepController(CMMPipeline):
                     for family in dataset.families.values():
                         samples_id = map(lambda x: x.sample_id,
                                          family.samples_list)
-#                        call = qry_record.genotype(samples_id[0])
-#                        if (type(call.shared_mutations) is not list or
-#                            not call.shared_mutations[allele_idx]):
-#                            shared_txt = "not shared"
-#                            shared_fmt = sep_fmt
-#                        else:
-#                            shared_txt = "shared"
-#                            shared_fmt = het_fmt
-#                        next_col = self.__write_sample(ws,
-#                                                       row,
-#                                                       next_col,
-#                                                       shared_txt,
-#                                                       shared_fmt,
-#                                                       )
-#                        next_col = self.__write_zygosities(ws,
-#                                                           row,
-#                                                           next_col,
-#                                                           qry_record,
-#                                                           samples_id,
-#                                                           dflt_cell_fmt,
-#                                                           )
+                        gt = qry_record.gt[samples_id[0]]
+                        if not gt.shared_mutation:
+                            shared_txt = "not shared"
+                            shared_fmt = sep_fmt
+                        else:
+                            shared_txt = "shared"
+                            shared_fmt = het_fmt
+                        next_col = self.__write_sample(ws,
+                                                       row,
+                                                       next_col,
+                                                       shared_txt,
+                                                       shared_fmt,
+                                                       )
+                        next_col = self.__write_zygosities(ws,
+                                                           row,
+                                                           next_col,
+                                                           qry_record,
+                                                           samples_id,
+                                                           dflt_cell_fmt,
+                                                           )
                 else:
                     samples_id = map(lambda x: x.sample_id,
                                      dataset.samples_list)
@@ -1134,24 +1134,6 @@ class MutRepController(CMMPipeline):
 #                    continue
 #                if (self.report_layout.filter_pass_vqsr and
 #                    not qry_record.is_pass_vqsr(allele_idx=allele_idx)):
-#                    continue
-#                if (self.report_layout.filter_non_intergenic and
-#                    qry_record.is_intergenic[allele_idx]):
-#                    continue
-#                if (self.report_layout.filter_non_intronic and
-#                    qry_record.is_intronic[allele_idx]):
-#                    continue
-#                if (self.report_layout.filter_non_upstream and
-#                    qry_record.is_upstream[allele_idx]):
-#                    continue
-#                if (self.report_layout.filter_non_downstream and
-#                    qry_record.is_downstream[allele_idx]):
-#                    continue
-#                if (self.report_layout.filter_non_utr and
-#                    qry_record.is_utr[allele_idx]):
-#                    continue
-#                if (self.report_layout.filter_non_synonymous and
-#                    qry_record.is_synonymous[allele_idx]):
 #                    continue
 #                if (self.report_layout.filter_has_mutation and
 #                    not qry_record.has_mutation(samples_id, allele_idx)):
@@ -1252,7 +1234,11 @@ class MutRepController(CMMPipeline):
         self.__reader = SQLiteDBReader(self.report_layout.db_file,
                                        self.families_info,
                                        verbose=self.__verbose)
-        self.__anno_cols = self.__reader.init_columns(self.report_layout.anno_cols)
+        anno_cols = list(self.report_layout.anno_cols)
+        anno_cols.append(REF_MUTATED_COL_NAME)
+        self.__anno_cols = self.__reader.init_columns(anno_cols)
+        if REF_MUTATED_COL_NAME in self.__anno_cols:
+            self.__anno_cols.remove(REF_MUTATED_COL_NAME)
         if not self.has_samples_info:
             self.__reader.init_samples()
         else:

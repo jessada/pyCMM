@@ -2,6 +2,8 @@
 import unittest
 from os.path import join as join_path
 from pycmm.template import SafeTester
+from pycmm.settings import FULL_SYSTEM_TEST
+from pycmm.settings import DB_TEST
 from pycmm.settings import MAX_REF_MAF_COL_NAME
 from pycmm.settings import GNOMAD_GENOME_ALL_COL_NAME
 from pycmm.proc.db.connector import SQLiteDB
@@ -11,6 +13,8 @@ from pycmm.proc.db.connector import TBL_NAME_GTZ_COORS
 from pycmm.proc.db.connector import TBL_NAME_ALL_GTZ_ANNOS
 from pycmm.proc.db.connector import REF_MUTATED_COL_NAME
 
+CONNECTOR_TEST = False
+
 
 class TestSQLiteDB(SafeTester):
 
@@ -19,6 +23,7 @@ class TestSQLiteDB(SafeTester):
                                            test_module_name=__name__,
                                            )
 
+    @unittest.skipUnless(FULL_SYSTEM_TEST or CONNECTOR_TEST or DB_TEST, "taking too long time to test")
     def test_update_tbl_info_1(self):
         """ test if the system info can written and read """
 
@@ -97,6 +102,7 @@ class TestSQLiteDB(SafeTester):
                          "Br-20",
                          "SQLiteDB cannot correctly update system table info")
 
+    @unittest.skipUnless(FULL_SYSTEM_TEST or CONNECTOR_TEST or DB_TEST, "taking too long time to test")
     def test_update_gtz_coors_1(self):
         """ test if the gtz coordinates can be written down"""
 
@@ -117,6 +123,7 @@ class TestSQLiteDB(SafeTester):
                          4,
                          "SQLiteDB cannot correctly update gtz coordinates")
 
+    @unittest.skipUnless(FULL_SYSTEM_TEST or CONNECTOR_TEST or DB_TEST, "taking too long time to test")
     def test_join_all_gtz_anno_1(self):
         """ test joining all gtz tables and all annotation tables """
 
@@ -136,6 +143,7 @@ class TestSQLiteDB(SafeTester):
                          417,
                          "SQLiteDB cannot correctly join all genotype and annotations")
 
+    @unittest.skipUnless(FULL_SYSTEM_TEST or CONNECTOR_TEST or DB_TEST, "taking too long time to test")
     def test_anno_col_to_db_col_1(self):
         """
         test converting ui col name to db col name
@@ -151,6 +159,7 @@ class TestSQLiteDB(SafeTester):
                          "_"+GNOMAD_GENOME_ALL_COL_NAME,
                          "SQLiteDB cannot correctly map UI column name to DB column name")
 
+    @unittest.skipUnless(FULL_SYSTEM_TEST or CONNECTOR_TEST or DB_TEST, "taking too long time to test")
     def test_anno_col_to_db_col_2(self):
         """
         test converting ui col name to db col name
@@ -166,6 +175,7 @@ class TestSQLiteDB(SafeTester):
                          GNOMAD_GENOME_ALL_COL_NAME,
                          "SQLiteDB cannot correctly map UI column name to DB column name")
 
+    @unittest.skipUnless(FULL_SYSTEM_TEST or CONNECTOR_TEST or DB_TEST, "taking too long time to test")
     def test_anno_col_to_db_col_3(self):
         """
         test converting ui column that doesn't exist
@@ -179,6 +189,7 @@ class TestSQLiteDB(SafeTester):
                          None,
                          "SQLiteDB cannot correctly map UI column name to DB column name")
 
+    @unittest.skipUnless(FULL_SYSTEM_TEST or CONNECTOR_TEST or DB_TEST, "taking too long time to test")
     def test_sample_id_to_db_col_1(self):
         """ test converting sample id to db column name """
 
@@ -190,6 +201,7 @@ class TestSQLiteDB(SafeTester):
                          "_Co_35",
                          "SQLiteDB cannot correctly map sample id to DB column name")
 
+    @unittest.skipUnless(FULL_SYSTEM_TEST or CONNECTOR_TEST or DB_TEST, "taking too long time to test")
     def test_sample_id_to_tbl_1(self):
         """ test converting sample id to db column name """
 
@@ -207,6 +219,7 @@ class TestSQLiteDB(SafeTester):
                          "gtz_THYRCA",
                          "SQLiteDB cannot correctly map sample id to table name")
 
+    @unittest.skipUnless(FULL_SYSTEM_TEST or CONNECTOR_TEST or DB_TEST, "taking too long time to test")
     def test_cal_max_ref_maf_1(self):
         """
         test finding maximum allele frequency
@@ -267,6 +280,7 @@ class TestSQLiteDB(SafeTester):
                          0.0099,
                          "SQLiteDB cannot correctly calculate max reference allele frequency")
 
+    @unittest.skipUnless(FULL_SYSTEM_TEST or CONNECTOR_TEST or DB_TEST, "taking too long time to test")
     def test_set_ref_mutated_1(self):
         """
         test finding maximum allele frequency

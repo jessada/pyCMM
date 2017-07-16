@@ -71,6 +71,9 @@ class QryCall(pyCMMBase):
     def get_raw_obj_str(self, *args, **kwargs):
         raw_str = OrderedDict()
         raw_str["raw zygosity"] = self.raw_zygo
+        raw_str["actual zygosity"] = self.actual_zygo
+        raw_str["mutated"] = self.mutated
+        raw_str["shared mutation"] = self.shared_mutation
         return raw_str
 
     @property
@@ -513,7 +516,14 @@ class SQLiteDBReader(SQLiteDB):
             anno_cols.append(REF_MUTATED_COL_NAME)
             anno_cols.append(INTERVAR_AND_EVIDENCE_COL_NAME)
             self.init_columns(anno_cols)
-            self.init_samples(self.samples_id)
+            if self.__family_infos is not None:
+                samples_id = map(lambda x: x.sample_id,
+                                 reduce(lambda x, y: x+y,
+                                        map(lambda x: x.members,
+                                            self.__family_infos.values())))
+            else:
+                samples_id = self.samples_id
+            self.init_samples(samples_id)
         sql += ", ".join(VCF_PKEYS)
         sql += ", " + ", ".join(self.__qry_cols)
         sql += " FROM " + MASTER_TABLE
