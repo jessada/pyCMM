@@ -154,6 +154,7 @@ XLS_FILTER_COL_IDX = 4
 LAYOUT_VCF_COLS = XLS_FILTER_COL_IDX + 1
 
 gene_refgene_col_name = GENE_REFGENE_COL_NAME.replace(".", "_")
+gene_refgene_col_name = GENE_REFGENE_COL_NAME
 
 #QRY_CHROM_COL_IDX = 0
 #QRY_POS_COL_IDX = 1
@@ -364,7 +365,6 @@ class ReportLayout(CMMParams):
                 header_corrections[old_header] = new_header
         return header_corrections
 
-# ********************************** need to refactor ********************************
     @property
     def anno_cols(self):
         anno_cols = []
@@ -378,13 +378,9 @@ class ReportLayout(CMMParams):
                     break
             if excluded:
                 continue
-            anno_cols.append(col_name.replace(".", "_"))
+            anno_cols.append(col_name)
+#            anno_cols.append(col_name.replace(".", "_"))
         return anno_cols
-#        anno_cols = self._get_job_config(JOBS_SETUP_RPT_ANNO_COLS_KEY,
-#                                         required=True)
-#        return map(lambda x: x.replace(".", "_"),
-#                   anno_cols)
-# ********************************** need to refactor ********************************
 
 #    def __cal_anno_cols(self):
 #        # open the annotated vcf tabix file for checking
@@ -685,26 +681,10 @@ class MutRepController(CMMPipeline):
                                                                              required=True))
         return self.__report_layout
 
-#    @property
-#    def qry_sample_ids(self):
-#        return self.__qry_sample_col_idxs.keys()
-#
-#    @property
-#    def qry_sample_col_idxs(self):
-#        return self.__qry_sample_col_idxs.values()
-#
     @property
     def anno_cols(self):
         return self.__anno_cols
-#        return self.__qry_anno_col_idxs.keys()
-#        if self.__anno_cols is None:
-#            self.__anno_cols = self.__cal_anno_cols()
-#        return self.__anno_cols
 
-#    @property
-#    def qry_anno_col_idxs(self):
-#        return self.__qry_anno_col_idxs
-#
     @property
     def plain_fmts(self):
         return self.__plain_fmts
@@ -713,40 +693,6 @@ class MutRepController(CMMPipeline):
     def summary_rpt_file(self):
         return join_path(self.rpts_out_dir,
                          self.dataset_name+"_summary.xlsx")
-
-#    def __cal_anno_cols(self):
-#        anno_cols = []
-#        for col_name in self.report_layout.anno_cols:
-#            anno_cols.append(col_name)
-# *********************** Actual calculation is needed ***********************
-#            # excluce columns based on configuration
-#            excluded = False
-#            for excl_tag in self.anno_excl_tags:
-#                if excl_tag in ALL_MUTREP_ANNO_COLS[col_name]:
-#                    excluded = True
-#                    break
-#            if excluded:
-#                continue
-# *********************** Actual calculation is needed ***********************
-        return anno_cols
-
-#    def __cal_anno_cols_idxs(self,
-#                             layout_anno_cols,
-#                             qry_col_idxs):
-#        anno_col_idxs = OrderedDict()
-#        for col_name in layout_anno_cols:
-#            anno_cols.append(col_name)
-## *********************** Actual calculation is needed ***********************
-##            # excluce columns based on configuration
-##            excluded = False
-##            for excl_tag in self.anno_excl_tags:
-##                if excl_tag in ALL_MUTREP_ANNO_COLS[col_name]:
-##                    excluded = True
-##                    break
-##            if excluded:
-##                continue
-## *********************** Actual calculation is needed ***********************
-#        return anno_cols
 
     def __set_report_format(self):
         self.__plain_fmts = self.__wb.add_colors_format({})
@@ -771,16 +717,10 @@ class MutRepController(CMMPipeline):
         ws.set_column(sample_start_idx, record_size-1, 3)
         row_freeze_idx = 1
         anno_cols = self.report_layout.anno_cols
-# ********************************** need to refactor ********************************
         if gene_refgene_col_name in anno_cols:
             col_freeze_idx = anno_cols.index(gene_refgene_col_name) + LAYOUT_VCF_COLS + 1
         else:
             col_freeze_idx = 0
-#        if GENE_REFGENE_COL_NAME in anno_cols:
-#            col_freeze_idx = anno_cols.index(GENE_REFGENE_COL_NAME) + LAYOUT_VCF_COLS + 1
-#        else:
-#            col_freeze_idx = 0
-# ********************************** need to refactor ********************************
         ws.freeze_panes(row_freeze_idx, col_freeze_idx)
 
     def __write_header(self, ws, fam_id):

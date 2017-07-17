@@ -179,7 +179,7 @@ class TestMutRepController(SafeTester):
                                                         )
         pl = MutRepController(jobs_setup_file)
         self.assertEqual(pl.report_layout.anno_cols[3],
-                         "GeneDetail_refGene",
+                         "GeneDetail.refGene",
                          "MutRepController cannot correctly read report layout info 'layout columns' from jobs setup file")
         self.assertEqual(pl.report_layout.anno_cols[4],
                          "cytoBand",
@@ -958,46 +958,38 @@ class TestMutRepController(SafeTester):
 #                         6,
 #                         "Incorrect number of rows the criteria sheet"
 #                         )
-#
+
 #    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST, "taking too long time to test")
-#    def test_header_corrections_1(self):
-#        """ test if column headers can be replaced with better names  """
-#
-#        self.init_test(self.current_func_name)
-#        db_file = join_path(self.data_dir,
-#                                        "input.vcf.gz")
-#        project_name = self.test_function
-#        anno_cols = list(DFLT_TEST_MUTREP_COLS)
-#        anno_cols.append("OAF_EARLYONSET_AF")
-#        anno_cols.append("OAF_BRC_CRC_PROSTATE_AF")
-#        header_corrections = "OAF_EARLYONSET_AF:EARLYONSET_AF"
-#        header_corrections += ",OAF_BRC_CRC_PROSTATE_AF:ALL_EXOME_AF"
-#        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
-#                                                        db_file=db_file,
-#                                                        header_corrections=header_corrections,
-#                                                        report_regions="22",
-#                                                        anno_cols=anno_cols,
-#                                                        )
-#        pl = MutRepController(jobs_setup_file=jobs_setup_file)
-#        pl.gen_summary_report(pl.report_layout.report_regions)
-#        xls_file = join_path(self.working_dir,
-#                             "rpts",
-#                             project_name+"_summary.xlsx")
-#        xu = XlsUtils(xls_file)
-#        ors_col_idx = xu.get_col_idx("ALL_EXOME_AF")
-#        self.assertEqual(xu.get_cell_value(4, ors_col_idx),
-#                         0.1250,
-#                         "Incorect ORS estimation"
-#                         )
-#        self.assertEqual(xu.get_cell_value(5, ors_col_idx),
-#                         0.0244,
-#                         "Incorect ORS estimation"
-#                         )
-#        self.assertEqual(xu.get_cell_value(6, ors_col_idx),
-#                         0.0375,
-#                         "Incorect ORS estimation"
-#                         )
-#
+    def test_header_corrections_1(self):
+        """ test if column headers can be replaced with better names  """
+
+        self.individual_debug = True
+        self.init_test(self.current_func_name)
+        anno_cols = list(DFLT_TEST_MUTREP_COLS)
+        anno_cols.append("OAF_EARLYONSET_AF")
+        anno_cols.append("OAF_BRC_CRC_PROSTATE_AF")
+        header_corrections = "OAF_EARLYONSET_AF:EARLYONSET_AF"
+        header_corrections += ",OAF_BRC_CRC_PROSTATE_AF:ALL_EXOME_AF"
+        jobs_setup_file = self.__create_jobs_setup_file(header_corrections=header_corrections,
+                                                        anno_cols=anno_cols,
+                                                        )
+        mc = MutRepController(jobs_setup_file, verbose=False)
+        xls_file = mc.gen_report(report_regions="22")
+        xu = XlsUtils(xls_file)
+        ors_col_idx = xu.get_col_idx("ALL_EXOME_AF")
+        self.assertEqual(xu.get_cell_value(4, ors_col_idx),
+                         0.1250,
+                         "Incorect allele frequency"
+                         )
+        self.assertEqual(xu.get_cell_value(5, ors_col_idx),
+                         0.0244,
+                         "Incorect allele frequency"
+                         )
+        self.assertEqual(xu.get_cell_value(6, ors_col_idx),
+                         0.0375,
+                         "Incorect allele frequency"
+                         )
+
 #    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST, "taking too long time to test")
 #    def test_calling_gq_1(self):
 #        """ test if calling genotyping quality can be displayed correctly in general cases """
