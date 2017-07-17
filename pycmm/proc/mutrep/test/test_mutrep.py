@@ -1053,63 +1053,46 @@ class TestMutRepController(SafeTester):
 #                         "Incorect GQ value"
 #                         )
 #
-#    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST, "taking too long time to test")
-#    def test_filter_genes_1(self):
-#        """
-#        test if basic gene search (one gene, full name) can be done correctly
-#        both inside the genes and surrounding.
-#        """
-#
-#        self.init_test(self.current_func_name)
-#        db_file = join_path(self.data_dir,
-#                                        "input.vcf.gz")
-#        project_name = self.test_function
-#        filter_genes = "ANKRD19P"
-#        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
-#                                                        db_file=db_file,
-#                                                        sample_info="8:Co-35:Co-37,13:Co-95,275:Co-1262:Co-618,296:Co-793:Co-876",
-#                                                        report_regions="9",
-#                                                        filter_genes=filter_genes,
-#                                                        )
-#        pl = MutRepController(jobs_setup_file=jobs_setup_file)
-#        pl.gen_summary_report(pl.report_layout.report_regions)
-#        xls_file = join_path(self.working_dir,
-#                             "rpts",
-#                             project_name+"_summary.xlsx")
-#        xu = XlsUtils(xls_file)
-#        self.assertEqual(xu.count_rows(sheet_idx=0),
-#                         31,
-#                         "Incorrect number of rows in the variants sheet"
-#                         )
-#
-#    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST, "taking too long time to test")
-#    def test_filter_genes_2(self):
-#        """
-#        test if a little advance gene search (two genes, full name) can be done correctly
-#        both inside the genes and surrounding.
-#        """
-#
-#        self.init_test(self.current_func_name)
-#        db_file = join_path(self.data_dir,
-#                                        "input.vcf.gz")
-#        project_name = self.test_function
-#        filter_genes = "ANKRD19P,IPPK"
-#        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
-#                                                        db_file=db_file,
-#                                                        sample_info="8:Co-35:Co-37,13:Co-95,275:Co-1262:Co-618,296:Co-793:Co-876",
-#                                                        report_regions="9",
-#                                                        filter_genes=filter_genes,
-#                                                        )
-#        pl = MutRepController(jobs_setup_file=jobs_setup_file)
-#        pl.gen_summary_report(pl.report_layout.report_regions)
-#        xls_file = join_path(self.working_dir,
-#                             "rpts",
-#                             project_name+"_summary.xlsx")
-#        xu = XlsUtils(xls_file)
-#        self.assertEqual(xu.count_rows(sheet_idx=0),
-#                         37,
-#                         "Incorrect number of rows in the variants sheet"
-#                         )
+    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST, "taking too long time to test")
+    def test_filter_genes_1(self):
+        """
+        test if gene search can be done correctly
+        both inside the genes and surrounding.
+        """
+
+        self.init_test(self.current_func_name)
+        jobs_setup_file = self.__create_jobs_setup_file(sample_info="8:Co-35:Co-37,13:Co-95,275:Co-1262:Co-618,296:Co-793:Co-876")
+        mc = MutRepController(jobs_setup_file, verbose=False)
+        xls_file = mc.gen_report(report_regions="9")
+        xu = XlsUtils(xls_file)
+        self.assertEqual(xu.count_rows(sheet_idx=0),
+                         48,
+                         "Incorrect number of rows in the variants sheet"
+                         )
+
+        filter_genes = "ANKRD19P"
+        jobs_setup_file = self.__create_jobs_setup_file(sample_info="8:Co-35:Co-37,13:Co-95,275:Co-1262:Co-618,296:Co-793:Co-876",
+                                                        filter_genes=filter_genes,
+                                                        )
+        mc = MutRepController(jobs_setup_file, verbose=False)
+        xls_file = mc.gen_report(report_regions="9")
+        xu = XlsUtils(xls_file)
+        self.assertEqual(xu.count_rows(sheet_idx=0),
+                         21,
+                         "Incorrect number of rows in the variants sheet"
+                         )
+
+        filter_genes = "ANKRD19P,IPPK"
+        jobs_setup_file = self.__create_jobs_setup_file(sample_info="8:Co-35:Co-37,13:Co-95,275:Co-1262:Co-618,296:Co-793:Co-876",
+                                                        filter_genes=filter_genes,
+                                                        )
+        mc = MutRepController(jobs_setup_file, verbose=False)
+        xls_file = mc.gen_report(report_regions="9")
+        xu = XlsUtils(xls_file)
+        self.assertEqual(xu.count_rows(sheet_idx=0),
+                         27,
+                         "Incorrect number of rows in the variants sheet"
+                         )
 
     @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST, "taking too long time to test")
     def test_color_genes_1(self):
@@ -1124,7 +1107,7 @@ class TestMutRepController(SafeTester):
                                                         color_genes=color_genes,
                                                         )
         mc = MutRepController(jobs_setup_file, verbose=False)
-        xls_file = mc.gen_report()
+        xls_file = mc.gen_report(report_regions="9")
         xu = XlsUtils(xls_file)
         self.assertEqual(xu.count_rows(sheet_idx=0),
                          48,
@@ -1162,7 +1145,7 @@ class TestMutRepController(SafeTester):
                                                         color_genes=color_genes,
                                                         )
         mc = MutRepController(jobs_setup_file, verbose=False)
-        xls_file = mc.gen_report()
+        xls_file = mc.gen_report(report_regions="9")
         xu = XlsUtils(xls_file)
         self.assertEqual(xu.count_rows(sheet_idx=0),
                          48,

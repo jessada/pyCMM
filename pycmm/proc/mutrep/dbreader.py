@@ -2,6 +2,7 @@ import copy
 import re
 from collections import OrderedDict
 from pycmm.settings import MAX_REF_MAF_COL_NAME
+from pycmm.settings import GENE_REFGENE_COL_NAME
 from pycmm.settings import REF_MAF_COL_NAMES
 from pycmm.settings import EXAC03_CONSTRAINT_COL_NAMES
 from pycmm.settings import EXAC03_CONSTRAINT_COL_NAME
@@ -368,6 +369,7 @@ class SQLiteDBReader(SQLiteDB):
         self.__init_properties()
 
     def __init_properties(self):
+        self.__filter_genes = None
         self.__filter_non_intergenic = False
         self.__filter_non_intronic = False
         self.__filter_non_upstream = False
@@ -448,6 +450,14 @@ class SQLiteDBReader(SQLiteDB):
                 raise IndexError("sample id: "+sample_id+" is not found in any tables")
         self.__ref_mutated_col_idx = sample_col_idx
             
+    @property
+    def filter_genes(self):
+        return self.__filter_genes
+
+    @filter_genes.setter
+    def filter_genes(self, value):
+        self.__filter_genes = value
+
     @property
     def filter_non_intergenic(self):
         return self.__filter_non_intergenic
@@ -551,6 +561,11 @@ class SQLiteDBReader(SQLiteDB):
             col_name = tbl_name.replace("gtz_", "") + "_FILTER"
             or_clause.append(col_name + " IS NOT NULL")
         where_clause.append("(" + " OR ".join(or_clause) + ")")
+        if self.filter_genes is not None:
+            or_clause = []
+            for gene_name in self.filter_genes:
+                or_clause.append(self.anno_col_to_db_col(GENE_REFGENE_COL_NAME) + " LIKE '%" + gene_name + "%'")
+            where_clause.append("(" + " OR ".join(or_clause) + ")")
         if len(where_clause) > 0:
             sql += " WHERE " + " AND ".join(where_clause)
         for row in self.read_rows(sql=sql):

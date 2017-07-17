@@ -1243,6 +1243,7 @@ class MutRepController(CMMPipeline):
         self.__reader.filter_non_downstream = self.report_layout.filter_non_downstream
         self.__reader.filter_non_utr = self.report_layout.filter_non_utr
         self.__reader.filter_non_synonymous = self.report_layout.filter_non_synonymous
+        self.__reader.filter_genes = self.report_layout.filter_genes
 
     def gen_report(self,
                    report_regions=None,
