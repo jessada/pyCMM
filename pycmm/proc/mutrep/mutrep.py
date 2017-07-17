@@ -153,6 +153,8 @@ XLS_ALT_COL_IDX = 3
 XLS_FILTER_COL_IDX = 4
 LAYOUT_VCF_COLS = XLS_FILTER_COL_IDX + 1
 
+gene_refgene_col_name = GENE_REFGENE_COL_NAME.replace(".", "_")
+
 #QRY_CHROM_COL_IDX = 0
 #QRY_POS_COL_IDX = 1
 #QRY_REF_COL_IDX = 2
@@ -770,8 +772,8 @@ class MutRepController(CMMPipeline):
         row_freeze_idx = 1
         anno_cols = self.report_layout.anno_cols
 # ********************************** need to refactor ********************************
-        if GENE_REFGENE_COL_NAME.replace(".", "_") in anno_cols:
-            col_freeze_idx = anno_cols.index(GENE_REFGENE_COL_NAME.replace(".", "_")) + LAYOUT_VCF_COLS + 1
+        if gene_refgene_col_name in anno_cols:
+            col_freeze_idx = anno_cols.index(gene_refgene_col_name) + LAYOUT_VCF_COLS + 1
         else:
             col_freeze_idx = 0
 #        if GENE_REFGENE_COL_NAME in anno_cols:
@@ -874,7 +876,6 @@ class MutRepController(CMMPipeline):
                            row,
                            start_col,
                            qry_record,
-#                           allele_idx,
 #                           sample_col_idxs,
                            samples_id,
                            dflt_cell_fmt,
@@ -882,10 +883,6 @@ class MutRepController(CMMPipeline):
         next_col = start_col
 #        ar_samples_id = qry_record.get_info(AR_SAMPLES_ID)
         for sample_id in samples_id:
-#        for sample_idx in xrange(len(samples_id)):
-#            sample_id = samples_id[sample_idx]
-#            call = qry_record.genotype(sample_id)
-#            zygo = call.cmm_gts[allele_idx]
             gt = qry_record.gt[sample_id]
             # determine cell(s) format
             if self.report_layout.coloring_shared:
@@ -934,7 +931,6 @@ class MutRepController(CMMPipeline):
                         ws,
                         row,
                         qry_record,
-#                        allele_idx,
                         fam_id,
                         ):
         # use input expression to determine if row will have background color
@@ -982,16 +978,15 @@ class MutRepController(CMMPipeline):
                 continue
             if anno_col_name in PREDICTION_COLS:
                 anno = anno.description
-#            # If color_genes is defined, color the genes found in color_genes
-#            if (anno_col_name == GENE_REFGENE_COL_NAME and
-#                self.report_layout.color_genes is not None): 
-#                gene_refgenes = qry_record.get_info(GENE_REFGENE_COL_NAME,
-#                                                    allele_idx).split(',')
-#                for color_gene in self.report_layout.color_genes:
-#                    if color_gene in gene_refgenes:
-#                        anno_cell_fmt = self.plain_fmts[self.report_layout.cell_color_color_gene]
-#                        break
-#            # determine cell format
+            # If color_genes is defined, color the genes found in color_genes
+            if (anno_col_name == gene_refgene_col_name and
+                self.report_layout.color_genes is not None): 
+                gene_refgenes = qry_record.get_anno(gene_refgene_col_name).split(';')
+                for color_gene in self.report_layout.color_genes:
+                    if color_gene in gene_refgenes:
+                        anno_cell_fmt = self.plain_fmts[self.report_layout.cell_color_color_gene]
+                        break
+            # determine cell format
             if (anno_col_name in FORMAT_COLS and
                 FORMAT_COLS[anno_col_name] == FORMAT_COL_FLOAT and
                 anno != "INF" and
@@ -1018,8 +1013,6 @@ class MutRepController(CMMPipeline):
                                                row,
                                                next_col,
                                                qry_record,
-#                                               allele_idx,
-#                                               samples_id,
                                                self.reader.samples_id,
                                                dflt_cell_fmt,
                                                )

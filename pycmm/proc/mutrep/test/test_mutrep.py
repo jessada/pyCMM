@@ -383,7 +383,6 @@ class TestMutRepController(SafeTester):
     def test_gen_report_2(self):
         """ test with multiple report_regions """
 
-        self.individual_debug = True
         self.init_test(self.current_func_name)
         rpt_out_file = join_path(self.working_dir,
                                  self.current_func_name + ".xlsx")
@@ -1111,50 +1110,52 @@ class TestMutRepController(SafeTester):
 #                         37,
 #                         "Incorrect number of rows in the variants sheet"
 #                         )
-#
-#    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST, "taking too long time to test")
-#    def test_color_genes_1(self):
-#        """
-#        test if basic gene search (one gene, full name) can be done correctly
-#        both inside the genes and surrounding.
-#        """
-#
-#        self.init_test(self.current_func_name)
-#        db_file = join_path(self.data_dir,
-#                                        "input.vcf.gz")
-#        project_name = self.test_function
-#        color_genes = "ANKRD19P"
-#        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
-#                                                        db_file=db_file,
-#                                                        sample_info="8:Co-35:Co-37,13:Co-95,275:Co-1262:Co-618,296:Co-793:Co-876",
-#                                                        report_regions="9",
-#                                                        color_genes=color_genes,
-#                                                        )
-#        pl = MutRepController(jobs_setup_file=jobs_setup_file)
-#        pl.gen_summary_report(pl.report_layout.report_regions)
-#        xls_file = join_path(self.working_dir,
-#                             "rpts",
-#                             project_name+"_summary.xlsx")
-#        xu = XlsUtils(xls_file)
-#        refgene_col_idx = xu.get_col_idx(GENE_REFGENE_COL_NAME)
-#        exp_rgb = "FF" + COLORS_RGB["XLS_GREEN"][-6:]
-#        self.assertEqual(xu.get_cell_rgb(2, refgene_col_idx),
-#                         RGB_NO_FILL,
-#                         "Incorrect color"
-#                         )
-#        self.assertEqual(xu.get_cell_rgb(50, refgene_col_idx),
-#                         exp_rgb,
-#                         "Incorrect color"
-#                         )
-#
-#    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST, "taking too long time to test")
+
+    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST, "taking too long time to test")
+    def test_color_genes_1(self):
+        """
+        test if basic gene search (one gene, full name) can be done correctly
+        both inside the genes and surrounding.
+        """
+
+        self.init_test(self.current_func_name)
+        color_genes = "ANKRD19P"
+        jobs_setup_file = self.__create_jobs_setup_file(sample_info="8:Co-35:Co-37,13:Co-95,275:Co-1262:Co-618,296:Co-793:Co-876",
+                                                        color_genes=color_genes,
+                                                        )
+        mc = MutRepController(jobs_setup_file, verbose=False)
+        xls_file = mc.gen_report()
+        xu = XlsUtils(xls_file)
+        self.assertEqual(xu.count_rows(sheet_idx=0),
+                         48,
+                         "Incorrect number of rows"
+                         )
+        refgene_col_idx = xu.get_col_idx(GENE_REFGENE_COL_NAME.replace(".", "_"))
+        exp_rgb = "FF" + COLORS_RGB["XLS_GREEN"][-6:]
+        self.assertEqual(xu.get_cell_rgb(2, refgene_col_idx),
+                         RGB_NO_FILL,
+                         "Incorrect color"
+                         )
+        self.assertEqual(xu.get_cell_rgb(20, refgene_col_idx),
+                         RGB_NO_FILL,
+                         "Incorrect color"
+                         )
+        self.assertEqual(xu.get_cell_rgb(30, refgene_col_idx),
+                         exp_rgb,
+                         "Incorrect color"
+                         )
+        self.assertEqual(xu.get_cell_rgb(40, refgene_col_idx),
+                         exp_rgb,
+                         "Incorrect color"
+                         )
+
+    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST, "taking too long time to test")
     def test_color_genes_2(self):
         """
         test if a little advance gene search (two genes, full name) can be done correctly
         both inside the genes and surrounding.
         """
 
-        self.individual_debug = True
         self.init_test(self.current_func_name)
         color_genes = "ANKRD19P,IPPK"
         jobs_setup_file = self.__create_jobs_setup_file(sample_info="8:Co-35:Co-37,13:Co-95,275:Co-1262:Co-618,296:Co-793:Co-876",
@@ -1164,10 +1165,10 @@ class TestMutRepController(SafeTester):
         xls_file = mc.gen_report()
         xu = XlsUtils(xls_file)
         self.assertEqual(xu.count_rows(sheet_idx=0),
-                         9,
+                         48,
                          "Incorrect number of rows"
                          )
-        refgene_col_idx = xu.get_col_idx(GENE_REFGENE_COL_NAME)
+        refgene_col_idx = xu.get_col_idx(GENE_REFGENE_COL_NAME.replace(".", "_"))
         exp_rgb = "FF" + COLORS_RGB["XLS_GREEN"][-6:]
         self.assertEqual(xu.get_cell_rgb(2, refgene_col_idx),
                          exp_rgb,
@@ -1177,7 +1178,11 @@ class TestMutRepController(SafeTester):
                          RGB_NO_FILL,
                          "Incorrect color"
                          )
-        self.assertEqual(xu.get_cell_rgb(50, refgene_col_idx),
+        self.assertEqual(xu.get_cell_rgb(30, refgene_col_idx),
+                         exp_rgb,
+                         "Incorrect color"
+                         )
+        self.assertEqual(xu.get_cell_rgb(40, refgene_col_idx),
                          exp_rgb,
                          "Incorrect color"
                          )
@@ -1524,11 +1529,10 @@ class TestMutRepController(SafeTester):
 #                         "Incorrect cell value"
 #                         )
 
-#    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST, "taking too long time to test")
+    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST, "taking too long time to test")
     def test_show_shared_variants_1(self):
         """ test if shared mutations can be shown """
 
-        self.individual_debug = True
         self.init_test(self.current_func_name)
         custom_excl_tags = DFLT_TEST_ANNO_EXCL_TAGS
         custom_excl_tags += "," + AXEQ_CHR3_6_14_18_COLS_TAG
@@ -1541,7 +1545,7 @@ class TestMutRepController(SafeTester):
                                                         show_shared_variants=True,
                                                         coloring_shared=True,
                                                         )
-        mc = MutRepController(jobs_setup_file)
+        mc = MutRepController(jobs_setup_file, verbose=False)
         xls_file = mc.gen_report(report_regions="3")
         xu = XlsUtils(xls_file)
         fam_col_idx = xu.get_col_idx("F0007826")
