@@ -92,3 +92,6 @@ eval_cmd "$cmd"
 
 cmd="$test_data_root/proc/mutrep/test/data/mutrep/MutRepController/test_unicode_1/gen_data.sh"
 eval_cmd "$cmd"
+
+cmd="$test_data_root/proc/mutrep/test/data/mutrep/MutRepController/test_multiple_regions_1/gen_data.sh"
+eval_cmd "$cmd"

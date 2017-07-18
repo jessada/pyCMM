@@ -381,48 +381,17 @@ class TestMutRepController(SafeTester):
                          )
 
     @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST or DB_TEST, "taking too long time to test")
-    def test_gen_report_2(self):
+    def test_multiple_regions_1(self):
         """ test with multiple report_regions """
 
         self.init_test(self.current_func_name)
-        rpt_out_file = join_path(self.working_dir,
-                                 self.current_func_name + ".xlsx")
         jobs_setup_file = self.__create_jobs_setup_file(report_regions="10:89683800-89685413,11")
-        mc = MutRepController(jobs_setup_file)
-        mc.gen_report(mc.report_layout.report_regions, out_file=rpt_out_file)
-        xu = XlsUtils(rpt_out_file)
+        mc = MutRepController(jobs_setup_file, verbose=False)
+        xls_file = mc.gen_report()
+        xu = XlsUtils(xls_file)
         self.assertEqual(xu.count_rows(),
-                         8,
+                         14,
                          "Incorrect number of rows")
-
-#    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST or DB_TEST, "taking too long time to test")
-#    def test_summary_report_3(self):
-#        """
-#        test if mutations with more than one alternate alleles in summary
-#        is correctly generated
-#        """
-#
-#        self.init_test(self.current_func_name)
-#        db_file = join_path(self.data_dir,
-#                                        "input.vcf.gz")
-#        project_name = self.test_function
-#        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
-#                                                        db_file=db_file,
-#                                                        report_regions="6",
-#                                                        call_detail=False,
-#                                                        )
-#        pl = MutRepController(jobs_setup_file=jobs_setup_file)
-#        pl.gen_summary_report(pl.report_layout.report_regions)
-#        xls_file = join_path(self.working_dir,
-#                             "rpts",
-#                             project_name+"_summary.xlsx")
-#        xu = XlsUtils(xls_file)
-#        self.assertFalse(xu.compare_vals("AXEQ_CHR3_6_14_18_PF",
-#                                         5,
-#                                         6,
-#                                         ),
-#                         "information of mutations with more than one alternate alleles are incorrect"
-#                         )
 
     @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST or DB_TEST, "taking too long time to test")
     def test_unicode_1(self):

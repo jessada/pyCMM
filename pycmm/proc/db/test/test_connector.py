@@ -14,7 +14,6 @@ from pycmm.proc.db.connector import TBL_NAME_ALL_GTZ_ANNOS
 from pycmm.proc.db.connector import REF_MUTATED_COL_NAME
 
 CONNECTOR_TEST = False
-CONNECTOR_TEST = True
 
 
 class TestSQLiteDB(SafeTester):
