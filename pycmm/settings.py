@@ -56,6 +56,13 @@ MUTREP_FAMILY_REPORT_DESCRIPTION = "An appliation to generate mutation report fo
 MUTREP_SUMMARY_REPORT_DESCRIPTION = "An appliation to generate summary report at given regions"
 MUTREP_CREATE_JOB_SETUP_FILE_DESCRIPTION = "An application to generate job setup file to process mutations report"
 
+## ******************************************************************************************* Mutation DB seq report ********************************************************************************************
+MUTREPDB_SEQ_REPORT_BIN = 'pyCMM-mutrepdb-seq-report'
+MUTREPDB_CREATE_JOB_SETUP_FILE_DESCRIPTION = "An application to generate job setup file to process mutations report"
+MUTREPDB_SEQ_REPORT_DESCRIPTION = "An appliation to generate sequencing report at given regions"
+MUTREPDB_CONTROLLER_DESCRIPTION = "A flow to control a pipeline to process seqeuncing report"
+MUTREPDB_CONTROLLER_DFLT_LOG_FILE = "mutrepdb_controller"
+
 ## ******************************************************************************************* DBMS ********************************************************************************************
 #MUTREP_SLURM_MONITOR_PIPELINE_BIN = 'pyCMM-mutrep-slurm-monitor-pipeline'
 #MUTREP_FAMILY_REPORT_BIN = 'pyCMM-mutrep-family-report'

@@ -10,6 +10,7 @@ from collections import OrderedDict
 from pycmm.settings import ALL_MUTREP_ANNO_COLS
 #from pycmm.settings import EST_KVOT_COLS
 #from pycmm.settings import DFLT_MUTREP_FREQ_RATIOS
+from pycmm.settings import MUTREPDB_SEQ_REPORT_BIN
 #from pycmm.settings import MUTREP_FAMILY_REPORT_BIN
 #from pycmm.settings import MUTREP_SUMMARY_REPORT_BIN
 #from pycmm.settings import EST_KVOT_EARLYONSET_VS_BRC_COL_NAME
@@ -43,7 +44,7 @@ from pycmm.settings import FORMAT_COL_INT
 from pycmm.template import pyCMMBase
 from pycmm.utils import DefaultOrderedDict
 from pycmm.utils import is_number
-#from pycmm.utils.ver import VersionManager
+from pycmm.utils.ver import VersionManager
 from pycmm.cmmlib import CMMParams
 #from pycmm.cmmlib.samplelib import SAMPLE_GROUP_MISSING
 from pycmm.cmmlib.samplelib import Sample
@@ -156,12 +157,6 @@ LAYOUT_VCF_COLS = XLS_FILTER_COL_IDX + 1
 gene_refgene_col_name = GENE_REFGENE_COL_NAME.replace(".", "_")
 gene_refgene_col_name = GENE_REFGENE_COL_NAME
 
-#QRY_CHROM_COL_IDX = 0
-#QRY_POS_COL_IDX = 1
-#QRY_REF_COL_IDX = 2
-#QRY_ALT_COL_IDX = 3
-#QRY_FILTER_COL_IDX = 4
-#
 #RECESSIVE_INFO_IS_RECESSIVE = "is_recessive"
 #
 #AR_SAMPLES_ID = "ar_samples_id"
@@ -467,12 +462,6 @@ class ReportLayout(CMMParams):
         return self._get_job_config(JOBS_SETUP_RPT_ANNO_EXCL_TAGS_KEY,
                                     default_val=[])
 
-#    @property
-#    def anno_cols(self):
-#        if self.__anno_cols is None:
-#            self.__anno_cols = self.__cal_anno_cols()
-#        return self.__anno_cols
-#
     @property
     def report_regions(self):
         regions = self._get_job_config(JOBS_SETUP_RPT_REGIONS_KEY)
@@ -661,7 +650,6 @@ class MutRepController(CMMPipeline):
     def get_third_party_software_version(self):
         vm = VersionManager()
         versions = OrderedDict()
-        versions['pyvcf'] = vm.pyvcf_version
         versions['pyaml'] = vm.pyaml_version
         versions['xlsxwriter'] = vm.xlsxwriter_version
         return versions
@@ -692,7 +680,7 @@ class MutRepController(CMMPipeline):
     @property
     def summary_rpt_file(self):
         return join_path(self.rpts_out_dir,
-                         self.dataset_name+"_summary.xlsx")
+                         self.dataset_name+"_seq_data.xlsx")
 
     def __set_report_format(self):
         self.__plain_fmts = self.__wb.add_colors_format({})
@@ -722,6 +710,10 @@ class MutRepController(CMMPipeline):
         else:
             col_freeze_idx = 0
         ws.freeze_panes(row_freeze_idx, col_freeze_idx)
+
+    def __write_sample(self, ws, row, col, content, fmt):
+        ws.write(row, col, content, fmt)
+        return col + 1
 
     def __write_header(self, ws, fam_id):
         def write_samples_header(start_col,
@@ -806,10 +798,6 @@ class MutRepController(CMMPipeline):
                                                     cell_fmt,
                                                     )
         return sample_start_col, next_col
-
-    def __write_sample(self, ws, row, col, content, fmt):
-        ws.write(row, col, content, fmt)
-        return col + 1
 
     def __write_zygosities(self,
                            ws,
@@ -1074,20 +1062,6 @@ class MutRepController(CMMPipeline):
 #                if (self.report_layout.filter_has_shared and
 #                    not qry_record.has_shared(allele_idx)):
 #                    continue
-#                if qry_record.alleles[allele_idx] == "*":
-#                    continue
-#                # If filter_genes is defined, only the filter_genes can be
-#                # in the report. Otherwise, no filtering applied
-#                if self.report_layout.filter_genes is not None: 
-#                    gene_found = False
-#                    gene_refgenes = qry_record.get_info(GENE_REFGENE_COL_NAME,
-#                                                        allele_idx).split(',')
-#                    for filter_gene in self.report_layout.filter_genes:
-#                        if filter_gene in gene_refgenes:
-#                            gene_found = True
-#                            break
-#                    if not gene_found:
-#                        continue
 #                if self.report_layout.recessive_analysis:
 #                    current_gene = qry_record.get_info(GENE_REFGENE_COL_NAME,
 #                                                       allele_idx)
@@ -1214,331 +1188,79 @@ class MutRepController(CMMPipeline):
         self.__wb.close()
         return out_file
 
-#class ReportLayout(CMMParams):
-#    """ A structure to parse and keep mutation report layout """
-#
-#    def __init__(self, *args, **kwargs):
-#        super(ReportLayout, self).__init__(*args, **kwargs)
-#        self.__init_properties()
-#        self.__init_cell_colors()
-#
-#    def get_raw_obj_str(self, *args, **kwargs):
-#        raw_str = super(ReportLayout, self).get_raw_obj_str(*args, **kwargs)
-#        raw_str["annotated tabix file"] = self.annotated_vcf_tabix
-#        raw_str["annotation columns"] = self.anno_cols
-#        if self.anno_excl_tags is not None and len(self.anno_excl_tags) > 0:
-#            raw_str["annotation exclusion tags"] = self.anno_excl_tags
-#        raw_str["genotyping calling detail"] = self.call_detail
-#        raw_str["genotyping calling quality"] = self.call_gq
-#        raw_str[RPT_LAYOUT_CAPTION_FREQ_RATIOS] = self.freq_ratios
-#        if self.exprs is not None:
-#            raw_str["expression actions"] = self.exprs.actions
-#        raw_str["filter genes list"] = self.filter_genes
-#        raw_str["color genes list"] = self.color_genes
-#        if self.report_regions is None:
-#            raw_str[RPT_LAYOUT_CAPTION_RPT_REGIONS] = "ALL"
-#        else:
-#            raw_str[RPT_LAYOUT_CAPTION_RPT_REGIONS] = self.report_regions
-#        raw_str["split chromosome"] = self.split_chrom
-#        raw_str['coloring shared variants'] = self.coloring_shared
-#        raw_str['coloring variant zygosities'] = self.coloring_zygosity
-#        raw_str['show shared mutations'] = self.show_shared_variants
-#        filter_actions = OrderedDict()
-#        filter_actions[FILTER_RARE] = self.filter_rare
-#        filter_actions[FILTER_PASS_VQSR] = self.filter_pass_vqsr
-#        filter_actions[FILTER_NON_INTERGENIC] = self.filter_non_intergenic
-#        filter_actions[FILTER_NON_INTRONIC] = self.filter_non_intronic
-#        filter_actions[FILTER_NON_UPSTREAM] = self.filter_non_upstream
-#        filter_actions[FILTER_NON_DOWNSTREAM] = self.filter_non_downstream
-#        filter_actions[FILTER_NON_UTR] = self.filter_non_utr
-#        filter_actions[FILTER_NON_SYNONYMOUS] = self.filter_non_synonymous
-#        filter_actions[FILTER_HAS_MUTATION] = self.filter_has_mutation
-#        filter_actions[FILTER_HAS_SHARED] = self.filter_has_shared
-#        filter_actions[FILTER_NON_RECESSIVE_GENE] = self.filter_non_recessive_gene
-#        raw_str[RPT_LAYOUT_CAPTION_FILTER_ACTIONS] = filter_actions
-#        return raw_str
-#
-#    def __init_properties(self):
-#        self.__anno_cols = None
-#        self.__freq_ratios = None
-#        self.__header_corrections = self.__get_header_corrections()
-#        self.__exprs = self._get_job_config(JOBS_SETUP_RPT_EXPRESSIONS_KEY)
-#        if self.__exprs is not None:
-#            self.__exprs = VcfExpressions(self.__exprs)
-#
-#    def __get_header_corrections(self):
-#        raw_header_corrections = self._get_job_config(JOBS_SETUP_RPT_HEADER_CORRECTIONS_KEY)
-#        header_corrections = {}
-#        if raw_header_corrections is not None:
-#            for header_correction in raw_header_corrections:
-#                old_header = header_correction[JOBS_SETUP_RPT_OLD_HEADER_KEY]
-#                new_header = header_correction[JOBS_SETUP_RPT_NEW_HEADER_KEY]
-#                header_corrections[old_header] = new_header
-#        return header_corrections
-#
-#    def __cal_anno_cols(self):
-#        # open the annotated vcf tabix file for checking
-#        # if the expected output columns are exist
-#        vcf_reader = VcfReader(filename=self.annotated_vcf_tabix)
-#        qry_record = vcf_reader.next()
-#        # generate columns list
-#        anno_cols = []
-#        for col_name in self._get_job_config(JOBS_SETUP_RPT_ANNO_COLS_KEY,
-#                                             required=True):
-#            # excluce columns based on configuration
-#            excluded = False
-#            for excl_tag in self.anno_excl_tags:
-#                if excl_tag in ALL_MUTREP_ANNO_COLS[col_name]:
-#                    excluded = True
-#                    break
-#            if excluded:
-#                continue
-#            # exclude columns that are not actually in the annotated tabix file
-#            # the underlying assumption is that all the variants must have the 
-#            # same number of fields annotated by ANNOVAR
-#            if (col_name not in qry_record.INFO.keys() and
-#                col_name not in EXAC03_CONSTRAINT_COL_NAMES and
-#                col_name not in EST_KVOT_COLS and
-#                col_name != PATHOGENIC_COUNT_COL_NAME and
-#                col_name != MAX_REF_MAF_COL_NAME and
-#                col_name != INTERVAR_CLASS_COL_NAME and
-#                col_name != INTERVAR_EVIDENCE_COL_NAME
-#                ):
-#                self.warning("Column " + col_name + " is missing")
-#                continue
-#            if ((col_name == EST_KVOT_EARLYONSET_VS_BRC_COL_NAME) and
-#                ((WES294_OAF_EARLYONSET_AF_COL_NAME not in qry_record.INFO.keys()) or
-#                 (WES294_OAF_BRCS_AF_COL_NAME not in qry_record.INFO.keys())
-#                 )
-#                ):
-#                self.warning(col_name + " cannot be calculated")
-#                continue
-#            if ((col_name == EST_KVOT_EARLYONSET_VS_SWEGEN_COL_NAME) and
-#                ((WES294_OAF_EARLYONSET_AF_COL_NAME not in qry_record.INFO.keys()) or
-#                 (SWEGEN_AF_COL_NAME not in qry_record.INFO.keys())
-#                 )
-#                ):
-#                self.warning(col_name + " cannot be calculated")
-#                continue
-#            if ((col_name == EST_KVOT_EARLYONSET_VS_EXAC_NFE_COL_NAME) and
-#                ((WES294_OAF_EARLYONSET_AF_COL_NAME not in qry_record.INFO.keys()) or
-#                 (EXAC_NFE_COL_NAME not in qry_record.INFO.keys())
-#                 )
-#                ):
-#                self.warning(col_name + " cannot be calculated")
-#                continue
-#            if ((col_name == EST_KVOT_EARLYONSET_VS_KG_EUR_COL_NAME) and
-#                ((WES294_OAF_EARLYONSET_AF_COL_NAME not in qry_record.INFO.keys()) or
-#                 (KG2014OCT_EUR_COL_NAME not in qry_record.INFO.keys())
-#                 )
-#                ):
-#                self.warning(col_name + " cannot be calculated")
-#                continue
-#            if (col_name in EXAC03_CONSTRAINT_COL_NAMES and
-#                EXAC03_CONSTRAINT_COL_NAME not in qry_record.INFO.keys()
-#                ):
-#                self.warning(col_name + " cannot be calculated")
-#                continue
-#            if ((col_name == INTERVAR_CLASS_COL_NAME or
-#                col_name == INTERVAR_EVIDENCE_COL_NAME) and
-#                INTERVAR_AND_EVIDENCE_COL_NAME not in qry_record.INFO.keys()
-#                ):
-#                self.warning(col_name + " cannot be calculated")
-#                continue
-#            # here are the columns that can be shown without errors
-#            anno_cols.append(col_name)
-#        if self.recessive_analysis:
-#            anno_cols += RECESSIVE_STUDY_COL_NAMES
-#        return anno_cols
-#
-#    @property
-#    def annotated_vcf_tabix(self):
-#        return self._get_job_config(JOBS_SETUP_RPT_DB_FILE,
-#                                    required=True)
-#
-#    @property
-#    def anno_excl_tags(self):
-#        return self._get_job_config(JOBS_SETUP_RPT_ANNO_EXCL_TAGS_KEY,
-#                                    default_val=[])
-#
-#    @property
-#    def anno_cols(self):
-#        if self.__anno_cols is None:
-#            self.__anno_cols = self.__cal_anno_cols()
-#        return self.__anno_cols
-#
-#    @property
-#    def report_regions(self):
-#        regions = self._get_job_config(JOBS_SETUP_RPT_REGIONS_KEY)
-#        if regions is not None:
-#            regions = map(lambda x: DNARegion(str(x)),
-#                          regions)
-#        return regions
-#
-#    @property
-#    def exprs(self):
-#        return self.__exprs
-#
-#    @property
-#    def split_chrom(self):
-#        return self._get_job_config(JOBS_SETUP_RPT_SPLIT_CHROM_KEY,
-#                                    default_val=False)
-#
-#    @property
-#    def call_detail(self):
-#        return JOBS_SETUP_RPT_EXTRA_ANNO_CALL_DETAIL in self._get_job_config(JOBS_SETUP_RPT_EXTRA_ANNO_COLS_KEY,
-#                                                                      default_val=[])
-#
-#    @property
-#    def call_gq(self):
-#        return JOBS_SETUP_RPT_EXTRA_ANNO_CALL_GQ in self._get_job_config(JOBS_SETUP_RPT_EXTRA_ANNO_COLS_KEY,
-#                                                                  default_val=[])
-#
-#    @property
-#    def filter_rare(self):
-#        return JOBS_SETUP_RPT_FILTER_RARE in self._get_job_config(JOBS_SETUP_RPT_ROWS_FILTER_ACTIONS_CRITERIA_KEY,
-#                                                                  default_val=[])
-#
-#    @property
-#    def filter_pass_vqsr(self):
-#        return JOBS_SETUP_RPT_FILTER_PASS_VQSR in self._get_job_config(JOBS_SETUP_RPT_ROWS_FILTER_ACTIONS_CRITERIA_KEY,
-#                                                                       default_val=[])
-#
-#    @property
-#    def filter_non_intergenic(self):
-#        return JOBS_SETUP_RPT_FILTER_NON_INTERGENIC in self._get_job_config(JOBS_SETUP_RPT_ROWS_FILTER_ACTIONS_CRITERIA_KEY,
-#                                                                            default_val=[])
-#
-#    @property
-#    def filter_non_intronic(self):
-#        return JOBS_SETUP_RPT_FILTER_NON_INTRONIC in self._get_job_config(JOBS_SETUP_RPT_ROWS_FILTER_ACTIONS_CRITERIA_KEY,
-#                                                                          default_val=[])
-#
-#    @property
-#    def filter_non_upstream(self):
-#        return JOBS_SETUP_RPT_FILTER_NON_UPSTREAM in self._get_job_config(JOBS_SETUP_RPT_ROWS_FILTER_ACTIONS_CRITERIA_KEY,
-#                                                                          default_val=[])
-#
-#    @property
-#    def filter_non_downstream(self):
-#        return JOBS_SETUP_RPT_FILTER_NON_DOWNSTREAM in self._get_job_config(JOBS_SETUP_RPT_ROWS_FILTER_ACTIONS_CRITERIA_KEY,
-#                                                                            default_val=[])
-#
-#    @property
-#    def filter_non_utr(self):
-#        return JOBS_SETUP_RPT_FILTER_NON_UTR in self._get_job_config(JOBS_SETUP_RPT_ROWS_FILTER_ACTIONS_CRITERIA_KEY,
-#                                                                     default_val=[])
-#
-#    @property
-#    def filter_non_synonymous(self):
-#        return JOBS_SETUP_RPT_FILTER_NON_SYNONYMOUS in self._get_job_config(JOBS_SETUP_RPT_ROWS_FILTER_ACTIONS_CRITERIA_KEY,
-#                                                                            default_val=[])
-#
-#    @property
-#    def filter_has_mutation(self):
-#        return JOBS_SETUP_RPT_FILTER_HAS_MUTATION in self._get_job_config(JOBS_SETUP_RPT_ROWS_FILTER_ACTIONS_CRITERIA_KEY,
-#                                                                          default_val=[])
-#
-#    @property
-#    def filter_has_shared(self):
-#        return JOBS_SETUP_RPT_FILTER_HAS_SHARED in self._get_job_config(JOBS_SETUP_RPT_ROWS_FILTER_ACTIONS_CRITERIA_KEY,
-#                                                                        default_val=[])
-#
-#    @property
-#    def filter_non_recessive_gene(self):
-#        return JOBS_SETUP_RPT_FILTER_NON_RECESSIVE_GENE in self._get_job_config(JOBS_SETUP_RPT_ROWS_FILTER_ACTIONS_CRITERIA_KEY,
-#                                                                                default_val=[])
-#
-#    @property
-#    def coloring_shared(self):
-#        return JOBS_SETUP_RPT_COLORING_SHARED in self._get_job_config(JOBS_SETUP_RPT_COLORING_SAMPLES_KEY,
-#                                                                      default_val=[])
-#
-#    @property
-#    def coloring_zygosity(self):
-#        return JOBS_SETUP_RPT_COLORING_ZYGOSITY in self._get_job_config(JOBS_SETUP_RPT_COLORING_SAMPLES_KEY,
-#                                                                        default_val=[])
-#
-#    @property
-#    def recessive_analysis(self):
-#        return self.filter_non_recessive_gene
-#
-#    @property
-#    def header_corrections(self):
-#        return self.__header_corrections
-#
-#    @property
-#    def freq_ratios(self):
-#        freq_ratios = self._get_job_config(JOBS_SETUP_RPT_FREQ_RATIOS_KEY)
-#        if ((self.__freq_ratios is None) and
-#            (freq_ratios is not None)
-#            ):
-#            tmp_ratios = OrderedDict()
-#            for freq_ratio in freq_ratios:
-#                col = freq_ratio[JOBS_SETUP_RPT_FREQ_RATIOS_COL_KEY]
-#                freq = freq_ratio[JOBS_SETUP_RPT_FREQ_RATIOS_FREQ_KEY]
-#                tmp_ratios[col] = freq
-#            self.__freq_ratios = tmp_ratios
-#        elif self.__freq_ratios is None:
-#            self.__freq_ratios = []
-#        return self.__freq_ratios
-#
-#    @property
-#    def filter_genes(self):
-#        return self._get_job_config(JOBS_SETUP_RPT_FILTER_GENES_KEY)
-#
-#    @property
-#    def color_genes(self):
-#        return self._get_job_config(JOBS_SETUP_RPT_COLOR_GENES_KEY)
-#
-#    def __init_cell_colors(self):
-#        self.__cell_colors = {}
-#        self.__cell_colors[CELL_TYPE_HET_SHARED] = DFLT_COLOR_HET_SHARED
-#        self.__cell_colors[CELL_TYPE_HOM_SHARED] = DFLT_COLOR_HOM_SHARED
-#        self.__cell_colors[CELL_TYPE_HET_ZYGO] = DFLT_COLOR_HET_ZYGO
-#        self.__cell_colors[CELL_TYPE_HOM_ZYGO] = DFLT_COLOR_HOM_ZYGO
-#        self.__cell_colors[CELL_TYPE_HET_RECESSIVE] = DFLT_COLOR_HET_RECESSIVE
-#        self.__cell_colors[CELL_TYPE_HOM_RECESSIVE] = DFLT_COLOR_HOM_RECESSIVE
-#        self.__cell_colors[CELL_TYPE_SEPARATOR] = DFLT_COLOR_SEPARATOR
-#        self.__cell_colors[CELL_TYPE_COLOR_GENE] = DFLT_COLOR_COLOR_GENE
-#
-#    @property
-#    def cell_color_het_shared(self):
-#        return self.__cell_colors[CELL_TYPE_HET_SHARED]
-#
-#    @property
-#    def cell_color_hom_shared(self):
-#        return self.__cell_colors[CELL_TYPE_HOM_SHARED]
-#
-#    @property
-#    def cell_color_het_zygo(self):
-#        return self.__cell_colors[CELL_TYPE_HET_ZYGO]
-#
-#    @property
-#    def cell_color_hom_zygo(self):
-#        return self.__cell_colors[CELL_TYPE_HOM_ZYGO]
-#
-#    @property
-#    def cell_color_het_recessive(self):
-#        return self.__cell_colors[CELL_TYPE_HET_RECESSIVE]
-#
-#    @property
-#    def cell_color_hom_recessive(self):
-#        return self.__cell_colors[CELL_TYPE_HOM_RECESSIVE]
-#
-#    @property
-#    def cell_color_separator(self):
-#        return self.__cell_colors[CELL_TYPE_SEPARATOR]
-#
-#    @property
-#    def cell_color_color_gene(self):
-#        return self.__cell_colors[CELL_TYPE_COLOR_GENE]
-#
-#    @property
-#    def show_shared_variants(self):
-#        return self._get_job_config(JOBS_SETUP_RPT_SHOW_SHARED_VARIANTS,
-#                                    default_val=False)
-#
+    def __submit_rpt_jobs(self,
+                          job_script,
+                          job_params_prefix,
+                          job_name_prefix,
+                          slurm_log_prefix,
+                          out_file_prefix,
+                          report_regions,
+                          ):
+        if self.report_layout.split_chrom:
+            if report_regions is None:
+                report_regions = map(lambda x: DNARegion(x), ALL_CHROMS)
+            for report_region in report_regions:
+                chr_slurm_log_prefix = slurm_log_prefix
+                chr_slurm_log_prefix += "_" + report_region.region_key
+                job_name = job_name_prefix
+                job_name += "_" + report_region.region_key
+                out_file = out_file_prefix
+                out_file += "_" + report_region.region_key
+                out_file += ".xlsx"
+                job_params = job_params_prefix
+                job_params += " -r " + report_region.raw_region
+                job_params += " -o " + out_file
+                self.submit_job(job_name,
+                                self.project_code,
+                                "core",
+                                "1",
+                                self.job_alloc_time,
+                                chr_slurm_log_prefix,
+                                job_script,
+                                job_params,
+                                )
+        else:
+            job_name = job_name_prefix
+            out_file = out_file_prefix + ".xlsx"
+            job_params = job_params_prefix
+            if report_regions is not None:
+                job_params += " -r " + ",".join(map(lambda x: x.raw_region,
+                                                    report_regions))
+            job_params += " -o " + out_file
+            self.submit_job(job_name,
+                            self.project_code,
+                            "core",
+                            "4",
+                            self.job_alloc_time,
+                            slurm_log_prefix,
+                            job_script,
+                            job_params,
+                            )
+
+    def gen_reports(self):
+        report_regions = self.report_layout.report_regions
+        if self.project_code is None:
+            self.gen_report(report_regions=report_regions)
+        else:
+            slurm_log_prefix = join_path(self.slurm_log_dir,
+                                         self.dataset_name)
+            slurm_log_prefix += '_rpts_smy'
+            job_name_prefix = self.dataset_name + '_rpts_smy'
+            job_script = MUTREPDB_SEQ_REPORT_BIN
+            job_params_prefix = " -j " + self.jobs_setup_file
+            out_file_prefix = join_path(self.rpts_out_dir,
+                                        self.dataset_name+"_seq")
+            self.__submit_rpt_jobs(job_script,
+                                   job_params_prefix,
+                                   job_name_prefix,
+                                   slurm_log_prefix,
+                                   out_file_prefix,
+                                   report_regions,
+                                   )
+#    def monitor_init(self, *args, **kwargs):
+#        self.__gen_reports()
+#        super(MutRepPipeline, self).monitor_init(*args, **kwargs)
+
 #class MutRepPipeline(CMMPipeline):
 #    """ A class to control CMMDB best practice pipeline """
 #
@@ -1557,46 +1279,6 @@ class MutRepController(CMMPipeline):
 #        versions['pyaml'] = vm.pyaml_version
 #        versions['xlsxwriter'] = vm.xlsxwriter_version
 #        return versions
-#
-#    def __init_properties(self):
-#        self.__report_layout = None
-#
-#    @property
-#    def report_layout(self):
-#        if self.__report_layout is None:
-#            self.__report_layout = ReportLayout(entries=self._get_job_config(JOBS_SETUP_RPT_LAYOUT_SECTION,
-#                                                                             required=True))
-#        return self.__report_layout
-#
-#    @property
-#    def summary_rpt_file(self):
-#        return join_path(self.rpts_out_dir,
-#                         self.dataset_name+"_summary.xlsx")
-#
-#    @property
-#    def plain_fmts(self):
-#        return self.__plain_fmts
-#
-#    @property
-#    def vcf_reader(self):
-#        return self.__vcf_reader
-#
-#    def __set_report_format(self):
-#        self.__plain_fmts = self.__wb.add_colors_format({})
-#
-#    def __add_sheet(self, sheet_name):
-#        ws = self.__wb.add_worksheet(sheet_name)
-#        ws.set_default_row(12)
-#        return ws
-#
-#    def correct_header(self, old_header):
-#        if old_header in self.report_layout.header_corrections:
-#            return self.report_layout.header_corrections[old_header]
-#        return old_header
-#
-#    def __write_sample(self, ws, row, col, content, fmt):
-#        ws.write(row, col, content, fmt)
-#        return col + 1
 #
 #    def __write_header(self, ws, fam_id):
 #        def write_samples_header(start_col,
@@ -2256,76 +1938,6 @@ class MutRepController(CMMPipeline):
 #        self.__add_criteria_sheet()
 #        self.__wb.close()
 #
-#    def __submit_report_jobs(self,
-#                             job_script,
-#                             job_params_prefix,
-#                             job_name_prefix,
-#                             slurm_log_prefix,
-#                             out_file_prefix,
-#                             report_regions,
-#                             ):
-#        if self.report_layout.split_chrom:
-#            if report_regions is None:
-#                report_regions = map(lambda x: DNARegion(x), ALL_CHROMS)
-#            for report_region in report_regions:
-#                chr_slurm_log_prefix = slurm_log_prefix
-#                chr_slurm_log_prefix += "_" + report_region.region_key
-#                job_name = job_name_prefix
-#                job_name += "_" + report_region.region_key
-#                out_file = out_file_prefix
-#                out_file += "_" + report_region.region_key
-#                out_file += ".xlsx"
-#                job_params = job_params_prefix
-#                job_params += " -r " + report_region.raw_region
-#                job_params += " -o " + out_file
-#                self.submit_job(job_name,
-#                                self.project_code,
-#                                "core",
-#                                "4",
-#                                self.job_alloc_time,
-#                                chr_slurm_log_prefix,
-#                                job_script,
-#                                job_params,
-#                                )
-#        else:
-#            job_name = job_name_prefix
-#            out_file = out_file_prefix + ".xlsx"
-#            job_params = job_params_prefix
-#            if report_regions is not None:
-#                job_params += " -r " + ",".join(map(lambda x: x.raw_region,
-#                                                    report_regions))
-#            job_params += " -o " + out_file
-#            self.submit_job(job_name,
-#                            self.project_code,
-#                            "core",
-#                            "4",
-#                            self.job_alloc_time,
-#                            slurm_log_prefix,
-#                            job_script,
-#                            job_params,
-#                            )
-#
-#    def gen_summary_reports(self):
-#        report_regions = self.report_layout.report_regions
-#        if self.project_code is None:
-#            self.gen_summary_report(report_regions)
-#        else:
-#            slurm_log_prefix = join_path(self.slurm_log_dir,
-#                                         self.dataset_name)
-#            slurm_log_prefix += '_rpts_smy'
-#            job_name_prefix = self.dataset_name + '_rpts_smy'
-#            job_script = MUTREP_SUMMARY_REPORT_BIN
-#            job_params_prefix = " -j " + self.jobs_setup_file
-#            out_file_prefix = join_path(self.rpts_out_dir,
-#                                        self.dataset_name+"_summary")
-#            self.__submit_report_jobs(job_script,
-#                                      job_params_prefix,
-#                                      job_name_prefix,
-#                                      slurm_log_prefix,
-#                                      out_file_prefix,
-#                                      report_regions,
-#                                      )
-#
 #    def gen_family_report(self,
 #                          fam_id,
 #                          report_regions,
@@ -2395,10 +2007,6 @@ class MutRepController(CMMPipeline):
 #
 #    def __gen_reports(self):
 #        self.gen_summary_reports()
-#
-#    def monitor_init(self, *args, **kwargs):
-#        self.__gen_reports()
-#        super(MutRepPipeline, self).monitor_init(*args, **kwargs)
 #
 #    def run_offline_pipeline(self):
 #        self.__gen_reports()

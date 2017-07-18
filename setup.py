@@ -9,6 +9,7 @@ from pycmm.settings import DUMMY_TABLE_ANNOVAR_BIN
 from pycmm.settings import MUTREP_SLURM_MONITOR_PIPELINE_BIN
 from pycmm.settings import MUTREP_FAMILY_REPORT_BIN
 from pycmm.settings import MUTREP_SUMMARY_REPORT_BIN
+from pycmm.settings import MUTREPDB_SEQ_REPORT_BIN
 from pycmm.settings import PLINK_SLURM_MONITOR_PIPELINE_BIN
 from pycmm.settings import PLINK_HAP_ASSOCS_REPORT_BIN
 from pycmm.settings import PLINK_MERGE_HAP_ASSOCS_BIN
@@ -62,6 +63,7 @@ setup(
               'pycmm.flow',
               'pycmm.proc',
               'pycmm.proc.db',
+              'pycmm.proc.mutrep',
               ],
     scripts=['bin/'+DNASEQ_SLURM_MONITOR_PIPELINE_BIN,
              'bin/pyCMM-dnaseq-pipeline',
@@ -77,6 +79,9 @@ setup(
              'bin/'+MUTREP_FAMILY_REPORT_BIN,
              'bin/'+MUTREP_SUMMARY_REPORT_BIN,
              'bin/pyCMM-mutrep-create-job-setup-file',
+             'bin/pyCMM-mutrepdb-create-job-setup-file',
+             'bin/'+MUTREPDB_SEQ_REPORT_BIN,
+             'bin/pyCMM-mutrepdb-controller',
              'bin/pyCMM-plink-create-job-setup-file',
              'bin/pyCMM-plink-pipeline',
              'bin/'+PLINK_SLURM_MONITOR_PIPELINE_BIN,
