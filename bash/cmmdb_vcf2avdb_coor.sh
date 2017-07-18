@@ -77,6 +77,7 @@ cmd+=" -format vcf4old"
 cmd+=" $tabix_file"
 cmd+=" --includeinfo"
 cmd+=" | awk -F '\t' '{ printf \"$printf_phrase\n\", $param_phrase}'"
+cmd+=" | vcf-sort"
 cmd+=" >> $out_file"
 eval_cmd "$cmd"
 

@@ -445,7 +445,6 @@ class TestQryCall(SafeTester):
                          "shared mutation cannot be correctly determined")
         qry_record = qry_records.next()
         qry_record = qry_records.next()
-        self.dbg(qry_record)
         self.assertEqual(qry_record.gt["1415-10D"].shared_mutation,
                          False,
                          "shared mutation cannot be correctly determined")
@@ -496,7 +495,7 @@ class TestSQLiteDBReader(SafeTester):
         dbr.filter_non_intergenic = True
         qry_records = dbr.get_qry_records()
         self.assertEqual(len(list(qry_records)),
-                         23,
+                         21,
                          "non-intergenic variants cannot be correctly determined")
 
     @unittest.skipUnless(FULL_SYSTEM_TEST or DBREADER_TEST or DB_TEST, "taking too long time to test")
@@ -524,7 +523,7 @@ class TestSQLiteDBReader(SafeTester):
         db_reader.filter_non_upstream = True
         qry_records = db_reader.get_qry_records()
         self.assertEqual(len(list(qry_records)),
-                         27,
+                         25,
                          "non-upstream variants cannot be correctly determined")
 
     @unittest.skipUnless(FULL_SYSTEM_TEST or DBREADER_TEST or DB_TEST, "taking too long time to test")

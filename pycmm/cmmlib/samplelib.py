@@ -116,7 +116,7 @@ class Dataset(CMMParams):
         self.__parse_samples_list()
 
     def get_raw_obj_str(self, *args, **kwargs):
-        raw_repr = super(Family, self).get_raw_obj_str(*args, **kwargs)
+        raw_repr = super(Dataset, self).get_raw_obj_str(*args, **kwargs)
         raw_repr["daaset id"] = self.dataset_id
         raw_repr["samples list"] = self.samples_list
         return raw_repr

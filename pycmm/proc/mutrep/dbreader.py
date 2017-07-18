@@ -559,7 +559,8 @@ class SQLiteDBReader(SQLiteDB):
         or_clause = []
         for tbl_name in self.__sample_tbls:
             col_name = tbl_name.replace("gtz_", "") + "_FILTER"
-            or_clause.append(col_name + " IS NOT NULL")
+            or_clause.append(col_name + " == 'PASS'")
+            or_clause.append(col_name + " == '.'")
         where_clause.append("(" + " OR ".join(or_clause) + ")")
         if self.filter_genes is not None:
             or_clause = []
