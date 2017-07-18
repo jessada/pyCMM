@@ -14,6 +14,7 @@ from pycmm.proc.db.connector import TBL_NAME_ALL_GTZ_ANNOS
 from pycmm.proc.db.connector import REF_MUTATED_COL_NAME
 
 CONNECTOR_TEST = False
+CONNECTOR_TEST = True
 
 
 class TestSQLiteDB(SafeTester):
@@ -101,27 +102,6 @@ class TestSQLiteDB(SafeTester):
         self.assertEqual(samples_id[4],
                          "Br-20",
                          "SQLiteDB cannot correctly update system table info")
-
-    @unittest.skipUnless(FULL_SYSTEM_TEST or CONNECTOR_TEST or DB_TEST, "taking too long time to test")
-    def test_update_gtz_coors_1(self):
-        """ test if the gtz coordinates can be written down"""
-
-        self.init_test(self.current_func_name)
-        db_file = join_path(self.working_dir,
-                            self.current_func_name+".db")
-        db = SQLiteDB(db_file, verbose=False)
-        coors1 = []
-        coors1.append(("1", 10000, "G", "A"))
-        coors1.append(("1", 20000, "G", "T"))
-        db._update_gtz_coors(coors1) 
-        coors2 = []
-        coors2.append(("1", 10000, "G", "A"))
-        coors2.append(("3", 20000, "G", "T"))
-        coors2.append(("X", 80000, "A", "T"))
-        db._update_gtz_coors(coors2) 
-        self.assertEqual(db.count_rows(TBL_NAME_GTZ_COORS),
-                         4,
-                         "SQLiteDB cannot correctly update gtz coordinates")
 
     @unittest.skipUnless(FULL_SYSTEM_TEST or CONNECTOR_TEST or DB_TEST, "taking too long time to test")
     def test_join_all_gtz_anno_1(self):

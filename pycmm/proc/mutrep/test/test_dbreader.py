@@ -231,7 +231,8 @@ class TestQryCall(SafeTester):
         jobs_setup_file = self.__create_jobs_setup_file(sample_info=sample_info)
         dbc= SQLiteDBController(jobs_setup_file, verbose=False)
         dbr = SQLiteDBReader(db_file, family_infos=dbc.families_info, verbose=False)
-        self.assertEqual(dbr.count_rows(TBL_NAME_ALL_GTZ_ANNOS),
+        qry_records = dbr.get_qry_records()
+        self.assertEqual(len(list(qry_records)),
                          18,
                          "SQLiteDBController cannot correctly execute db jobs")
         qry_records = dbr.get_qry_records()
@@ -487,11 +488,15 @@ class TestSQLiteDBReader(SafeTester):
         self.init_test(self.current_func_name)
         db_file = join_path(self.data_dir,
                             'input.db')
-        db_reader = SQLiteDBReader(db_file, verbose=False)
-        db_reader.filter_non_intergenic = True
-        qry_records = db_reader.get_qry_records()
+        sample_info = join_path(self.data_dir,
+                                "sample.info")
+        jobs_setup_file = self.__create_jobs_setup_file(sample_info=sample_info)
+        dbc= SQLiteDBController(jobs_setup_file, verbose=False)
+        dbr = SQLiteDBReader(db_file, family_infos=dbc.families_info, verbose=False)
+        dbr.filter_non_intergenic = True
+        qry_records = dbr.get_qry_records()
         self.assertEqual(len(list(qry_records)),
-                         31,
+                         23,
                          "non-intergenic variants cannot be correctly determined")
 
     @unittest.skipUnless(FULL_SYSTEM_TEST or DBREADER_TEST or DB_TEST, "taking too long time to test")

@@ -7,6 +7,7 @@ from pycmm.template import SafeTester
 from pycmm.cmmlib.xlslib import XlsUtils
 from pycmm.cmmlib.colorlib import COLORS_RGB
 from pycmm.settings import XLS_TEST
+from pycmm.settings import DB_TEST
 #from pycmm.settings import DFLT_MUTREP_FREQ_RATIOS
 from pycmm.settings import ALL_MUTREP_ANNO_COLS
 #from pycmm.settings import MT_COLS_TAG
@@ -313,7 +314,7 @@ class TestMutRepController(SafeTester):
                          'SRC',
                          "MutRepController cannot correctly read report layout info 'color genes' from jobs setup file")
 
-    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST, "taking too long time to test")
+    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST or DB_TEST, "taking too long time to test")
     def test_select_dataset_1(self):
         """ test selection only rows with samples information """
 
@@ -379,7 +380,7 @@ class TestMutRepController(SafeTester):
                          "Incorrect number of rows"
                          )
 
-    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST, "taking too long time to test")
+    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST or DB_TEST, "taking too long time to test")
     def test_gen_report_2(self):
         """ test with multiple report_regions """
 
@@ -394,7 +395,7 @@ class TestMutRepController(SafeTester):
                          8,
                          "Incorrect number of rows")
 
-#    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST, "taking too long time to test")
+#    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST or DB_TEST, "taking too long time to test")
 #    def test_summary_report_3(self):
 #        """
 #        test if mutations with more than one alternate alleles in summary
@@ -423,7 +424,7 @@ class TestMutRepController(SafeTester):
 #                         "information of mutations with more than one alternate alleles are incorrect"
 #                         )
 #
-#    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST, "taking too long time to test")
+#    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST or DB_TEST, "taking too long time to test")
 #    def test_summary_report_4(self):
 #        """ test summary with multiple report_regions and many sample infos """
 #
@@ -458,7 +459,7 @@ class TestMutRepController(SafeTester):
 #                         "Incorrect number of sheets"
 #                         )
 #
-#    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST, "taking too long time to test")
+#    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST or DB_TEST, "taking too long time to test")
 #    def test_summary_report_6(self):
 #        """ test if unicode character 'ö' is allowed in the report """
 #
@@ -485,7 +486,7 @@ class TestMutRepController(SafeTester):
 #                         "report with swedish unicode character cannot be generated correctly"
 #                         )
 #
-    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST, "taking too long time to test")
+    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST or DB_TEST, "taking too long time to test")
     def test_expression_action_del_row_1(self):
         """
         test if expreesion patterns and expression actions can be used
@@ -493,7 +494,7 @@ class TestMutRepController(SafeTester):
         """
 
         self.init_test(self.current_func_name)
-        jobs_setup_file = self.__create_jobs_setup_file(expression_patterns='exp_ns_snv:"ExonicFunc_refGene"==\'synonymous_SNV\'',
+        jobs_setup_file = self.__create_jobs_setup_file(expression_patterns='exp_ns_snv:"ExonicFunc.refGene"==\'synonymous_SNV\'',
                                                         expression_usages="exp_ns_snv:DELETE_ROW",
                                                         )
         mc = MutRepController(jobs_setup_file, verbose=False)
@@ -504,7 +505,7 @@ class TestMutRepController(SafeTester):
                          "Incorrect number of rows"
                          )
 
-    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST, "taking too long time to test")
+    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST or DB_TEST, "taking too long time to test")
     def test_expression_action_del_row_2(self):
         """
         test if expreesion patterns and expression actions can be used
@@ -523,7 +524,7 @@ class TestMutRepController(SafeTester):
                          "Incorrect number of rows"
                          )
 
-    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST, "taking too long time to test")
+    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST or DB_TEST, "taking too long time to test")
     def test_expression_action_del_row_3(self):
         """
         test if expreesion patterns and expression actions can be used
@@ -546,7 +547,7 @@ class TestMutRepController(SafeTester):
                          "Incorrect number of rows"
                          )
 
-    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST, "taking too long time to test")
+    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST or DB_TEST, "taking too long time to test")
     def test_expression_action_del_row_4(self):
         """
         test if expreesion patterns and expression actions can be used
@@ -557,7 +558,7 @@ class TestMutRepController(SafeTester):
         anno_cols = list(DFLT_TEST_MUTREP_COLS)
         anno_cols.append("OAF_EARLYONSET_AF")
         anno_cols.append("dpsi_zscore")
-        jobs_setup_file = self.__create_jobs_setup_file(expression_patterns='true_synonymous:("dpsi_zscore"!=\'\')and(float("dpsi_zscore")>-2)and("ExonicFunc_refGene"==\'synonymous_SNV\')and(float("dpsi_zscore")<2)',
+        jobs_setup_file = self.__create_jobs_setup_file(expression_patterns='true_synonymous:("dpsi_zscore"!=\'\')and(float("dpsi_zscore")>-2)and("ExonicFunc.refGene"==\'synonymous_SNV\')and(float("dpsi_zscore")<2)',
                                                         expression_usages="true_synonymous:DELETE_ROW",
                                                         anno_cols=anno_cols,
                                                         )
@@ -569,7 +570,7 @@ class TestMutRepController(SafeTester):
                          "Incorrect number of rows"
                          )
 
-    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST, "taking too long time to test")
+    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST or DB_TEST, "taking too long time to test")
     def test_expression_action_del_row_5(self):
         """
         test deleting rows using max_ref_maf column
@@ -591,7 +592,7 @@ class TestMutRepController(SafeTester):
                          "Incorrect number of rows"
                          )
 
-    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST, "taking too long time to test")
+    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST or DB_TEST, "taking too long time to test")
     def test_expression_action_color_row_1(self):
         """
         test if expreesion patterns and expression actions can be used
@@ -600,14 +601,14 @@ class TestMutRepController(SafeTester):
 
         self.init_test(self.current_func_name)
         jobs_setup_file = self.__create_jobs_setup_file(report_regions="6:78171940-78172992,18:28610987-28611790",
-                                                        expression_patterns='exp_splicing:"Func_refGene"==\'splicing\'',
+                                                        expression_patterns='exp_splicing:"Func.refGene"==\'splicing\'',
                                                         expression_usages="exp_splicing:COLOR_ROW:ROSY_BROWN",
 #                                                        call_detail="YES",
                                                         )
         mc = MutRepController(jobs_setup_file, verbose=False)
         xls_file = mc.gen_report(mc.report_layout.report_regions)
         xu = XlsUtils(xls_file)
-        col_idx = xu.get_col_idx(col_name="Func_refGene", sheet_idx=0)
+        col_idx = xu.get_col_idx(col_name="Func.refGene", sheet_idx=0)
         self.assertEqual(xu.get_cell_value(8, col_idx, sheet_idx=0),
                          "splicing",
                          "Incorrect cell value"
@@ -626,7 +627,7 @@ class TestMutRepController(SafeTester):
                             "Incorrect color"
                             )
 
-    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST, "taking too long time to test")
+    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST or DB_TEST, "taking too long time to test")
     def test_expression_action_color_col_1(self):
         """
         test if expreesion patterns and expression actions can be used
@@ -634,14 +635,14 @@ class TestMutRepController(SafeTester):
         """
 
         self.init_test(self.current_func_name)
-        jobs_setup_file = self.__create_jobs_setup_file(expression_patterns='exp_exonic:"Func_refGene"==\'exonic\',exp_ns_snv:"ExonicFunc_refGene"==\'nonsynonymous_SNV\'',
-                                                        expression_usages="exp_exonic:COLOR_ROW:ROSY_BROWN,exp_ns_snv:COLOR_COLUMN:cytoBand:TEAL,exp_exonic:COLOR_COLUMN:Gene_refGene:YELLOW",
+        jobs_setup_file = self.__create_jobs_setup_file(expression_patterns='exp_exonic:"Func.refGene"==\'exonic\',exp_ns_snv:"ExonicFunc.refGene"==\'nonsynonymous_SNV\'',
+                                                        expression_usages="exp_exonic:COLOR_ROW:ROSY_BROWN,exp_ns_snv:COLOR_COLUMN:cytoBand:TEAL,exp_exonic:COLOR_COLUMN:Gene.refGene:YELLOW",
 #                                                        call_detail="YES",
                                                         )
         mc = MutRepController(jobs_setup_file, verbose=False)
         xls_file = mc.gen_report(report_regions="6:78171940-78172992,18:28610987-28611790")
         xu = XlsUtils(xls_file)
-        col_idx = xu.get_col_idx(col_name="Func_refGene", sheet_idx=0)
+        col_idx = xu.get_col_idx(col_name="Func.refGene", sheet_idx=0)
         self.assertEqual(xu.get_cell_value(4, col_idx, sheet_idx=0),
                          "exonic",
                          "Incorrect cell value"
@@ -665,14 +666,14 @@ class TestMutRepController(SafeTester):
                          exp_rgb,
                          "Incorrect color"
                          )
-        col_idx = xu.get_col_idx(col_name="Gene_refGene", sheet_idx=0)
+        col_idx = xu.get_col_idx(col_name="Gene.refGene", sheet_idx=0)
         exp_rgb = "FF" + COLORS_RGB["YELLOW"][-6:]
         self.assertEqual(xu.get_cell_rgb(4, col_idx, sheet_idx=0),
                          exp_rgb,
                          "Incorrect color"
                          )
 
-    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST, "taking too long time to test")
+    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST or DB_TEST, "taking too long time to test")
     def test_expression_action_color_col_2(self):
         """
         test multiple coloring in one column with different expression
@@ -723,7 +724,7 @@ class TestMutRepController(SafeTester):
                          "Incorrect color"
                          )
 
-    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST, "taking too long time to test")
+    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST or DB_TEST, "taking too long time to test")
     def test_coloring_shared_1(self):
         """ test coloring shared samples when the option is on """
 
@@ -815,7 +816,7 @@ class TestMutRepController(SafeTester):
                          "Incorrect color"
                          )
 
-#    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST, "taking too long time to test")
+#    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST or DB_TEST, "taking too long time to test")
 #    def test_cal_est_kvot_1(self):
 #        """
 #        test variable type handling in test_cal_ors
@@ -846,7 +847,7 @@ class TestMutRepController(SafeTester):
 #                         "Incorrect number of rows"
 #                         )
 #
-#    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST, "taking too long time to test")
+#    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST or DB_TEST, "taking too long time to test")
 #    def test_cal_est_kvot_2(self):
 #        """
 #        test if there is mutation in reference for cal_est_ors
@@ -918,7 +919,7 @@ class TestMutRepController(SafeTester):
 #                         "Incorect ORS estimation"
 #                         )
 #
-#    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST, "taking too long time to test")
+#    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST or DB_TEST, "taking too long time to test")
 #    def test_criteria_sheet_1(self):
 #        """ test summary with multiple report_regions and many sample infos """
 #
@@ -959,7 +960,7 @@ class TestMutRepController(SafeTester):
 #                         "Incorrect number of rows the criteria sheet"
 #                         )
 
-#    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST, "taking too long time to test")
+#    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST or DB_TEST, "taking too long time to test")
     def test_header_corrections_1(self):
         """ test if column headers can be replaced with better names  """
 
@@ -971,7 +972,7 @@ class TestMutRepController(SafeTester):
         header_corrections = "OAF_EARLYONSET_AF:EARLYONSET_AF"
         header_corrections += ",OAF_BRC_CRC_PROSTATE_AF:ALL_EXOME_AF"
         jobs_setup_file = self.__create_jobs_setup_file(header_corrections=header_corrections,
-                                                        anno_cols=anno_cols,
+#                                                        anno_cols=anno_cols,
                                                         )
         mc = MutRepController(jobs_setup_file, verbose=False)
         xls_file = mc.gen_report(report_regions="22")
@@ -990,7 +991,7 @@ class TestMutRepController(SafeTester):
                          "Incorect allele frequency"
                          )
 
-#    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST, "taking too long time to test")
+#    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST or DB_TEST, "taking too long time to test")
 #    def test_calling_gq_1(self):
 #        """ test if calling genotyping quality can be displayed correctly in general cases """
 #
@@ -1045,7 +1046,7 @@ class TestMutRepController(SafeTester):
 #                         "Incorect GQ value"
 #                         )
 #
-    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST, "taking too long time to test")
+    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST or DB_TEST, "taking too long time to test")
     def test_filter_genes_1(self):
         """
         test if gene search can be done correctly
@@ -1086,7 +1087,7 @@ class TestMutRepController(SafeTester):
                          "Incorrect number of rows in the variants sheet"
                          )
 
-    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST, "taking too long time to test")
+    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST or DB_TEST, "taking too long time to test")
     def test_color_genes_1(self):
         """
         test if basic gene search (one gene, full name) can be done correctly
@@ -1105,7 +1106,7 @@ class TestMutRepController(SafeTester):
                          48,
                          "Incorrect number of rows"
                          )
-        refgene_col_idx = xu.get_col_idx(GENE_REFGENE_COL_NAME.replace(".", "_"))
+        refgene_col_idx = xu.get_col_idx(GENE_REFGENE_COL_NAME)
         exp_rgb = "FF" + COLORS_RGB["XLS_GREEN"][-6:]
         self.assertEqual(xu.get_cell_rgb(2, refgene_col_idx),
                          RGB_NO_FILL,
@@ -1124,7 +1125,7 @@ class TestMutRepController(SafeTester):
                          "Incorrect color"
                          )
 
-    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST, "taking too long time to test")
+    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST or DB_TEST, "taking too long time to test")
     def test_color_genes_2(self):
         """
         test if a little advance gene search (two genes, full name) can be done correctly
@@ -1143,7 +1144,7 @@ class TestMutRepController(SafeTester):
                          48,
                          "Incorrect number of rows"
                          )
-        refgene_col_idx = xu.get_col_idx(GENE_REFGENE_COL_NAME.replace(".", "_"))
+        refgene_col_idx = xu.get_col_idx(GENE_REFGENE_COL_NAME)
         exp_rgb = "FF" + COLORS_RGB["XLS_GREEN"][-6:]
         self.assertEqual(xu.get_cell_rgb(2, refgene_col_idx),
                          exp_rgb,
@@ -1162,7 +1163,7 @@ class TestMutRepController(SafeTester):
                          "Incorrect color"
                          )
 
-    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST, "taking too long time to test")
+    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST or DB_TEST, "taking too long time to test")
     def test_coloring_zygosity_1(self):
         """ test coloring shared samples when the option is off """
 
@@ -1257,7 +1258,7 @@ class TestMutRepController(SafeTester):
                          "Incorrect color"
                          )
 
-    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST, "taking too long time to test")
+    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST or DB_TEST, "taking too long time to test")
     def test_coloring_zygosity_2(self):
         """ test coloring shared samples when the option is on """
 
@@ -1350,7 +1351,7 @@ class TestMutRepController(SafeTester):
                          "Incorrect color"
                          )
 
-#    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST, "taking too long time to test")
+#    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST or DB_TEST, "taking too long time to test")
 #    def test_datasets_1(self):
 #        """
 #        test if samples in mutation report can be displayed in groups
@@ -1427,7 +1428,7 @@ class TestMutRepController(SafeTester):
 #                         "Incorrect cell value"
 #                         )
 #
-#    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST, "taking too long time to test")
+#    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST or DB_TEST, "taking too long time to test")
 #    def test_datasets_2(self):
 #        """
 #        test if samples in mutation report can be displayed in groups
@@ -1504,7 +1505,7 @@ class TestMutRepController(SafeTester):
 #                         "Incorrect cell value"
 #                         )
 
-    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST, "taking too long time to test")
+    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST or DB_TEST, "taking too long time to test")
     def test_show_shared_variants_1(self):
         """ test if shared mutations can be shown """
 
@@ -1552,7 +1553,7 @@ class TestMutRepController(SafeTester):
                          "Incorrect color"
                          )
 
-#    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST, "taking too long time to test")
+#    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST or DB_TEST, "taking too long time to test")
 #    def test_filter_non_recessive_gene_1(self):
 #        """ test basic filtering non-recessive gene """
 #
