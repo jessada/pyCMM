@@ -423,69 +423,24 @@ class TestMutRepController(SafeTester):
 #                                         ),
 #                         "information of mutations with more than one alternate alleles are incorrect"
 #                         )
-#
-#    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST or DB_TEST, "taking too long time to test")
-#    def test_summary_report_4(self):
-#        """ test summary with multiple report_regions and many sample infos """
-#
-#        self.init_test(self.current_func_name)
-#        db_file = join_path(self.data_dir,
-#                                        "chr6_18.vcf.gz")
-#        project_name = self.test_function
-#        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
-#                                                        db_file=db_file,
-#                                                        report_regions="6:78171940-78172992,18:28610987-28611790",
-#                                                        sample_info="1234:Alb-31:Br-466,6067:Br-432:Al-161:Br-504,6789:Al-65",
-#                                                        call_detail="YES",
-#                                                        )
-#        pl = MutRepController(jobs_setup_file=jobs_setup_file)
-#        pl.gen_summary_report(pl.report_layout.report_regions)
-#        xls_file = join_path(self.working_dir,
-#                             "rpts",
-#                             project_name+"_summary.xlsx")
-#        xu = XlsUtils(xls_file)
-#        self.assertEqual(xu.count_rows(sheet_idx=0),
-#                         10,
-#                         "Incorrect number of rows"
-#                         )
-#        self.assertEqual(xu.count_cols(col_name1="1234-Alb-31",
-#                                       col_name2="6789-Al-65",
-#                                       sheet_idx=0),
-#                         11,
-#                         "Incorrect number of columns"
-#                         )
-#        self.assertEqual(xu.nsheets,
-#                         2,
-#                         "Incorrect number of sheets"
-#                         )
-#
-#    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST or DB_TEST, "taking too long time to test")
-#    def test_summary_report_6(self):
-#        """ test if unicode character 'ö' is allowed in the report """
-#
-#        self.init_test(self.current_func_name)
-#        db_file = join_path(self.data_dir,
-#                                        "input.vcf.gz")
-#        rows_filter_actions = JOBS_SETUP_RPT_FILTER_NON_INTRONIC
-#        project_name = self.test_function
-#        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
-#                                                        db_file=db_file,
-#                                                        anno_excl_tags=DFLT_TEST_ANNO_EXCL_TAGS,
-#                                                        report_regions=None,
-#                                                        call_detail=False,
-#                                                        rows_filter_actions=rows_filter_actions,
-#                                                        )
-#        pl = MutRepController(jobs_setup_file=jobs_setup_file)
-#        pl.gen_summary_report(pl.report_layout.report_regions)
-#        xls_file = join_path(self.working_dir,
-#                             "rpts",
-#                             project_name+"_summary.xlsx")
-#        xu = XlsUtils(xls_file)
-#        self.assertEqual(xu.count_rows(),
-#                         2,
-#                         "report with swedish unicode character cannot be generated correctly"
-#                         )
-#
+
+    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST or DB_TEST, "taking too long time to test")
+    def test_unicode_1(self):
+        """ test if unicode character 'ö' is allowed in the report """
+
+        self.init_test(self.current_func_name)
+        rows_filter_actions = JOBS_SETUP_RPT_FILTER_NON_INTRONIC
+        jobs_setup_file = self.__create_jobs_setup_file(anno_excl_tags=DFLT_TEST_ANNO_EXCL_TAGS,
+                                                        rows_filter_actions=rows_filter_actions,
+                                                        )
+        mc = MutRepController(jobs_setup_file, verbose=False)
+        xls_file = mc.gen_report(report_regions="17")
+        xu = XlsUtils(xls_file)
+        self.assertEqual(xu.count_rows(),
+                         2,
+                         "report with swedish unicode character cannot be generated correctly"
+                         )
+
     @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST or DB_TEST, "taking too long time to test")
     def test_expression_action_del_row_1(self):
         """
