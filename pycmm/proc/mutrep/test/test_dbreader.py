@@ -941,6 +941,7 @@ class TestQryRecord(SafeTester):
                             'input.db')
         db_reader = SQLiteDBReader(db_file, verbose=False)
         qry_records = db_reader.get_qry_records()
+
 #    def test_qry_eval_2(self):
 #        """
 #        test qry_eval with multi alleleic INFO
@@ -1202,36 +1203,6 @@ class TestQryRecord(SafeTester):
                          '0.975506865848027',
                          "values of ExAC constraint cannot be correctly determined")
 
-#    def test_parse_exac_constraint_2(self):
-#        """
-#        test parsing exac constraint for vcf without the annotation
-#        """
-#
-#        self.init_test(self.current_func_name)
-#        db_file = join_path(self.data_dir,
-#                            'input.vcf.gz')
-#        db_reader = SQLiteDBReader(db_file)
-#        qry_record = db_reader.next()
-#        self.assertTrue(qry_record.get_anno(EXAC03_CONSTRAINT_EXP_SYN_COL_NAME) == '',
-#                        "values of ExAC constraint cannot be correctly determined")
-#
-#    def test_parse_exac_constraint_4(self):
-#        """
-#        test parsing exac constraint for vcf without the annotation
-#        """
-#
-#        self.init_test(self.current_func_name)
-#        db_file = join_path(self.data_dir,
-#                            'input.vcf.gz')
-#        db_reader = SQLiteDBReader(db_file)
-#        qry_record = db_reader.next()
-#        self.assertEqual(qry_record.get_anno(EXAC03_CONSTRAINT_N_LOF_COL_NAME, 1),
-#                         '',
-#                         "values of ExAC constraint cannot be correctly determined")
-#        self.assertEqual(qry_record.get_anno(EXAC03_CONSTRAINT_PLI_COL_NAME, 2),
-#                         '',
-#                         "values of ExAC constraint cannot be correctly determined")
-#
     @unittest.skipUnless(FULL_SYSTEM_TEST or DBREADER_TEST or DB_TEST, "taking too long time to test")
     def test_parse_intervar_1(self):
         """

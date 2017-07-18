@@ -137,6 +137,7 @@ class QryRecord(pyCMMBase):
         self.__max_ref_maf = None
         self.__pathogenic_count = None
         self.__parse_genotype()
+        self.__added_anno = {}
         self.__cal_shared()
 
     def get_raw_obj_str(self, *args, **kwargs):
@@ -275,6 +276,8 @@ class QryRecord(pyCMMBase):
         # return the info
         if anno_col in self.__anno_col_idxs:
             return self.__raw_qry[self.__anno_col_idxs[anno_col]]
+        if anno_col in self.__added_anno:
+            return self.__added_anno[anno_col]
         return None
 
     def get_anno(self, anno_col):
@@ -307,6 +310,9 @@ class QryRecord(pyCMMBase):
             ):
             anno_val = ""
         return anno_val
+
+    def add_anno(self, var_name, value):
+        self.__added_anno[var_name] = value
 
     def has_mutation(self, samples_id):
         """

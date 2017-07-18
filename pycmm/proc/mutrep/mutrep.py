@@ -6,7 +6,7 @@ from pycmm.proc import init_jobs_setup_file
 from pycmm.proc import get_func_arg
 from collections import defaultdict
 from collections import OrderedDict
-#from collections import namedtuple
+from collections import namedtuple
 from pycmm.settings import ALL_MUTREP_ANNO_COLS
 #from pycmm.settings import EST_KVOT_COLS
 #from pycmm.settings import DFLT_MUTREP_FREQ_RATIOS
@@ -31,13 +31,13 @@ from pycmm.settings import DFLT_HEADER_CORRECTIONS
 #from pycmm.settings import EXAC03_CONSTRAINT_COL_NAMES
 #from pycmm.settings import EXAC03_CONSTRAINT_COL_NAME
 #from pycmm.settings import MAX_REF_MAF_COL_NAME
-#from pycmm.settings import COMPOUND_HETEROZYGOTE_AFFECTED_COUNT_COL_NAME
-#from pycmm.settings import COMPOUND_HETEROZYGOTE_UNAFFECTED_COUNT_COL_NAME
-#from pycmm.settings import COMPOUND_HETEROZYGOTE_FREQ_RATIO_COL_NAME
-#from pycmm.settings import HOMOZYGOTE_AFFECTED_COUNT_COL_NAME
-#from pycmm.settings import HOMOZYGOTE_UNAFFECTED_COUNT_COL_NAME
-#from pycmm.settings import HOMOZYGOTE_FREQ_RATIO_COL_NAME
-#from pycmm.settings import RECESSIVE_STUDY_COL_NAMES
+from pycmm.settings import COMPOUND_HETEROZYGOTE_AFFECTED_COUNT_COL_NAME
+from pycmm.settings import COMPOUND_HETEROZYGOTE_UNAFFECTED_COUNT_COL_NAME
+from pycmm.settings import COMPOUND_HETEROZYGOTE_FREQ_RATIO_COL_NAME
+from pycmm.settings import HOMOZYGOTE_AFFECTED_COUNT_COL_NAME
+from pycmm.settings import HOMOZYGOTE_UNAFFECTED_COUNT_COL_NAME
+from pycmm.settings import HOMOZYGOTE_FREQ_RATIO_COL_NAME
+from pycmm.settings import RECESSIVE_STUDY_COL_NAMES
 from pycmm.settings import FORMAT_COLS
 from pycmm.settings import FORMAT_COL_FLOAT
 from pycmm.settings import FORMAT_COL_INT
@@ -61,8 +61,6 @@ from pycmm.proc.mutrep.dbreader import SQLiteDBReader
 from pycmm.proc.mutrep.dbreader import GT_HOM
 from pycmm.proc.mutrep.dbreader import GT_HET
 from pycmm.proc.db.connector import REF_MUTATED_COL_NAME
-#from pycmm.cmmlib.tamodel import CMMGT_HOMOZYGOTE
-#from pycmm.cmmlib.tamodel import CMMGT_HETEROZYGOTE
 
 ACTION_DELETE_ROW = "DELETE_ROW"
 ACTION_COLOR_ROW = "COLOR_ROW"
@@ -76,10 +74,10 @@ DFLT_COLOR_HET_ZYGO = 'XLS_LIGHT_GREEN'
 DFLT_COLOR_HOM_ZYGO = 'XLS_DARK_GREEN'
 CELL_TYPE_HET_ZYGO = 'HET_ZYGO'
 CELL_TYPE_HOM_ZYGO = 'HOM_ZYGO'
-#DFLT_COLOR_HET_RECESSIVE = 'XLS_GREEN'
-#DFLT_COLOR_HOM_RECESSIVE = 'XLS_ORANGE'
-#CELL_TYPE_HET_RECESSIVE = 'HET_RECESSIVE'
-#CELL_TYPE_HOM_RECESSIVE = 'HOM_RECESSIVE'
+DFLT_COLOR_HET_RECESSIVE = 'XLS_GREEN'
+DFLT_COLOR_HOM_RECESSIVE = 'XLS_ORANGE'
+CELL_TYPE_HET_RECESSIVE = 'HET_RECESSIVE'
+CELL_TYPE_HOM_RECESSIVE = 'HOM_RECESSIVE'
 DFLT_COLOR_SEPARATOR = 'XLS_GRAY1_2'
 CELL_TYPE_SEPARATOR = 'SEPARATOR'
 DFLT_COLOR_COLOR_GENE = 'XLS_GREEN'
@@ -157,10 +155,9 @@ LAYOUT_VCF_COLS = XLS_FILTER_COL_IDX + 1
 gene_refgene_col_name = GENE_REFGENE_COL_NAME.replace(".", "_")
 gene_refgene_col_name = GENE_REFGENE_COL_NAME
 
-#RECESSIVE_INFO_IS_RECESSIVE = "is_recessive"
-#
-#AR_SAMPLES_ID = "ar_samples_id"
-#
+RECESSIVE_INFO_IS_RECESSIVE = "is_recessive"
+AR_SAMPLES_ID = "ar_samples_id"
+
 #VcfRecordBuffer = namedtuple('VcfRecordBuffer',
 #                             'qry_record allele_idx')
 #
@@ -584,8 +581,8 @@ class ReportLayout(CMMParams):
         self.__cell_colors[CELL_TYPE_HOM_SHARED] = DFLT_COLOR_HOM_SHARED
         self.__cell_colors[CELL_TYPE_HET_ZYGO] = DFLT_COLOR_HET_ZYGO
         self.__cell_colors[CELL_TYPE_HOM_ZYGO] = DFLT_COLOR_HOM_ZYGO
-#        self.__cell_colors[CELL_TYPE_HET_RECESSIVE] = DFLT_COLOR_HET_RECESSIVE
-#        self.__cell_colors[CELL_TYPE_HOM_RECESSIVE] = DFLT_COLOR_HOM_RECESSIVE
+        self.__cell_colors[CELL_TYPE_HET_RECESSIVE] = DFLT_COLOR_HET_RECESSIVE
+        self.__cell_colors[CELL_TYPE_HOM_RECESSIVE] = DFLT_COLOR_HOM_RECESSIVE
         self.__cell_colors[CELL_TYPE_SEPARATOR] = DFLT_COLOR_SEPARATOR
         self.__cell_colors[CELL_TYPE_COLOR_GENE] = DFLT_COLOR_COLOR_GENE
 
@@ -605,14 +602,14 @@ class ReportLayout(CMMParams):
     def cell_color_hom_zygo(self):
         return self.__cell_colors[CELL_TYPE_HOM_ZYGO]
 
-#    @property
-#    def cell_color_het_recessive(self):
-#        return self.__cell_colors[CELL_TYPE_HET_RECESSIVE]
-#
-#    @property
-#    def cell_color_hom_recessive(self):
-#        return self.__cell_colors[CELL_TYPE_HOM_RECESSIVE]
-#
+    @property
+    def cell_color_het_recessive(self):
+        return self.__cell_colors[CELL_TYPE_HET_RECESSIVE]
+
+    @property
+    def cell_color_hom_recessive(self):
+        return self.__cell_colors[CELL_TYPE_HOM_RECESSIVE]
+
     @property
     def cell_color_separator(self):
         return self.__cell_colors[CELL_TYPE_SEPARATOR]
@@ -801,7 +798,7 @@ class MutRepController(CMMPipeline):
                            dflt_cell_fmt,
                            ):
         next_col = start_col
-#        ar_samples_id = qry_record.get_info(AR_SAMPLES_ID)
+        ar_samples_id = qry_record.get_anno(AR_SAMPLES_ID)
         for sample_id in samples_id:
             gt = qry_record.gt[sample_id]
             # determine cell(s) format
@@ -826,14 +823,14 @@ class MutRepController(CMMPipeline):
                     zygo_fmt = dflt_cell_fmt
             else:
                 zygo_fmt = dflt_cell_fmt
-#            if (self.report_layout.recessive_analysis and
-#                sample_id in ar_samples_id):
-#                if call.actual_gts[allele_idx] == CMMGT_HOMOZYGOTE:
-#                    hom_zygo_color = self.report_layout.cell_color_hom_recessive
-#                    zygo_fmt = self.plain_fmts[hom_zygo_color]
-#                elif call.actual_gts[allele_idx] == CMMGT_HETEROZYGOTE:
-#                    het_zygo_color = self.report_layout.cell_color_het_recessive
-#                    zygo_fmt = self.plain_fmts[het_zygo_color]
+            if (self.report_layout.recessive_analysis and
+                sample_id in ar_samples_id):
+                if gt.actual_zygo == GT_HOM:
+                    hom_zygo_color = self.report_layout.cell_color_hom_recessive
+                    zygo_fmt = self.plain_fmts[hom_zygo_color]
+                elif gt.actual_zygo == GT_HET:
+                    het_zygo_color = self.report_layout.cell_color_het_recessive
+                    zygo_fmt = self.plain_fmts[het_zygo_color]
 #
             # write content to cell(s)
             next_col = self.__write_sample(ws, row, next_col, gt.raw_zygo, zygo_fmt)
@@ -990,6 +987,86 @@ class MutRepController(CMMPipeline):
             self.info(log_msg)
         return row + 1
 
+    def __filter_non_recessive_gene(self,
+                                    qry_record_buffers,
+                                    ):
+        AnalysisResult = namedtuple('AnalysisResult',
+                                    'ar_samples_id cpd_het_count hom_count')
+        def analyse_samples(qry_record_buffers,
+                            samples_id,
+                            ):
+            ar_samples_id = []
+            cpd_het_count = 0
+            hom_count = 0
+            for sample_id in samples_id:
+                recessive_count = 0
+                cpd_het_found = 0
+                hom_found = False
+                # go through qry_record for the first round
+                # to check if the sample has recessive variants
+                for qry_record in qry_record_buffers:
+                    gt = qry_record.gt[sample_id]
+                    if gt.actual_zygo == GT_HOM:
+                        recessive_count += 2
+                        hom_found = True
+                        cpd_het_found += 1
+                    elif gt.actual_zygo == GT_HET:
+                        recessive_count += 1
+                        cpd_het_found += 1
+                if recessive_count > 1:
+                    ar_samples_id.append(sample_id)
+                if cpd_het_found > 1:
+                    cpd_het_count += 1
+                if hom_found:
+                    hom_count += 1
+            return AnalysisResult(ar_samples_id=ar_samples_id,
+                                  cpd_het_count=cpd_het_count,
+                                  hom_count=hom_count)
+
+        # __filter_non_recessive_gene start
+        # go through all variants of every samples in the gene
+        # and see if any compound heterozygote and homozygote can be found
+        affected_samples_id = map(lambda x: x.sample_id,
+                                  self.affected_samples_list)
+        n_affected_samples = len(affected_samples_id)
+        affected_result = analyse_samples(qry_record_buffers,
+                                           affected_samples_id,
+                                           )
+        unaffected_samples_id = map(lambda x: x.sample_id,
+                                    self.unaffected_samples_list)
+        n_unaffected_samples = len(unaffected_samples_id)
+        unaffected_result = analyse_samples(qry_record_buffers,
+                                             unaffected_samples_id,
+                                             )
+        # go through qry_record for the second round
+        # mark the buffer idx with any affected recessive variants
+        for qry_record in qry_record_buffers:
+            for sample_id in affected_result.ar_samples_id:
+                gt = qry_record.gt[sample_id]
+                if (gt.actual_zygo == GT_HOM or
+                    gt.actual_zygo == GT_HET):
+                    qry_record.add_anno(RECESSIVE_INFO_IS_RECESSIVE,
+                                        True)
+                    qry_record.add_anno(AR_SAMPLES_ID,
+                                        affected_result.ar_samples_id+unaffected_result.ar_samples_id)
+                    qry_record.add_anno(COMPOUND_HETEROZYGOTE_AFFECTED_COUNT_COL_NAME,
+                                        affected_result.cpd_het_count)
+                    qry_record.add_anno(COMPOUND_HETEROZYGOTE_UNAFFECTED_COUNT_COL_NAME,
+                                        unaffected_result.cpd_het_count)
+                    affected_cpd_het_freq = "{:.2f}".format(float(affected_result.cpd_het_count)/float(n_affected_samples))
+                    unaffected_cpd_het_freq = "{:.2f}".format(float(unaffected_result.cpd_het_count)/float(n_unaffected_samples))
+                    qry_record.add_anno(COMPOUND_HETEROZYGOTE_FREQ_RATIO_COL_NAME,
+                                        affected_cpd_het_freq+" vs "+unaffected_cpd_het_freq)
+                    qry_record.add_anno(HOMOZYGOTE_AFFECTED_COUNT_COL_NAME,
+                                        affected_result.hom_count)
+                    qry_record.add_anno(HOMOZYGOTE_UNAFFECTED_COUNT_COL_NAME,
+                                        unaffected_result.hom_count)
+                    affected_hom_freq = "{:.2f}".format(float(affected_result.hom_count)/float(n_affected_samples))
+                    unaffected_hom_freq = "{:.2f}".format(float(unaffected_result.hom_count)/float(n_unaffected_samples))
+                    qry_record.add_anno(HOMOZYGOTE_FREQ_RATIO_COL_NAME,
+                                        affected_hom_freq+" vs "+unaffected_hom_freq)
+                    break
+
     def __write_contents(self,
                          ws,
                          row,
@@ -1002,14 +1079,11 @@ class MutRepController(CMMPipeline):
                                    qry_record_buffers,
                                    ):
             self.__filter_non_recessive_gene(qry_record_buffers)
-            for qry_record_buffer in qry_record_buffers:
-                qry_record = qry_record_buffer.qry_record
-                allele_idx = qry_record_buffer.allele_idx
-                if qry_record.get_info(RECESSIVE_INFO_IS_RECESSIVE): 
+            for qry_record in qry_record_buffers:
+                if qry_record.get_anno(RECESSIVE_INFO_IS_RECESSIVE): 
                     row = self.__write_content(ws,
                                                row,
                                                qry_record,
-                                               allele_idx,
                                                None,
                                                )
             del qry_record_buffers[:]
@@ -1035,54 +1109,46 @@ class MutRepController(CMMPipeline):
                     if qry_record.qry_eval(dra.pattern):
                         delete_row = True
                         break
+#            if (self.report_layout.filter_rare and
+#                not qry_record.is_rare(allele_idx=allele_idx)):
+#                continue
+#            if (self.report_layout.filter_pass_vqsr and
+#                not qry_record.is_pass_vqsr(allele_idx=allele_idx)):
+#                continue
+#            if (self.report_layout.filter_has_mutation and
+#                not qry_record.has_mutation(samples_id, allele_idx)):
+#                continue
+#            if (self.report_layout.filter_has_shared and
+#                not qry_record.has_shared(allele_idx)):
+#                continue
             if delete_row:
                 continue
-            row = self.__write_content(ws,
-                                       row,
-                                       qry_record,
-                                       fam_id)
-#            for allele_idx in xrange(1, len(qry_record.alleles)):
-#                if (self.report_layout.filter_rare and
-#                    not qry_record.is_rare(allele_idx=allele_idx)):
-#                    continue
-#                if (self.report_layout.filter_pass_vqsr and
-#                    not qry_record.is_pass_vqsr(allele_idx=allele_idx)):
-#                    continue
-#                if (self.report_layout.filter_has_mutation and
-#                    not qry_record.has_mutation(samples_id, allele_idx)):
-#                    continue
-#                if (self.report_layout.filter_has_shared and
-#                    not qry_record.has_shared(allele_idx)):
-#                    continue
-#                if self.report_layout.recessive_analysis:
-#                    current_gene = qry_record.get_info(GENE_REFGENE_COL_NAME,
-#                                                       allele_idx)
-#                    # check ing if the current record is a new gene 
-#                    # if yes then filter non recessive variants in the previous gene
-#                    if (previous_gene is not None) and (current_gene != previous_gene):
-#                        row = run_recessive_analysis(ws,
-#                                                     row,
-#                                                     qry_record_buffers,
-#                                                     )
-#                    # accumulate data for the current gene
-#                    buffer = VcfRecordBuffer(qry_record=qry_record,
-#                                             allele_idx=allele_idx)
-#                    qry_record_buffers.append(buffer)
-#                    previous_gene = current_gene
-#                else:
-#                    row = self.__write_content(ws,
-#                                               row,
-#                                               qry_record,
-#                                               allele_idx,
-#                                               fam_id)
-#        # check if filter non recessive gene should be applied with the
-#        # last gene in the chromosome
-#        if (self.report_layout.recessive_analysis and
-#            current_gene is not None):
-#            row = run_recessive_analysis(ws,
-#                                         row,
-#                                         qry_record_buffers,
-#                                         )
+            if self.report_layout.recessive_analysis:
+                current_gene = qry_record.get_anno(GENE_REFGENE_COL_NAME)
+                # check ing if the current record is a new gene 
+                # if yes then filter non recessive variants in the previous gene
+                if (previous_gene is not None) and (current_gene != previous_gene):
+                    row = run_recessive_analysis(ws,
+                                                 row,
+                                                 qry_record_buffers,
+                                                 )
+                # accumulate data for the current gene
+                qry_record_buffers.append(qry_record)
+                previous_gene = current_gene
+            else:
+                row = self.__write_content(ws,
+                                           row,
+                                           qry_record,
+                                           allele_idx,
+                                           fam_id)
+        # check if filter non recessive gene should be applied with the
+        # last gene in the chromosome
+        if (self.report_layout.recessive_analysis and
+            current_gene is not None):
+            row = run_recessive_analysis(ws,
+                                         row,
+                                         qry_record_buffers,
+                                         )
         return row
 
     def __add_muts_sheet(self,
@@ -1138,6 +1204,8 @@ class MutRepController(CMMPipeline):
         self.__anno_cols = self.__reader.init_columns(anno_cols)
         if REF_MUTATED_COL_NAME in self.__anno_cols:
             self.__anno_cols.remove(REF_MUTATED_COL_NAME)
+        if self.report_layout.recessive_analysis:
+            self.__anno_cols += RECESSIVE_STUDY_COL_NAMES
         if not self.has_samples_info:
             self.__reader.init_samples()
         else:
@@ -1263,89 +1331,6 @@ class MutRepController(CMMPipeline):
 #                call_detail.append(fmt + "=" + str(data))
 #        return ":".join(call_detail)
 #
-#    def __filter_non_recessive_gene(self,
-#                                    qry_record_buffers,
-#                                    ):
-#        AnalysisResult = namedtuple('AnalysisResult',
-#                                    'ar_samples_id cpd_het_count hom_count')
-#        def analyse_samples(qry_record_buffers,
-#                            samples_id,
-#                            ):
-#            ar_samples_id = []
-#            cpd_het_count = 0
-#            hom_count = 0
-#            for sample_id in samples_id:
-#                recessive_count = 0
-#                cpd_het_found = 0
-#                hom_found = False
-#                # go through qry_record for the first round
-#                # to check if the sample has recessive variants
-#                for qry_record_buffer in qry_record_buffers:
-#                    qry_record = qry_record_buffer.qry_record
-#                    allele_idx = qry_record_buffer.allele_idx
-#                    call = qry_record.genotype(sample_id)
-#                    if call.actual_gts[allele_idx] == CMMGT_HOMOZYGOTE:
-#                        recessive_count += 2
-#                        hom_found = True
-#                        cpd_het_found += 1
-#                    elif call.actual_gts[allele_idx] == CMMGT_HETEROZYGOTE:
-#                        recessive_count += 1
-#                        cpd_het_found += 1
-#                if recessive_count > 1:
-#                    ar_samples_id.append(sample_id)
-#                if cpd_het_found > 1:
-#                    cpd_het_count += 1
-#                if hom_found:
-#                    hom_count += 1
-#            return AnalysisResult(ar_samples_id=ar_samples_id,
-#                                  cpd_het_count=cpd_het_count,
-#                                  hom_count=hom_count)
-#
-#        # __filter_non_recessive_gene start
-#        # go through all variants of every samples in the gene
-#        # and see if any compound heterozygote and homozygote can be found
-#        affected_samples_id = map(lambda x: x.sample_id,
-#                                  self.affected_samples_list)
-#        n_affected_samples = len(affected_samples_id)
-#        affected_result = analyse_samples(qry_record_buffers,
-#                                           affected_samples_id,
-#                                           )
-#        unaffected_samples_id = map(lambda x: x.sample_id,
-#                                    self.unaffected_samples_list)
-#        n_unaffected_samples = len(unaffected_samples_id)
-#        unaffected_result = analyse_samples(qry_record_buffers,
-#                                             unaffected_samples_id,
-#                                             )
-#        # go through qry_record for the second round
-#        # mark the buffer idx with any affected recessive variants
-#        for qry_record_buffer in qry_record_buffers:
-#            qry_record = qry_record_buffer.qry_record
-#            allele_idx = qry_record_buffer.allele_idx
-#            for sample_id in affected_result.ar_samples_id:
-#                call = qry_record.genotype(sample_id)
-#                if (call.actual_gts[allele_idx] == CMMGT_HOMOZYGOTE or
-#                    call.actual_gts[allele_idx] == CMMGT_HETEROZYGOTE):
-#                    qry_record.add_info(RECESSIVE_INFO_IS_RECESSIVE,
-#                                        True)
-#                    qry_record.add_info(AR_SAMPLES_ID,
-#                                        [affected_result.ar_samples_id+unaffected_result.ar_samples_id])
-#                    qry_record.add_info(COMPOUND_HETEROZYGOTE_AFFECTED_COUNT_COL_NAME,
-#                                        affected_result.cpd_het_count)
-#                    qry_record.add_info(COMPOUND_HETEROZYGOTE_UNAFFECTED_COUNT_COL_NAME,
-#                                        unaffected_result.cpd_het_count)
-#                    affected_cpd_het_freq = "{:.2f}".format(float(affected_result.cpd_het_count)/float(n_affected_samples))
-#                    unaffected_cpd_het_freq = "{:.2f}".format(float(unaffected_result.cpd_het_count)/float(n_unaffected_samples))
-#                    qry_record.add_info(COMPOUND_HETEROZYGOTE_FREQ_RATIO_COL_NAME,
-#                                        affected_cpd_het_freq+" vs "+unaffected_cpd_het_freq)
-#                    qry_record.add_info(HOMOZYGOTE_AFFECTED_COUNT_COL_NAME,
-#                                        affected_result.hom_count)
-#                    qry_record.add_info(HOMOZYGOTE_UNAFFECTED_COUNT_COL_NAME,
-#                                        unaffected_result.hom_count)
-#                    affected_hom_freq = "{:.2f}".format(float(affected_result.hom_count)/float(n_affected_samples))
-#                    unaffected_hom_freq = "{:.2f}".format(float(unaffected_result.hom_count)/float(n_unaffected_samples))
-#                    qry_record.add_info(HOMOZYGOTE_FREQ_RATIO_COL_NAME,
-#                                        affected_hom_freq+" vs "+unaffected_hom_freq)
-#                    break
 #
 #    def __add_criteria_sheet(self,
 #                             ):
