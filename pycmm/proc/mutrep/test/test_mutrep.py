@@ -960,11 +960,10 @@ class TestMutRepController(SafeTester):
 #                         "Incorrect number of rows the criteria sheet"
 #                         )
 
-#    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST or DB_TEST, "taking too long time to test")
+    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST or DB_TEST, "taking too long time to test")
     def test_header_corrections_1(self):
         """ test if column headers can be replaced with better names  """
 
-        self.individual_debug = True
         self.init_test(self.current_func_name)
         anno_cols = list(DFLT_TEST_MUTREP_COLS)
         anno_cols.append("OAF_EARLYONSET_AF")
@@ -972,24 +971,39 @@ class TestMutRepController(SafeTester):
         header_corrections = "OAF_EARLYONSET_AF:EARLYONSET_AF"
         header_corrections += ",OAF_BRC_CRC_PROSTATE_AF:ALL_EXOME_AF"
         jobs_setup_file = self.__create_jobs_setup_file(header_corrections=header_corrections,
-#                                                        anno_cols=anno_cols,
+                                                        anno_cols=anno_cols,
                                                         )
         mc = MutRepController(jobs_setup_file, verbose=False)
         xls_file = mc.gen_report(report_regions="22")
         xu = XlsUtils(xls_file)
-        ors_col_idx = xu.get_col_idx("ALL_EXOME_AF")
-        self.assertEqual(xu.get_cell_value(4, ors_col_idx),
+        oaf_col_idx = xu.get_col_idx("ALL_EXOME_AF")
+        self.assertEqual(xu.get_cell_value(4, oaf_col_idx),
                          0.1250,
                          "Incorect allele frequency"
                          )
-        self.assertEqual(xu.get_cell_value(5, ors_col_idx),
-                         0.0244,
+        self.assertEqual(xu.get_cell_value(6, oaf_col_idx),
+                         None,
+#                         0.0244,
                          "Incorect allele frequency"
                          )
-        self.assertEqual(xu.get_cell_value(6, ors_col_idx),
-                         0.0375,
+        self.assertEqual(xu.get_cell_value(7, oaf_col_idx),
+                         None,
                          "Incorect allele frequency"
                          )
+        self.assertEqual(xu.get_cell_value(8, oaf_col_idx),
+                         None,
+#                         0.0375,
+                         "Incorect allele frequency"
+                         )
+        self.assertEqual(xu.get_cell_value(9, oaf_col_idx),
+                         0.0571,
+                         "Incorect allele frequency"
+                         )
+        self.assertEqual(xu.get_cell_value(24, oaf_col_idx),
+                         0,
+                         "Incorect allele frequency"
+                         )
+
 
 #    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST or DB_TEST, "taking too long time to test")
 #    def test_calling_gq_1(self):
