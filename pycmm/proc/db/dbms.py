@@ -105,7 +105,8 @@ class SQLiteDBWriter(SQLiteDB):
                               )
         row_count = self.__load_data_file(reader=reader, *args, **kwargs)
         reader = VcfGTZReader(file_name=data_file)
-        self._update_gtz_coors(reader.coors)
+        self._update_gtz_coors(tbl_name)
+#        self._update_gtz_coors(reader.coors)
         return row_count
 
     def __correct_maf_table(self, tbl_name, dataset_name):

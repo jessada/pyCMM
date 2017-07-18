@@ -159,13 +159,18 @@ class SQLiteDB(pyCMMBase):
         sql += " " + col_def
         self._exec_sql(sql)
 
+#    def _update_gtz_coors(self,
+#                          gtz_coors,
+#                          ):
     def _update_gtz_coors(self,
-                          gtz_coors,
+                          tbl_name,
                           ):
         # insert all the input coors into the table (only the new ones)
         sql = 'INSERT OR IGNORE INTO ' + TBL_NAME_GTZ_COORS
-        sql += ' VALUES (?, ?, ?, ?)'
-        row_count = self._exec_many_sql(sql, gtz_coors).rowcount
+        sql += ' (' + ", ".join(VCF_PKEYS) + ')'
+        sql += ' SELECT ' + ", ".join(VCF_PKEYS)
+        sql += ' FROM ' + tbl_name
+        row_count = self._exec_sql(sql).rowcount
         return row_count
 
     def _update_tbl_info(self,
@@ -190,7 +195,7 @@ class SQLiteDB(pyCMMBase):
             sql += " ( " + TBL_CMM_TBLS_TBL_NAME_COL_NAME
             sql += ", " + TBL_CMM_TBLS_INFO_COLS_COL_NAME
             sql += ", " + TBL_CMM_TBLS_DATA_TYPE_COL_NAME + " ) "
-            sql += " select '" + updating_tbl_name + "'"
+            sql += " SELECT '" + updating_tbl_name + "'"
             sql += ", '" + col_names_txt + "'"
             sql += ", '" + data_type + "'"
         self._exec_sql(sql)
