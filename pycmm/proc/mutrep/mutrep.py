@@ -669,7 +669,7 @@ class MutRepController(CMMPipeline):
     @property
     def summary_rpt_file(self):
         return join_path(self.rpts_out_dir,
-                         self.dataset_name+"_seq_data.xlsx")
+                         self.dataset_name+"_seq.xlsx")
 
     def __set_report_format(self):
         self.__plain_fmts = self.__wb.add_colors_format({})
@@ -1139,7 +1139,6 @@ class MutRepController(CMMPipeline):
                 row = self.__write_content(ws,
                                            row,
                                            qry_record,
-                                           allele_idx,
                                            fam_id)
         # check if filter non recessive gene should be applied with the
         # last gene in the chromosome

@@ -928,62 +928,6 @@ class TestMutRepController(SafeTester):
                          "Incorect allele frequency"
                          )
 
-
-#    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST or DB_TEST, "taking too long time to test")
-#    def test_calling_gq_1(self):
-#        """ test if calling genotyping quality can be displayed correctly in general cases """
-#
-#        self.init_test(self.current_func_name)
-#        db_file = join_path(self.data_dir,
-#                                        "input.vcf.gz")
-#        project_name = self.test_function
-#        rows_filter_actions = JOBS_SETUP_RPT_FILTER_NON_INTERGENIC
-#        rows_filter_actions += ',' + JOBS_SETUP_RPT_FILTER_NON_INTRONIC
-#        rows_filter_actions += ',' + JOBS_SETUP_RPT_FILTER_NON_UPSTREAM
-#        rows_filter_actions += ',' + JOBS_SETUP_RPT_FILTER_NON_DOWNSTREAM
-#        rows_filter_actions += ',' + JOBS_SETUP_RPT_FILTER_NON_UTR
-#        rows_filter_actions += ',' + JOBS_SETUP_RPT_FILTER_NON_SYNONYMOUS
-#        rows_filter_actions += ',' + JOBS_SETUP_RPT_FILTER_HAS_MUTATION
-#        jobs_setup_file = self.__create_jobs_setup_file(project_name=project_name,
-#                                                        db_file=db_file,
-#                                                        sample_info="/proj/b2011117/private/databases/samples_list/Exome_all_CRCs.list",
-#                                                        report_regions="7",
-#                                                        rows_filter_actions=rows_filter_actions,
-#                                                        call_gq=True,
-#                                                        call_detail=False,
-#                                                        )
-#        pl = MutRepController(jobs_setup_file=jobs_setup_file)
-#        pl.gen_summary_report(pl.report_layout.report_regions)
-#        xls_file = join_path(self.working_dir,
-#                             "rpts",
-#                             project_name+"_summary.xlsx")
-#        xu = XlsUtils(xls_file)
-#        sample_col_idx = xu.get_col_idx("1213-Co-1666")
-#        self.assertEqual(xu.get_cell_value(4, sample_col_idx),
-#                         "wt",
-#                         "Incorect zygosity"
-#                         )
-#        self.assertEqual(xu.get_cell_value(4, sample_col_idx+1),
-#                         0,
-#                         "Incorect GQ value"
-#                         )
-#        self.assertEqual(xu.get_cell_value(5, sample_col_idx),
-#                         "het",
-#                         "Incorect zygosity"
-#                         )
-#        self.assertEqual(xu.get_cell_value(5, sample_col_idx+1),
-#                         99,
-#                         "Incorect GQ value"
-#                         )
-#        self.assertEqual(xu.get_cell_value(7, sample_col_idx),
-#                         "het",
-#                         "Incorect zygosity"
-#                         )
-#        self.assertEqual(xu.get_cell_value(7, sample_col_idx+1),
-#                         27,
-#                         "Incorect GQ value"
-#                         )
-#
     @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST or DB_TEST, "taking too long time to test")
     def test_filter_genes_1(self):
         """
