@@ -152,14 +152,10 @@ class AVDBReader(Reader):
         pkeys.append('Alt')
         return pkeys
 
-#    def next(self):
-#        return super(AVDBReader, self).next().as_tuple()
-#
     @property
     def record_tuples(self):
         for item in super(AVDBReader, self).__iter__():
             yield item.as_tuple(self.__data_type, self.__gf_idx)
-#        return super(AVDBReader, self).next().as_tuple()
 
 try:
     import cparse
@@ -615,9 +611,6 @@ class TAVcfInfoReader(TAVcfReader):
         for item in super(TAVcfInfoReader, self).__iter__():
             yield item.as_annovar_tuple(self.annovar_infos.keys())
 
-#    def next(self):
-#        return super(TAVcfInfoReader, self).next().as_annovar_tuple(self.annovar_infos.keys())
-
 class TAVcfGTZReader(TAVcfReader):
     """
     An encapsulated version of TAVcfReader to only read Call data
@@ -655,16 +648,13 @@ class TAVcfGTZReader(TAVcfReader):
     @property
     def record_tuples(self):
         for item in super(TAVcfGTZReader, self).__iter__():
+            if item.ALT == ["*"]:
+                continue
             yield item.as_gtz_tuple(self.samples)
-#    def next(self):
-#        return super(TAVcfGTZReader, self).next().as_gtz_tuple(self.samples)
 
     @property
     def coors(self):
         for item in super(TAVcfGTZReader, self).__iter__():
+            if item.ALT == ["*"]:
+                continue
             yield item.as_pkey_tuple()
-#        for item in self.next():
-#            self.dbg(item)
-#            self.dbg(item[0:4])
-#            yield item.as_gtz_tuple()
-#        return super(TAVcfGTZReader, self).next().as_pkey_tuple()

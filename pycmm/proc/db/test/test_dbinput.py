@@ -452,3 +452,19 @@ class TestTAVcfGTZReader(SafeTester):
         self.assertEqual(vcf_rec,
                          ('10', 100000554, 'A', 'ATT', 5045.91, 'PASS', 'het', 'het', '.', '.', 'hom', 'hom', 'het', 'het', 'het'),
                          "TAVcfGTZReader doesn't work correctly")
+
+#    @unittest.skipUnless(FULL_SYSTEM_TEST or DBINPUT_TEST or DB_TEST, "taking too long time to test")
+    def test_reader_2(self):
+        """ test reading GTZ and skipping * from vcf file with * """
+
+        self.init_test(self.current_func_name)
+        input_file = join_path(self.data_dir,
+                               "input.vcf.gz")
+        vcf_reader = TAVcfGTZReader(file_name=input_file)
+        self.assertEqual(len(list(vcf_reader.record_tuples)),
+                         9,
+                         "TAVcfGTZReader cannot exclude '*'")
+        vcf_reader = TAVcfGTZReader(file_name=input_file)
+        self.assertEqual(len(list(vcf_reader.coors)),
+                         9,
+                         "TAVcfGTZReader cannot exclude '*'")

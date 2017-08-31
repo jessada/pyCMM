@@ -159,9 +159,6 @@ class SQLiteDB(pyCMMBase):
         sql += " " + col_def
         self._exec_sql(sql)
 
-#    def _update_gtz_coors(self,
-#                          gtz_coors,
-#                          ):
     def _update_gtz_coors(self,
                           tbl_name,
                           ):
