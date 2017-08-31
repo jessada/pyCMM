@@ -332,7 +332,7 @@ class TestMutRepController(SafeTester):
         xls_file = mc.gen_report()
         xu = XlsUtils(xls_file)
         self.assertEqual(xu.count_rows(),
-                         43,
+                         42,
                          "Incorrect number of rows"
                          )
 
@@ -354,7 +354,7 @@ class TestMutRepController(SafeTester):
         xls_file = mc.gen_report()
         xu = XlsUtils(xls_file)
         self.assertEqual(xu.count_rows(),
-                         50,
+                         49,
                          "Incorrect number of rows"
                          )
 
@@ -941,7 +941,7 @@ class TestMutRepController(SafeTester):
         xls_file = mc.gen_report(report_regions="9")
         xu = XlsUtils(xls_file)
         self.assertEqual(xu.count_rows(sheet_idx=0),
-                         43,
+                         42,
                          "Incorrect number of rows in the variants sheet"
                          )
 
@@ -953,7 +953,7 @@ class TestMutRepController(SafeTester):
         xls_file = mc.gen_report(report_regions="9")
         xu = XlsUtils(xls_file)
         self.assertEqual(xu.count_rows(sheet_idx=0),
-                         20,
+                         19,
                          "Incorrect number of rows in the variants sheet"
                          )
 
@@ -965,7 +965,7 @@ class TestMutRepController(SafeTester):
         xls_file = mc.gen_report(report_regions="9")
         xu = XlsUtils(xls_file)
         self.assertEqual(xu.count_rows(sheet_idx=0),
-                         26,
+                         25,
                          "Incorrect number of rows in the variants sheet"
                          )
 
@@ -985,7 +985,7 @@ class TestMutRepController(SafeTester):
         xls_file = mc.gen_report(report_regions="9")
         xu = XlsUtils(xls_file)
         self.assertEqual(xu.count_rows(sheet_idx=0),
-                         43,
+                         42,
                          "Incorrect number of rows"
                          )
         refgene_col_idx = xu.get_col_idx(GENE_REFGENE_COL_NAME)
@@ -1023,7 +1023,7 @@ class TestMutRepController(SafeTester):
         xls_file = mc.gen_report(report_regions="9")
         xu = XlsUtils(xls_file)
         self.assertEqual(xu.count_rows(sheet_idx=0),
-                         43,
+                         42,
                          "Incorrect number of rows"
                          )
         refgene_col_idx = xu.get_col_idx(GENE_REFGENE_COL_NAME)
