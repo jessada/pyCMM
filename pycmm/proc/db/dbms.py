@@ -106,7 +106,6 @@ class SQLiteDBWriter(SQLiteDB):
         row_count = self.__load_data_file(reader=reader, *args, **kwargs)
         reader = VcfGTZReader(file_name=data_file)
         self._update_gtz_coors(tbl_name)
-#        self._update_gtz_coors(reader.coors)
         return row_count
 
     def __correct_maf_table(self, tbl_name, dataset_name):
@@ -338,7 +337,6 @@ class SQLiteDBController(CMMPipeline):
     def __execute_db_jobs(self):
         for db_job in self.db_params.db_jobs:
             n_records = self.__execute_db_job(db_job)
-#            self.info("Finished: " + str(n_records) + " were updated")
             self.info("Finished: " + str(n_records) + " records were inserted")
 
     def run_offline_pipeline(self):
