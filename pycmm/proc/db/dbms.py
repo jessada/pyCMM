@@ -14,9 +14,6 @@ from pycmm.proc.db.connector import SQLiteDB
 from pycmm.proc.db.connector import DATA_TYPE_AVDB_INFO
 from pycmm.proc.db.connector import DATA_TYPE_ANNOVAR_INFO
 from pycmm.proc.db.connector import DATA_TYPE_GTZ
-#from pycmm.proc.db.connector import VCF_PKEYS
-#from pycmm.proc.db.connector import AVDB_PKEYS
-#from pycmm.proc.db.connector import TBL_NAME_GTZ_COORS
 from pycmm.proc.db.dbinput import AVDBReader
 from pycmm.proc.db.dbinput import TAVcfInfoReader as VcfInfoReader
 from pycmm.proc.db.dbinput import TAVcfGTZReader as VcfGTZReader
@@ -40,6 +37,7 @@ OPERATION_CAL_HW = 'CALCULATE_HARDY_WEINBERG'
 OPERATION_JOIN_ALL_GTZ_ANNOS = 'JOIN_ALL_GTZ_ANNOS'
 OPERATION_CAL_MAX_REF_MAF = 'CAL_MAF_REF_MAF'
 OPERATION_SET_REF_MUTATED = 'SET_REF_MUTATED'
+OPERATION_VACUUM = 'VACUUM'
 
 class SQLiteDBWriter(SQLiteDB):
     """
@@ -331,6 +329,8 @@ class SQLiteDBController(CMMPipeline):
             return self.db.cal_max_ref_maf()
         elif db_job.operation == OPERATION_SET_REF_MUTATED:
             return self.db.set_ref_mutated()
+        elif db_job.operation == OPERATION_VACUUM:
+            return self.db.vacuum()
         else:
             raise Exception('Unknown operation: ' + db_job.operation)
 

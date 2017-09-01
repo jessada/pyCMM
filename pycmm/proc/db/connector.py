@@ -145,6 +145,10 @@ class SQLiteDB(pyCMMBase):
         sql = 'DROP VIEW IF EXISTS ' + view_name
         self._exec_sql(sql)
 
+    def vacuum(self):
+        sql = 'VACUUM'
+        self._exec_sql(sql)
+
     def _create_table(self, tbl_name, col_names, pkeys=None):
         sql = 'CREATE TABLE IF NOT EXISTS ' + tbl_name
         sql += ' ( ' + ", ".join(col_names) 

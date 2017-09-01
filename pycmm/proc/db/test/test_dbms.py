@@ -5,6 +5,7 @@ from os.path import join as join_path
 from pycmm.settings import FULL_SYSTEM_TEST
 from pycmm.settings import DB_TEST
 from pycmm.template import SafeTester
+from pycmm.utils import file_size
 from pycmm.proc.db.dbinput import AVDBReader
 from pycmm.proc.db.dbinput import TAVcfInfoReader as VcfInfoReader
 from pycmm.proc.db.dbinput import TAVcfGTZReader as VcfGTZReader
@@ -440,9 +441,6 @@ class TestSQLiteDBController(SafeTester):
         self.assertEqual(db.count_rows("test_hg19_intervar"),
                          27,
                          "SQLiteDBController cannot correctly execute db jobs")
-#        self.assertEqual(db.count_rows("test_hg19_ljb26_all"),
-#                         128,
-#                         "SQLiteDBController cannot correctly execute db jobs")
         self.assertEqual(db.count_rows("test_hg19_dbnsfp30a"),
                          128,
                          "SQLiteDBController cannot correctly execute db jobs")
@@ -521,9 +519,6 @@ class TestSQLiteDBController(SafeTester):
         self.assertEqual(db.count_rows("test_hg19_intervar"),
                          27,
                          "SQLiteDBController cannot correctly execute db jobs")
-#        self.assertEqual(db.count_rows("test_hg19_ljb26_all"),
-#                         128,
-#                         "SQLiteDBController cannot correctly execute db jobs")
         self.assertEqual(db.count_rows("test_hg19_dbnsfp30a"),
                          128,
                          "SQLiteDBController cannot correctly execute db jobs")
@@ -653,3 +648,30 @@ class TestSQLiteDBController(SafeTester):
         self.assertEqual(len(db.get_col_names(TBL_NAME_ALL_GTZ_ANNOS)),
                          496,
                          "SQLiteDBController cannot correctly execute db jobs")
+
+    @unittest.skipUnless(FULL_SYSTEM_TEST or DBMS_TEST or DB_TEST, "taking too long time to test")
+    def test_vacuum_1(self):
+        """ test if vacuum can shrink sqlite wih many inserts and drops"""
+
+        self.init_test(self.current_func_name)
+        db_file = join_path(self.working_dir,
+                            self.current_func_name+".db")
+        db_jobs = join_path(self.data_dir,
+                            'db_wo_vacuum.jobs')
+        jobs_setup_file = self.__create_jobs_setup_file(db_file=db_file,
+                                                        db_jobs=db_jobs,
+                                                        )
+        dbc= SQLiteDBController(jobs_setup_file, verbose=False)
+        dbc.run_offline_pipeline()
+        self.assertTrue(file_size(db_file) > 460000,
+                        "SQLiteDBController cannot correctly VACUUM")
+
+        db_jobs = join_path(self.data_dir,
+                            'db_w_vacuum.jobs')
+        jobs_setup_file = self.__create_jobs_setup_file(db_file=db_file,
+                                                        db_jobs=db_jobs,
+                                                        )
+        dbc= SQLiteDBController(jobs_setup_file, verbose=False)
+        dbc.run_offline_pipeline()
+        self.assertTrue(file_size(db_file) < 460000,
+                        "SQLiteDBController cannot correctly VACUUM")
