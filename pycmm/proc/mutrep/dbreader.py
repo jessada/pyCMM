@@ -574,6 +574,7 @@ class SQLiteDBReader(SQLiteDB):
                 or_clause.append(self.anno_col_to_db_col(GENE_REFGENE_COL_NAME) + " LIKE '%" + gene_name + "%'")
             where_clause.append("(" + " OR ".join(or_clause) + ")")
         where_clause.append("ALT != '*'")
+        where_clause.append("ALT != '0'")
         if len(where_clause) > 0:
             sql += " WHERE " + " AND ".join(where_clause)
         for row in self.read_rows(sql=sql):
