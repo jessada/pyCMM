@@ -24,6 +24,11 @@ from pycmm.settings import EXONICFUNC_REFGENE_COL_NAME
 from pycmm.settings import GENE_REFGENE_COL_NAME
 from pycmm.settings import GENEDETAIL_REFGENE_COL_NAME
 from pycmm.settings import CYTOBAND_COL_NAME
+from pycmm.settings import SPIDEX_DPSI_ZSCORE_COL_NAME
+from pycmm.settings import PATHOGENIC_COUNT_COL_NAME
+from pycmm.settings import PREDICTION_COLS
+from pycmm.settings import LJB_METASVM_PREDICTION_COL_NAME
+from pycmm.settings import LJB_METALR_PREDICTION_COL_NAME
 from pycmm.settings import KG2014OCT_ALL_COL_NAME
 #from pycmm.settings import KG2014OCT_EUR_COL_NAME
 from pycmm.settings import AXEQ_CHR9_HET_COL_NAME
@@ -31,10 +36,9 @@ from pycmm.settings import AXEQ_CHR3_6_14_18_PF_COL_NAME
 from pycmm.settings import AXEQ_CHR5_19_GF_COL_NAME
 #from pycmm.settings import PRIMARY_MAF_VAR
 #from pycmm.settings import EXAC_ALL_COL_NAME
-#from pycmm.settings import PATHOGENIC_COUNT_COL_NAME
 from pycmm.settings import FULL_SYSTEM_TEST
 from pycmm.settings import WES294_OAF_EARLYONSET_AF_COL_NAME
-#from pycmm.settings import WES294_OAF_EARLYONSET_GF_COL_NAME
+from pycmm.settings import WES294_OAF_EARLYONSET_GF_COL_NAME
 #from pycmm.settings import EST_KVOT_EARLYONSET_VS_BRC_COL_NAME
 #from pycmm.settings import EST_KVOT_EARLYONSET_VS_EXAC_NFE_COL_NAME
 #from pycmm.settings import EST_KVOT_EARLYONSET_VS_KG_EUR_COL_NAME
@@ -907,7 +911,6 @@ class TestMutRepController(SafeTester):
                          )
         self.assertEqual(xu.get_cell_value(6, oaf_col_idx),
                          None,
-#                         0.0244,
                          "Incorect allele frequency"
                          )
         self.assertEqual(xu.get_cell_value(7, oaf_col_idx),
@@ -916,7 +919,6 @@ class TestMutRepController(SafeTester):
                          )
         self.assertEqual(xu.get_cell_value(8, oaf_col_idx),
                          None,
-#                         0.0375,
                          "Incorect allele frequency"
                          )
         self.assertEqual(xu.get_cell_value(9, oaf_col_idx),
@@ -1508,4 +1510,53 @@ class TestMutRepController(SafeTester):
         self.assertEqual(xu.get_cell_rgb(9, sample_col_idx),
                          RGB_NO_FILL,
                          "Incorrect color"
+                         )
+
+#    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST or DB_TEST, "taking too long time to test")
+    def test_filter_non_recessive_gene_2(self):
+        """ test filtering non-recessive gene must include variants found in the controls"""
+
+        self.init_test(self.current_func_name)
+        anno_cols = []
+        anno_cols.append(FUNC_REFGENE_COL_NAME)
+        anno_cols.append(EXONICFUNC_REFGENE_COL_NAME)
+        anno_cols.append(GENE_REFGENE_COL_NAME)
+        anno_cols.append(GENEDETAIL_REFGENE_COL_NAME)
+        anno_cols.append(CYTOBAND_COL_NAME)
+        anno_cols.append(MAX_REF_MAF_COL_NAME)
+        anno_cols += REF_MAF_COL_NAMES
+        anno_cols.append(WES294_OAF_EARLYONSET_AF_COL_NAME)
+        anno_cols.append(WES294_OAF_EARLYONSET_GF_COL_NAME)
+        anno_cols.append(SPIDEX_DPSI_ZSCORE_COL_NAME)
+        anno_cols.append(PATHOGENIC_COUNT_COL_NAME)
+        anno_cols += PREDICTION_COLS
+        anno_cols.append(LJB_METASVM_PREDICTION_COL_NAME)
+        anno_cols.append(LJB_METALR_PREDICTION_COL_NAME)
+        rows_filter_actions = JOBS_SETUP_RPT_FILTER_NON_INTRONIC
+        rows_filter_actions += ',' + JOBS_SETUP_RPT_FILTER_NON_UPSTREAM
+        rows_filter_actions += ',' + JOBS_SETUP_RPT_FILTER_NON_DOWNSTREAM
+        rows_filter_actions += ',' + JOBS_SETUP_RPT_FILTER_NON_UTR
+        rows_filter_actions += ',' + JOBS_SETUP_RPT_FILTER_NON_RECESSIVE_GENE
+
+        expression_patterns = OrderedDict()
+        expression_patterns['true_synonymous'] = '("dpsi_zscore"!=\'\')and("ExonicFunc.refGene"==\'synonymous_SNV\')and(float("dpsi_zscore")>-2)and(float("dpsi_zscore")<2)'
+        expression_patterns['likely_synonymous'] = '("dpsi_zscore"==\'\')and("ExonicFunc.refGene"==\'synonymous_SNV\')'
+        expression_patterns['MAX_REF_MAF_COMMON'] = '("MAX_REF_MAF"!=\'\')and(float("MAX_REF_MAF")<=0.80)and(float("MAX_REF_MAF")>=0.20)'
+        expression_patterns['Pathogenic5'] = 'int("Pathogenic_count")<5'
+        expression_patterns['EARLYONSET_lowQC'] = '(float("OAF_EARLYONSET_GF")<0.5)'
+        expression_patterns['filter_ncRNA_exonic'] = '"' + FUNC_REFGENE_COL_NAME + '"==\'ncRNA_exonic\''
+        sample_info = join_path(self.data_dir,
+                                "sample.info")
+        jobs_setup_file = self.__create_jobs_setup_file(anno_cols=anno_cols,
+                                                        sample_info=sample_info,
+                                                        rows_filter_actions=rows_filter_actions,
+                                                        expression_patterns=",".join(map(lambda x: x+":"+expression_patterns[x], expression_patterns)),
+                                                        expression_usages=",".join(map(lambda x: x+":DELETE_ROW", expression_patterns)),
+                                                        )
+        mc = MutRepController(jobs_setup_file, verbose=False)
+        xls_file = mc.gen_report(report_regions="8")
+        xu = XlsUtils(xls_file)
+        self.assertEqual(xu.count_rows(sheet_idx=0),
+                         9,
+                         "Incorrect number of rows in the variants sheet"
                          )

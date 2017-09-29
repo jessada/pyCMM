@@ -104,3 +104,6 @@ eval_cmd "$cmd"
 
 cmd="$test_data_root/proc/mutrep/test/data/mutrep/MutRepController/test_filter_non_recessive_gene_1/gen_data.sh"
 eval_cmd "$cmd"
+
+cmd="$test_data_root/proc/mutrep/test/data/mutrep/MutRepController/test_filter_non_recessive_gene_2/gen_data.sh"
+eval_cmd "$cmd"

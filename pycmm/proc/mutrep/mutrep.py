@@ -1040,8 +1040,9 @@ class MutRepController(CMMPipeline):
                                              )
         # go through qry_record for the second round
         # mark the buffer idx with any affected recessive variants
+        total_ar_samples_id = affected_result.ar_samples_id + unaffected_result.ar_samples_id
         for qry_record in qry_record_buffers:
-            for sample_id in affected_result.ar_samples_id:
+            for sample_id in total_ar_samples_id:
                 gt = qry_record.gt[sample_id]
                 if (gt.actual_zygo == GT_HOM or
                     gt.actual_zygo == GT_HET):
