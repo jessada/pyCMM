@@ -217,7 +217,7 @@ class JobManager(pyCMMBase):
         # virtual function
         pass
     
-    def monitor_jobs(self, interval=30):
+    def monitor_jobs(self, interval=300):
         self.monitor_init()
         while True:
             self.update_job_status()

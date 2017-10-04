@@ -1,4 +1,11 @@
 #!/bin/bash 
+set -e
+set -o pipefail
+
+module load bwa
+module load picard
+module load GATK
+
 source $PYCMM/bash/cmm_functions.sh
 
 script_name=$(basename $0)
@@ -164,20 +171,20 @@ cmd+=" > $tmp_bwa_mem_out"
 eval_cmd "$cmd"
 
 new_section_txt "executing SortSam"
-cmd=" java -jar $CLASSPATH/SortSam.jar"
+cmd=" java -jar $CLASSPATH/picard.jar SortSam"
 cmd+=" INPUT=$tmp_bwa_mem_out"
 cmd+=" OUTPUT=$tmp_sorted_bam"
 cmd+=" SORT_ORDER=coordinate"
 eval_cmd "$cmd"
 
 new_section_txt "executing MarkDuplicates"
-cmd=" java -jar $CLASSPATH/MarkDuplicates.jar"
+cmd=" java -jar $CLASSPATH/picard.jar MarkDuplicates"
 cmd+=" INPUT=$tmp_sorted_bam"
 cmd+=" OUTPUT=$tmp_dedup_bam"
 cmd+=" METRICS_FILE=$tmp_metrics_file"
 eval_cmd "$cmd"
 
-cmd=" java -jar $CLASSPATH/BuildBamIndex.jar"
+cmd=" java -jar $CLASSPATH/picard.jar BuildBamIndex"
 cmd+=" INPUT=$tmp_dedup_bam"
 eval_cmd "$cmd"
 

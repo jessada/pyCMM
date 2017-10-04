@@ -1,5 +1,7 @@
 #!/bin/bash
 
+running_log_file=""
+
 die () {
     echo >&2 "[exception] $@"
     echo >&2 "$usage"
@@ -31,7 +33,7 @@ msg_to_out ()
 
 info_msg ()
 {
-    local message="$1"
+    local message="${1:-}"
 
     INFO_MSG_FORMAT="## [INFO] `date "+%Y-%m-%d %H:%M:%S,%3N"` - %s"
     local formated_msg=`printf "$INFO_MSG_FORMAT" "$message"`
