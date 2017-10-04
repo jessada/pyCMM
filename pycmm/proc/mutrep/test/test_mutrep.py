@@ -1512,7 +1512,7 @@ class TestMutRepController(SafeTester):
                          "Incorrect color"
                          )
 
-#    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST or DB_TEST, "taking too long time to test")
+    @unittest.skipUnless(FULL_SYSTEM_TEST or MUTREP_TEST or XLS_TEST or DB_TEST, "taking too long time to test")
     def test_filter_non_recessive_gene_2(self):
         """ test filtering non-recessive gene must include variants found in the controls"""
 
