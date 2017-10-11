@@ -1,4 +1,6 @@
 #!/bin/bash 
+set -o pipefail
+
 module load annovar
 source $PYCMM/bash/cmm_functions.sh
 
@@ -45,6 +47,8 @@ revision_no=`git rev-list HEAD | wc -l`
 revision_code=`git rev-parse HEAD`
 cd - > /dev/null
 
+working_dir=`mktemp -d`
+
 ## ****************************************  display configuration  ****************************************
 ## display required configuration
 new_section_txt "S T A R T <$script_name>"
@@ -75,13 +79,16 @@ function decompose_n_leftalign {
     cmd+=" $input_vcf"
     cmd+=" $chrom"
     cmd+=" | vt decompose -s -"
-    cmd+=" | vt normalize -r $GRCH37_REF -"
+    cmd+=" | vt normalize -q -r $GRCH37_REF -"
     cmd+=" | grep -v \"^#\""
-    cmd+=" >> $out_file"
+    cmd+=" | grep -Pv \"\t\*\t\""
+    cmd+=" | grep -P \"\tPASS\t\""
+    cmd+=" >> $tmp_left_align"
     eval_cmd "$cmd"
 }
 
-tabix -h $input_vcf 1:1-1 > $out_file
+tmp_left_align="$working_dir/tmp_la.vcf"
+tabix -h $input_vcf 1:1-1 > $tmp_left_align
 decompose_n_leftalign 1
 decompose_n_leftalign 2
 decompose_n_leftalign 3
@@ -107,10 +114,41 @@ decompose_n_leftalign 22
 decompose_n_leftalign "X"
 decompose_n_leftalign "Y"
 
-cmd="bgzip -f $out_file"
+cmd="bgzip -f $tmp_left_align"
 eval_cmd "$cmd"
 
-cmd="tabix -p vcf $out_file.gz"
+cmd="tabix -p vcf $tmp_left_align.gz"
+eval_cmd "$cmd"
+
+cmd="tabix -h $tmp_left_align.gz 1:1-1 > $out_file" 
+eval_cmd "$cmd"
+
+# retain all the original information
+#printf_phrase="%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s"
+#param_phrase="\$1, \$2, \$8, \$4, \$5, \$11, \$12, \$13, \$14"
+# suppress QUAL and INFO column
+printf_phrase="%s\t%s\t%s\t%s\t%s\t.\t%s\t.\t%s"
+param_phrase="\$1, \$2, \$8, \$4, \$5, \$12, \$14"
+
+n_samples=`vcf-query -l $tmp_left_align.gz | wc -l `
+for ((n_sample=1; n_sample<=$n_samples; n_sample++));
+do
+    printf_phrase+="\t%s"
+    param_phrase+=", \$$((n_sample+14))"
+done;
+
+cmd="convert2annovar.pl"
+cmd+=" -format vcf4old"
+cmd+=" $tmp_left_align.gz"
+cmd+=" --includeinfo"
+cmd+=" | awk -F '\t' '{ printf \"$printf_phrase\n\", $param_phrase}'"
+cmd+=" | vcf-sort"
+cmd+=" >> $out_file"
+eval_cmd "$cmd"
+
+cmd="bgzip -f $out_file"
+eval_cmd "$cmd"
+cmd="tabix -f -p vcf $out_file.gz"
 eval_cmd "$cmd"
 
 new_section_txt "F I N I S H <$script_name>"
