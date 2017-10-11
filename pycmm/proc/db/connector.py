@@ -1,7 +1,7 @@
 import sqlite3
 from pycmm.settings import MAX_REF_MAF_COL_NAME
 from pycmm.settings import REF_MAF_COL_NAMES
-from pycmm.settings import INTERVAR_AND_EVIDENCE_COL_NAME
+#from pycmm.settings import INTERVAR_AND_EVIDENCE_COL_NAME
 from pycmm.settings import GNOMAD_GENOME_ALL_COL_NAME
 from pycmm.settings import ALL_MUTREP_ANNO_COLS
 from pycmm.template import pyCMMBase
@@ -289,7 +289,7 @@ class SQLiteDB(pyCMMBase):
                                     anno_col_names))
         anno_col_names += ALL_MUTREP_ANNO_COLS
         anno_col_names.append(REF_MUTATED_COL_NAME)
-        anno_col_names.append(INTERVAR_AND_EVIDENCE_COL_NAME)
+#        anno_col_names.append(INTERVAR_AND_EVIDENCE_COL_NAME)
         for anno_col_name in anno_col_names:
             if anno_col_name in mod_db_col_names:
                 db_col_idx = mod_db_col_names.index(anno_col_name)

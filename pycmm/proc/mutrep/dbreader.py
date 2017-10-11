@@ -6,9 +6,9 @@ from pycmm.settings import GENE_REFGENE_COL_NAME
 from pycmm.settings import REF_MAF_COL_NAMES
 from pycmm.settings import EXAC03_CONSTRAINT_COL_NAMES
 from pycmm.settings import EXAC03_CONSTRAINT_COL_NAME
-from pycmm.settings import INTERVAR_AND_EVIDENCE_COL_NAME
-from pycmm.settings import INTERVAR_CLASS_COL_NAME
-from pycmm.settings import INTERVAR_EVIDENCE_COL_NAME
+#from pycmm.settings import INTERVAR_AND_EVIDENCE_COL_NAME
+#from pycmm.settings import INTERVAR_CLASS_COL_NAME
+#from pycmm.settings import INTERVAR_EVIDENCE_COL_NAME
 from pycmm.settings import PATHOGENIC_COUNT_COL_NAME
 from pycmm.settings import PREDICTION_COLS
 from pycmm.settings import LJB_METASVM_PREDICTION_COL_NAME
@@ -21,8 +21,8 @@ from pycmm.proc.db.connector import SQLiteDB
 from pycmm.proc.db.connector import VCF_PKEYS
 from pycmm.proc.db.connector import TBL_NAME_ALL_GTZ_ANNOS
 from pycmm.proc.db.connector import REF_MUTATED_COL_NAME
-from pycmm.cmmlib.intervarlib import parse_intervar_class
-from pycmm.cmmlib.intervarlib import parse_intervar_evidence
+#from pycmm.cmmlib.intervarlib import parse_intervar_class
+#from pycmm.cmmlib.intervarlib import parse_intervar_evidence
 from pycmm.cmmlib.annovarlib import PredictionTranslator
 
 MASTER_TABLE = TBL_NAME_ALL_GTZ_ANNOS
@@ -295,10 +295,10 @@ class QryRecord(pyCMMBase):
             pass
         elif anno_col in EXAC03_CONSTRAINT_COL_NAMES:
             anno_val = self.__get_exac_constraint_val(anno_col)
-        elif anno_col == INTERVAR_CLASS_COL_NAME:
-            anno_val = parse_intervar_class(self.get_anno(INTERVAR_AND_EVIDENCE_COL_NAME))
-        elif anno_col == INTERVAR_EVIDENCE_COL_NAME:
-            anno_val = parse_intervar_evidence(self.get_anno(INTERVAR_AND_EVIDENCE_COL_NAME))
+#        elif anno_col == INTERVAR_CLASS_COL_NAME:
+#            anno_val = parse_intervar_class(self.get_anno(INTERVAR_AND_EVIDENCE_COL_NAME))
+#        elif anno_col == INTERVAR_EVIDENCE_COL_NAME:
+#            anno_val = parse_intervar_evidence(self.get_anno(INTERVAR_AND_EVIDENCE_COL_NAME))
         elif anno_col == MAX_REF_MAF_COL_NAME:
             anno_val = self.__get_max_ref_maf()
         elif anno_col == PATHOGENIC_COUNT_COL_NAME:
@@ -413,16 +413,16 @@ class SQLiteDBReader(SQLiteDB):
                     db_col_name = self.anno_col_to_db_col(EXAC03_CONSTRAINT_COL_NAME)
                     self.__qry_cols.append(db_col_name)
                     anno_col_idx += 1
-            elif ((anno_col_name == INTERVAR_CLASS_COL_NAME or
-                anno_col_name == INTERVAR_EVIDENCE_COL_NAME) and
-                self.anno_col_to_db_col(INTERVAR_AND_EVIDENCE_COL_NAME) is not None
-                ):
-                avail_cols.append(anno_col_name)
-                if INTERVAR_AND_EVIDENCE_COL_NAME not in self.__anno_col_idxs:
-                    self.__anno_col_idxs[INTERVAR_AND_EVIDENCE_COL_NAME] = anno_col_idx
-                    db_col_name = self.anno_col_to_db_col(INTERVAR_AND_EVIDENCE_COL_NAME)
-                    self.__qry_cols.append(db_col_name)
-                    anno_col_idx += 1
+#            elif ((anno_col_name == INTERVAR_CLASS_COL_NAME or
+#                anno_col_name == INTERVAR_EVIDENCE_COL_NAME) and
+#                self.anno_col_to_db_col(INTERVAR_AND_EVIDENCE_COL_NAME) is not None
+#                ):
+#                avail_cols.append(anno_col_name)
+#                if INTERVAR_AND_EVIDENCE_COL_NAME not in self.__anno_col_idxs:
+#                    self.__anno_col_idxs[INTERVAR_AND_EVIDENCE_COL_NAME] = anno_col_idx
+#                    db_col_name = self.anno_col_to_db_col(INTERVAR_AND_EVIDENCE_COL_NAME)
+#                    self.__qry_cols.append(db_col_name)
+#                    anno_col_idx += 1
             elif anno_col_name == MAX_REF_MAF_COL_NAME:
                 avail_cols.append(anno_col_name)
             elif anno_col_name == PATHOGENIC_COUNT_COL_NAME:
@@ -530,7 +530,7 @@ class SQLiteDBReader(SQLiteDB):
                                    anno_cols))
             anno_cols.append(MAX_REF_MAF_COL_NAME)
             anno_cols.append(REF_MUTATED_COL_NAME)
-            anno_cols.append(INTERVAR_AND_EVIDENCE_COL_NAME)
+#            anno_cols.append(INTERVAR_AND_EVIDENCE_COL_NAME)
             self.init_columns(anno_cols)
             if self.__family_infos is not None:
                 samples_id = map(lambda x: x.sample_id,

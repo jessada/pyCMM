@@ -650,6 +650,31 @@ class TestSQLiteDBController(SafeTester):
                          "SQLiteDBController cannot correctly execute db jobs")
 
     @unittest.skipUnless(FULL_SYSTEM_TEST or DBMS_TEST or DB_TEST, "taking too long time to test")
+    def test_execute_db_jobs_6(self):
+        """
+        Test db_jobs execution with data that
+        are likely to represent real input data.
+        This test is designed to validate and generate test data for
+        downstream testing.
+        """
+
+        self.individual_debug = True
+        self.init_test(self.current_func_name)
+        db_file = join_path(self.working_dir,
+                            self.current_func_name+".db")
+        db_jobs = join_path(self.data_dir,
+                            'db.jobs')
+        jobs_setup_file = self.__create_jobs_setup_file(db_file=db_file,
+                                                        db_jobs=db_jobs,
+                                                        )
+        dbc= SQLiteDBController(jobs_setup_file, verbose=False)
+        dbc.run_offline_pipeline()
+        db = SQLiteDB(db_file, verbose=False)
+        self.assertEqual(len(reduce(lambda x,y: x+y, db.get_avdb_info().values())),
+                         51,
+                         "SQLiteDBController cannot correctly execute db jobs")
+
+    @unittest.skipUnless(FULL_SYSTEM_TEST or DBMS_TEST or DB_TEST, "taking too long time to test")
     def test_vacuum_1(self):
         """ test if vacuum can shrink sqlite wih many inserts and drops"""
 

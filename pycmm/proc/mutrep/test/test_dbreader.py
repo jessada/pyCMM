@@ -27,19 +27,27 @@ from pycmm.settings import EXAC03_CONSTRAINT_EXP_LOF_COL_NAME
 from pycmm.settings import EXAC03_CONSTRAINT_N_LOF_COL_NAME
 from pycmm.settings import EXAC03_CONSTRAINT_PLI_COL_NAME
 from pycmm.settings import INTERVAR_CLASS_COL_NAME
-from pycmm.settings import INTERVAR_EVIDENCE_COL_NAME
+from pycmm.settings import INTERVAR_PM2_EVIDENCE_COL_NAME
+from pycmm.settings import INTERVAR_BS2_EVIDENCE_COL_NAME
+from pycmm.settings import INTERVAR_BP1_EVIDENCE_COL_NAME
+from pycmm.settings import INTERVAR_BP2_EVIDENCE_COL_NAME
+from pycmm.settings import INTERVAR_BP3_EVIDENCE_COL_NAME
+from pycmm.settings import INTERVAR_BP4_EVIDENCE_COL_NAME
+#from pycmm.settings import INTERVAR_EVIDENCE_COL_NAME
 from pycmm.settings import PATHOGENIC_COUNT_COL_NAME
 #from pycmm.settings import MAX_REF_MAF_COL_NAME
 #from pycmm.settings import WES294_OAF_EARLYONSET_AF_COL_NAME
 #from pycmm.settings import WES294_OAF_BRCS_AF_COL_NAME
 from pycmm.cmmlib.intervarlib import INTERVAR_CLASS_BENIGN
-from pycmm.cmmlib.intervarlib import INTERVAR_CLASS_LIKELY_BENIGN
-from pycmm.cmmlib.intervarlib import INTERVAR_CLASS_UNCERTAIN_SIGNIFICANCE
+#from pycmm.cmmlib.intervarlib import INTERVAR_CLASS_LIKELY_BENIGN
+#from pycmm.cmmlib.intervarlib import INTERVAR_CLASS_UNCERTAIN_SIGNIFICANCE
 from pycmm.cmmlib.intervarlib import INTERVAR_CLASS_LIKELY_PATHOGENIC
 from pycmm.cmmlib.intervarlib import INTERVAR_CLASS_PATHOGENIC
 
 DBREADER_TEST = False
 
+INTERVAR_CLASS_UNCERTAIN_SIGNIFICANCE = "Uncertain significance"
+INTERVAR_CLASS_LIKELY_BENIGN = "Likely benign"
 
 class TestQryCall(SafeTester):
 
@@ -1215,44 +1223,36 @@ class TestQryRecord(SafeTester):
         db_reader = SQLiteDBReader(db_file, verbose=False)
         qry_records = db_reader.get_qry_records()
         qry_record = qry_records.next()
+        qry_record = qry_records.next()
+        qry_record = qry_records.next()
+        qry_record = qry_records.next()
+        qry_record = qry_records.next()
+        qry_record = qry_records.next()
+        qry_record = qry_records.next()
+        qry_record = qry_records.next()
+        qry_record = qry_records.next()
         self.assertEqual(qry_record.get_anno(INTERVAR_CLASS_COL_NAME),
-                         INTERVAR_CLASS_BENIGN,
+                         INTERVAR_CLASS_UNCERTAIN_SIGNIFICANCE,
                          "Incorect intervar value")
-        self.assertEqual(qry_record.get_anno(INTERVAR_EVIDENCE_COL_NAME),
-                         "BA1, BS1, BP4, BP7",
+        self.assertEqual(qry_record.get_anno(INTERVAR_PM2_EVIDENCE_COL_NAME),
+                         "0",
                          "Incorect intervar value")
         qry_record = qry_records.next()
         self.assertEqual(qry_record.get_anno(INTERVAR_CLASS_COL_NAME),
                          INTERVAR_CLASS_LIKELY_BENIGN,
                          "Incorect intervar value")
-        self.assertEqual(qry_record.get_anno(INTERVAR_EVIDENCE_COL_NAME),
-                         "PM1, BS2, BP4",
+        self.assertEqual(qry_record.get_anno(INTERVAR_BS2_EVIDENCE_COL_NAME),
+                         "1",
                          "Incorect intervar value")
-        qry_record = qry_records.next()
-        self.assertEqual(qry_record.get_anno(INTERVAR_CLASS_COL_NAME),
-                         INTERVAR_CLASS_UNCERTAIN_SIGNIFICANCE,
+        self.assertEqual(qry_record.get_anno(INTERVAR_BP1_EVIDENCE_COL_NAME),
+                         "1",
                          "Incorect intervar value")
-        self.assertEqual(qry_record.get_anno(INTERVAR_EVIDENCE_COL_NAME),
-                         "",
+        self.assertEqual(qry_record.get_anno(INTERVAR_BP2_EVIDENCE_COL_NAME),
+                         "0",
                          "Incorect intervar value")
-        qry_record = qry_records.next()
-        self.assertEqual(qry_record.get_anno(INTERVAR_CLASS_COL_NAME),
-                         INTERVAR_CLASS_BENIGN,
+        self.assertEqual(qry_record.get_anno(INTERVAR_BP3_EVIDENCE_COL_NAME),
+                         "0",
                          "Incorect intervar value")
-        self.assertEqual(qry_record.get_anno(INTERVAR_EVIDENCE_COL_NAME),
-                         "BS1, BS2",
-                         "Incorect intervar value")
-        qry_record = qry_records.next()
-        self.assertEqual(qry_record.get_anno(INTERVAR_CLASS_COL_NAME),
-                         INTERVAR_CLASS_PATHOGENIC,
-                         "Incorect intervar value")
-        self.assertEqual(qry_record.get_anno(INTERVAR_EVIDENCE_COL_NAME),
-                         "PVS1, PM2, PP5",
-                         "Incorect intervar value")
-        qry_record = qry_records.next()
-        self.assertEqual(qry_record.get_anno(INTERVAR_CLASS_COL_NAME),
-                         INTERVAR_CLASS_LIKELY_PATHOGENIC,
-                         "Incorect intervar value")
-        self.assertEqual(qry_record.get_anno(INTERVAR_EVIDENCE_COL_NAME),
-                         "PVS1, PM2",
+        self.assertEqual(qry_record.get_anno(INTERVAR_BP4_EVIDENCE_COL_NAME),
+                         "0",
                          "Incorect intervar value")
