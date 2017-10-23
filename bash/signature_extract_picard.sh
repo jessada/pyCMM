@@ -1,7 +1,7 @@
 #!/bin/bash 
 set -o pipefail
 
-module load annovar
+#module load annovar
 module load picard/2.0.1
 source $PYCMM/bash/cmm_functions.sh
 
@@ -71,51 +71,6 @@ display_param "working directory" "$working_dir"
 
 # ****************************************  executing  ****************************************
  
-new_section_txt "Annovar annotation"
-
-tmp_ta="$working_dir/ta"
-table_annovar_cmd="table_annovar.pl"
-table_annovar_cmd+=" $input_vcf"
-table_annovar_cmd+=" $ANNOVAR_HUMAN_DB_DIR"
-table_annovar_cmd+=" -buildver hg19"
-table_annovar_cmd+=" -out $tmp_ta"
-table_annovar_cmd+=" -remove"
-table_annovar_cmd+=" -protocol refGene"
-table_annovar_cmd+=" -operation g"
-table_annovar_cmd+=" -nastring ."
-table_annovar_cmd+=" -vcfinput"
-eval_cmd "$table_annovar_cmd"
-
-
-new_section_txt "Extract only coding and splice regions"
-
-tmp_picard_input="$working_dir/tmp_picard_input.vcf"
-picard_input="$working_dir/picard_input.vcf"
-
-cmd="head -10000 $tmp_ta.hg19_multianno.vcf"
-cmd+=" | grep \"^#\""
-cmd+=" > $tmp_picard_input"
-eval_cmd "$cmd"
-
-cmd="grep -v \"^#\" $tmp_ta.hg19_multianno.vcf"
-cmd+=" | grep \"=exonic\""
-cmd+=" >> $tmp_picard_input"
-eval_cmd "$cmd"
-
-cmd="grep -v \"^#\" $tmp_ta.hg19_multianno.vcf"
-cmd+=" | grep \"=splicing\""
-cmd+=" >> $tmp_picard_input"
-eval_cmd "$cmd"
-
-cmd="vcf-sort $tmp_picard_input > $picard_input"
-eval_cmd "$cmd"
-
-cmd="bgzip -f $picard_input"
-eval_cmd "$cmd"
-
-cmd="tabix -p vcf $picard_input.gz"
-eval_cmd "$cmd"
-
 
 new_section_txt "Generate Picard features"
 
@@ -124,7 +79,8 @@ new_section_txt "Generate Picard features"
 cmd="java -jar"
 cmd+=" $CLASSPATH/picard.jar"
 cmd+=" CollectVariantCallingMetrics"
-cmd+=" INPUT=$picard_input.gz"
+cmd+=" INPUT=$input_vcf"
+#cmd+=" INPUT=$picard_input.gz"
 cmd+=" OUTPUT=$out_file_prefix"
 cmd+=" DBSNP=$REFERENCE_DATA_DIR/dbsnp_138.b37.vcf"
 eval_cmd "$cmd"
