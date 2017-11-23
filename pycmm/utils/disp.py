@@ -2,6 +2,7 @@ from pycmm.utils import mylogger
 import pkg_resources
 import sys
 from collections import OrderedDict
+from collections import defaultdict
 
 param_display_fmt = "  {name:<50}{value}"
 
@@ -75,7 +76,8 @@ def disp_params_set(params_name,
             val = params[key]
             if ((type(val) is list) or
                 (type(val) is dict) or
-                (type(val) is OrderedDict)
+                (type(val) is OrderedDict) or
+                (type(val) is defaultdict)
                 ):
                 disp_params_set("  "+indent+key, val, indent=indent+"  ")
             else:

@@ -1,8 +1,10 @@
 SAMPLES_INFOS:
-  - FAMILY_ID: "NO_FAMILY"
-    MEMBERS:
-      - SAMPLE_ID: "Co-35"
-      - SAMPLE_ID: "Co-37"
-      - SAMPLE_ID: "Co-135"
-      - SAMPLE_ID: "Co-131"
-      - SAMPLE_ID: "1322-11D"
+  - DATASET_ID: dummy_dataset
+    FAMILIES:
+      - FAMILY_ID: "NO_FAMILY"
+        MEMBERS:
+          - SAMPLE_ID: "Co-35"
+          - SAMPLE_ID: "Co-37"
+          - SAMPLE_ID: "Co-135"
+          - SAMPLE_ID: "Co-131"
+          - SAMPLE_ID: "1322-11D"

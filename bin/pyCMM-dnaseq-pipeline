@@ -3,6 +3,7 @@ from pycmm.settings import DNASEQ_PIPELINE_DFLT_LOG_FILE
 from pycmm.settings import DNASEQ_SLURM_MONITOR_PIPELINE_BIN
 from pycmm.flow.gatkbp import GATKBPPipeline
 from pycmm.app import app_pycmm_pipeline
+from pycmm.app import PIPELINE_ALLOC_TIME_DFLT
 import argparse
 
 argp = argparse.ArgumentParser(description=DNASEQ_PIPELINE_DESCRIPTION)
@@ -16,11 +17,17 @@ argp.add_argument('-l',
                   dest='log_file',
                   metavar='FILE',
                   help='log file',
-                  default=DNASEQ_PIPELINE_DFLT_LOG_FILE)
+                  default=None)
+argp.add_argument('-t',
+                  dest='pipeline_alloc_time',
+                  metavar='TIME',
+                  help='pipeline allocation time',
+                  default=PIPELINE_ALLOC_TIME_DFLT)
 args = argp.parse_args()
 app_pycmm_pipeline(jobs_setup_file=args.jobs_setup_file,
                    log_file=args.log_file,
                    pipeline=GATKBPPipeline,
                    pipeline_description=DNASEQ_PIPELINE_DESCRIPTION,
                    pipeline_bin=DNASEQ_SLURM_MONITOR_PIPELINE_BIN,
+                   pipeline_alloc_time=args.pipeline_alloc_time,
                    )

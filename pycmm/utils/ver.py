@@ -1,6 +1,7 @@
 import os
 import re
 import pkg_resources
+from pycmm.settings import DUMMY_TABLE_ANNOVAR_BASH
 from pycmm.template import pyCMMBase
 from pycmm.utils import exec_sh
 
@@ -10,7 +11,7 @@ class VersionManager(pyCMMBase):
     def __init__(self, **kwargs):
         super(VersionManager, self).__init__(**kwargs)
     
-    def get_raw_repr(self):
+    def get_raw_obj_str(self):
         return {"pycmm": self.pycmm_version,
                 "pysam": self.pysam_version,
                 "pyvcf": self.pyvcf_version,
@@ -53,7 +54,7 @@ class VersionManager(pyCMMBase):
 
     @property
     def table_annovar_version(self):
-        p, data = exec_sh("table_annovar.pl -h", silent=True)
+        p, data = exec_sh(DUMMY_TABLE_ANNOVAR_BASH + " -h", silent=True)
         search_result = re.search("\$(.*)\$", data)
         return search_result.group(1)
 

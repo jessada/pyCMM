@@ -1,14 +1,45 @@
 import copy
 import sys
 import re
+from collections import defaultdict
 from vcf.model import _Record as _VcfRecord
 from vcf.model import _Call as _VcfCall
 from pycmm.template import pyCMMBase
 from pycmm.settings import PRIMARY_MAF_VAR
 from pycmm.settings import FUNC_REFGENE_VAR
 from pycmm.settings import EXONICFUNC_REFGENE_VAR
+from pycmm.settings import EST_KVOT_EARLYONSET_VS_BRC_COL_NAME
+from pycmm.settings import EST_KVOT_EARLYONSET_VS_EXAC_NFE_COL_NAME
+from pycmm.settings import EST_KVOT_EARLYONSET_VS_SWEGEN_COL_NAME
+from pycmm.settings import EST_KVOT_EARLYONSET_VS_KG_EUR_COL_NAME
+from pycmm.settings import PATHOGENIC_COUNT_COL_NAME
+from pycmm.settings import WES294_OAF_EARLYONSET_AF_COL_NAME
+from pycmm.settings import WES294_OAF_BRCS_AF_COL_NAME
+from pycmm.settings import SWEGEN_AF_COL_NAME
+from pycmm.settings import EXAC_NFE_COL_NAME
+from pycmm.settings import KG2014OCT_EUR_COL_NAME
+from pycmm.settings import EXAC03_CONSTRAINT_EXP_SYN_COL_NAME
+from pycmm.settings import EXAC03_CONSTRAINT_N_SYN_COL_NAME
+from pycmm.settings import EXAC03_CONSTRAINT_SYN_Z_COL_NAME
+from pycmm.settings import EXAC03_CONSTRAINT_EXP_MIS_COL_NAME
+from pycmm.settings import EXAC03_CONSTRAINT_N_MIS_COL_NAME
+from pycmm.settings import EXAC03_CONSTRAINT_MIS_Z_COL_NAME
+from pycmm.settings import EXAC03_CONSTRAINT_EXP_LOF_COL_NAME
+from pycmm.settings import EXAC03_CONSTRAINT_N_LOF_COL_NAME
+from pycmm.settings import EXAC03_CONSTRAINT_PLI_COL_NAME
+from pycmm.settings import REF_MAF_COL_NAMES
+from pycmm.settings import MAX_REF_MAF_COL_NAME
+from pycmm.settings import EXAC03_CONSTRAINT_COL_NAMES
+from pycmm.settings import EXAC03_CONSTRAINT_COL_NAME
+from pycmm.settings import PREDICTION_COLS
+from pycmm.settings import INTERVAR_AND_EVIDENCE_COL_NAME
+from pycmm.settings import INTERVAR_CLASS_COL_NAME
+from pycmm.settings import INTERVAR_EVIDENCE_COL_NAME
 from pycmm.utils import check_equal
 from pycmm.utils import check_in
+from pycmm.utils import is_number
+from pycmm.cmmlib.intervarlib import parse_intervar_class
+from pycmm.cmmlib.intervarlib import parse_intervar_evidence
 
 CMMGT_WILDTYPE = 'wt'
 CMMGT_HOMOZYGOTE = 'hom'
@@ -22,6 +53,8 @@ FUNC_UPSTREAM = 'upstream'
 FUNC_DOWNSTREAM = 'downstream'
 FUNC_UTR = 'UTR'
 EXONICFUNC_SYNONYMOUS = 'synonymous_SNV'
+
+EXAC_CONSTRAINT_PATTERN = re.compile(r'''(?P<var_name>.+?)=(?P<value>.+)''')
 
 class _TAVcfCall(_VcfCall, pyCMMBase):
     """
@@ -99,7 +132,6 @@ class _TAVcfCall(_VcfCall, pyCMMBase):
         But it'll be a very rare case
         """
         actual_gts = []
-        afs = self.site.afss[0]
         for gt_idx in xrange(len(self.cmm_gts)):
             cmm_gt = self.cmm_gts[gt_idx]
             # Other than the problematic wild type and homozygote,
@@ -107,8 +139,8 @@ class _TAVcfCall(_VcfCall, pyCMMBase):
             if cmm_gt != CMMGT_HOMOZYGOTE and cmm_gt != CMMGT_WILDTYPE:
                 actual_gts.append(cmm_gt)
                 continue
-            # if allele frequency less than 0.5 the actual gt remain the same
-            if (afs[gt_idx] == ".") or (float(afs[gt_idx]) < 0.5):
+            # if reference is not mutated the actual gt remain the same
+            if not self.site.ref_is_mutated[gt_idx]:
                 actual_gts.append(cmm_gt)
                 continue
             # below should be only hom and wild type with allele freq >= 0.5
@@ -202,8 +234,20 @@ class _TAVcfRecord(_VcfRecord, pyCMMBase):
         self.__is_upstream = None
         self.__is_downstream = None
         self.__is_utr = None
+        self.__ref_is_mutated = None
         self.__family_infos = copy.deepcopy(family_infos)
         self.__shared_cal = False
+        self.__pathogenic_counts = {}
+        self.__exac_constraints = defaultdict(dict)
+        self.__max_ref_maf = {}
+        self.__added_info = {}
+
+        if (type(self.FILTER) is list) and (len(self.FILTER) == 0):
+            self.FILTER = "PASS"
+        elif type(self.FILTER) is list:
+            self.FILTER = ";".join(self.FILTER)
+        else:
+            self.FILTER = "."
 
     @property
     def freq_ratios(self):
@@ -256,14 +300,120 @@ class _TAVcfRecord(_VcfRecord, pyCMMBase):
                                                         compare=check_equal)
         return self.__is_synonymous
 
+    @property
+    def ref_is_mutated(self):
+        if self.__ref_is_mutated is None:
+            afs = self.afss[0]
+            self.__ref_is_mutated = []
+            for gt_idx in xrange(len(afs)):
+                if ((afs[gt_idx] == ".") or
+                    (afs[gt_idx] == CMM_DUMMY) or
+                    (float(afs[gt_idx]) < 0.5)
+                    ):
+                    self.__ref_is_mutated.append(False)
+                else:
+                    self.__ref_is_mutated.append(True)
+        return self.__ref_is_mutated
+
+    def add_info(self, var_name, value):
+        self.__added_info[var_name] = value
+
     def __get_info(self, var_name):
         """
+        for internal call
         - return list of values of table_annovar column "var_name"
         - number of entry in the list = 1 + number of alternate alleles
         """
         if var_name in self.INFO:
             return self.INFO[var_name]
+        if var_name in self.__added_info:
+            return self.__added_info[var_name]
         return None
+
+    def get_info(self, var_name, allele_idx=1):
+        """
+        parsed to be called by high-level function
+        - kvot is included
+        """
+        def cal_est_ors(cases_freq,
+                        ctrls_freq,
+                        ref_is_mutated,
+                        ):
+            # filter out none number
+            if cases_freq == "NA":
+                return "NA"
+            if (cases_freq is None or
+                cases_freq == "" or
+                not is_number(cases_freq)
+                ):
+                return ""
+            if (ctrls_freq is None or
+                ctrls_freq == "" or
+                not is_number(ctrls_freq)
+                ):
+                return ""
+            # filter "divide by 0"
+            if float(ctrls_freq) == 0:
+                return "INF"
+            if ref_is_mutated and (float(ctrls_freq) == 1):
+                return "INF"
+            if ref_is_mutated:
+                return "{:.4f}".format((1-float(cases_freq))/(1-float(ctrls_freq)))
+            return "{:.4f}".format(float(cases_freq)/float(ctrls_freq))
+
+        info = self.__get_info(var_name)
+        if info is not None:
+            if (type(info) is list) and (len(info) == 1):
+                info = info[0]
+            elif (type(info) is list) and (len(info) > 1):
+                info = info[allele_idx-1]
+        elif var_name == PATHOGENIC_COUNT_COL_NAME:
+            info = self.pathogenic_count(allele_idx=allele_idx)
+        elif var_name == EST_KVOT_EARLYONSET_VS_BRC_COL_NAME:
+            info = cal_est_ors(cases_freq=self.get_info(WES294_OAF_EARLYONSET_AF_COL_NAME,
+                                                        allele_idx),
+                               ctrls_freq=self.get_info(WES294_OAF_BRCS_AF_COL_NAME,
+                                                        allele_idx),
+                               ref_is_mutated=self.ref_is_mutated[allele_idx],
+                               )
+        elif var_name == EST_KVOT_EARLYONSET_VS_SWEGEN_COL_NAME:
+            info = cal_est_ors(cases_freq=self.get_info(WES294_OAF_EARLYONSET_AF_COL_NAME,
+                                                        allele_idx),
+                               ctrls_freq=self.get_info(SWEGEN_AF_COL_NAME,
+                                                        allele_idx),
+                               ref_is_mutated=self.ref_is_mutated[allele_idx],
+                               )
+        elif var_name == EST_KVOT_EARLYONSET_VS_EXAC_NFE_COL_NAME:
+            info = cal_est_ors(cases_freq=self.get_info(WES294_OAF_EARLYONSET_AF_COL_NAME,
+                                                        allele_idx),
+                               ctrls_freq=self.get_info(EXAC_NFE_COL_NAME,
+                                                        allele_idx),
+                               ref_is_mutated=self.ref_is_mutated[allele_idx],
+                               )
+        elif var_name == EST_KVOT_EARLYONSET_VS_KG_EUR_COL_NAME:
+            info = cal_est_ors(cases_freq=self.get_info(WES294_OAF_EARLYONSET_AF_COL_NAME,
+                                                        allele_idx),
+                               ctrls_freq=self.get_info(KG2014OCT_EUR_COL_NAME,
+                                                        allele_idx),
+                               ref_is_mutated=self.ref_is_mutated[allele_idx],
+                               )
+        elif var_name in EXAC03_CONSTRAINT_COL_NAMES:
+            info = self.__get_exac_constraint_val(var_name, allele_idx)
+        elif var_name == MAX_REF_MAF_COL_NAME:
+            info = self.__get_max_ref_maf(allele_idx)
+        elif var_name == INTERVAR_CLASS_COL_NAME:
+            info = parse_intervar_class(self.get_info(INTERVAR_AND_EVIDENCE_COL_NAME,
+                                                      allele_idx))
+        elif var_name == INTERVAR_EVIDENCE_COL_NAME:
+            info = parse_intervar_evidence(self.get_info(INTERVAR_AND_EVIDENCE_COL_NAME,
+                                                         allele_idx))
+        if (info == "" or
+            info is None or
+            info == [None] or
+            info == "."
+            ):
+           info = ""
+        return info
 
     def __cal_afss(self):
         """
@@ -416,13 +566,74 @@ class _TAVcfRecord(_VcfRecord, pyCMMBase):
             return False
         return True
 
-    def __info_repl(self, match_obj):
-        repl_txt = "self.INFO["
-        repl_txt += match_obj.group(0)
-        repl_txt += "]"
-        return repl_txt
+    def is_pass_vqsr(self, allele_idx=1):
+        return self.FILTER == "PASS"
 
-    def vcf_eval(self, expr):
-        return eval(re.sub(r'(\".+?\")',
-                           self.__info_repl,
-                           expr))
+    def pathogenic_count(self, allele_idx=1):
+        if allele_idx not in self.__pathogenic_counts:
+            count = 0
+            for col_name in PREDICTION_COLS:
+                info = self.get_info(col_name, allele_idx)
+                if not info.harmful:
+                    continue
+                count += 1
+            self.__pathogenic_counts[allele_idx] = count
+        return self.__pathogenic_counts[allele_idx]
+
+    def __get_exac_constraint_val(self, var_name, allele_idx=1):
+        if var_name in self.__exac_constraints[allele_idx]:
+            return self.__exac_constraints[allele_idx][var_name]
+        exac_constraint_vals = self.get_info(EXAC03_CONSTRAINT_COL_NAME, allele_idx)
+        if (exac_constraint_vals is None or
+            exac_constraint_vals == "." or
+            exac_constraint_vals == ""):
+            return None
+        self.__parse_exac_constraint(exac_constraint_vals, allele_idx)
+        return self.__exac_constraints[allele_idx][var_name]
+
+    def __parse_exac_constraint(self, exac_constraint_vals, allele_idx):
+        exac_constaints = exac_constraint_vals.split('#')
+        for exac_constaint in exac_constaints:
+            match = EXAC_CONSTRAINT_PATTERN.match(exac_constaint)
+            var_name = match.group('var_name')
+            value = match.group('value')
+            self.__exac_constraints[allele_idx][var_name] = value
+
+    def __get_max_ref_maf(self, allele_idx=1):
+        if allele_idx not in self.__max_ref_maf:
+            max_ref_maf = 0
+            for ref_maf_col_name in REF_MAF_COL_NAMES:
+                ref_maf = self.get_info(ref_maf_col_name, allele_idx)
+                if ref_maf == "":
+                    continue
+                ref_maf = float(ref_maf)
+                if ref_maf > 0.5:
+                    ref_maf = 1 - ref_maf
+                if ref_maf > max_ref_maf:
+                    max_ref_maf = ref_maf
+            self.__max_ref_maf[allele_idx] = max_ref_maf
+        return self.__max_ref_maf[allele_idx]
+
+    def vcf_eval(self, expr, allele_idx):
+        def info_repl(match_obj):
+            repl_txt = "self.get_info("
+            repl_txt += match_obj.group(0)
+            repl_txt += ", " + str(allele_idx)
+            repl_txt += ")"
+            return repl_txt
+
+        # look for annotated fields
+        info_fields = {}
+        for match in re.finditer(r'(\".+?\")', expr):
+            info_fields[match.group(1)] = 1
+        # replace the annotated fields with the actual values
+        repl_expr = expr
+        for info_field in info_fields:
+            info_val = eval(re.sub(r'(\".+?\")',
+                                   info_repl,
+                                   info_field)) 
+            repl_expr = re.sub(info_field,
+                               "'"+str(info_val)+"'",
+                               repl_expr)
+        # then eval the expression
+        return eval(repl_expr)

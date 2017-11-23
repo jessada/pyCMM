@@ -2,22 +2,22 @@ import argparse
 import sys
 from argparse import RawTextHelpFormatter
 from pycmm.app.mutrep import app_pycmm_mutrep_create_jobs_setup_file
+from pycmm.settings import DFLT_JOB_ALLOC_TIME
 from pycmm.settings import MUTREP_CREATE_JOB_SETUP_FILE_DESCRIPTION
 from pycmm.settings import AXEQ_CHR3_6_14_18_COLS_TAG
 from pycmm.settings import AXEQ_CHR5_19_COLS_TAG
 from pycmm.settings import AXEQ_CHR9_COLS_TAG
-from pycmm.settings import CRC_101_COLS_TAG
-from pycmm.settings import CRC_CAFAM_COLS_TAG
-from pycmm.settings import CRC_COLON_COLS_TAG
-from pycmm.settings import CRC_RECTAL_COLS_TAG
-from pycmm.settings import CRC_CRC_COLS_TAG
-from pycmm.settings import ILL_BR_COLS_TAG
-from pycmm.settings import NK64_COLS_TAG
+from pycmm.settings import WES294_OAF_CRCS_COLS_TAG
+from pycmm.settings import WES294_OAF_CHEK2_COLS_TAG 
+from pycmm.settings import WES294_OAF_EARLYONSET_COLS_TAG
 from pycmm.settings import MUTSTAT_DETAILS_COLS_TAG
-from pycmm.settings import ASSOC_COLS_TAG
 from pycmm.settings import LJB_SCORE_COLS_TAG
 from pycmm.settings import EXAC_OTH_COLS_TAG
+from pycmm.settings import EXAC_CONSTRAINT_COLS_TAG
+from pycmm.settings import SWEGEN_OTH_COLS_TAG
+from pycmm.settings import KVOT_COLS_TAG
 from pycmm.settings import UNKNOWN_COLS_TAG
+from pycmm.flow.mutrep import JOBS_SETUP_RPT_FILTER_PASS_VQSR
 from pycmm.flow.mutrep import JOBS_SETUP_RPT_FILTER_RARE
 from pycmm.flow.mutrep import JOBS_SETUP_RPT_FILTER_NON_INTERGENIC
 from pycmm.flow.mutrep import JOBS_SETUP_RPT_FILTER_NON_INTRONIC
@@ -27,6 +27,7 @@ from pycmm.flow.mutrep import JOBS_SETUP_RPT_FILTER_NON_UTR
 from pycmm.flow.mutrep import JOBS_SETUP_RPT_FILTER_NON_SYNONYMOUS
 from pycmm.flow.mutrep import JOBS_SETUP_RPT_FILTER_HAS_MUTATION
 from pycmm.flow.mutrep import JOBS_SETUP_RPT_FILTER_HAS_SHARED
+from pycmm.flow.mutrep import JOBS_SETUP_RPT_FILTER_NON_RECESSIVE_GENE
 
 argp = argparse.ArgumentParser(description=MUTREP_CREATE_JOB_SETUP_FILE_DESCRIPTION,
                                formatter_class=RawTextHelpFormatter,
@@ -56,12 +57,13 @@ argp.add_argument('-p',
                   help='UPPMAX project code',
                   default=None,
                   )
+help = 'UPPMAX allocation time (default: {dflt_val})'.format(dflt_val=DFLT_JOB_ALLOC_TIME)
 argp.add_argument('--job_alloc_time',
-                   dest='job_alloc_time',
-                   metavar="ALLOC_TIME",
-                   help='UPPMAX allocation time for jobs that create databases (i.e. mut stat, table annovar)',
-                   default=None,
-                   )
+                  dest='job_alloc_time',
+                  metavar="ALLOC_TIME",
+                  help=help,
+                  default=DFLT_JOB_ALLOC_TIME,
+                  )
 mutrep_group.add_argument('-A',
                           dest='annotated_vcf_tabix',
                           metavar="FILE",
@@ -79,17 +81,15 @@ help_txt += '\n'
 help_txt += '\t' + AXEQ_CHR3_6_14_18_COLS_TAG + ': columns that are related to mutations statistics generated from dataset Axeq chr3, 6, 14, 18\n'
 help_txt += '\t' + AXEQ_CHR5_19_COLS_TAG + ': columns that are related to dataset Axeq chr5, 19\n'
 help_txt += '\t' + AXEQ_CHR9_COLS_TAG + ': columns that are related to dataset Axeq chr9\n'
-help_txt += '\t' + CRC_101_COLS_TAG + ': columns that are related to mutations statistics generated from all 101 CRC samples\n'
-help_txt += '\t' + CRC_CAFAM_COLS_TAG + ': columns that are related to mutations statistics generated from cancer-family subdataset of CRC dataset\n'
-help_txt += '\t' + CRC_COLON_COLS_TAG + ': columns that are related to mutations statistics generated from colon-cancer subdataset of CRC dataset\n'
-help_txt += '\t' + CRC_RECTAL_COLS_TAG + ': columns that are related to mutations statistics generated from rectal-cancer subdataset of CRC dataset\n'
-help_txt += '\t' + CRC_CRC_COLS_TAG + ': columns that are related to mutations statistics generated from colorectal-cancer subdataset of CRC dataset\n'
-help_txt += '\t' + ILL_BR_COLS_TAG + ': columns that are related to mutations statistics generated from a dataset consisting of 30 breast-cancer samples from Illumina\n'
-help_txt += '\t' + NK64_COLS_TAG + ': columns that are related to mutations statistics generated from a dataset consisting of PMS2-, early onset- and famliy 24 samples\n'
+help_txt += '\t' + WES294_OAF_CHEK2_COLS_TAG  + ': columns that are related to mutations statistics generated from CHEK2 samples\n'
+help_txt += '\t' + WES294_OAF_EARLYONSET_COLS_TAG + ': columns that are related to mutations statistics generated from early-oneset colorectal samples\n'
+help_txt += '\t' + WES294_OAF_CRCS_COLS_TAG + ': columns that are related to mutations statistics generated from all colorectal samples, one family each\n'
 help_txt += '\t' + MUTSTAT_DETAILS_COLS_TAG + ': detailed information of mutations statistics\n'
-help_txt += '\t' + ASSOC_COLS_TAG + ': result from association studies\n'
 help_txt += '\t' + LJB_SCORE_COLS_TAG + ': prediction score from LJB\n'
+help_txt += '\t' + SWEGEN_OTH_COLS_TAG + ': other columns from SWEGEN database beside SWEGEN_AF\n'
+help_txt += '\t' + EXAC_CONSTRAINT_COLS_TAG + ': ExAC constraint indicating mutation intolerance for the gene\n'
 help_txt += '\t' + EXAC_OTH_COLS_TAG + ': other columns from ExAC database beside ExAC_ALL and ExAC_NFE\n'
+help_txt += '\t' + KVOT_COLS_TAG + ': KVOT calculation\n'
 help_txt += '\t' + UNKNOWN_COLS_TAG + ": columns that I don't know that they are about\n"
 help_txt += '\n'
 help_txt += 'example: -E ' + AXEQ_CHR9_COLS_TAG + ',' + MUTSTAT_DETAILS_COLS_TAG + '\n'
@@ -102,6 +102,7 @@ mutrep_group.add_argument('-E',
                           )
 help_txt = 'Criteria of rows to be filtered. The list are as follows:\n'
 help_txt += '\n'
+help_txt += '\t' + JOBS_SETUP_RPT_FILTER_PASS_VQSR + '\n'
 help_txt += '\t' + JOBS_SETUP_RPT_FILTER_RARE + '\n'
 help_txt += '\t' + JOBS_SETUP_RPT_FILTER_NON_INTERGENIC + '\n'
 help_txt += '\t' + JOBS_SETUP_RPT_FILTER_NON_INTRONIC + '\n'
@@ -109,6 +110,7 @@ help_txt += '\t' + JOBS_SETUP_RPT_FILTER_NON_UPSTREAM + '\n'
 help_txt += '\t' + JOBS_SETUP_RPT_FILTER_NON_DOWNSTREAM + '\n'
 help_txt += '\t' + JOBS_SETUP_RPT_FILTER_NON_UTR + '\n'
 help_txt += '\t' + JOBS_SETUP_RPT_FILTER_NON_SYNONYMOUS + '\n'
+help_txt += '\t' + JOBS_SETUP_RPT_FILTER_NON_RECESSIVE_GENE + '\n'
 help_txt += '\t' + JOBS_SETUP_RPT_FILTER_HAS_MUTATION + '\n'
 help_txt += '\t' + JOBS_SETUP_RPT_FILTER_HAS_SHARED + '\n'
 help_txt += '\n'
@@ -118,6 +120,18 @@ mutrep_group.add_argument('--filter_actions',
                           dest='rows_filter_actions',
                           metavar="CRITERIA(S)",
                           help=help_txt,
+                          default=None,
+                          )
+mutrep_group.add_argument('--expression_patterns',
+                          dest='expression_patterns',
+                          metavar="PATTERN(S)",
+                          help="define expression(s) to be used with --expression_usages",
+                          default=None,
+                          )
+mutrep_group.add_argument('--expression_usages',
+                          dest='expression_usages',
+                          metavar="USAGE(S)",
+                          help="actions to be preformed",
                           default=None,
                           )
 mutrep_group.add_argument('-R',
@@ -130,6 +144,18 @@ mutrep_group.add_argument('-f',
                           dest='freq_ratios',
                           metavar="FREQ_RATIOS",
                           help='frequencies ratios to be of the mutations to be identified as rare',
+                          default=None,
+                          )
+mutrep_group.add_argument('--filter_genes',
+                          dest='filter_genes',
+                          metavar="GENES",
+                          help='identify if only specific genes can be in the reports',
+                          default=None,
+                          )
+mutrep_group.add_argument('--color_genes',
+                          dest='color_genes',
+                          metavar="GENES",
+                          help='identify if any genes needed to be highlight',
                           default=None,
                           )
 mutrep_group.add_argument('--split_chrom',
@@ -150,16 +176,28 @@ mutrep_group.add_argument('--call_detail',
                           help='indicate if other call information beside GT are required',
                           default=False,
                           )
-mutrep_group.add_argument('--only_summary',
-                          dest='only_summary',
+mutrep_group.add_argument('--call_gq',
+                          dest='call_gq',
                           action="store_true",
-                          help='identified if only want to generate summary report',
+                          help='indicate if genotype quality should be displayed',
                           default=False,
                           )
-mutrep_group.add_argument('--only_families',
-                          dest='only_families',
+mutrep_group.add_argument('--coloring_shared',
+                          dest='coloring_shared',
                           action="store_true",
-                          help='identified if only want to generate families report',
+                          help='identified if only want to color shared variants',
+                          default=False,
+                          )
+mutrep_group.add_argument('--coloring_zygosity',
+                          dest='coloring_zygosity',
+                          action="store_true",
+                          help='identified if only want to color variant zygosities',
+                          default=False,
+                          )
+mutrep_group.add_argument('--show_shared_variants',
+                          dest='show_shared_variants',
+                          action="store_true",
+                          help='identified if only want to show families shared mutations',
                           default=False,
                           )
 argp.add_argument('-o',
@@ -176,14 +214,20 @@ app_pycmm_mutrep_create_jobs_setup_file(dataset_name=args.dataset_name,
                                         job_alloc_time=args.job_alloc_time,
                                         anno_cols=args.anno_cols,
                                         rows_filter_actions=args.rows_filter_actions,
+                                        expression_patterns=args.expression_patterns,
+                                        expression_usages=args.expression_usages,
                                         anno_excl_tags=args.anno_excl_tags,
                                         annotated_vcf_tabix=args.annotated_vcf_tabix,
                                         report_regions=args.report_regions,
                                         frequency_ratios=args.freq_ratios,
+                                        filter_genes=args.filter_genes,
+                                        color_genes=args.color_genes,
                                         split_chrom=args.split_chrom,
                                         summary_families_sheet=args.summary_families_sheet,
                                         call_detail=args.call_detail,
-                                        only_summary=args.only_summary,
-                                        only_families=args.only_families,
+                                        call_gq=args.call_gq,
+                                        coloring_shared=args.coloring_shared,
+                                        coloring_zygosity=args.coloring_zygosity,
+                                        show_shared_variants=args.show_shared_variants,
                                         out_jobs_setup_file=args.out_jobs_setup_file,
                                         )

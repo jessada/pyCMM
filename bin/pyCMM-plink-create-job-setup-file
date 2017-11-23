@@ -3,7 +3,7 @@ import sys
 from argparse import RawTextHelpFormatter
 from pycmm.app.plink import app_pycmm_plink_create_jobs_setup_file
 from pycmm.settings import PLINK_CREATE_JOB_SETUP_FILE_DESCRIPTION
-from pycmm.settings import DFLT_FLOW_ALLOC_TIME
+from pycmm.settings import DFLT_JOB_ALLOC_TIME
 from pycmm.flow.plink import DFLT_CUTOFF_PVALUE
 from pycmm.flow.plink import DFLT_CUTOFF_ORS
 from pycmm.flow.plink import DFLT_HAP_WINDOW_SIZES
@@ -69,12 +69,12 @@ plink_group.add_argument('--hap-window',
                          help=help,
                          default=DFLT_HAP_WINDOW_SIZES,
                          )
-help = 'UPPMAX allocation time (default: {dflt_val})'.format(dflt_val=DFLT_FLOW_ALLOC_TIME)
-plink_group.add_argument('--flow_alloc_time',
-                         dest='flow_alloc_time',
+help = 'UPPMAX allocation time (default: {dflt_val})'.format(dflt_val=DFLT_JOB_ALLOC_TIME)
+plink_group.add_argument('--job_alloc_time',
+                         dest='job_alloc_time',
                          metavar="ALLOC_TIME",
                          help=help,
-                         default=DFLT_FLOW_ALLOC_TIME,
+                         default=DFLT_JOB_ALLOC_TIME,
                          )
 plink_group.add_argument('--filter_criteria',
                          dest='filter_criteria',
@@ -128,7 +128,7 @@ app_pycmm_plink_create_jobs_setup_file(project_name=args.project_name,
                                        hap_window_sizes=args.hap_window_sizes,
                                        project_code=args.project_code,
                                        sample_info=args.sample_info,
-                                       flow_alloc_time=args.flow_alloc_time,
+                                       job_alloc_time=args.job_alloc_time,
                                        filter_criteria=args.filter_criteria,
                                        fam_hap_prefix=args.fam_hap_prefix,
                                        out_jobs_setup_file=args.out_jobs_setup_file,

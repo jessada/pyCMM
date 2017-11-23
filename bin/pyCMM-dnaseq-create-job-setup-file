@@ -2,6 +2,7 @@ import argparse
 import sys
 from argparse import RawTextHelpFormatter
 from pycmm.settings import DNASEQ_CREATE_JOB_SETUP_FILE_DESCRIPTION
+from pycmm.settings import DFLT_JOB_ALLOC_TIME
 from pycmm.app.gatkbp import app_pycmm_gatkbp_create_jobs_setup_file
 from collections import OrderedDict
 
@@ -28,12 +29,13 @@ argp.add_argument('-p',
                   help='UPPMAX project code',
                   default=None,
                   )
-gatk_group.add_argument('--gatkbp_alloc_time',
-                        dest='gatkbp_alloc_time',
-                        metavar="TIME",
-                        help='UPPMAX allocation time for DNA Seq GATK Best Practice workflow',
-                        default=None,
-                        )
+help = 'UPPMAX allocation time (default: {dflt_val})'.format(dflt_val=DFLT_JOB_ALLOC_TIME)
+gatk_group.add_argument('--job_alloc_time',
+                         dest='job_alloc_time',
+                         metavar="ALLOC_TIME",
+                         help=help,
+                         default=DFLT_JOB_ALLOC_TIME,
+                         )
 gatk_group.add_argument('-R',
                         dest='reference_file',
                         metavar="FILE",
@@ -94,7 +96,7 @@ argp.add_argument('-o',
 args = argp.parse_args()
 app_pycmm_gatkbp_create_jobs_setup_file(dataset_name=args.dataset_name,
                                         project_code=args.project_code,
-                                        gatkbp_alloc_time=args.gatkbp_alloc_time,
+                                        gatkbp_alloc_time=args.job_alloc_time,
                                         reference_file=args.reference_file,
                                         project_out_dir=args.project_out_dir,
                                         samples_root_dir=args.samples_root_dir,

@@ -2,6 +2,7 @@ import sys
 from os.path import join as join_path
 from collections import OrderedDict
 from pycmm.template import pyCMMBase
+from pycmm.settings import DUMMY_TABLE_ANNOVAR_BASH
 from pycmm.settings import LJB_SIFT_PREDICTION_COL_NAME as SIFT_PRED_COL
 from pycmm.settings import LJB_POLYPHEN2_HDIV_PREDICTION_COL_NAME as POLYPHEN2_HDIV_PRED_COL
 from pycmm.settings import LJB_POLYPHEN2_HVAR_PREDICTION_COL_NAME as POLYPHEN2_HVAR_PRED_COL
@@ -10,7 +11,9 @@ from pycmm.settings import LJB_MUTATIONTASTER_PREDICTION_COL_NAME as MUTATIONTAS
 from pycmm.settings import LJB_MUTATIONASSESSOR_PREDICTION_COL_NAME as MUTATIONASSESSOR_PRED_COL
 from pycmm.settings import LJB_FATHMM_PREDICTION_COL_NAME as FATHMM_PRED_COL
 from pycmm.settings import LJB_RADIALSVM_PREDICTION_COL_NAME as RADIALSVM_PRED_COL
+from pycmm.settings import LJB_METASVM_PREDICTION_COL_NAME as METASVM_PRED_COL
 from pycmm.settings import LJB_LR_PREDICTION_COL_NAME as LR_PRED_COL
+from pycmm.settings import LJB_METALR_PREDICTION_COL_NAME as METALR_PRED_COL
 from pycmm.settings import DFLT_ANV_DB_DIR
 from pycmm.settings import DFLT_ANV_DB_NAMES
 from pycmm.settings import DFLT_ANV_DB_OPS
@@ -54,7 +57,7 @@ class Annovar(pyCMMBase):
         self.__data_out_folder = data_out_folder
         self.__tmp_annovar_prefix = self.new_local_tmp_file()
 
-    def get_raw_repr(self):
+    def get_raw_obj_str(self):
         raw_repr = OrderedDict()
         raw_repr["dataset name"] = self.dataset_name
         raw_repr["input file"] = self.input_file
@@ -111,7 +114,7 @@ class Annovar(pyCMMBase):
 
     @property
     def table_annovar_cmd(self):
-        cmd = "table_annovar.pl"
+        cmd = DUMMY_TABLE_ANNOVAR_BASH
         cmd += " " + self.input_file
         cmd += " " + self.db_dir
         cmd += " -buildver " + self.buildver
@@ -138,7 +141,7 @@ class Annovar(pyCMMBase):
         self.info("The result is at "+self.out_annotated_vcf)
 
 
-class PredictionInfo(pyCMMBase):
+class PredictionInfo(CMMParams):
     """
     To encapsulate the effect prediction information
     """
@@ -151,6 +154,13 @@ class PredictionInfo(pyCMMBase):
         self.__code = code
         self.__description = description
         self.__harmful = harmful
+
+    def get_raw_obj_str(self, **kwargs):
+        raw_repr = super(PredictionInfo, self).get_raw_obj_str(**kwargs)
+        raw_repr["code"] = self.code
+        raw_repr["description"] = self.description
+        raw_repr["harmful"] = self.harmful
+        return raw_repr
 
     @property
     def code(self):
@@ -169,7 +179,7 @@ class PredictionInfo(pyCMMBase):
         return self.__harmful
 
 
-class PredictionTranslator(pyCMMBase):
+class PredictionTranslator(CMMParams):
     """
     A class to translate codes from effect predictors by using informaiton
     from http://annovar.openbioinformatics.org/en/latest/user-guide/filter/
@@ -193,7 +203,7 @@ class PredictionTranslator(pyCMMBase):
         self.__set_prediction_info()
         self.__null_prediction = PredictionInfo(code='.',
                                                 description='.',
-                                                harmful=False,
+                                                harmful=True,
                                                 )
 
     def __set_prediction_info(self):
@@ -219,7 +229,7 @@ class PredictionTranslator(pyCMMBase):
         self.__pred_info[POLYPHEN2_HDIV_PRED_COL]['D'] = pred_info
         pred_info = PredictionInfo(code='P',
                                    description='Possibly damaging',
-                                   harmful=True,
+                                   harmful=False,
                                    )
         self.__pred_info[POLYPHEN2_HDIV_PRED_COL]['P'] = pred_info
         pred_info = PredictionInfo(code='B',
@@ -236,7 +246,7 @@ class PredictionTranslator(pyCMMBase):
         self.__pred_info[POLYPHEN2_HVAR_PRED_COL]['D'] = pred_info
         pred_info = PredictionInfo(code='P',
                                    description='Possibly damaging',
-                                   harmful=True,
+                                   harmful=False,
                                    )
         self.__pred_info[POLYPHEN2_HVAR_PRED_COL]['P'] = pred_info
         pred_info = PredictionInfo(code='B',
@@ -258,7 +268,7 @@ class PredictionTranslator(pyCMMBase):
         self.__pred_info[LRT_PRED_COL]['N'] = pred_info
         pred_info = PredictionInfo(code='U',
                                    description='Unknown',
-                                   harmful=False,
+                                   harmful=True,
                                    )
         self.__pred_info[LRT_PRED_COL]['U'] = pred_info
 
@@ -339,6 +349,7 @@ class PredictionTranslator(pyCMMBase):
                                    harmful=False,
                                    )
         self.__pred_info[RADIALSVM_PRED_COL]['T'] = pred_info
+        self.__pred_info[METASVM_PRED_COL] = self.__pred_info[RADIALSVM_PRED_COL]
 
         self.__pred_info[LR_PRED_COL] = {}
         pred_info = PredictionInfo(code='D',
@@ -351,6 +362,7 @@ class PredictionTranslator(pyCMMBase):
                                    harmful=False,
                                    )
         self.__pred_info[LR_PRED_COL]['T'] = pred_info
+        self.__pred_info[METALR_PRED_COL] = self.__pred_info[LR_PRED_COL]
 
     def get_prediction_info(self,
                             predictor_name,
@@ -393,8 +405,8 @@ class AnnovarParams(CMMParams):
     def __init__(self, **kwargs):
         super(AnnovarParams, self).__init__(**kwargs)
 
-    def get_raw_repr(self, **kwargs):
-        raw_repr = super(AnnovarParams, self).get_raw_repr(**kwargs)
+    def get_raw_obj_str(self, **kwargs):
+        raw_repr = super(AnnovarParams, self).get_raw_obj_str(**kwargs)
         raw_repr["input vcf tabix file"] = self.input_vcf_tabix
         raw_repr["annovar db dir"] = self.db_dir
         raw_repr["annovar build ver"] = self.buildver

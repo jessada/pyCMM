@@ -6,29 +6,28 @@ from os.path import isfile
 from collections import OrderedDict
 from pycmm.utils.ver import VersionManager
 from pycmm.cmmlib import CMMParams
-from pycmm.cmmlib.familylib import JOBS_SETUP_SAMPLES_INFOS_KEY
-from pycmm.cmmlib.familylib import JOBS_SETUP_SAMPLE_ID_KEY
-from pycmm.cmmlib.familylib import JOBS_SETUP_FAMILY_ID_KEY
-from pycmm.cmmlib.familylib import JOBS_SETUP_MEMBERS_LIST_KEY
-from pycmm.cmmlib.familylib import NO_FAMILY
-from pycmm.cmmlib.familylib import Sample
-from pycmm.cmmlib.familylib import Family
+from pycmm.cmmlib.samplelib import JOBS_SETUP_SAMPLES_INFOS_KEY
+from pycmm.cmmlib.samplelib import JOBS_SETUP_SAMPLE_ID_KEY
+from pycmm.cmmlib.samplelib import JOBS_SETUP_FAMILY_ID_KEY
+from pycmm.cmmlib.samplelib import JOBS_SETUP_MEMBERS_LIST_KEY
+from pycmm.cmmlib.samplelib import NO_FAMILY
+from pycmm.cmmlib.samplelib import Sample
+from pycmm.cmmlib.samplelib import Family
+from pycmm.cmmlib.samplelib import SamplesInfo
 from pycmm.cmmlib.fastqlib import Fastq
+from pycmm.cmmlib.fastqlib import is_r1
+from pycmm.cmmlib.fastqlib import is_r2
+from pycmm.cmmlib.fastqlib import r1tor2
 from pycmm.flow import CMMPipeline
+from pycmm.flow import get_func_arg
 from pycmm.flow import init_jobs_setup_file
-#from pycmm.utils.jobman import JOB_STATUS_COMPLETED
 
-#BWA_MEM_SCRIPT = "$PYCMM/bash/GATKBP_bwa_mem.sh"
-#SORT_SAM_SCRIPT = "$PYCMM/bash/GATKBP_sort_sam.sh"
-#MARK_DUP_SCRIPT = "$PYCMM/bash/GATKBP_mark_dup.sh"
-#INDELS_TARGET_INTERVALS_SCRIPT = "$PYCMM/bash/GATKBP_create_intervals.sh"
-#INDELS_REALIGN_SCRIPT = "$PYCMM/bash/GATKBP_indels_realign.sh"
-#BASE_RECAL_SCRIPT = "$PYCMM/bash/GATKBP_base_recal.sh"
-#HAPLOTYPE_CALLER_SCRIPT = "$PYCMM/bash/GATKBP_haplotype_caller.sh"
 PREPROCESS_SAMPLE_SCRIPT = "$PYCMM/bash/GATKBP_preprocess_sample.sh"
 SPLIT_GVCFS_SCRIPT = "$PYCMM/bash/split_gvcfs.sh"
 COMBINE_GVCFS_SCRIPT = "$PYCMM/bash/GATKBP_combine_gvcfs.sh"
 GENOTYPE_GVCFS_SCRIPT = "$PYCMM/bash/GATKBP_genotype_gvcfs.sh"
+CONCAT_VCFS_SCRIPT = "$PYCMM/bash/concat_vcfs.sh"
+VQSR_SCRIPT = "$PYCMM/bash/GATKBP_VQSR.sh"
 
 # *************** gatk parameters section ***************
 JOBS_SETUP_GATK_PARAMS_SECTION = "GATK_PARAMS"
@@ -51,16 +50,18 @@ JOBS_SETUP_R2_KEY = "R2"
 JOBS_SETUP_FASTQ_PAIRS_KEY = "fastq_files"
 JOBS_SETUP_FASTQ_ENCODING_KEY = "encoding"
 
+DFLT_PLATFORM = "Illumina"
+
 
 class GATKSample(Sample):
     """  To parse and structure GATK sample """
 
-    def __init__(self, sample_info, **kwargs):
+    def __init__(self, sample_info, *args, **kwargs):
         kwargs["member_info"] = sample_info
-        super(GATKSample, self).__init__(**kwargs)
+        super(GATKSample, self).__init__(*args, **kwargs)
 
-    def get_raw_repr(self, **kwargs):
-        raw_repr = super(GATKSample, self).get_raw_repr(**kwargs)
+    def get_raw_obj_str(self, *args, **kwargs):
+        raw_repr = super(GATKSample, self).get_raw_obj_str(*args, **kwargs)
         raw_repr["library"] = self.library
         raw_repr["unit"] = self.unit
         raw_repr["sample group"] = self.sample_group
@@ -111,22 +112,6 @@ class GATKSample(Sample):
         return self._get_job_config(JOBS_SETUP_SAMPLE_USAGE_MAIL_KEY,
                                     required=True)
 
-#    @property
-#    def working_dir(self):
-#        return self.__working_dir
-#
-#    @working_dir.setter
-#    def working_dir(self, value):
-#        self.__working_dir = value
-#
-#    @property
-#    def pdf_out_dir(self):
-#        return self.__pdf_out_dir
-#
-#    @pdf_out_dir.setter
-#    def pdf_out_dir(self, value):
-#        self.__pdf_out_dir = value
-#
     @property
     def bam_out_dir(self):
         return self.__bam_out_dir
@@ -143,67 +128,58 @@ class GATKSample(Sample):
     def gvcf_out_dir(self, value):
         self.__gvcf_out_dir = value
 
-#    @property
-#    def raw_aligned_reads_file(self):
-#        return join_path(self.working_dir,
-#                         self.sample_id+"_raw_aligned_reads.sam")
-#
-#    @property
-#    def sorted_reads_file(self):
-#        return join_path(self.working_dir,
-#                         self.sample_id+"_sorted_reads.bam")
-#
-#    @property
-#    def dedup_reads_file(self):
-#        return join_path(self.working_dir,
-#                         self.sample_id+"_dedup_reads.bam")
-#
-#    @property
-#    def metrics_file(self):
-#        return join_path(self.working_dir,
-#                         self.sample_id+"_metrics.txt")
-#
-#    @property
-#    def indels_target_intervals_file(self):
-#        return join_path(self.working_dir,
-#                         self.sample_id+"_indels_target_intervals.list")
-#
-#    @property
-#    def realigned_reads_file(self):
-#        return join_path(self.working_dir,
-#                         self.sample_id+"_realigned_reads.bam")
-#
-#    @property
-#    def recal_table_file(self):
-#        return join_path(self.working_dir,
-#                         self.sample_id+"_recal_data.table")
-#
-#    @property
-#    def post_recal_table_file(self):
-#        return join_path(self.working_dir,
-#                         self.sample_id+"_post_recal_data.table")
-#
     @property
     def recal_bam_file(self):
         return join_path(self.bam_out_dir,
                          self.sample_id+".dedup.realigned.recal.bam")
 
-#    @property
-#    def recalibration_plots(self):
-#        return join_path(self.pdf_out_dir,
-#                         self.sample_id+"_recalibration_plots.pdf")
-#
     @property
     def gvcf_file(self):
         return join_path(self.gvcf_out_dir,
                          self.sample_id+".g.vcf.gz")
 
-class GATKFamily(Family):
+class GATKBPSamplesInfo(SamplesInfo):
+    """  To parse and structure all samples information for mutation report """
+
+    def __init__(self,
+                 samples_info,
+                 *args,
+                 **kwargs
+                 ):
+        super(GATKBPSamplesInfo, self).__init__(samples_info,
+                                                GATKBPFamily,
+                                                *args,
+                                                **kwargs)
+#        self.__parse_families()
+#
+#    def __parse_families(self):
+#        if self.datasets is None:
+#            self.__families = None
+#            return
+#        self.__families = OrderedDict()
+#        for dataset in self.datasets.values():
+#            for fam_id in dataset.families:
+#                family = dataset.families[fam_id]
+#                self.__families[fam_id] = family
+#
+#    @property
+#    def datasets(self):
+#        return self.items
+#
+#    @property
+#    def families(self):
+#        return self.__families
+
+class GATKBPFamily(Family):
     """  To parse and structure GATK dummy family """
 
-    def __init__(self, **kwargs):
+    def __init__(self, *args, **kwargs):
         self.__members = None
-        super(GATKFamily, self).__init__(**kwargs)
+        super(GATKBPFamily, self).__init__(*args, **kwargs)
+
+    @property
+    def _id(self):
+        return self.fam_id
 
     @property
     def members(self):
@@ -217,19 +193,19 @@ class GATKFamily(Family):
 class GATKParams(CMMParams):
     """  To handle and parse GATK parameters  """
 
-    def __init__(self, **kwargs):
-        super(GATKParams, self).__init__(**kwargs)
+    def __init__(self, *args, **kwargs):
+        super(GATKParams, self).__init__(*args, **kwargs)
         self.__init_properties()
 
-    def get_raw_repr(self, **kwargs):
-        raw_repr = super(GATKParams, self).get_raw_repr(**kwargs)
+    def get_raw_obj_str(self, *args, **kwargs):
+        raw_repr = super(GATKParams, self).get_raw_obj_str(*args, **kwargs)
         raw_repr["known indels"] = self.known_indels
         raw_repr["reference"] = self.reference
         raw_repr["dbsnp file"] = self.dbsnp
         raw_repr["variants calling"] = self.variants_calling
         raw_repr["targets interval list"] = self.targets_interval_list
         raw_repr["usage mail"] = self.dataset_usage_mail
-        raw_repr["samples"] = self.samples
+        raw_repr["split region file"] = self.split_regions_file
         return raw_repr
 
     def __init_properties(self):
@@ -278,16 +254,13 @@ class GATKParams(CMMParams):
 class GATKBPPipeline(CMMPipeline):
     """ A class to control GATK best practice pipeline """
 
-    def __init__(self, **kwargs):
-        kwargs['family_template'] = GATKFamily
-        super(GATKBPPipeline, self).__init__(**kwargs)
+    def __init__(self, *args, **kwargs):
+        kwargs['info_template'] = GATKBPSamplesInfo
+        super(GATKBPPipeline, self).__init__(*args, **kwargs)
         self.__init_properties()
 
-    def get_raw_repr(self, **kwargs):
-        raw_repr = super(GATKBPPipeline, self).get_raw_repr(**kwargs)
-        raw_repr["dataset name"] = self.dataset_name
-        raw_repr["GATK parameters"] = self.gatk_params
-        raw_repr["samples"] = self.samples
+    def get_raw_obj_str(self, *args, **kwargs):
+        raw_repr = super(GATKBPPipeline, self).get_raw_obj_str(*args, **kwargs)
         return raw_repr
 
     def __init_properties(self):
@@ -309,10 +282,6 @@ class GATKBPPipeline(CMMPipeline):
     def bam_out_dir(self):
         return self._get_sub_project_dir("bam")
 
-#    @property
-#    def pdf_out_dir(self):
-#        return self._get_sub_project_dir("pdf")
-#
     @property
     def gvcf_out_dir(self):
         return self._get_sub_project_dir("gvcf")
@@ -335,7 +304,7 @@ class GATKBPPipeline(CMMPipeline):
         return file_name
 
     def get_genotyped_gvcfs_file_name(self, region_txt=None):
-        file_name = join_path(self.vcf_out_dir,
+        file_name = join_path(self.working_dir,
                               self.dataset_name)
         if region_txt is not None:
             file_name += "_" + region_txt
@@ -348,229 +317,10 @@ class GATKBPPipeline(CMMPipeline):
         versions['GATK'] = vm.gatk_version
         return versions
 
-#    def bwa_mem(self,
-#                sample_id,
-#                ):
-#        """ To generate a SAM file containing aligned reads """
-#
-#        sample_rec = self.samples[sample_id]
-#        job_script = BWA_MEM_SCRIPT
-#        job_params = " -I " + sample_rec.fastq_pairs[0]['R1'] 
-#        job_params += "," + sample_rec.fastq_pairs[0]['R2']
-#        job_params += " -g " + sample_rec.sample_group
-#        job_params += " -R " + self.gatk_params.reference
-#        job_params += " -n " + sample_id
-#        job_params += " -o " + sample_rec.raw_aligned_reads_file
-#        if self.project_code is None:
-#            self.exec_sh(job_script + job_params)
-#            return sample_rec.raw_aligned_reads_file
-#        else:
-#            job_name = sample_id + "_bwa_mem"
-#            self._submit_slurm_job(job_name,
-#                                   "1",
-#                                   job_script,
-#                                   job_params,
-#                                   email=sample_rec.usage_mail,
-#                                   )
-#            return job_name
-#
-#    def sort_sam(self,
-#                 sample_id,
-#                 sam_file=None,
-#                 prereq=None,
-#                 ):
-#        """ Use picard command to sort the SAM file and convert it to BAM """
-#
-#        sample_rec = self.samples[sample_id]
-#        job_script = SORT_SAM_SCRIPT
-#        if sam_file is None:
-#            job_params = " -I " + sample_rec.raw_aligned_reads_file 
-#        else:
-#            job_params = " -I " + sam_file 
-#        job_params += " -o " + sample_rec.sorted_reads_file
-#        if self.project_code is None:
-#            self.exec_sh(job_script + job_params)
-#            return sample_rec.sorted_reads_file
-#        else:
-#            job_name = sample_id + "_sort_sam"
-#            self._submit_slurm_job(job_name,
-#                                   "2",
-#                                   job_script,
-#                                   job_params,
-#                                   email=sample_rec.usage_mail,
-#                                   prereq=prereq,
-#                                   )
-#            return job_name
-#
-#    def mark_dup(self,
-#                 sample_id,
-#                 bam_file=None,
-#                 prereq=None,
-#                 ):
-#        """ Use picard command to mark duplicates """
-#
-#        sample_rec = self.samples[sample_id]
-#        job_script = MARK_DUP_SCRIPT
-#        if bam_file is None:
-#            job_params = " -I " + sample_rec.sorted_reads_file
-#        else:
-#            job_params = " -I " + bam_file
-#        job_params += " -o " + sample_rec.dedup_reads_file
-#        job_params += " -m " + sample_rec.metrics_file
-#        if self.project_code is None:
-#            self.exec_sh(job_script + job_params)
-#            return sample_rec.dedup_reads_file
-#        else:
-#            job_name = sample_id + "_mark_dup"
-#            self._submit_slurm_job(job_name,
-#                                   "4",
-#                                   job_script,
-#                                   job_params,
-#                                   email=sample_rec.usage_mail,
-#                                   prereq=prereq,
-#                                   )
-#            return job_name
-#
-#    def create_intervals(self,
-#                         sample_id,
-#                         bam_file=None,
-#                         prereq=None,
-#                         ):
-#        """ Create a target list of intervals to be realigned """
-#        sample_rec = self.samples[sample_id]
-#        job_script = INDELS_TARGET_INTERVALS_SCRIPT
-#        if bam_file is None:
-#            job_params = " -I " + sample_rec.dedup_reads_file
-#        else:
-#            job_params = " -I " + bam_file
-#        if ((self.gatk_params.known_indels is not None) and
-#            (len(self.gatk_params.known_indels) > 0)
-#            ):
-#            job_params += " -k " + ",".join(self.gatk_params.known_indels)
-#        job_params += " -R " + self.gatk_params.reference
-#        job_params += " -o " + sample_rec.indels_target_intervals_file
-#        if self.project_code is None:
-#            self.exec_sh(job_script + job_params)
-#            return sample_rec.indels_target_intervals_file
-#        else:
-#            job_name = sample_id + "_create_intervals"
-#            self._submit_slurm_job(job_name,
-#                                   "2",
-#                                   job_script,
-#                                   job_params,
-#                                   email=sample_rec.usage_mail,
-#                                   prereq=prereq,
-#                                   )
-#            return job_name
-#
-#    def indels_realign(self,
-#                       sample_id,
-#                       bam_file=None,
-#                       indels_target_intervals_file=None,
-#                       prereq=None,
-#                       ):
-#        """ Local Realignment around Indels """
-#        sample_rec = self.samples[sample_id]
-#        job_script = INDELS_REALIGN_SCRIPT
-#        if bam_file is None:
-#            job_params = " -I " + sample_rec.dedup_reads_file
-#        else:
-#            job_params = " -I " + bam_file
-#        if ((self.gatk_params.known_indels is not None) and
-#            (len(self.gatk_params.known_indels) > 0)
-#            ):
-#            job_params += " -k " + ",".join(self.gatk_params.known_indels)
-#        job_params += " -R " + self.gatk_params.reference
-#        if indels_target_intervals_file is None:
-#            job_params += " -t " + sample_rec.indels_target_intervals_file
-#        else:
-#            job_params += " -t " + indels_target_intervals_file
-#        job_params += " -o " + sample_rec.realigned_reads_file
-#        if self.project_code is None:
-#            self.exec_sh(job_script + job_params)
-#            return sample_rec.realigned_reads_file
-#        else:
-#            job_name = sample_id + "_indels_realign"
-#            self._submit_slurm_job(job_name,
-#                                   "2",
-#                                   job_script,
-#                                   job_params,
-#                                   email=sample_rec.usage_mail,
-#                                   prereq=prereq,
-#                                   )
-#            return job_name
-#
-#    def base_recal(self,
-#                   sample_id,
-#                   bam_file=None,
-#                   prereq=None,
-#                   ):
-#        """ Base Quality Score Recalibration """
-#        sample_rec = self.samples[sample_id]
-#        job_script = BASE_RECAL_SCRIPT
-#        if bam_file is None:
-#            job_params = " -I " + sample_rec.realigned_reads_file
-#        else:
-#            job_params = " -I " + bam_file
-#        job_params += " -R " + self.gatk_params.reference
-#        if ((self.gatk_params.known_indels is not None) and
-#            (len(self.gatk_params.known_indels) > 0)
-#            ):
-#            job_params += " -k " + ",".join(self.gatk_params.known_indels)
-#        job_params += "," + self.gatk_params.dbsnp
-#        job_params += " -t " + sample_rec.recal_table_file
-#        job_params += " -a " + sample_rec.post_recal_table_file
-#        job_params += " -p " + sample_rec.recalibration_plots
-#        job_params += " -o " + sample_rec.recal_bam_file
-#        if self.project_code is None:
-#            self.exec_sh(job_script + job_params)
-#            return sample_rec.recal_bam_file
-#        else:
-#            job_name = sample_id + "_base_recal"
-#            self._submit_slurm_job(job_name,
-#                                   "3",
-#                                   job_script,
-#                                   job_params,
-#                                   email=sample_rec.usage_mail,
-#                                   prereq=prereq,
-#                                   )
-#            return job_name
-#
-#    def hap_cal(self,
-#                sample_id,
-#                bam_file=None,
-#                prereq=None,
-#                ):
-#        """
-#        Call SNPs and indels simultaneously via local re-assembly of haplotypes
-#        in an active region
-#        """
-#
-#        sample_rec = self.samples[sample_id]
-#        job_script = HAPLOTYPE_CALLER_SCRIPT
-#        if bam_file is None:
-#            job_params = " -I " + sample_rec.recal_bam_file
-#        else:
-#            job_params = " -I " + bam_file
-#        job_params += " -R " + self.gatk_params.reference
-#        if self.gatk_params.targets_interval_list is not None:
-#            job_params += " -L " + self.gatk_params.targets_interval_list
-#        if self.gatk_params.dbsnp is not None:
-#            job_params += " -d " + self.gatk_params.dbsnp
-#        job_params += " -o " + sample_rec.gvcf_file
-#        if self.project_code is None:
-#            self.exec_sh(job_script + job_params)
-#            return sample_rec.gvcf_file
-#        else:
-#            job_name = sample_id + "_hap_cal"
-#            self._submit_slurm_job(job_name,
-#                                   "2",
-#                                   job_script,
-#                                   job_params,
-#                                   email=sample_rec.usage_mail,
-#                                   prereq=prereq,
-#                                   )
-#            return job_name
+    @property
+    def vqsr_vcf(self):
+        return join_path(self.vcf_out_dir,
+                         self.dataset_name+".VQSR.vcf")
 
     def preprocess_sample(self,
                           sample_id,
@@ -613,45 +363,17 @@ class GATKBPPipeline(CMMPipeline):
                                    email=sample_rec.usage_mail,
                                    )
             return job_name
-#        job_name_bwa_mem = self.bwa_mem(sample_id)
-#        job_name_sort_sam = self.sort_sam(sample_id,
-#                                          prereq=[job_name_bwa_mem])
-#        job_name_mark_dup = self.mark_dup(sample_id,
-#                                          prereq=[job_name_sort_sam])
-#        job_name_create_intervals = self.create_intervals(sample_id,
-#                                                          prereq=[job_name_mark_dup])
-#        job_name_indels_realign = self.indels_realign(sample_id,
-#                                                      prereq=[job_name_create_intervals])
-#        job_name_base_recal = self.base_recal(sample_id,
-#                                              prereq=[job_name_indels_realign])
-#        job_name_hap_cal = self.hap_cal(sample_id,
-#                                        prereq=[job_name_base_recal])
         return job_name_hap_cal
 
     def __garbage_collecting(self):
         pass
-#        for job_name in self.job_dict:
-#            job_rec = self.job_dict[job_name]
-#            if ((job_name.endswith("_base_recal")) and
-#                (job_rec.job_status == JOB_STATUS_COMPLETED)
-#                ):
-#                sample_id = job_name.strip("_base_recal")
-#                sample_rec = self.samples[sample_id]
-#                self.info("deleting " + sample_rec.raw_aligned_reads_file)
-#                self.delete_file(sample_rec.raw_aligned_reads_file)
-#                self.info("deleting " + sample_rec.sorted_reads_file)
-#                self.delete_file(sample_rec.sorted_reads_file)
-#                self.info("deleting " + sample_rec.dedup_reads_file)
-#                self.delete_file(sample_rec.dedup_reads_file)
-#                self.info("deleting " + sample_rec.realigned_reads_file)
-#                self.delete_file(sample_rec.realigned_reads_file)
 
-    def monitor_init(self, **kwargs):
-        super(GATKBPPipeline, self).monitor_init(**kwargs)
-        self.preprocess_dataset()
+    def monitor_init(self, *args, **kwargs):
+        super(GATKBPPipeline, self).monitor_init(*args, **kwargs)
+        self.process_dataset()
 
-    def monitor_action(self, **kwargs):
-        super(GATKBPPipeline, self).monitor_action(**kwargs)
+    def monitor_action(self, *args, **kwargs):
+        super(GATKBPPipeline, self).monitor_action(*args, **kwargs)
         self.__garbage_collecting()
 
     def split_gvcfs(self,
@@ -659,8 +381,7 @@ class GATKBPPipeline(CMMPipeline):
                     prereq=None,
                     ):
         """
-        Combines any number of gVCF files that were produced by
-        the Haplotype Caller into a single joint gVCF file
+        Split gvcf files by region
         """
 
         job_name = self.dataset_name + "_split_gvcfs"
@@ -691,7 +412,10 @@ class GATKBPPipeline(CMMPipeline):
         the Haplotype Caller into a single joint gVCF file
         """
 
-        job_name = self.dataset_name + "_comb_gvcfs_" + region_txt
+        if region_txt is None:
+            job_name = self.dataset_name + "_comb_gvcfs"
+        else:
+            job_name = self.dataset_name + "_comb_gvcfs_" + region_txt
         job_script = COMBINE_GVCFS_SCRIPT
         gvcf_list_file = join_path(self.working_dir,
                                    job_name+"_gvcf.list")
@@ -734,11 +458,13 @@ class GATKBPPipeline(CMMPipeline):
                        region_txt=None,
                       ):
         """
-        Combines any number of gVCF files that were produced by
-        the Haplotype Caller into a single joint gVCF file
+        Call samples actual genotypes after combined
         """
 
-        job_name = self.dataset_name + "_gnt_gvcfs_" + region_txt
+        if region_txt is None:
+            job_name = self.dataset_name + "_gnt_gvcfs"
+        else:
+            job_name = self.dataset_name + "_gnt_gvcfs_" + region_txt
         job_script = GENOTYPE_GVCFS_SCRIPT
         gvcf_list_file = join_path(self.working_dir,
                                    job_name+"_gvcf.list")
@@ -770,15 +496,76 @@ class GATKBPPipeline(CMMPipeline):
                                    )
             return job_name
 
-    def preprocess_dataset(self):
+    def concat_vcfs(self,
+                    prereq=None,
+                    ):
         """
-        An aggregate flow to pre-process a DNASeq sample. The flow consists of
-          - bwa-mem alignment
-          - reads sorting
-          - marking duplicates
-          - haplotype caller
-        The flow output a gvcf file for one sample. The return value is the last
-        job name of the process.
+        concat split vcf
+        """
+
+        job_name = self.dataset_name + "_cct_vcfs"
+        job_script = CONCAT_VCFS_SCRIPT
+        vcf_list_file = join_path(self.working_dir,
+                                  job_name+"_vcf.list")
+        f_vcf = open(vcf_list_file, "w")
+        for region_txt in self.gatk_params.split_regions_txt_list:
+            f_vcf.write(self.get_genotyped_gvcfs_file_name(region_txt=region_txt) + "\n")
+        f_vcf.close()
+        output_file = self.get_genotyped_gvcfs_file_name()
+
+        job_params = " -i " + vcf_list_file
+        job_params += " -o " + output_file
+        if self.project_code is None:
+            self.exec_sh(job_script + job_params)
+            return output_file
+        else:
+            self._submit_slurm_job(job_name,
+                                   "1",
+                                   job_script,
+                                   job_params,
+                                   email=self.gatk_params.dataset_usage_mail,
+                                   prereq=prereq,
+                                   )
+            return job_name
+
+    def vqsr(self,
+             prereq=None,
+             ):
+        """
+        Variant Quality Score Recalibration
+        """
+
+        job_name = self.dataset_name + "_vqsr"
+        job_script = VQSR_SCRIPT
+        output_file = self.vqsr_vcf
+
+        job_params = " -i " + self.get_genotyped_gvcfs_file_name()
+        job_params += " -o " + output_file
+        if self.project_code is None:
+            self.exec_sh(job_script + job_params)
+            return output_file
+        else:
+            self._submit_slurm_job(job_name,
+                                   "2",
+                                   job_script,
+                                   job_params,
+                                   email=self.gatk_params.dataset_usage_mail,
+                                   prereq=prereq,
+                                   )
+            return job_name
+
+    def process_dataset(self):
+        """
+        An aggregate flow to DNASeq workflow consisting of
+          - process each sample
+              - bwa-mem alignment
+              - reads sorting
+              - marking duplicates
+              - haplotype caller
+          - if needed, split gvcf
+          - combine gvcf
+          - genotype gvcf
+          - if needed, concat vcf
         """
 
         prereq = []
@@ -789,61 +576,57 @@ class GATKBPPipeline(CMMPipeline):
             (self.gatk_params.split_regions_txt_list is not None)
             ):
             job_name_split_gvcfs = self.split_gvcfs(prereq=prereq)
+            job_name_genotype_gvcfs_list = []
             for region_txt in self.gatk_params.split_regions_txt_list:
                 job_name_combine_gvcfs = self.combine_gvcfs(region_txt=region_txt,
                                                             prereq=[job_name_split_gvcfs])
-                job_name_genotype_gvcfs = self.genotype_gvcfs(region_txt=region_txt,
-                                                              prereq=[job_name_combine_gvcfs]) 
+                job_name_genotype_gvcfs_list.append(self.genotype_gvcfs(region_txt=region_txt,
+                                                                        prereq=[job_name_combine_gvcfs]))
+            job_name_concat_vcfs = self.concat_vcfs(prereq=job_name_genotype_gvcfs_list) 
+            return job_name_concat_vcfs
         elif self.gatk_params.variants_calling:
             job_name_combine_gvcfs = self.combine_gvcfs(prereq=prereq) 
             job_name_genotype_gvcfs = self.genotype_gvcfs(prereq=[job_name_combine_gvcfs]) 
             return job_name_genotype_gvcfs
 
-def create_jobs_setup_file(project_name,
-                           project_out_dir,
-                           reference_file,
-                           samples_root_dir,
-                           platform='Illumina',
-                           known_indels_file=None,
-                           dbsnp_file=None,
-                           variants_calling=False,
-                           targets_interval_list=None,
-                           split_regions_file=None,
-                           dataset_usage_mail=False,
-                           sample_usage_mail={},
-                           preprocess_sample=True,
-                           project_code=None,
-                           job_alloc_time=None,
-                           jobs_report_file=None,
-                           out_jobs_setup_file=None,
-                           ):
-    job_setup_document, stream = init_jobs_setup_file(project_name=project_name,
-                                                      project_out_dir=project_out_dir,
-                                                      project_code=project_code,
-                                                      job_alloc_time=job_alloc_time,
-                                                      sample_info=None,
-                                                      jobs_report_file=jobs_report_file,
-                                                      out_jobs_setup_file=out_jobs_setup_file,
-                                                      )
+def create_jobs_setup_file(*args, **kwargs):
+    job_setup_document, stream = init_jobs_setup_file(*args, **kwargs)
     gatk_params = {}
+    known_indels_file = get_func_arg('known_indels_file', kwargs)
     if known_indels_file is not None:
         gatk_params[JOBS_SETUP_KNOWN_INDELS_KEY] = known_indels_file
+    dbsnp_file = get_func_arg('dbsnp_file', kwargs)
     if dbsnp_file is not None:
         gatk_params[JOBS_SETUP_DBSNP_KEY] = dbsnp_file
-    gatk_params[JOBS_SETUP_REFFERENCE_KEY] = reference_file
-    gatk_params[JOBS_SETUP_VARIANTS_CALLING_KEY] = variants_calling
+    project_out_dir = kwargs['project_out_dir']
+    gatk_params[JOBS_SETUP_REFFERENCE_KEY] = kwargs['reference_file']
+    gatk_params[JOBS_SETUP_VARIANTS_CALLING_KEY] = get_func_arg('variants_calling',
+                                                                kwargs,
+                                                                default_val=False)
+    targets_interval_list = get_func_arg('targets_interval_list', kwargs)
     if targets_interval_list is not None:
         gatk_params[JOBS_SETUP_TARGETS_INTERVAL_LIST_KEY] = targets_interval_list
+    split_regions_file = get_func_arg('split_regions_file', kwargs)
     if split_regions_file is not None:
         gatk_params[JOBS_SETUP_SPLIT_REGIONS_FILE_KEY] = split_regions_file
     options = []
+    dataset_usage_mail = get_func_arg('dataset_usage_mail',
+                                      kwargs,
+                                      default_val=False)
     if dataset_usage_mail:
         options.append(JOBS_SETUP_USAGE_MAIL)
     if len(options) > 0:
         gatk_params[JOBS_SETUP_OPTIONS_KEY] = options
     job_setup_document[JOBS_SETUP_GATK_PARAMS_SECTION] = gatk_params
 
-    samples = []
+    samples_root_dir = kwargs['samples_root_dir']
+    sample_usage_mail = get_func_arg('sample_usage_mail',
+                                      kwargs,
+                                      default_val={})
+    preprocess_sample = get_func_arg('preprocess_sample',
+                                      kwargs,
+                                      default_val=True)
+    samples_dict = {}
     # look for all sub-directories of samples_root_dir for sample groups
     for item in listdir(samples_root_dir):
         item_path = join_path(samples_root_dir, item)
@@ -859,55 +642,49 @@ def create_jobs_setup_file(project_name,
                     sample_path = subitem_path
                     # look for fastq.gz files to create sample information
                     sample = None
+                    fastq_files = []
                     for sample_item in listdir(sample_path):
-                        if sample_item.endswith('.fastq.gz'):
+                        if not sample_item.endswith('.fastq.gz'):
+                            continue
+                        file_path = join_path(sample_path, sample_item)
+                        if is_r2(file_path):
+                            continue
+                        if sample_id not in samples_dict.keys():
+                            # if sample information was not there, create one
                             sample = {}
                             sample[JOBS_SETUP_SAMPLE_ID_KEY] = '"' + sample_id + '"'
-                            sample[JOBS_SETUP_PLATFORM_KEY] = platform
+                            sample[JOBS_SETUP_PLATFORM_KEY] = DFLT_PLATFORM
                             sample[JOBS_SETUP_SAMPLE_GROUP_KEY] = sample_group
                             if sample_id in sample_usage_mail:
                                 sample[JOBS_SETUP_SAMPLE_USAGE_MAIL_KEY] = 'YES'
                             else:
                                 sample[JOBS_SETUP_SAMPLE_USAGE_MAIL_KEY] = 'NO'
                             sample[JOBS_SETUP_PREPROCESS_SAMPLE_KEY] = preprocess_sample
-                            break
-                    # look for fastq.gz files to fastq files info for R1,R2 pairs or R1 alone
-                    fastq_files = []
-                    for sample_item in listdir(sample_path):
-                        if not sample_item.endswith('.fastq.gz'):
-                            continue
-                        if 'R1' not in sample_item:
-                            continue
-                        pair = {}
-                        R1_file = join_path(sample_path, sample_item)
-                        pair[JOBS_SETUP_R1_KEY] = R1_file
-                        R2_file = R1_file.replace('R1', 'R2')
-                        if isfile(R2_file):
-                            pair[JOBS_SETUP_R2_KEY] = R2_file
-                        fastq_files.append(pair)
-                    # look for fastq.gz files to fastq files info for single file (without 'R1')
-                    for sample_item in listdir(sample_path):
-                        if not sample_item.endswith('.fastq.gz'):
-                            continue
-                        if 'R1' in sample_item:
-                            continue
-                        pair = {}
-                        file_path = join_path(sample_path, sample_item)
-                        if 'R2' in file_path and isfile(file_path.replace('R2', 'R1')):
-                            continue
-                        pair[JOBS_SETUP_R1_KEY] = file_path
-                        fastq_files.append(pair)
+                        # parse infor for R1,R2 pairs or R1 alone
+                        if is_r1(file_path):
+                            pair = {}
+                            pair[JOBS_SETUP_R1_KEY] = file_path
+                            R2_file = r1tor2(file_path)
+                            if (R2_file is not None and
+                                isfile(R2_file)):
+                                pair[JOBS_SETUP_R2_KEY] = R2_file
+                            fastq_files.append(pair)
+                        else:
+                            # Here it's supposed to be fastq.gz files but not R1 or R2
+                            pair = {}
+                            pair[JOBS_SETUP_R1_KEY] = file_path
+                            fastq_files.append(pair)
                     if sample is not None:
                         sample[JOBS_SETUP_FASTQ_PAIRS_KEY] = fastq_files
                         # check fastq encoding version
                         fastq = Fastq(fastq_files[0][JOBS_SETUP_R1_KEY])
                         sample[JOBS_SETUP_FASTQ_ENCODING_KEY] = fastq.encoding
-                        samples.append(sample)
+                        samples_dict[sample_id] = sample
     # dummy family (no family)
     families = []
     family_info = {}
     family_info[JOBS_SETUP_FAMILY_ID_KEY] = '"' + NO_FAMILY + '"'
-    family_info[JOBS_SETUP_MEMBERS_LIST_KEY] = samples
+    family_info[JOBS_SETUP_MEMBERS_LIST_KEY] = samples_dict.values()
     families.append(family_info)
     job_setup_document[JOBS_SETUP_SAMPLES_INFOS_KEY] = families
 

@@ -1,6 +1,8 @@
 #!/bin/bash 
 source $PYCMM/bash/cmm_functions.sh
 
+module load emboss
+
 script_name=$(basename $0)
 params="$@"
 

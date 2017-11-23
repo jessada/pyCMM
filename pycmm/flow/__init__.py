@@ -5,11 +5,10 @@ from collections import OrderedDict
 from pycmm.settings import DFLT_JOB_ALLOC_TIME
 from pycmm.utils import get_dict_val
 from pycmm.utils.jobman import JobManager
-from pycmm.cmmlib.familylib import params_to_yaml_doc
-from pycmm.cmmlib.familylib import SamplesInfo
-from pycmm.cmmlib.familylib import Family
-from pycmm.cmmlib.familylib import JOBS_SETUP_SAMPLES_INFOS_KEY
-from pycmm.cmmlib.familylib import NO_FAMILY
+from pycmm.cmmlib.samplelib import params_to_yaml_doc
+from pycmm.cmmlib.samplelib import MutRepSamplesInfo
+from pycmm.cmmlib.samplelib import JOBS_SETUP_SAMPLES_INFOS_KEY
+from pycmm.cmmlib.samplelib import NO_FAMILY
 
 JOBS_SETUP_JOBS_REPORT_FILE_KEY = "JOBS_REPORT_FILE"
 JOBS_SETUP_PROJECT_NAME_KEY = "PROJECT_NAME"
@@ -23,15 +22,16 @@ class CMMPipeline(JobManager):
 
     def __init__(self,
                  jobs_setup_file,
-                 family_template=Family,
+                 info_template=MutRepSamplesInfo,
+                 *args,
                  **kwargs
                  ):
         self.__load_jobs_info(jobs_setup_file)
-        self.__init_properties(family_template)
+        self.__init_properties(info_template)
         kwargs['jobs_report_file'] = self.jobs_report_file
-        super(CMMPipeline, self).__init__(**kwargs)
+        super(CMMPipeline, self).__init__(*args, **kwargs)
 
-    def get_raw_repr(self):
+    def get_raw_obj_str(self):
         raw_repr = OrderedDict()
         raw_repr["project name"] = self.project_name
         raw_repr["project out dir"] = self.project_out_dir
@@ -62,10 +62,9 @@ class CMMPipeline(JobManager):
         stream = file(jobs_setup_file, "r")
         self.__jobs_info = yaml.safe_load(stream)
 
-    def __init_properties(self, family_template):
+    def __init_properties(self, info_template):
         self.__project_out_dir = None
-        self.__samples_info = SamplesInfo(self._get_job_config(JOBS_SETUP_SAMPLES_INFOS_KEY),
-                                          family_template=family_template)
+        self.__samples_info = info_template(self._get_job_config(JOBS_SETUP_SAMPLES_INFOS_KEY))
 
     def _get_sub_project_dir(self, sub_dir):
         attr_name = "_"
@@ -89,6 +88,7 @@ class CMMPipeline(JobManager):
 
     def run_slurm_monitor_pipeline(self,
                                    class_slurm_bin,
+                                   alloc_time,
                                    log_file=None,
                                    ):
         job_name = self.project_name + "_mgr"
@@ -100,7 +100,7 @@ class CMMPipeline(JobManager):
                                "1",
                                job_script,
                                job_params,
-                               alloc_time="10-00:00:00",
+                               alloc_time=alloc_time,
                                )
 
     def run_offline_pipeline(self):
@@ -231,14 +231,38 @@ class CMMPipeline(JobManager):
     def samples_id_w_fam_pref(self):
         return self.__samples_info.samples_id_w_fam_pref
 
-    def monitor_init(self, **kwargs):
-        super(CMMPipeline, self).monitor_init(**kwargs)
+    @property
+    def affected_samples_list(self):
+        return self.__samples_info.affected_samples_list
 
-    def monitor_action(self, **kwargs):
-        super(CMMPipeline, self).monitor_action(**kwargs)
+    @property
+    def unaffected_samples_list(self):
+        return self.__samples_info.unaffected_samples_list
 
-    def monitor_finalize(self, **kwargs):
-        super(CMMPipeline, self).monitor_finalize(**kwargs)
+#    @property
+#    def samples_groups(self):
+#        return self.__samples_info.samples_groups
+#
+    @property
+    def samples_list(self):
+        return self.__samples_info.samples_list
+
+    @property
+    def has_samples_info(self):
+        return self.__samples_info.has_info
+
+    @property
+    def datasets(self):
+        return self.__samples_info.datasets
+
+    def monitor_init(self, *args, **kwargs):
+        super(CMMPipeline, self).monitor_init(*args, **kwargs)
+
+    def monitor_action(self, *args, **kwargs):
+        super(CMMPipeline, self).monitor_action(*args, **kwargs)
+
+    def monitor_finalize(self, *args, **kwargs):
+        super(CMMPipeline, self).monitor_finalize(*args, **kwargs)
 
 # a note on parameters of init_jobs_setup_file and create_jobs_setup_file
 # The reason that I explicitly list them is for documentation purpose. It is to

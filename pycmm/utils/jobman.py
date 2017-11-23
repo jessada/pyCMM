@@ -29,7 +29,7 @@ class JobRecord(pyCMMBase):
         self.nodelist = None
         super(JobRecord, self).__init__(**kwargs)
     
-    def get_raw_repr(self):
+    def get_raw_obj_str(self):
         return {"job name": self.job_name,
                 "project code": self.project_code,
                 "partition type": self.partition_type,
@@ -109,7 +109,7 @@ class JobManager(pyCMMBase):
             self.__job_nodelist = stdout_data.strip()
         return self.__job_nodelist
 
-    def get_raw_repr(self):
+    def get_raw_obj_str(self):
         return None
 
     def __get_sbatch_cmd(self, job_rec):
@@ -129,6 +129,7 @@ class JobManager(pyCMMBase):
                 cmd += ":" + job_id
         if (job_rec.nodelist is not None) and (len(job_rec.nodelist) > 0):
             cmd += " --nodelist=" + job_rec.nodelist
+        cmd += " pydummy"
         cmd += " " + job_rec.job_script
         cmd += " " + job_rec.job_params
         return cmd
@@ -216,7 +217,7 @@ class JobManager(pyCMMBase):
         # virtual function
         pass
     
-    def monitor_jobs(self, interval=30):
+    def monitor_jobs(self, interval=300):
         self.monitor_init()
         while True:
             self.update_job_status()

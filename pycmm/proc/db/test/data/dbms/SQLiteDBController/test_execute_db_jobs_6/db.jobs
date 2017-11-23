@@ -1,0 +1,49 @@
+DB_JOBS:
+  - Data_file: $PYCMM/pycmm/proc/db/test/data/dbms/SQLiteDBController/test_execute_db_jobs_6/test_hg19_gnomad_genome.txt
+    Data_type: DATA_TYPE_AVDB_PUBLIC_AF
+    Drop_table: yes
+    Operation: LOAD_AVDB
+    Table_name: test_hg19_gnomad_genome
+    Header_exist: Yes
+  - Data_file: $PYCMM/pycmm/proc/db/test/data/dbms/SQLiteDBController/test_execute_db_jobs_6/test_hg19_clinvar_20170130.txt
+    Drop_table: yes
+    Operation: LOAD_AVDB
+    Table_name: test_hg19_clinvar_20170130
+    Header_exist: Yes
+  - Data_file: $PYCMM/pycmm/proc/db/test/data/dbms/SQLiteDBController/test_execute_db_jobs_6/test_hg19_249_Swedes.txt
+    Data_type: DATA_TYPE_AVDB_PUBLIC_AF
+    Drop_table: yes
+    Operation: LOAD_AVDB
+    Table_name: test_hg19_249_Swedes
+    Header_exist: Yes
+  - Data_file: $PYCMM/pycmm/proc/db/test/data/dbms/SQLiteDBController/test_execute_db_jobs_6/test_hg19_intervar_20170202.txt
+    Drop_table: yes
+    Operation: LOAD_AVDB
+    Table_name: test_hg19_intervar_20170202
+    Header_exist: Yes
+  - Data_file: $PYCMM/pycmm/proc/db/test/data/dbms/SQLiteDBController/test_execute_db_jobs_6/test_hg19_CMM_Swegen_20161223.txt
+    Data_type: DATA_TYPE_AVDB_CMM_AF
+    Drop_table: yes
+    Operation: LOAD_AVDB
+    Table_name: test_hg19_CMM_Swegen_20161223
+    Header_exist: Yes
+  - Data_file: $PYCMM/pycmm/proc/db/test/data/dbms/SQLiteDBController/test_execute_db_jobs_6/test_annovar_vcf.vcf.gz
+    Drop_table: Yes
+    Operation: LOAD_ANNOVAR_VCF
+    Table_name: test_annovar_vcf
+  - Data_file: $PYCMM/pycmm/proc/db/test/data/dbms/SQLiteDBController/test_execute_db_jobs_6/test_gtz_THYRCA.vcf.gz
+    Drop_table: Yes
+    Operation: LOAD_GTZ_VCF
+    Table_name: test_gtz_THYRCA
+  - Data_file: $PYCMM/pycmm/proc/db/test/data/dbms/SQLiteDBController/test_execute_db_jobs_6/test_gtz_WES294.vcf.gz
+    Drop_table: yes
+    Operation: LOAD_GTZ_VCF
+    Table_name: test_gtz_WES294
+  - Data_file: $PYCMM/pycmm/proc/db/test/data/dbms/SQLiteDBController/test_execute_db_jobs_6/test_gtz_Co_309.vcf.gz
+    Drop_table: yes
+    Operation: LOAD_GTZ_VCF
+    Table_name: test_gtz_Co_309
+  - Operation: JOIN_ALL_GTZ_ANNOS
+    Drop_table: No
+  - Operation: SET_REF_MUTATED
+    Drop_table: No

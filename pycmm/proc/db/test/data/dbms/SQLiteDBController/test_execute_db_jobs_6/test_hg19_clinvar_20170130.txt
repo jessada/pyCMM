@@ -1,0 +1,64 @@
+#Chr	Start	End	Ref	Alt	CLINSIG	CLNDBN	CLNACC	CLNDSDB	CLNDSDBID
+5	112154148	112154148	A	T	other	Familial_colorectal_cancer	RCV000073553.1	MedGen	CN029768
+5	112154154	112154154	T	A	other	Familial_colorectal_cancer	RCV000074108.1	MedGen	CN029768
+5	112154155	112154155	T	C	other	Familial_colorectal_cancer	RCV000074109.1	MedGen	CN029768
+5	112154303	112154303	T	G	other	Familial_colorectal_cancer	RCV000074110.1	MedGen	CN029768
+5	112154444	112154444	A	G	Likely benign	Hereditary_cancer-predisposing_syndrome	RCV000209377.1	MedGen:SNOMED_CT	C0027672:699346009
+5	112154531	112154531	G	T	other	Familial_colorectal_cancer	RCV000074111.1	MedGen	CN029768
+5	112154540	112154540	T	G	other	Familial_colorectal_cancer	RCV000073554.1	MedGen	CN029768
+5	112154541	112154541	T	G	other	Familial_colorectal_cancer	RCV000073555.1	MedGen	CN029768
+5	112154543	112154543	G	C	other	Familial_colorectal_cancer	RCV000073556.1	MedGen	CN029768
+5	112154544	112154544	C	G	other	Familial_colorectal_cancer	RCV000074112.1	MedGen	CN029768
+5	112154649	112154649	C	T	Likely benign	Familial_adenomatous_polyposis_1	RCV000410782.1	MedGen:OMIM	C2713442:175100
+5	112154663	112154663	-	T	Pathogenic|other	Hereditary_cancer-predisposing_syndrome|not_provided	RCV000129375.3|RCV000202006.2	MedGen:SNOMED_CT|MedGen	C0027672:699346009|CN221809
+5	112154666	112154667	GA	-	Pathogenic|Pathogenic	Familial_adenomatous_polyposis_1|not_provided	RCV000000874.2|RCV000325868.1	MedGen:OMIM|MedGen	C2713442:175100|CN221809
+5	112154672	112154672	G	T	Uncertain significance	Familial_adenomatous_polyposis_1	RCV000198142.1	MedGen:OMIM	C2713442:175100
+5	112154676	112154676	A	G	Uncertain significance	Hereditary_cancer-predisposing_syndrome	RCV000218619.1	MedGen:SNOMED_CT	C0027672:699346009
+5	112154677	112154677	T	C	Likely benign	Hereditary_cancer-predisposing_syndrome	RCV000217858.1	MedGen:SNOMED_CT	C0027672:699346009
+5	112154703	112154703	A	G	Uncertain significance	not_specified	RCV000159508.1	MedGen	CN169374
+5	112154708	112154708	A	G	Uncertain significance	Hereditary_cancer-predisposing_syndrome	RCV000166400.1	MedGen:SNOMED_CT	C0027672:699346009
+5	112154715	112154715	A	G	Uncertain significance	Familial_adenomatous_polyposis_1	RCV000233604.1	MedGen:OMIM	C2713442:175100
+5	112154722	112154722	G	A	Likely benign|Likely benign	Hereditary_cancer-predisposing_syndrome|Familial_adenomatous_polyposis_1	RCV000166005.1|RCV000411887.1	MedGen:SNOMED_CT|MedGen:OMIM	C0027672:699346009|C2713442:175100
+5	112154723	112154723	C	G	Pathogenic|Pathogenic	Hereditary_cancer-predisposing_syndrome|not_provided	RCV000164280.2|RCV000202243.3	MedGen:SNOMED_CT|MedGen	C0027672:699346009|CN221809
+5	112154723	112154723	C	T	Pathogenic|Pathogenic	Hereditary_cancer-predisposing_syndrome|not_provided	RCV000164280.2|RCV000202243.3	MedGen:SNOMED_CT|MedGen	C0027672:699346009|CN221809
+5	112154724	112154724	G	A	Uncertain significance|Uncertain significance	Hereditary_cancer-predisposing_syndrome|Familial_adenomatous_polyposis_1	RCV000167510.2|RCV000200721.1	MedGen:SNOMED_CT|MedGen:OMIM	C0027672:699346009|C2713442:175100
+5	112154734	112154734	A	C	Likely benign\x2cUncertain significance|Benign	Familial_adenomatous_polyposis_1\x2cnot_specified|Familial_adenomatous_polyposis_1	RCV000227707.1,RCV000077980.4|RCV000122754.3	MedGen:OMIM\x2cMedGen|MedGen:OMIM	C2713442:175100\x2cCN169374|C2713442:175100
+5	112154734	112154734	A	G	Likely benign\x2cUncertain significance|Benign	Familial_adenomatous_polyposis_1\x2cnot_specified|Familial_adenomatous_polyposis_1	RCV000227707.1,RCV000077980.4|RCV000122754.3	MedGen:OMIM\x2cMedGen|MedGen:OMIM	C2713442:175100\x2cCN169374|C2713442:175100
+5	112154750	112154750	C	A	other	Familial_colorectal_cancer	RCV000074113.1	MedGen	CN029768
+5	112154760	112154760	G	C	Uncertain significance	Hereditary_cancer-predisposing_syndrome	RCV000164333.1	MedGen:SNOMED_CT	C0027672:699346009
+5	112154774	112154774	C	T	Likely pathogenic	not_provided	RCV000202206.1	MedGen	CN221809
+5	112154779	112154779	T	G	Likely benign	Familial_adenomatous_polyposis_1	RCV000205612.1	MedGen:OMIM	C2713442:175100
+5	112154797	112154797	-	A	Pathogenic	Familial_adenomatous_polyposis_1	RCV000000842.2	MedGen:OMIM	C2713442:175100
+5	112154801	112154801	C	T	Pathogenic	Familial_adenomatous_polyposis_1	RCV000198412.1	MedGen:OMIM	C2713442:175100
+5	112154827	112154828	CT	-	Pathogenic	Familial_adenomatous_polyposis_1	RCV000000870.3	MedGen:OMIM	C2713442:175100
+5	112154830	112154830	T	-	Pathogenic	Hereditary_cancer-predisposing_syndrome	RCV000132249.2	MedGen:SNOMED_CT	C0027672:699346009
+5	112154840	112154840	G	C	Uncertain significance	Familial_adenomatous_polyposis_1	RCV000197838.1	MedGen:OMIM	C2713442:175100
+5	112154841	112154841	G	A	Uncertain significance	Hereditary_cancer-predisposing_syndrome	RCV000217359.1	MedGen:SNOMED_CT	C0027672:699346009
+5	112154843	112154843	A	G	Uncertain significance	Familial_adenomatous_polyposis_1	RCV000199724.2	MedGen:OMIM	C2713442:175100
+5	112154850	112154850	G	A	Uncertain significance|Uncertain significance	Hereditary_cancer-predisposing_syndrome|Familial_multiple_polyposis_syndrome	RCV000164563.2|RCV000239027.1	MedGen:SNOMED_CT|MedGen:Orphanet:SNOMED_CT	C0027672:699346009|C0032580:ORPHA733:72900001
+5	112154850	112154850	G	C	Uncertain significance|Uncertain significance	Hereditary_cancer-predisposing_syndrome|Familial_multiple_polyposis_syndrome	RCV000164563.2|RCV000239027.1	MedGen:SNOMED_CT|MedGen:Orphanet:SNOMED_CT	C0027672:699346009|C0032580:ORPHA733:72900001
+5	112154850	112154850	G	-	Pathogenic	Hereditary_cancer-predisposing_syndrome	RCV000221309.1	MedGen:SNOMED_CT	C0027672:699346009
+5	112154851	112154851	G	A	Likely benign	Familial_adenomatous_polyposis_1	RCV000199890.1	MedGen:OMIM	C2713442:175100
+5	112154868	112154868	G	A	Uncertain significance|Likely benign|Uncertain significance	Hereditary_cancer-predisposing_syndrome|Familial_adenomatous_polyposis_1|not_specified	RCV000132523.5|RCV000168435.3|RCV000211897.2	MedGen:SNOMED_CT|MedGen:OMIM|MedGen	C0027672:699346009|C2713442:175100|CN169374
+5	112154883	112154883	C	T	Uncertain significance	not_specified	RCV000159529.1	MedGen	CN169374
+5	112154892	112154894	ACA	-	Uncertain significance	Hereditary_cancer-predisposing_syndrome	RCV000216755.1	MedGen:SNOMED_CT	C0027672:699346009
+5	112154900	112154900	A	G	Uncertain significance	Hereditary_cancer-predisposing_syndrome	RCV000129630.2	MedGen:SNOMED_CT	C0027672:699346009
+5	112154904	112154904	A	G	Uncertain significance	Hereditary_cancer-predisposing_syndrome	RCV000214204.1	MedGen:SNOMED_CT	C0027672:699346009
+5	112154908	112154908	A	G	Likely benign	Hereditary_cancer-predisposing_syndrome	RCV000217282.1	MedGen:SNOMED_CT	C0027672:699346009
+5	112154921	112154922	AA	-	Pathogenic|Pathogenic	Familial_adenomatous_polyposis_1|not_provided	RCV000000871.3|RCV000159588.2	MedGen:OMIM|MedGen	C2713442:175100|CN221809
+5	112154926	112154926	A	G	Likely benign	Hereditary_cancer-predisposing_syndrome	RCV000165087.1	MedGen:SNOMED_CT	C0027672:699346009
+5	112154932	112154932	G	T	Uncertain significance	Familial_adenomatous_polyposis_1	RCV000122755.1	MedGen:OMIM	C2713442:175100
+5	112154933	112154933	C	T	Uncertain significance	Hereditary_cancer-predisposing_syndrome	RCV000214416.1	MedGen:SNOMED_CT	C0027672:699346009
+5	112154934	112154934	G	A	Uncertain significance	Familial_adenomatous_polyposis_1	RCV000230439.1	MedGen:OMIM	C2713442:175100
+5	112154942	112154942	C	T	Pathogenic|Pathogenic|Pathogenic	Hereditary_cancer-predisposing_syndrome|not_provided|Familial_adenomatous_polyposis_1	RCV000115066.6|RCV000202096.2|RCV000234357.1	MedGen:SNOMED_CT|MedGen|MedGen:OMIM	C0027672:699346009|CN221809|C2713442:175100
+5	112154943	112154943	G	A	Uncertain significance	Hereditary_cancer-predisposing_syndrome	RCV000131387.2	MedGen:SNOMED_CT	C0027672:699346009
+5	112154954	112154954	-	T	Likely pathogenic	not_provided	RCV000202239.1	MedGen	CN221809
+5	112154963	112154963	C	T	Pathogenic	Hereditary_cancer-predisposing_syndrome	RCV000214229.1	MedGen:SNOMED_CT	C0027672:699346009
+5	112154967	112154967	-	A	Pathogenic	not_provided	RCV000235625.1	MedGen	CN221809
+5	112154969	112154969	C	A	Uncertain significance\x2cPathogenic|Uncertain significance|Benign|Uncertain significance|other|Likely benign	Hereditary_cancer-predisposing_syndrome\x2cGardner_syndrome|not_provided|Hereditary_cancer-predisposing_syndrome|not_specified|Familial_adenomatous_polyposis_1|APC-Associated_Polyposis_Disorders	RCV000223120.1,RCV000000833.5|RCV000034380.1|RCV000115067.6|RCV000120052.3|RCV000122757.6|RCV000315386.1	MedGen:SNOMED_CT\x2cMedGen:Orphanet:SNOMED_CT|MedGen|MedGen:SNOMED_CT|MedGen|MedGen:OMIM|MedGen	C0027672:699346009\x2cC0017097:ORPHA79665:60876000|CN221809|C0027672:699346009|CN169374|C2713442:175100|CN239210
+5	112154969	112154969	C	T	Uncertain significance\x2cPathogenic|Uncertain significance|Benign|Uncertain significance|other|Likely benign	Hereditary_cancer-predisposing_syndrome\x2cGardner_syndrome|not_provided|Hereditary_cancer-predisposing_syndrome|not_specified|Familial_adenomatous_polyposis_1|APC-Associated_Polyposis_Disorders	RCV000223120.1,RCV000000833.5|RCV000034380.1|RCV000115067.6|RCV000120052.3|RCV000122757.6|RCV000315386.1	MedGen:SNOMED_CT\x2cMedGen:Orphanet:SNOMED_CT|MedGen|MedGen:SNOMED_CT|MedGen|MedGen:OMIM|MedGen	C0027672:699346009\x2cC0017097:ORPHA79665:60876000|CN221809|C0027672:699346009|CN169374|C2713442:175100|CN239210
+5	112154970	112154970	G	A	Uncertain significance|Uncertain significance	not_specified|Familial_adenomatous_polyposis_1	RCV000159530.2|RCV000227001.1	MedGen|MedGen:OMIM	CN169374|C2713442:175100
+5	112154971	112154971	C	T	Likely benign	Familial_adenomatous_polyposis_1	RCV000196218.1	MedGen:OMIM	C2713442:175100
+5	112154972	112154972	G	A	Uncertain significance	not_specified	RCV000202029.1	MedGen	CN169374
+5	112154991	112154991	G	A	Pathogenic	Familial_adenomatous_polyposis_1	RCV000168200.1	MedGen:OMIM	C2713442:175100
+5	112154991	112154991	G	T	Pathogenic	Familial_adenomatous_polyposis_1	RCV000168200.1	MedGen:OMIM	C2713442:175100

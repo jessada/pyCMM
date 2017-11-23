@@ -80,7 +80,7 @@ class HapAssocParser(pyCMMBase):
         self.__set_idxs()
         super(HapAssocParser, self).__init__(**kwargs)
 
-    def get_raw_repr(self):
+    def get_raw_obj_str(self):
         raw_repr = OrderedDict()
         raw_repr["locus"] = self.locus
         raw_repr["locus prefix"] = self.locus_prefix
@@ -304,7 +304,7 @@ class LMissParser(pyCMMBase):
             raise IOError("Invalid lmiss file")
         super(LMissParser, self).__init__(**kwargs)
 
-    def get_raw_repr(self):
+    def get_raw_obj_str(self):
         raw_repr = OrderedDict()
         raw_repr["chrom"] = self.chrom
         raw_repr["snp"] = self.snp
@@ -365,7 +365,7 @@ class MapParser(pyCMMBase):
             raise IOError("Invalid map file")
         super(MapParser, self).__init__(**kwargs)
 
-    def get_raw_repr(self):
+    def get_raw_obj_str(self):
         raw_repr = OrderedDict()
         raw_repr["chrom"] = self.chrom
         raw_repr["snp"] = self.snp
@@ -432,7 +432,7 @@ class SnpInfoParser(pyCMMBase):
         self.__snp_idx = None
         super(SnpInfoParser, self).__init__(**kwargs)
 
-    def get_raw_repr(self):
+    def get_raw_obj_str(self):
         raw_repr = OrderedDict()
         raw_repr["snp"] = self.snp
         raw_repr["f_miss_a"] = self.f_miss_a
@@ -545,7 +545,7 @@ class FamParser(pyCMMBase):
             raise IOError("Invalid fam file")
         super(FamParser, self).__init__(**kwargs)
 
-    def get_raw_repr(self):
+    def get_raw_obj_str(self):
         raw_repr = OrderedDict()
         raw_repr["Family ID"] = self.fam_id
         raw_repr["Individual ID"] = self.indv_id
@@ -599,8 +599,8 @@ class TPedParser(MapParser):
         kwargs['rec'] = rec
         super(TPedParser, self).__init__(**kwargs)
 
-    def get_raw_repr(self):
-        raw_repr = super(TPedParser, self).get_raw_repr()
+    def get_raw_obj_str(self):
+        raw_repr = super(TPedParser, self).get_raw_obj_str()
         raw_repr["genotypes"] = self.gts
         return raw_repr
 

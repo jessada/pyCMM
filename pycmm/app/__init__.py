@@ -4,6 +4,9 @@ from pycmm.utils import mylogger
 from pycmm.utils import disp
 from pycmm.utils import set_log_file
 
+PIPELINE_ALLOC_TIME_VAR = "pipeline_alloc_time"
+PIPELINE_ALLOC_TIME_DFLT = "10-00:00:00"
+
 def display_configs(func_name,
                     app_description,
                     kwargs,
@@ -23,26 +26,22 @@ def display_configs(func_name,
                      required_params=required_params,
                      optional_params=optional_params,
                      )
-    disp.disp_params_set("Pipeline parameters", pl.get_raw_repr())
+    disp.disp_params_set("Pipeline parameters", pl.get_raw_obj_str())
 
     if hasattr(pl, "gatk_params"):
-## *********************************************************************************************** Need refactoring ***********************************************************************************************
-        gatk_params = OrderedDict()
-        gatk_params['reference file'] = pl.gatk_params.reference
-        gatk_params['known indels'] = pl.gatk_params.known_indels
-        gatk_params['dbsnp file'] = pl.gatk_params.dbsnp
-        gatk_params['variants calling'] = pl.gatk_params.variants_calling
-        gatk_params['targets interval list'] = pl.gatk_params.targets_interval_list
-        gatk_params['split chromosome regions'] = pl.gatk_params.split_regions_file
-        gatk_params['dataset usage mail'] = pl.gatk_params.dataset_usage_mail
-        disp.disp_params_set("GATK DNA-Seq Best Practice parameters", gatk_params)
-## *********************************************************************************************** Need refactoring ***********************************************************************************************
+        disp.disp_params_set("GATK DNA-Seq Best Practice parameters", pl.gatk_params.get_raw_obj_str())
+    if hasattr(pl, "plink_params"):
+        disp.disp_params_set("Plink parameters", pl.plink_params.get_raw_obj_str())
     if hasattr(pl, "mutstat_params"):
-        disp.disp_params_set("Mutation statistics database parameters", pl.mutstat_params.get_raw_repr())
+        disp.disp_params_set("Mutation statistics database parameters", pl.mutstat_params.get_raw_obj_str())
     if hasattr(pl, "annovar_params"):
-        disp.disp_params_set("Annovar parameters", pl.annovar_params.get_raw_repr())
+        disp.disp_params_set("Annovar parameters", pl.annovar_params.get_raw_obj_str())
     if hasattr(pl, "report_layout"):
-        disp.disp_params_set("report layout parameters", pl.report_layout.get_raw_repr())
+        disp.disp_params_set("report layout parameters", pl.report_layout.get_raw_obj_str())
+    if hasattr(pl, "rpt_params"):
+        disp.disp_params_set("report parameters", pl.rpt_params.get_raw_obj_str())
+    if hasattr(pl, "db_params"):
+        disp.disp_params_set("DBMS parameters", pl.db_params.get_raw_obj_str())
     if custom_params is not None:
         disp.disp_params_set("custom parameters", custom_params)
 
@@ -81,9 +80,14 @@ def app_pycmm_pipeline(*args, **kwargs):
                     pl,
                     )
     pipeline_bin = kwargs['pipeline_bin']
+    if PIPELINE_ALLOC_TIME_VAR in kwargs:
+        pipeline_alloc_time = kwargs[PIPELINE_ALLOC_TIME_VAR]
+    else:
+        pipeline_alloc_time = PIPELINE_ALLOC_TIME_DFLT
     if pl.project_code is not None:
         pl.run_slurm_monitor_pipeline(class_slurm_bin=pipeline_bin,
-                                      log_file=kwargs['log_file']
+                                      alloc_time=pipeline_alloc_time,
+                                      log_file=kwargs['log_file'],
                                       )
     else:
         pl.run_offline_pipeline()

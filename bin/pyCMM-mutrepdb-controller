@@ -1,0 +1,21 @@
+from pycmm.settings import MUTREPDB_CONTROLLER_DESCRIPTION
+from pycmm.settings import MUTREPDB_CONTROLLER_DFLT_LOG_FILE
+from pycmm.app.mutrepdb import app_pycmm_seq_reports
+import argparse
+
+argp = argparse.ArgumentParser(description=MUTREPDB_CONTROLLER_DESCRIPTION)
+argp.add_argument('-j',
+                  dest='jobs_setup_file',
+                  metavar="JOBS SETUP FILE",
+                  help='a file containing jobs configuration',
+                  required=True,
+                  )
+argp.add_argument('-l',
+                  dest='log_file',
+                  metavar='FILE',
+                  help='log file',
+                  default=MUTREPDB_CONTROLLER_DFLT_LOG_FILE)
+args = argp.parse_args()
+app_pycmm_seq_reports(jobs_setup_file=args.jobs_setup_file,
+                      log_file=args.log_file,
+                      )

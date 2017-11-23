@@ -1,0 +1,183 @@
+DB_JOBS:
+  - Data_file: $PYCMM/pycmm/proc/db/test/data/dbms/SQLiteDBController/test_execute_db_jobs_2/test_gtz_one_sample.vcf.gz
+    Drop_table: yes
+    Operation: LOAD_GTZ_VCF
+    Table_name: test_gtz_one_sample
+  - Data_file: $PYCMM/pycmm/proc/db/test/data/dbms/SQLiteDBController/test_execute_db_jobs_2/test_hg19_gnomad_genome.txt
+    Data_type: DATA_TYPE_AVDB_PUBLIC_AF
+    Drop_table: yes
+    Operation: LOAD_AVDB
+    Table_name: test_hg19_gnomad_genome
+    Header_exist: Yes
+  - Data_file: $PYCMM/pycmm/proc/db/test/data/dbms/SQLiteDBController/test_execute_db_jobs_2/test_hg19_clinvar_20150330.txt
+    Drop_table: yes
+    Operation: LOAD_AVDB
+    Table_name: test_hg19_clinvar_20150330
+    Header_exist: No
+  - Data_file: $PYCMM/pycmm/proc/db/test/data/dbms/SQLiteDBController/test_execute_db_jobs_2/test_hg19_clinvar_20170130.txt
+    Drop_table: yes
+    Operation: LOAD_AVDB
+    Table_name: test_hg19_clinvar_20170130
+    Header_exist: Yes
+  - Data_file: $PYCMM/pycmm/proc/db/test/data/dbms/SQLiteDBController/test_execute_db_jobs_2/test_hg19_CMM_Axeq_chr5_19.txt
+    Data_type: DATA_TYPE_AVDB_CMM_AF
+    Drop_table: yes
+    Operation: LOAD_AVDB
+    Table_name: test_hg19_CMM_Axeq_chr5_19
+    Header_exist: Yes
+  - Data_file: $PYCMM/pycmm/proc/db/test/data/dbms/SQLiteDBController/test_execute_db_jobs_2/test_hg19_CMM_Axeq_chr3_6_14_18.txt
+    Data_type: DATA_TYPE_AVDB_CMM_AF
+    Drop_table: yes
+    Operation: LOAD_AVDB
+    Table_name: test_hg19_CMM_Axeq_chr3_6_14_18
+    Header_exist: Yes
+  - Data_file: $PYCMM/pycmm/proc/db/test/data/dbms/SQLiteDBController/test_execute_db_jobs_2/test_hg19_CMM_Axeq_chr9.txt
+    Data_type: DATA_TYPE_AVDB_CMM_AF
+    Drop_table: yes
+    Operation: LOAD_AVDB
+    Table_name: test_hg19_CMM_Axeq_chr9
+    Header_exist: Yes
+  - Data_file: $PYCMM/pycmm/proc/db/test/data/dbms/SQLiteDBController/test_execute_db_jobs_2/test_hg19_CMM_OAF_BrC_CRC_prostate.txt
+    Data_type: DATA_TYPE_AVDB_CMM_AF
+    Drop_table: yes
+    Operation: LOAD_AVDB
+    Table_name: test_hg19_CMM_OAF_BrC_CRC_prostate
+    Header_exist: Yes
+  - Data_file: $PYCMM/pycmm/proc/db/test/data/dbms/SQLiteDBController/test_execute_db_jobs_2/test_hg19_CMM_OAF_familial_CRCs.txt
+    Data_type: DATA_TYPE_AVDB_CMM_AF
+    Drop_table: yes
+    Operation: LOAD_AVDB
+    Table_name: test_hg19_CMM_OAF_familial_CRCs
+    Header_exist: Yes
+  - Data_file: $PYCMM/pycmm/proc/db/test/data/dbms/SQLiteDBController/test_execute_db_jobs_2/test_hg19_CMM_OAF_CHEK2.txt
+    Data_type: DATA_TYPE_AVDB_CMM_AF
+    Drop_table: yes
+    Operation: LOAD_AVDB
+    Table_name: test_hg19_CMM_OAF_CHEK2
+    Header_exist: Yes
+  - Data_file: $PYCMM/pycmm/proc/db/test/data/dbms/SQLiteDBController/test_execute_db_jobs_2/test_hg19_CMM_OAF_EARLYONSET.txt
+    Data_type: DATA_TYPE_AVDB_CMM_AF
+    Drop_table: yes
+    Operation: LOAD_AVDB
+    Table_name: test_hg19_CMM_OAF_EARLYONSET
+    Header_exist: Yes
+  - Data_file: $PYCMM/pycmm/proc/db/test/data/dbms/SQLiteDBController/test_execute_db_jobs_2/test_hg19_CMM_OAF_BrCs.txt
+    Data_type: DATA_TYPE_AVDB_CMM_AF
+    Drop_table: yes
+    Operation: LOAD_AVDB
+    Table_name: test_hg19_CMM_OAF_BrCs
+    Header_exist: Yes
+  - Data_file: $PYCMM/pycmm/proc/db/test/data/dbms/SQLiteDBController/test_execute_db_jobs_2/test_hg19_CMM_OAF_CRCs.txt
+    Data_type: DATA_TYPE_AVDB_CMM_AF
+    Drop_table: yes
+    Operation: LOAD_AVDB
+    Table_name: test_hg19_CMM_OAF_CRCs
+    Header_exist: Yes
+  - Data_file: $PYCMM/pycmm/proc/db/test/data/dbms/SQLiteDBController/test_execute_db_jobs_2/test_hg19_CMM_Swegen_20161223.txt
+    Data_type: DATA_TYPE_AVDB_CMM_AF
+    Drop_table: yes
+    Operation: LOAD_AVDB
+    Table_name: test_hg19_CMM_Swegen_20161223
+    Header_exist: Yes
+  - Data_file: $PYCMM/pycmm/proc/db/test/data/dbms/SQLiteDBController/test_execute_db_jobs_2/test_hg19_exac03.txt
+    Data_type: DATA_TYPE_AVDB_PUBLIC_AF
+    Drop_table: yes
+    Operation: LOAD_AVDB
+    Table_name: test_hg19_exac03
+    Header_exist: Yes
+  - Data_file: $PYCMM/pycmm/proc/db/test/data/dbms/SQLiteDBController/test_execute_db_jobs_2/test_hg19_exac03nontcga.txt
+    Data_type: DATA_TYPE_AVDB_PUBLIC_AF
+    Drop_table: yes
+    Operation: LOAD_AVDB
+    Table_name: test_hg19_exac03nontcga
+    Header_exist: Yes
+  - Data_file: $PYCMM/pycmm/proc/db/test/data/dbms/SQLiteDBController/test_execute_db_jobs_2/test_hg19_200_Danes.txt
+    Data_type: DATA_TYPE_AVDB_PUBLIC_AF
+    Drop_table: yes
+    Operation: LOAD_AVDB
+    Table_name: test_hg19_200_Danes
+    Header_exist: Yes
+  - Data_file: $PYCMM/pycmm/proc/db/test/data/dbms/SQLiteDBController/test_execute_db_jobs_2/test_hg19_249_Swedes.txt
+    Data_type: DATA_TYPE_AVDB_PUBLIC_AF
+    Drop_table: yes
+    Operation: LOAD_AVDB
+    Table_name: test_hg19_249_Swedes
+    Header_exist: Yes
+  - Data_file: $PYCMM/pycmm/proc/db/test/data/dbms/SQLiteDBController/test_execute_db_jobs_2/test_hg19_spidex.txt
+    Drop_table: yes
+    Operation: LOAD_AVDB
+    Table_name: test_hg19_spidex
+    Header_exist: Yes
+  - Data_file: $PYCMM/pycmm/proc/db/test/data/dbms/SQLiteDBController/test_execute_db_jobs_2/test_hg19_intervar.txt
+    Drop_table: yes
+    Operation: LOAD_AVDB
+    Table_name: test_hg19_intervar
+    Header_exist: Yes
+#  - Data_file: $PYCMM/pycmm/proc/db/test/data/dbms/SQLiteDBController/test_execute_db_jobs_2/test_hg19_ljb26_all.txt
+#    Drop_table: yes
+#    Operation: LOAD_AVDB
+#    Table_name: test_hg19_ljb26_all
+#    Header_exist: Yes
+  - Data_file: $PYCMM/pycmm/proc/db/test/data/dbms/SQLiteDBController/test_execute_db_jobs_2/test_hg19_dbnsfp30a.txt
+    Drop_table: yes
+    Operation: LOAD_AVDB
+    Table_name: test_hg19_dbnsfp30a
+    Header_exist: Yes
+  - Data_file: $PYCMM/pycmm/proc/db/test/data/dbms/SQLiteDBController/test_execute_db_jobs_2/test_hg19_avsnp144.txt
+    Drop_table: yes
+    Operation: LOAD_AVDB
+    Table_name: test_hg19_avsnp144
+    Header_exist: No
+  - Data_file: $PYCMM/pycmm/proc/db/test/data/dbms/SQLiteDBController/test_execute_db_jobs_2/test_hg19_cosmic70.txt
+    Drop_table: yes
+    Operation: LOAD_AVDB
+    Table_name: test_hg19_cosmic70
+    Header_exist: No
+  - Data_file: $PYCMM/pycmm/proc/db/test/data/dbms/SQLiteDBController/test_execute_db_jobs_2/test_annovar_vcf.vcf.gz
+    Drop_table: Yes
+    Operation: LOAD_ANNOVAR_VCF
+    Table_name: test_annovar_vcf
+  - Data_file: $PYCMM/pycmm/proc/db/test/data/dbms/SQLiteDBController/test_execute_db_jobs_2/test_gtz_THYRCA.vcf.gz
+    Drop_table: Yes
+    Operation: LOAD_GTZ_VCF
+    Table_name: test_gtz_THYRCA
+  - Data_file: $PYCMM/pycmm/proc/db/test/data/dbms/SQLiteDBController/test_execute_db_jobs_2/test_gtz_WES294.vcf.gz
+    Drop_table: yes
+    Operation: LOAD_GTZ_VCF
+    Table_name: test_gtz_WES294
+  - Operation: CALCULATE_HARDY_WEINBERG
+    Drop_table: No
+    Table_name: test_hg19_CMM_Axeq_chr5_19
+  - Operation: CALCULATE_HARDY_WEINBERG
+    Drop_table: No
+    Table_name: test_hg19_CMM_Axeq_chr3_6_14_18
+  - Operation: CALCULATE_HARDY_WEINBERG
+    Drop_table: No
+    Table_name: test_hg19_CMM_Axeq_chr9
+  - Operation: CALCULATE_HARDY_WEINBERG
+    Drop_table: No
+    Table_name: test_hg19_CMM_OAF_BrC_CRC_prostate
+  - Operation: CALCULATE_HARDY_WEINBERG
+    Drop_table: No
+    Table_name: test_hg19_CMM_OAF_familial_CRCs
+  - Operation: CALCULATE_HARDY_WEINBERG
+    Drop_table: No
+    Table_name: test_hg19_CMM_OAF_CHEK2
+  - Operation: CALCULATE_HARDY_WEINBERG
+    Drop_table: No
+    Table_name: test_hg19_CMM_OAF_EARLYONSET
+  - Operation: CALCULATE_HARDY_WEINBERG
+    Drop_table: No
+    Table_name: test_hg19_CMM_OAF_BrCs
+  - Operation: CALCULATE_HARDY_WEINBERG
+    Drop_table: No
+    Table_name: test_hg19_CMM_OAF_CRCs
+  - Operation: CALCULATE_HARDY_WEINBERG
+    Drop_table: No
+    Table_name: test_hg19_CMM_Swegen_20161223
+  - Operation: JOIN_ALL_GTZ_ANNOS
+    Drop_table: No
+  - Operation: CAL_MAF_REF_MAF
+    Drop_table: No
+  - Operation: SET_REF_MUTATED
+    Drop_table: No

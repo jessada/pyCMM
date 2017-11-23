@@ -1,6 +1,8 @@
 import subprocess
 import datetime
 import re
+import os
+import fnmatch
 from os.path import dirname
 from os.path import realpath
 from os.path import getsize
@@ -15,6 +17,18 @@ def get_file_prefix(file_name, file_ext):
     if file_name.endswith(file_ext):
         return file_name[:-len(file_ext)]
     return file_name
+
+def find_files(search_path, pattern="*", max_depth=1000):
+    for root, dirs, files in os.walk(search_path):
+        for file_name in files:
+            if fnmatch.fnmatch(file_name, pattern):
+                yield os.path.join(root, file_name)
+        if root == search_path:
+            depth = 0
+        else:
+            depth = root[len(search_path) + len(os.path.sep):].count(os.path.sep) + 1
+        if depth == max_depth:
+            dirs[:] = []
 
 def set_log_file(raw_file):
     if raw_file is not None:

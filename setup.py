@@ -9,9 +9,11 @@ from pycmm.settings import DUMMY_TABLE_ANNOVAR_BIN
 from pycmm.settings import MUTREP_SLURM_MONITOR_PIPELINE_BIN
 from pycmm.settings import MUTREP_FAMILY_REPORT_BIN
 from pycmm.settings import MUTREP_SUMMARY_REPORT_BIN
+from pycmm.settings import MUTREPDB_SEQ_REPORT_BIN
 from pycmm.settings import PLINK_SLURM_MONITOR_PIPELINE_BIN
 from pycmm.settings import PLINK_HAP_ASSOCS_REPORT_BIN
 from pycmm.settings import PLINK_MERGE_HAP_ASSOCS_BIN
+from pycmm.settings import DBMS_EXECUTE_DB_JOBS_BIN
 
 def opj(*args):
     path = os.path.join(*args)
@@ -59,11 +61,15 @@ setup(
               'pycmm.utils',
               'pycmm.cmmlib',
               'pycmm.flow',
+              'pycmm.proc',
+              'pycmm.proc.db',
+              'pycmm.proc.mutrep',
               ],
     scripts=['bin/'+DNASEQ_SLURM_MONITOR_PIPELINE_BIN,
              'bin/pyCMM-dnaseq-pipeline',
              'bin/pyCMM-dnaseq-create-job-setup-file',
              'bin/pyCMM-cmmdb-cal-mut-stat',
+             'bin/pyCMM-cmmdb-vcf-AF-to-annovar',
              'bin/pyCMM-cmmdb-table-annovar',
              'bin/pyCMM-cmmdb-create-job-setup-file',
              'bin/'+DUMMY_TABLE_ANNOVAR_BIN,
@@ -73,11 +79,17 @@ setup(
              'bin/'+MUTREP_FAMILY_REPORT_BIN,
              'bin/'+MUTREP_SUMMARY_REPORT_BIN,
              'bin/pyCMM-mutrep-create-job-setup-file',
+             'bin/pyCMM-mutrepdb-create-job-setup-file',
+             'bin/'+MUTREPDB_SEQ_REPORT_BIN,
+             'bin/pyCMM-mutrepdb-controller',
              'bin/pyCMM-plink-create-job-setup-file',
-             'bin/pyCMM-plink-hap-assocs',
+             'bin/pyCMM-plink-pipeline',
              'bin/'+PLINK_SLURM_MONITOR_PIPELINE_BIN,
              'bin/'+PLINK_HAP_ASSOCS_REPORT_BIN,
              'bin/'+PLINK_MERGE_HAP_ASSOCS_BIN,
+             'bin/pyCMM-dbms-controller',
+             'bin/pyCMM-dbms-create-job-setup-file',
+             'bin/'+DBMS_EXECUTE_DB_JOBS_BIN,
              ],
     package=['pyCMM'],
 #    package_data={'': ['data/CBV/*.cbv']

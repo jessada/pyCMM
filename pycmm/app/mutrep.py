@@ -6,7 +6,7 @@ from pycmm.settings import MUTREP_SUMMARY_REPORT_DESCRIPTION
 from pycmm.utils import mylogger
 from pycmm.utils import disp
 from pycmm.flow.mutrep import MutRepPipeline
-from pycmm.flow.mutrep import ReportRegion
+from pycmm.flow.mutrep import DNARegion
 from pycmm.flow.mutrep import create_jobs_setup_file
 from pycmm.app import display_configs
 
@@ -20,7 +20,7 @@ def app_pycmm_family_report(*args, **kwargs):
     if raw_report_regions is None:
         report_regions = None
     else:
-        report_regions = map(lambda x: ReportRegion(x),
+        report_regions = map(lambda x: DNARegion(x),
                              raw_report_regions.split(","))
     out_file = kwargs['out_file']
 
@@ -29,7 +29,7 @@ def app_pycmm_family_report(*args, **kwargs):
     if report_regions is None:
         custom_params['report region(s)'] = report_regions
     else:
-        custom_params['report region(s)'] = map(lambda x: x.get_raw_repr(),
+        custom_params['report region(s)'] = map(lambda x: x.get_raw_obj_str(),
                                                 report_regions)
     custom_params['output file'] = out_file
     mylogger.getLogger(__name__)
@@ -52,7 +52,7 @@ def app_pycmm_summary_report(*args, **kwargs):
     if raw_report_regions is None:
         report_regions = None
     else:
-        report_regions = map(lambda x: ReportRegion(x),
+        report_regions = map(lambda x: DNARegion(x),
                              raw_report_regions.split(","))
     out_file = kwargs['out_file']
 
@@ -60,7 +60,7 @@ def app_pycmm_summary_report(*args, **kwargs):
     if report_regions is None:
         custom_params['report region(s)'] = report_regions
     else:
-        custom_params['report region(s)'] = map(lambda x: x.get_raw_repr(),
+        custom_params['report region(s)'] = map(lambda x: x.get_raw_obj_str(),
                                                 report_regions)
     custom_params['output file'] = out_file
     mylogger.getLogger(__name__)
@@ -112,13 +112,17 @@ def app_pycmm_mutrep_create_jobs_setup_file(*args, **kwargs):
                      )
     layout_params = OrderedDict()
     if kwargs['anno_cols'] is not None:
-        layout_params['annotation columns (-a)'] = kwargs['anno_cols']
+        layout_params['annotation columns (-a)'] = kwargs['anno_cols'].split(",")
     else:
         layout_params['annotation columns (-a)'] = "all"
     if kwargs['anno_excl_tags'] is not None:
         layout_params['annotation excluded tags (-E)'] = kwargs['anno_excl_tags'].split(",")
     if kwargs['rows_filter_actions'] is not None:
         layout_params['rows filtering criteria (--filter_actions)'] = kwargs['rows_filter_actions'].split(",")
+    if kwargs['expression_patterns'] is not None:
+        layout_params['expression_patterns (--expression_patterns)'] = kwargs['expression_patterns'].split(",")
+    if kwargs['expression_usages'] is not None:
+        layout_params['expression_usages (--expression_usages)'] = kwargs['expression_usages'].split(",")
     if kwargs['annotated_vcf_tabix'] is not None:
         layout_params['annotated vcf tablx file (-A)'] = kwargs['annotated_vcf_tabix']
     if kwargs['report_regions'] is not None:
@@ -127,31 +131,21 @@ def app_pycmm_mutrep_create_jobs_setup_file(*args, **kwargs):
         layout_params['report regions (-R)'] = "all"
     if kwargs['frequency_ratios'] is not None:
         layout_params['rare frequency ratios (-f)'] = OrderedDict(item.split(":") for item in kwargs['frequency_ratios'].split(","))
+    if kwargs['filter_genes'] is not None:
+        layout_params['filter genes (--filter_genes)'] = kwargs['filter_genes'].split(',')
+    if kwargs['color_genes'] is not None:
+        layout_params['color genes (--color_genes)'] = kwargs['color_genes'].split(',')
     layout_params['split chromosome (--split_chrom)'] = kwargs['split_chrom']
     layout_params['summary_families sheet (--summary_families)'] = kwargs['summary_families_sheet']
     extra_anno_cols = {}
     extra_anno_cols['call detail (--call_detail)'] = kwargs['call_detail']
+    extra_anno_cols['genotype quality (--call_gq)'] = kwargs['call_gq']
     layout_params['extra annotation columns'] = extra_anno_cols
-    layout_params['only summary report (--only_summary)'] = kwargs['only_summary']
-    layout_params['only families report (--only_families)'] = kwargs['only_families']
+    layout_params['coloring shared variants (--coloring_shared)'] = kwargs['coloring_shared']
+    layout_params['coloring variant zygosities (--coloring_zygosity)'] = kwargs['coloring_zygosity']
+    layout_params['show shared variants (--show_shared_variants)'] = kwargs['show_shared_variants']
     disp.disp_params_set("Report layout parameters", layout_params)
-    create_jobs_setup_file(project_name=kwargs['dataset_name'],
-                           project_out_dir=kwargs['project_out_dir'],
-                           sample_info=kwargs['sample_info'],
-                           project_code=kwargs['project_code'],
-                           job_alloc_time=kwargs['job_alloc_time'],
-                           anno_cols=kwargs['anno_cols'],
-                           rows_filter_actions=kwargs['rows_filter_actions'],
-                           anno_excl_tags=kwargs['anno_excl_tags'],
-                           annotated_vcf_tabix=kwargs['annotated_vcf_tabix'],
-                           report_regions=kwargs['report_regions'],
-                           frequency_ratios=kwargs['frequency_ratios'],
-                           split_chrom=kwargs['split_chrom'],
-                           summary_families_sheet=kwargs['summary_families_sheet'],
-                           call_detail=kwargs['call_detail'],
-                           only_summary=kwargs['only_summary'],
-                           only_families=kwargs['only_families'],
-                           out_jobs_setup_file=kwargs['out_jobs_setup_file'],
-                           )
+    kwargs['project_name'] = kwargs['dataset_name']
+    create_jobs_setup_file(**kwargs)
     mylogger.getLogger(__name__)
     disp.new_section_txt("F I N I S H <" + func_name + ">")

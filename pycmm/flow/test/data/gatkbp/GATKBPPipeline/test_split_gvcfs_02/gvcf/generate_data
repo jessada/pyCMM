@@ -1,0 +1,97 @@
+#!/bin/bash 
+
+script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+input_vcf_gz_dir="/proj/b2011117/nobackup/private/projects_output/gatkbp/WGS/TYRCA/piper/TYRCA_piper_merge/gvcf"
+out_dir="$script_dir"
+
+function extract_vcf {
+    in_vcf_gz=$1
+    out_vcf=$2
+
+    tabix -h $in_vcf_gz 1:80001895-80001934 > $out_vcf
+    tabix $in_vcf_gz 2:150000429-150000653 >> $out_vcf
+    tabix $in_vcf_gz 9:90001445-90001620 >> $out_vcf
+    tabix $in_vcf_gz 15:25000901-25000924 >> $out_vcf
+    tabix $in_vcf_gz 22:41979660-41979701 >> $out_vcf
+    tabix $in_vcf_gz X:50121125-50121152 >> $out_vcf
+
+    bgzip -f $out_vcf
+    tabix -p vcf $out_vcf.gz
+}
+
+extract_vcf $input_vcf_gz_dir/2016-08616.g.vcf.gz $out_dir/sample_a1.g.vcf
+extract_vcf $input_vcf_gz_dir/2015-12231.g.vcf.gz $out_dir/sample_a2.g.vcf
+extract_vcf $input_vcf_gz_dir/2015-12460.g.vcf.gz $out_dir/sample_b1.g.vcf
+extract_vcf $input_vcf_gz_dir/1415-10D.g.vcf.gz  $out_dir/sample_b2.g.vcf
+
+#data_dir="$script_dir/../data"
+#input_vcf="$data_dir/WES294_sorted.vcf"
+#
+#out_dir="$script_dir/../out"
+#out_prefix="WES294_out"
+#snp_recal_file="$out_dir/$out_prefix.snp.recal"
+#snp_tranches_file="$out_dir/$out_prefix.snp.tranches"
+#indel_recal_file="$out_dir/$out_prefix.indel.recal"
+#indel_tranches_file="$out_dir/$out_prefix.indel.tranches"
+#out_filtered_snp_file="$out_dir/$out_prefix.recal.snp.filtered.vcf"
+#out_filtered_indel_file="$out_dir/$out_prefix.recal.snp.indel.filtered.vcf"
+#
+#resource_dir="/proj/b2011117/private/databases/reference"
+#ref="$resource_dir/Homo_sapiens.GRCh37.57.dna.concat.fa"
+#hapmap_vcf="$resource_dir/hapmap_3.3.b37.vcf"
+#KG_omni="$resource_dir/1000G_omni2.5.b37.vcf"
+#KG_phase1="$resource_dir/1000G_phase1.snps.high_confidence.b37.vcf"
+#db_snp="$resource_dir/dbsnp_138.b37.vcf"
+#Mills="$resource_dir/Mills_and_1000G_gold_standard.indels.b37.vcf"
+#
+#cmd=" java -jar $GATK_dir/GenomeAnalysisTK.jar"
+#cmd+=" -T VariantRecalibrator"
+#cmd+=" -R $ref"
+#cmd+=" -input $input_vcf"
+#cmd+=" -recalFile $snp_recal_file"
+#cmd+=" -tranchesFile $snp_tranches_file"
+#cmd+=" -nt 4"
+#cmd+=" -resource:hapmap,known=false,training=true,truth=true,prior=15.0 $hapmap_vcf"
+#cmd+=" -resource:omni,known=false,training=true,truth=true,prior=12.0 $KG_omni"
+#cmd+=" -resource:1000G,known=false,training=true,truth=false,prior=10.0 $KG_phase1"
+#cmd+=" -resource:dbsnp,known=true,training=false,truth=false,prior=2.0 $db_snp"
+#cmd+=" -an QD -an MQ -an MQRankSum -an ReadPosRankSum -an FS -an SOR -an InbreedingCoeff"
+#cmd+=" -mode SNP"
+#eval_cmd "$cmd"
+#
+#cmd=" java -jar $GATK_dir/GenomeAnalysisTK.jar"
+#cmd+=" -T VariantRecalibrator"
+#cmd+=" -R $ref"
+#cmd+=" -input $input_vcf"
+#cmd+=" -recalFile $indel_recal_file"
+#cmd+=" -tranchesFile $indel_tranches_file"
+#cmd+=" -nt 4"
+#cmd+=" --maxGaussians 4"
+#cmd+=" -resource:mills,known=false,training=true,truth=true,prior=12.0 $Mills"
+#cmd+=" -resource:dbsnp,known=true,training=false,truth=false,prior=2.0 $db_snp"
+#cmd+=" -an QD -an FS -an SOR -an ReadPosRankSum -an MQRankSum -an InbreedingCoeff "
+#cmd+=" -mode INDEL"
+#eval_cmd "$cmd"
+#
+#cmd=" java -jar $GATK_dir/GenomeAnalysisTK.jar"
+#cmd+=" -T ApplyRecalibration"
+#cmd+=" -R $ref"
+#cmd+=" -input $input_vcf"
+#cmd+=" -recalFile $snp_recal_file"
+#cmd+=" -tranchesFile $snp_tranches_file"
+#cmd+=" -o $out_filtered_snp_file"
+#cmd+=" --ts_filter_level 99.5"
+#cmd+=" -mode SNP"
+#eval_cmd "$cmd"
+#
+#cmd=" java -jar $GATK_dir/GenomeAnalysisTK.jar"
+#cmd+=" -T ApplyRecalibration"
+#cmd+=" -R $ref"
+#cmd+=" -input $out_filtered_snp_file"
+#cmd+=" -recalFile $indel_recal_file"
+#cmd+=" -tranchesFile $indel_tranches_file"
+#cmd+=" -o $out_filtered_indel_file"
+#cmd+=" --ts_filter_level 99.0"
+#cmd+=" -mode INDEL"
+#eval_cmd "$cmd"

@@ -1,6 +1,7 @@
 # This Python file uses the following encoding: utf-8
 import pyaml
 from collections import defaultdict
+from collections import OrderedDict
 from os.path import join as join_path
 from pycmm.settings import PLINK_SLURM_MONITOR_PIPELINE_BIN
 from pycmm.settings import PLINK_MERGE_HAP_ASSOCS_BIN
@@ -12,6 +13,7 @@ from pycmm.cmmlib.dnalib import DNARegion
 from pycmm.cmmlib.plinklib import merge_hap_assocs
 from pycmm.cmmlib.plinklib import merge_lmiss_map
 from pycmm.utils import exec_sh
+from pycmm.utils.ver import VersionManager
 from pycmm.flow import CMMPipeline
 from pycmm.flow import init_jobs_setup_file
 
@@ -46,7 +48,7 @@ class FilterCriteria(pyCMMBase):
         self.__criterias = criterias
         super(FilterCriteria, self).__init__(**kwargs)
 
-    def get_raw_repr(self):
+    def get_raw_obj_str(self):
         raw_repr = OrderedDict()
         raw_repr["filter p-value less than 0.05"] = self.filter_pvalue005
         raw_repr["filter disease snp"] = self.filter_disease_snp
@@ -67,8 +69,8 @@ class PlinkParams(CMMParams):
     def __init__(self, **kwargs):
         super(PlinkParams, self).__init__(**kwargs)
 
-    def get_raw_repr(self):
-        raw_repr = OrderedDict()
+    def get_raw_obj_str(self, **kwargs):
+        raw_repr = super(PlinkParams, self).get_raw_obj_str(**kwargs)
         raw_repr["input file prefix"] = self.input_file_prefix
         raw_repr["input binary"] = self.input_binary
         raw_repr["phenotype_file"] = self.phenotype_file
@@ -134,7 +136,7 @@ class PlinkPipeline(CMMPipeline):
 
     @property
     def hap_assoc_alloc_time(self):
-        return self.flow_alloc_time
+        return self.job_alloc_time
 
     @property
     def plink_out_dir(self):
@@ -168,6 +170,13 @@ class PlinkPipeline(CMMPipeline):
     @property
     def region_keys(self):
         return map(lambda x: x.region_key, self.plink_params.input_dna_regions)
+
+    def get_third_party_software_version(self):
+        vm = VersionManager()
+        versions = OrderedDict()
+        versions['PLINK'] = vm.plink_version
+        versions['pyaml'] = vm.pyaml_version
+        return versions
 
     def get_plink_hap_assoc_paramss(self, input_file_prefix=None):
         params = " --noweb"
@@ -211,17 +220,11 @@ class PlinkPipeline(CMMPipeline):
             slurm_log_file = join_path(self.slurm_log_dir,
                                        job_name+".log")
             job_script = PLINK_DUMMY_SCRIPT
-# *********************************************************************************************** Need refactoring ***********************************************************************************************
-            self.submit_job(job_name,
-                            self.project_code,
-                            "core",
-                            "1",
-                            self.flow_alloc_time,
-                            slurm_log_file,
-                            job_script,
-                            params,
-                            )
-# *********************************************************************************************** Need refactoring ***********************************************************************************************
+            self._submit_slurm_job(job_name,
+                                   "1",
+                                   job_script,
+                                   params,
+                                   )
             submitted_hap_assoc_jobs[region_key].append(job_name)
         self.__submitted_jobs['hap_assoc'] = submitted_hap_assoc_jobs
 
@@ -244,18 +247,12 @@ class PlinkPipeline(CMMPipeline):
                                        job_name+".log")
             job_script = PLINK_MERGE_HAP_ASSOCS_BIN
             prereq = self.__submitted_jobs['hap_assoc'][region_key]
-# *********************************************************************************************** Need refactoring ***********************************************************************************************
-            self.submit_job(job_name,
-                            self.project_code,
-                            "core",
-                            "1",
-                            self.flow_alloc_time,
-                            slurm_log_file,
-                            job_script,
-                            params,
-                            prereq=prereq,
-                            )
-# *********************************************************************************************** Need refactoring ***********************************************************************************************
+            self._submit_slurm_job(job_name,
+                                   "1",
+                                   job_script,
+                                   params,
+                                   prereq=prereq,
+                                   )
             merge_hap_assocs_jobs[region_key] = [job_name]
         self.__submitted_jobs['merge_hap_assocs'] = merge_hap_assocs_jobs
 
@@ -280,18 +277,12 @@ class PlinkPipeline(CMMPipeline):
                                        job_name+".log")
             job_script = PLINK_HAP_ASSOCS_REPORT_BIN
             prereq = self.__submitted_jobs['merge_hap_assocs'][region_key]
-# *********************************************************************************************** Need refactoring ***********************************************************************************************
-            self.submit_job(job_name,
-                            self.project_code,
-                            "core",
-                            "1",
-                            self.flow_alloc_time,
-                            slurm_log_file,
-                            job_script,
-                            params,
-                            prereq=prereq,
-                            )
-# *********************************************************************************************** Need refactoring ***********************************************************************************************
+            self._submit_slurm_job(job_name,
+                                   "1",
+                                   job_script,
+                                   params,
+                                   prereq=prereq,
+                                   )
             hap_assocs_report_jobs[region_key] = [job_name]
         self.__submitted_jobs['hap_assocs_report'] = hap_assocs_report_jobs
 
@@ -333,7 +324,7 @@ class PlinkPipeline(CMMPipeline):
 #                            self.project_code,
 #                            "core",
 #                            "1",
-#                            self.flow_alloc_time,
+#                            self.job_alloc_time,
 #                            slurm_log_file,
 #                            job_script,
 #                            params,
@@ -341,30 +332,6 @@ class PlinkPipeline(CMMPipeline):
 ##                            nodelist=self.job_nodelist,
 #                            )
 ## *************************************************************** keep this part of code until I'm certain that there is no way to specify nodelist *************************************************************** 
-
-# *********************************************************************************************** Need refactoring ***********************************************************************************************
-# need to replace with similar function from parent
-    def run_hap_assocs_slurm(self,
-                             jobs_setup_file,
-                             log_file=None,
-                             ):
-        job_name = self.project_name + "_mgr"
-        slurm_log_file = join_path(self.slurm_log_dir,
-                                   job_name+".log")
-        job_script = PLINK_SLURM_MONITOR_PIPELINE_BIN
-        job_params = " -j " + jobs_setup_file
-        if log_file is not None:
-            job_params += " -l " + log_file
-        self.submit_job(job_name,
-                        self.project_code,
-                        "core",
-                        "1",
-                        self.flow_alloc_time,
-                        slurm_log_file,
-                        job_script,
-                        job_params,
-                        )
-# *********************************************************************************************** Need refactoring ***********************************************************************************************
 
     def extract_snps_stat(self, input_dna_region, input_file_prefix=None):
         params = " --noweb"
@@ -467,7 +434,7 @@ def create_jobs_setup_file(project_name,
                            cutoff_ors=None,
                            hap_window_sizes=None,
                            project_code=None,
-                           flow_alloc_time=None,
+                           job_alloc_time=None,
                            rpt_alloc_time=None,
                            filter_criteria=None,
                            sample_info=None,
@@ -478,7 +445,7 @@ def create_jobs_setup_file(project_name,
     job_setup_document, stream = init_jobs_setup_file(project_name=project_name,
                                                       project_out_dir=project_out_dir,
                                                       project_code=project_code,
-                                                      flow_alloc_time=flow_alloc_time,
+                                                      job_alloc_time=job_alloc_time,
                                                       rpt_alloc_time=rpt_alloc_time,
                                                       sample_info=sample_info,
                                                       jobs_report_file=jobs_report_file,

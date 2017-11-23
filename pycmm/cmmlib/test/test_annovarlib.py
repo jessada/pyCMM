@@ -20,7 +20,9 @@ from pycmm.cmmlib.annovarlib import MUTATIONTASTER_PRED_COL
 from pycmm.cmmlib.annovarlib import MUTATIONASSESSOR_PRED_COL
 from pycmm.cmmlib.annovarlib import FATHMM_PRED_COL
 from pycmm.cmmlib.annovarlib import RADIALSVM_PRED_COL
+from pycmm.cmmlib.annovarlib import METASVM_PRED_COL
 from pycmm.cmmlib.annovarlib import LR_PRED_COL
+from pycmm.cmmlib.annovarlib import METALR_PRED_COL
 
 DFLT_ANV_TEST_DB_DIR = DFLT_ANV_DB_DIR
 DFLT_ANV_TEST_DB_NAMES = "refGene"
@@ -188,12 +190,24 @@ class TestPredictionTranslator(SafeTester):
         self.assertEqual(pred.get_prediction_info(RADIALSVM_PRED_COL, "T").description,
                          "Tolerated",
                          "PredictionTranslator cannot describe "+RADIALSVM_PRED_COL)
+        self.assertEqual(pred.get_prediction_info(METASVM_PRED_COL, "D").description,
+                         "Deleterious",
+                         "PredictionTranslator cannot describe "+METASVM_PRED_COL)
+        self.assertEqual(pred.get_prediction_info(METASVM_PRED_COL, "T").description,
+                         "Tolerated",
+                         "PredictionTranslator cannot describe "+METASVM_PRED_COL)
         self.assertEqual(pred.get_prediction_info(LR_PRED_COL, "D").description,
                          "Deleterious",
                          "PredictionTranslator cannot describe "+LR_PRED_COL)
         self.assertEqual(pred.get_prediction_info(LR_PRED_COL, "T").description,
                          "Tolerated",
                          "PredictionTranslator cannot describe "+LR_PRED_COL)
+        self.assertEqual(pred.get_prediction_info(METALR_PRED_COL, "D").description,
+                         "Deleterious",
+                         "PredictionTranslator cannot describe "+METALR_PRED_COL)
+        self.assertEqual(pred.get_prediction_info(METALR_PRED_COL, "T").description,
+                         "Tolerated",
+                         "PredictionTranslator cannot describe "+METALR_PRED_COL)
 
     def test_description_2(self):
         """ to test specials case of the description of effect predictor code """
@@ -224,7 +238,7 @@ class TestPredictionTranslator(SafeTester):
                          True,
                          "PredictionTranslator cannot tell harmfulness of "+POLYPHEN2_HDIV_PRED_COL)
         self.assertEqual(pred.get_prediction_info(POLYPHEN2_HDIV_PRED_COL, "P").harmful,
-                         True,
+                         False,
                          "PredictionTranslator cannot tell harmfulness of "+POLYPHEN2_HDIV_PRED_COL)
         self.assertEqual(pred.get_prediction_info(POLYPHEN2_HDIV_PRED_COL, "B").harmful,
                          False,
@@ -233,7 +247,7 @@ class TestPredictionTranslator(SafeTester):
                          True,
                          "PredictionTranslator cannot tell harmfulness of "+POLYPHEN2_HVAR_PRED_COL)
         self.assertEqual(pred.get_prediction_info(POLYPHEN2_HVAR_PRED_COL, "P").harmful,
-                         True,
+                         False,
                          "PredictionTranslator cannot tell harmfulness of "+POLYPHEN2_HVAR_PRED_COL)
         self.assertEqual(pred.get_prediction_info(POLYPHEN2_HVAR_PRED_COL, "B").harmful,
                          False,
@@ -245,7 +259,7 @@ class TestPredictionTranslator(SafeTester):
                          False,
                          "PredictionTranslator cannot tell harmfulness of "+LRT_PRED_COL)
         self.assertEqual(pred.get_prediction_info(LRT_PRED_COL, "U").harmful,
-                         False,
+                         True,
                          "PredictionTranslator cannot tell harmfulness of "+LRT_PRED_COL)
         self.assertEqual(pred.get_prediction_info(MUTATIONTASTER_PRED_COL, "A").harmful,
                          True,
@@ -289,17 +303,29 @@ class TestPredictionTranslator(SafeTester):
         self.assertEqual(pred.get_prediction_info(RADIALSVM_PRED_COL, "T").harmful,
                          False,
                          "PredictionTranslator cannot tell harmfulness of "+RADIALSVM_PRED_COL)
+        self.assertEqual(pred.get_prediction_info(METASVM_PRED_COL, "D").harmful,
+                         True,
+                         "PredictionTranslator cannot tell harmfulness of "+METASVM_PRED_COL)
+        self.assertEqual(pred.get_prediction_info(METASVM_PRED_COL, "T").harmful,
+                         False,
+                         "PredictionTranslator cannot tell harmfulness of "+METASVM_PRED_COL)
         self.assertEqual(pred.get_prediction_info(LR_PRED_COL, "D").harmful,
                          True,
                          "PredictionTranslator cannot tell harmfulness of "+LR_PRED_COL)
         self.assertEqual(pred.get_prediction_info(LR_PRED_COL, "T").harmful,
                          False,
                          "PredictionTranslator cannot tell harmfulness of "+LR_PRED_COL)
+        self.assertEqual(pred.get_prediction_info(METALR_PRED_COL, "D").harmful,
+                         True,
+                         "PredictionTranslator cannot tell harmfulness of "+METALR_PRED_COL)
+        self.assertEqual(pred.get_prediction_info(METALR_PRED_COL, "T").harmful,
+                         False,
+                         "PredictionTranslator cannot tell harmfulness of "+METALR_PRED_COL)
         self.assertEqual(pred.get_prediction_info(LR_PRED_COL, "K").harmful,
                          False,
                          "PredictionTranslator cannot tell harmfulness of "+LR_PRED_COL)
 
-    def test_is_harmful_1(self):
+    def test_is_harmful_2(self):
         """ to if the predictor can tell the harmfulness in special scenarios"""
         self.init_test(self.current_func_name)
         pred = PredictionTranslator()
@@ -310,7 +336,7 @@ class TestPredictionTranslator(SafeTester):
                          False,
                          "PredictionTranslator cannot work correctly if the prediction code is unknown")
         self.assertEqual(pred.get_prediction_info(LR_PRED_COL, ".").harmful,
-                         False,
+                         True,
                          "PredictionTranslator cannot work correctly if there is no prediction code")
 
     def tearDown(self):
