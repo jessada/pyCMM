@@ -135,8 +135,6 @@ display_param "working direcotry" "$working_dir"
 
 new_section_txt "E X E C U T I N G"
 
-tmp_raw_stat="$working_dir/$dataset_name.raw_stat"
-
 VCF_QUERY_FORMAT="'%CHROM\t%POS\t%REF\t%ALT[\t%GT]\n'"
 COL_KEY_COUNT=4
 IDX_0_CHR_COL=0
@@ -241,38 +239,6 @@ function count_frequency {
     done
 }
 
-if [ ! -z "$vcf_region" ]; then
-    for (( n=0; n<$((${#vcf_region_list[@]})); n++ ))
-    do
-        count_frequency "${vcf_region_list[$n]}" >> "$tmp_raw_stat"
-    done
-else
-    count_frequency "" >> "$tmp_raw_stat"
-fi
-
-#---------- generate stat key --------------
-tmp_stat_key_sort=$working_dir/$dataset_name"_tmp_sort.key.stat"
-:>$tmp_stat_key_sort
-add_key_to_stat="grep -P \"^[0-9]\" $tmp_raw_stat"
-add_key_to_stat+=" | awk -F'\t' '{ printf \"%02d_%012d_%s_%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n\", \$1, \$2, \$4, \$5, \$6,  \$7,  \$8,  \$9,  \$10,  \$11,  \$12,  \$13,  \$14  }'"
-add_key_to_stat+=" | sort -k1,1"
-add_key_to_stat+=" >> $tmp_stat_key_sort"
-eval_cmd "$add_key_to_stat"
-add_key_to_stat="grep -vP \"^[0-9]\" $tmp_raw_stat"
-add_key_to_stat+=" | awk -F'\t' '{ printf \"%s_%012d_%s_%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n\", \$1, \$2, \$4, \$5, \$6,  \$7,  \$8,  \$9,  \$10,  \$11,  \$12,  \$13,  \$14 }'"
-add_key_to_stat+=" | sort -k1,1"
-add_key_to_stat+=" >> $tmp_stat_key_sort"
-eval_cmd "$add_key_to_stat"
-#---------- generate stat key --------------
-
-#---------- reformat stat --------------
-tmp_formatted_stat="$working_dir/$dataset_name"_tmp_formatted.stat
-
-format_stat_cmd="join -t $'\t' -j 1 -o 1.2,1.3,1.4,1.5,1.6,2.2,2.3,2.4,2.5,2.6,2.7,2.8,2.9,2.10 <( sort -k1,1 $vcf2avdb_key_table ) $tmp_stat_key_sort > $tmp_formatted_stat"
-eval_cmd "$format_stat_cmd"
-#---------- reformat stat --------------
-
-
 col_prefix=$( echo $dataset_name | awk '{print toupper($0)}' )
 # create header
 header="#Chr"
@@ -291,14 +257,14 @@ header+="\t$col_prefix"_AF
 header+="\t$col_prefix"_PF
 echo -e "$header" > "$out_file"
         
-cmd="grep -P \"^[0-9]\" $tmp_formatted_stat"
-cmd+=" | sort -k1,1n -k2,2n -k4,4 -k5,5"
-cmd+=" >> $out_file"
-eval_cmd "$cmd" 
-cmd="grep -vP \"^[0-9]\" $tmp_formatted_stat"
-cmd+=" | sort -k1,1 -k2,2n -k4,4 -k5,5"
-cmd+=" >> $out_file"
-eval_cmd "$cmd" 
+if [ ! -z "$vcf_region" ]; then
+    for (( n=0; n<$((${#vcf_region_list[@]})); n++ ))
+    do
+        count_frequency "${vcf_region_list[$n]}" >> "$out_file"
+    done
+else
+    count_frequency "" >> "$out_file"
+fi
 
 #---------- idx stat file --------------
 idx_stat_file="$out_file.idx"
