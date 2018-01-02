@@ -50,7 +50,7 @@ while getopts ":i:d:g:o:h" OPTION; do
 done
 
 [ ! -z $input_vcf ] || die "an input VCF file is required (-i)"
-[ ! -z $suggested_gene_list ] || die "please indicate gene list (-g)"
+#[ ! -z $suggested_gene_list ] || die "please indicate gene list (-g)"
 [ ! -z $out_file ] || die "please indicate output file name (-o)"
 [ -f "$input_vcf" ] || die "$input_vcf is not a valid file name."
 
@@ -82,158 +82,18 @@ display_param "time stamp" "$time_stamp"
 info_msg
 info_msg "overall configuration"
 display_param "input VCF file (-i)" "$input_vcf"
-display_param "reference gene database (-d)" "$reference_gene"
-display_param "gene list (-g)" "$suggested_gene_list"
+#display_param "reference gene database (-d)" "$reference_gene"
+#display_param "gene list (-g)" "$suggested_gene_list"
 display_param "output file (-o)" "$out_file"
 display_param "working directory" "$working_dir"
 
 # ****************************************  executing  ****************************************
  
-#new_section_txt "Extract list of coding regions"
-#
-#tmp_refgene="$working_dir/refgene"
-#cmd="sort -k3,3 -k5,5n $reference_gene"
-#cmd+=" | cut -f3,5,6,13"
-#cmd+=" > $tmp_refgene"
-#eval_cmd "$cmd"
-#
-#tmp_gene_list="$working_dir/gene_list"
-## look for gene that only present in one place (not more than 1 chromosome)
-#cmd="cut -f1,4 $tmp_refgene"
-#cmd+=" | sort"
-#cmd+=" | uniq"
-#cmd+=" | sort -k2,2"
-#cmd+=" | uniq -u -f1"
-#cmd+=" | cut -f2"
-##cmd+=" | grep -v \"^MIR6\""
-##cmd+=" | grep -v \"^MIR4\""
-##cmd+=" | grep -v \"^MIR3\""
-##cmd+=" | grep -v \"^SNAR-A\""
-###cmd+=" | grep -v \"^FAM74\""
-##cmd+=" | grep -vP \"^LINC[0-9]\""
-##cmd+=" | grep -vP \"^L0C[0-9]\""
-##cmd+=" | grep -vP \"^NBPF[0-9]\""
-##cmd+=" | grep -v \"^ULK4P3$\""
-##cmd+=" | grep -v \"^TTTY17A$\""
-##cmd+=" | grep -v \"^TTTY17B$\""
-##cmd+=" | grep -v \"^TTTY17C$\""
-##cmd+=" | grep -v \"^LOC103908605$\""
-##cmd+=" | grep -v \"^SPDYE8P$\""
-##cmd+=" | grep -v \"^PMS2P5$\""
-##cmd+=" | grep -v \"^PMS2P7$\""
-##cmd+=" | grep -v \"^STAG3L1$\""
-##cmd+=" | grep -v \"^RGPD5$\""
-##cmd+=" | grep -v \"^TTTY8$\""
-##cmd+=" | grep -v \"^TTTY8B$\""
-##cmd+=" | grep -v \"^TTTY7$\""
-##cmd+=" | grep -v \"^TTTY7B$\""
-##cmd+=" | grep -v \"^TTTY21$\""
-##cmd+=" | grep -v \"^TTTY21B$\""
-##cmd+=" | grep -v \"^TTTY2$\""
-##cmd+=" | grep -v \"^TTTY2B$\""
-##cmd+=" | grep -v \"^TTTY1$\""
-##cmd+=" | grep -v \"^TTTY1B$\""
-##cmd+=" | grep -v \"^LOC100288162$\""
-##cmd+=" | grep -v \"^TTTY23$\""
-##cmd+=" | grep -v \"^TTTY23B$\""
-##cmd+=" | grep -v \"^RNU1-13P$\""
-##cmd+=" | grep -v \"^LOC100132057$\""
-##cmd+=" | grep -v \"^LOC554249$\""
-##cmd+=" | grep -v \"^LOC102724238$\""
-##cmd+=" | grep -v \"^PPIAL4B$\""
-#cmd+=" | grep -v \"^NBPF20$\""
-#cmd+=" | grep -v \"^RGPD5$\""
-#cmd+=" | grep -v \"^NBPF9$\""
-#cmd+=" | grep -v \"^NBPF8$\""
-#cmd+=" | grep -v \"^PPIAL4C$\""
-##cmd+=" | grep -v \"^LOC102723709$\""
-##cmd+=" | grep -v \"^FAM74A6$\""
-##cmd+=" | grep -v \"^LOC286297$\""
-#cmd+=" | grep -v \"^SPATA31A7$\""
-#cmd+=" | grep -v \"^SPATA31A5$\""
-#cmd+=" | grep -v \"^ANKRD20A3$\""
-##cmd+=" | grep -v \"^FAM74A1$\""
-##cmd+=" | grep -v \"^LOC101928381$\""
-#cmd+=" | grep -v \"^FOXD4L4$\""
-#cmd+=" | grep -v \"^FAM72C$\""
-##cmd+=" | grep -v \"^SRGAP2D$\""
-#cmd+=" > $tmp_gene_list"
-#eval_cmd "$cmd"
-#
-#tmp_filtered_gene_list="$working_dir/filtered_gene_list"
-#cmd="join"
-#cmd+=" -1 1"
-#cmd+=" -2 1"
-#cmd+=" -t $'\t'"
-#cmd+=" -o 0"
-#cmd+=" $tmp_gene_list"
-#cmd+=" <( sort $suggested_gene_list )"
-#cmd+=" > $tmp_filtered_gene_list"
-#eval_cmd "$cmd"
-#
-#tmp_coding_region="$working_dir/coding_region"
-#tmp_debug="$working_dir/debug"
-#:>$tmp_coding_region
-#:>$tmp_debug
-#for gene_name in `cat $tmp_filtered_gene_list`
-#do
-##    info_msg "Processing information of gene: $gene_name"
-#    query_cmd="grep -P '\t$gene_name$' $tmp_refgene"
-#    query_cmd+=" | cut -f1"
-#    query_cmd+=" | head -1"
-#    tmp=`eval "$query_cmd"`
-#    chromosome="${tmp/chr/}"
-#
-#    # get start position (the minimum one)
-#    query_cmd="grep -P '\t$gene_name$' $tmp_refgene"
-#    query_cmd+=" | cut -f2"
-#    query_cmd+=" | sort -n"
-#    query_cmd+=" | head -1"
-#    start_pos=`eval "$query_cmd"`
-#
-#    # get end position (the maximum one)
-#    query_cmd="grep -P '\t$gene_name$' $tmp_refgene"
-#    query_cmd+=" | cut -f3"
-#    query_cmd+=" | sort -n"
-#    query_cmd+=" | tail -1"
-#    end_pos=`eval "$query_cmd"`
-#
-#    echo "$chromosome:$start_pos-$end_pos" >> $tmp_coding_region
-#    echo -e "$chromosome:$start_pos-$end_pos\t$(expr $end_pos - $start_pos)\t$gene_name" >> $tmp_debug
-#done 
-#
-#new_section_txt "Extract variants from coding regions that pass the QC"
-#
-#tmp_exome="$working_dir/exome"
-#:> $tmp_exome
-#for region in `cat $tmp_coding_region`
-#do
-#    cmd="tabix $input_vcf $region"
-#    cmd+=" | grep -P \"\tPASS\t\""
-#    cmd+=" >> $tmp_exome"
-#    eval_cmd "$cmd"
-#done
-#
-#tmp_uniq_exome="$working_dir/uniq_exome.vcf"
-#tmp_pass_qc="$working_dir/pass_qc.vcf"
-#tabix -h $input_vcf 1:1-1 > $tmp_uniq_exome
-#cmd="sort $tmp_exome"
-#cmd+=" | uniq"
-#cmd+=" >> $tmp_uniq_exome"
-#eval_cmd "$cmd"
-#cmd="vcf-sort -c $tmp_uniq_exome > $tmp_pass_qc"
-#eval_cmd "$cmd"
-#cmd="bgzip -f $tmp_pass_qc"
-#eval_cmd "$cmd"
-#cmd="tabix -f -p vcf $tmp_pass_qc.gz"
-#eval_cmd "$cmd"
-
 new_section_txt "Extract only coding and splice regions"
 
 tmp_ta="$working_dir/ta"
 table_annovar_cmd="table_annovar.pl"
 table_annovar_cmd+=" $input_vcf"
-#table_annovar_cmd+=" $tmp_pass_qc.gz"
 table_annovar_cmd+=" $ANNOVAR_HUMAN_DB_DIR"
 table_annovar_cmd+=" -buildver hg19"
 table_annovar_cmd+=" -out $tmp_ta"
