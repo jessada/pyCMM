@@ -555,7 +555,8 @@ HOMOZYGOTE_UNAFFECTED_COUNT_COL_NAME = "homozygote_unaffected_count"
 HOMOZYGOTE_FREQ_RATIO_COL_NAME = "homozygote_frequency_ratio"
 
 # This will be obsolete in mutrepdb 
-INTERVAR_AND_EVIDENCE_COL_NAME = "InterVar:InterVarAndEvidence"
+INTERVAR_AND_EVIDENCE_COL_NAME = "InterVar_InterVarAndEvidence"
+#INTERVAR_AND_EVIDENCE_COL_NAME = "InterVar:InterVarAndEvidence"
 INTERVAR_EVIDENCE_COL_NAME = "InterVar_evidence"
 
 RECESSIVE_STUDY_COL_NAMES = []

@@ -1116,9 +1116,9 @@ class MutRepController(CMMPipeline):
 #            if (self.report_layout.filter_pass_vqsr and
 #                not qry_record.is_pass_vqsr(allele_idx=allele_idx)):
 #                continue
-#            if (self.report_layout.filter_has_mutation and
-#                not qry_record.has_mutation(samples_id, allele_idx)):
-#                continue
+            if (self.report_layout.filter_has_mutation and
+                not qry_record.has_mutation(samples_id)):
+                continue
 #            if (self.report_layout.filter_has_shared and
 #                not qry_record.has_shared(allele_idx)):
 #                continue
@@ -1171,6 +1171,9 @@ class MutRepController(CMMPipeline):
                                         )
         else:
             for report_region in report_regions:
+                log_msg = " >> query chromosome "
+                log_msg += report_region.raw_region
+                self.info(log_msg)
                 if report_region.start_pos is None:
                     qry_records = self.reader.get_qry_records(report_region.chrom)
                 else:
