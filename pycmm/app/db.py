@@ -84,7 +84,7 @@ def app_pycmm_dbms_create_jobs_setup_file(*args, **kwargs):
 #        layout_params['filter genes (--filter_genes)'] = kwargs['filter_genes'].split(',')
 #    if kwargs['color_genes'] is not None:
 #        layout_params['color genes (--color_genes)'] = kwargs['color_genes'].split(',')
-    db_params['db file (--db_fuke)'] = kwargs['db_file']
+    db_params['db file (--db_file)'] = kwargs['db_file']
     db_params['db jobs (--db_jobs)'] = kwargs['db_jobs']
 #    layout_params['summary_families sheet (--summary_families)'] = kwargs['summary_families_sheet']
 #    extra_anno_cols = {}
