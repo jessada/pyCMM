@@ -142,7 +142,7 @@ cmd+=" -format vcf4old"
 cmd+=" $tmp_left_align.gz"
 cmd+=" --includeinfo"
 cmd+=" | awk -F '\t' '{ printf \"$printf_phrase\n\", $param_phrase}'"
-cmd+=" | vcf-sort"
+cmd+=" | vcf-sort -c"
 cmd+=" >> $out_file"
 eval_cmd "$cmd"
 
