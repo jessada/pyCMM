@@ -615,7 +615,7 @@ class TestSQLiteDBController(SafeTester):
                          496,
                          "SQLiteDBController cannot correctly execute db jobs")
 
-    @unittest.skipUnless(FULL_SYSTEM_TEST or DBMS_TEST or DB_TEST, "taking too long time to test")
+#    @unittest.skipUnless(FULL_SYSTEM_TEST or DBMS_TEST or DB_TEST, "taking too long time to test")
     def test_execute_db_jobs_5(self):
         """
         Test db_jobs execution with data that

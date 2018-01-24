@@ -173,7 +173,7 @@ DB_JOBS:
     Table_name: test_hg19_CMM_Swegen_20161223
   - Operation: JOIN_ALL_GTZ_ANNOS
     Drop_table: No
-  - Operation: CAL_MAF_REF_MAF
+  - Operation: CAL_MAX_REF_MAF
     Drop_table: No
   - Operation: SET_REF_MUTATED
     Drop_table: No
