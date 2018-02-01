@@ -1,6 +1,8 @@
 from pycmm.utils import mylogger
 import pkg_resources
 import sys
+import getpass
+import socket
 from collections import OrderedDict
 from collections import defaultdict
 
@@ -43,6 +45,8 @@ def show_config(app_description,
     disp_header("Version and environment configuration")
     disp_param("pyCMM version", pkg_resources.get_distribution("pycmm").version)
     disp_param("parameters", " ".join(sys.argv[1:]))
+    disp_param("hostname", socket.gethostname())
+    disp_param("user", getpass.getuser())
     disp_params_set("Third party software version", third_party_software_version)
     disp_params_set("Required parameters", required_params) 
     if optional_params is not None:
