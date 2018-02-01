@@ -52,14 +52,20 @@ class JobRecord(pyCMMBase):
     @slurm_log_prefix.setter
     def slurm_log_prefix(self, value):
         self.__slurm_log_prefix = value
-        self.__slurm_log_file = value
-        self.__slurm_log_file += "_"
-        self.__slurm_log_file += self.time_stamp.strftime("%Y%m%d%H%M%S")
-        self.__slurm_log_file += ".log"
+        tmp_slurm = value
+        tmp_slurm += "_"
+        tmp_slurm += self.time_stamp.strftime("%Y%m%d%H%M%S")
+        tmp_slurm += ".%j."
+        self.__slurm_stdout_file = tmp_slurm + "out.log"
+        self.__slurm_stderr_file = tmp_slurm + "err.log"
 
     @property
-    def slurm_log_file(self):
-        return self.__slurm_log_file
+    def slurm_stdout_file(self):
+        return self.__slurm_stdout_file
+
+    @property
+    def slurm_stderr_file(self):
+        return self.__slurm_stderr_file
 
 class JobManager(pyCMMBase):
     """ A class to manage UPPMAX SLURM job """
@@ -121,7 +127,8 @@ class JobManager(pyCMMBase):
         cmd += " -J " + job_rec.job_name
         if job_rec.email:
             cmd += " -C usage_mail"
-        cmd += " -o " + job_rec.slurm_log_file
+        cmd += " -o " + job_rec.slurm_stdout_file
+        cmd += " -e " + job_rec.slurm_stderr_file
         if (job_rec.prereq is not None) and (len(job_rec.prereq) > 0) and (type(job_rec.prereq) is list):
             cmd += " --dependency=afterok"
             for job_name in job_rec.prereq:
