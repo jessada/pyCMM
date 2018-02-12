@@ -1,6 +1,6 @@
 #!/bin/bash 
 set -e
-set -o pipefail
+#set -o pipefail
 
 source $PYCMM/bash/cmm_functions.sh
 
@@ -100,15 +100,23 @@ echo "##fileformat=VCFv4.2" > $tmp_concated_vcf
 echo -e "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO" >> $tmp_concated_vcf
 
 tmp_concated="$working_dir/tmp_concated"
+#for chrom in 5
 for chrom in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 X Y
 do
     > $tmp_concated
     for vcf_file in "${vcf_files[@]}"
     do
-        cmd="tabix $vcf_file $chrom | cut -f1-5 | awk -F'\t' '{ printf \"%s\t.\t.\t.\n\", \$0 }' >> $tmp_concated"
+        cmd="tabix -h $vcf_file $chrom"
+        cmd+=" | vt decompose -s -"
+        cmd+=" | vt normalize -q -r $GRCH37_REF -"
+        cmd+=" | grep -P \"\tPASS\t\""
+        cmd+=" | grep -Pv \"\t\*\t\""
+        cmd+=" | cut -f1-5"
+        cmd+=" | awk -F'\t' '{ printf \"%s\t.\t.\t.\n\", \$0 }'"
+        cmd+=" >> $tmp_concated"
         eval_cmd "$cmd"
     done
-    cmd="sort -k2,2n $tmp_concated >> $tmp_concated.vcf"
+    cmd="sort -k2,2n $tmp_concated | uniq >> $tmp_concated.vcf"
     eval_cmd "$cmd"
 done
 
@@ -129,19 +137,35 @@ table_annovar_cmd+=" -buildver hg19"
 table_annovar_cmd+=" -out $tmp_ta_prefix"
 table_annovar_cmd+=" -remove"
 table_annovar_cmd+=" -protocol refGene,cytoBand,targetScanS,wgRna,exac03constraint,1000g2014oct_all,1000g2014oct_eur"
-#table_annovar_cmd+=" -protocol refGene,cytoBand,targetScanS,wgRna,tfbsConsSites,exac03constraint,1000g2014oct_all,1000g2014oct_eur"
-#table_annovar_cmd+=" -operation g,r,r,r,r,r,f,f"
 table_annovar_cmd+=" -operation g,r,r,r,r,f,f"
 table_annovar_cmd+=" -nastring ."
 table_annovar_cmd+=" -vcfinput"
 eval_cmd "$table_annovar_cmd"
 
-mv $tmp_ta_prefix.hg19_multianno.vcf $output_vcf
+tmp_ta_vcf="$tmp_ta_prefix.hg19_multianno.vcf"
+cmd="bgzip -f $tmp_ta_vcf"
+eval_cmd "$cmd"
+cmd="tabix -f -p vcf $tmp_ta_vcf.gz"
+eval_cmd "$cmd"
+
+cmd="tabix -h $tmp_ta_vcf.gz 1:1-1 > $output_vcf" 
+eval_cmd "$cmd"
+
+printf_phrase="%s\t%s\t%s\t%s\t%s\t.\t%s\t%s"
+param_phrase="\$1, \$2, \$8, \$4, \$5, \$12, \$13"
+
+cmd="convert2annovar.pl"
+cmd+=" -format vcf4old"
+cmd+=" $tmp_ta_vcf.gz"
+cmd+=" --includeinfo"
+cmd+=" | awk -F '\t' '{ printf \"$printf_phrase\n\", $param_phrase}'"
+cmd+=" | vcf-sort -c"
+cmd+=" >> $output_vcf"
+eval_cmd "$cmd"
 
 cmd="bgzip -f $output_vcf"
 eval_cmd "$cmd"
 cmd="tabix -f -p vcf $output_vcf.gz"
 eval_cmd "$cmd"
-
 
 new_section_txt "F I N I S H <$script_name>"
