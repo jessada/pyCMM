@@ -106,6 +106,12 @@ display_param "working directory" "$working_dir"
 
 new_section_txt "Decompose variants"
 
+cmd="vcf-query -l"
+cmd+=" $input_vcf"
+cmd+=" | tr \"\n\" \"\t\""
+samples_list=`eval $cmd`
+n_samples=`echo $samples_list | wc -w`
+
 tmp_decompose="$working_dir/tmp_decompose"
 cmd="gunzip -c"
 cmd+=" $input_vcf"
@@ -119,7 +125,6 @@ eval_cmd "$cmd"
 printf_phrase="%s\t%s\t%s\t%s\t%s\t.\t%s\t.\t%s"
 param_phrase="\$1, \$2, \$3, \$4, \$5, \$7, \$9"
 
-n_samples=`vcf-query -l $input_vcf | wc -l `
 for ((n_sample=1; n_sample<=$n_samples; n_sample++));
 do
     printf_phrase+="\t%s"
@@ -320,10 +325,6 @@ info_msg
 info_msg
 info_msg ">>> merging strands, genes, coordinates, codons, and zygosities together <<<"
 
-cmd="vcf-query -l"
-cmd+=" $input_vcf"
-cmd+=" | tr \"\n\" \"\t\""
-samples_list=`eval $cmd`
 echo -e "#Strand\tGene\tChr\tPos\tRef\tAlt\tcodon\t$samples_list" > $out_event_file
 
 out_join_phrase="1.1,0,2.2,2.3,2.4,2.5,2.6"
@@ -343,33 +344,34 @@ cmd+=" <( sort -k1,1 $tmp_genes_coors_codons_gtz )"
 cmd+=" >> $out_event_file"
 eval_cmd "$cmd"
 
+#out_event_file="/proj/sens2017534//nobackup/projects_output/signatures/features/TCGA/0.001//debug_wrong_codon/event/debug_wrong_codon_fe22be00_TiTv.event"
 new_section_txt "extracting Ti/Tv signatures"
 
 first_sample_idx=8
-n_samples=`echo $samples_list | wc -w`
 
-function count_subevents {
-    events=$1
-    strand=$2
-
-    event_out=""
-    for col_idx in $(seq $first_sample_idx $((n_samples+first_sample_idx-1)))
-    do
-        cmd="cut"
-        cmd+=" -f$col_idx"
-        cmd+=" $events"
-        cmd+=" | grep -o 1"
-        cmd+=" | wc -l"
-        event_count=$( eval $cmd  || true ) 
-        event_out+="\n$event_count"
-    done
-    echo -e "$event_out" | grep -v "^$" >> $tmp_events_count
-}
-
+#function count_subevents {
+#    events=$1
+#    strand=$2
+#
+#    event_out=""
+#    for col_idx in $(seq $first_sample_idx $((n_samples+first_sample_idx-1)))
+#    do
+#        cmd="cut"
+#        cmd+=" -f$col_idx"
+#        cmd+=" $events"
+#        cmd+=" | grep -o 1"
+#        cmd+=" | wc -l"
+#        event_count=$( eval $cmd  || true ) 
+#        event_out+="\n$event_count"
+#    done
+#    echo -e "$event_out" | grep -v "^$" >> $tmp_events_count
+#}
+#
 function count_events {
-    ref=$1
-    alt=$2
-    codon=$3
+    event_sample_idx=$1    
+    ref=$2
+    alt=$3
+    codon=$4
 
     case "$ref" in
       C)
@@ -503,8 +505,6 @@ function count_events {
         ;;
     esac
 
-    tmp_events="$working_dir/tmp_events"
-
     ts_fwd_ref=$ref
     ts_fwd_alt=$alt
     ts_fwd_codon=$codon
@@ -515,10 +515,10 @@ function count_events {
     cmd="awk -F\$'\t'"
     cmd+=" '{ if ((\$1 == \"+\" && \$5 == \"$ts_fwd_ref\" && \$6 == \"$ts_fwd_alt\" && \$7 == \"$ts_fwd_codon\") || (\$1 == \"-\" && \$5 == \"$ts_rev_ref\" && \$6 == \"$ts_rev_alt\" && \$7 == \"$ts_rev_codon\")) print \$0 }'"
     cmd+=" $out_event_file"
-    cmd+=" > $tmp_events"
-    eval_cmd "$cmd"
-
-    count_subevents $tmp_events "transcribed"
+    cmd+=" | cut -f $event_sample_idx"
+    cmd+=" | grep -o 1"
+    cmd+=" | wc -l"
+    ts_count=$( eval $cmd  || true ) 
 
     uts_fwd_ref=$rev_ref
     uts_fwd_alt=$rev_alt
@@ -530,66 +530,68 @@ function count_events {
     cmd="awk -F\$'\t'"
     cmd+=" '{ if ((\$1 == \"+\" && \$5 == \"$uts_fwd_ref\" && \$6 == \"$uts_fwd_alt\" && \$7 == \"$uts_fwd_codon\") || (\$1 == \"-\" && \$5 == \"$uts_rev_ref\" && \$6 == \"$uts_rev_alt\" && \$7 == \"$uts_rev_codon\")) print \$0 }'"
     cmd+=" $out_event_file"
-    cmd+=" > $tmp_events"
-    eval_cmd "$cmd"
+    cmd+=" | cut -f $event_sample_idx"
+    cmd+=" | grep -o 1"
+    cmd+=" | wc -l"
+    uts_count=$( eval $cmd  || true ) 
 
-    count_subevents $tmp_events "untranscribed"
+    echo "$(( ts_count+uts_count ))\t$ts_count\t$uts_count"
 }
 
-out_header="sample_id\tref\talt\tif_transcribed"
-tmp_reshape_siguatures_info="$working_dir/tmp_reshape_siguatures_info"
-paste_buffer="$working_dir/paste_buffer"
-:>$paste_buffer
-tmp_paste_events_count="$working_dir/tmp_paste_events_count"
-:>$tmp_paste_events_count
+# write header
+out_header="Substitution Type\tTrinucleotide\tSomatic Mutation Type"
 array_samples_list=( $samples_list )  
-
-# create "reshape" signatures info
-for ref in C T
+for sample_idx in $(seq 0 $((n_samples-1)))
 do
-    for alt in A C G T
-    do
-        if [ "$ref" != "$alt" ]
-        then
-            for col_idx in $(seq 0 $((n_samples-1)))
-            do
-                echo -e "${array_samples_list[$col_idx]}\t$ref\t$alt\tTranscribed" >> $tmp_reshape_siguatures_info
-            done
-            for col_idx in $(seq 0 $((n_samples-1)))
-            do
-                echo -e "${array_samples_list[$col_idx]}\t$ref\t$alt\tUnTranscribed" >> $tmp_reshape_siguatures_info
-            done
-
-        fi
-    done
-done
-
-tmp_events_count="$working_dir/tmp_events_count"
-for prime3 in A C G T
-do
-    for prime5 in A C G T
-    do
-        out_header+="\t$prime3"_"$prime5"
-        # each column in event counting represent a pair of 3' and 5'
-        :>$tmp_events_count
-        for ref in C T
-        do
-            for alt in A C G T
-            do
-                if [ "$ref" != "$alt" ]
-                then
-                    codon="$prime3$ref$prime5"
-                    count_events $ref $alt $codon
-                fi
-            done
-        done
-        paste "$paste_buffer" "$tmp_events_count" > "$tmp_paste_events_count"
-        cp "$tmp_paste_events_count" "$paste_buffer"
-    done
+    sample_id="${array_samples_list[$sample_idx]}"
+    # exclude normal tissue if the vcf data are from tumors
+    if [[ $sample_id = *"NORMAL"* ]]
+    then
+        continue
+    fi
+    out_header+="\t$sample_id"
+    out_header+="\t$sample_id"_transcribed
+    out_header+="\t$sample_id"_untranscribed
 done
 echo -e "$out_header" > $out_titv_file
 
-paste -d '' "$tmp_reshape_siguatures_info" "$tmp_paste_events_count" >> $out_titv_file
+# counting events in alphabetical order of Somatic Mutation Type
+#for prime3 in A
+for prime3 in A C G T
+do
+#    for ref in C
+    for ref in C T
+    do
+#        for alt in A
+        for alt in A C G T
+        do
+            if [ "$ref" != "$alt" ]
+            then
+                for prime5 in A C G T
+                do
+                    substition_type="$ref>$alt"
+                    trinucleotide="$prime3$ref$prime5"
+                    somatic_mutation_type="$prime3[$substition_type]$prime5"
+                    tmp_count="$substition_type\t$trinucleotide\t$somatic_mutation_type"
+                    # count event for each sample
+                    for sample_idx in $(seq 0 $((n_samples-1)))
+                    do
+                        sample_id="${array_samples_list[$sample_idx]}"
+                        # exclude normal tissue if the vcf data are from tumors
+                        if [[ $sample_id = *"NORMAL"* ]]
+                        then
+                            continue
+                        fi
+                        event_sample_idx=$(( sample_idx+first_sample_idx ))
+                        info_msg "counting somatic muation type: $somatic_mutation_type for sample: $sample_id"
+                        tmp_count+="\t$( count_events $event_sample_idx $ref $alt $trinucleotide )"
+                    done
+                    echo -e "$tmp_count" >> "$out_titv_file"
+                done
+            fi
+        done
+    done
+done
 
 new_section_txt "F I N I S H <$script_name>"
 
